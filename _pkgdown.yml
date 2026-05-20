@@ -7,6 +7,12 @@ template:
     primary: "#2C6FAC"
     headings-font-size: "1.8rem"
 
+deploy:
+  install_metadata: false
+
+llm_docs:
+  include: false
+
 home:
   title: "RCausalML — Uplift Modeling and Causal Inference with ML"
   description: >
@@ -66,8 +72,10 @@ navbar:
   right:
     - icon: fa-github fa-lg
       href: https://github.com/zia207/RCausalML
+      aria-label: "GitHub repository"
     - icon: fa-book fa-lg
       href: https://causalml.readthedocs.io/en/latest/
+      aria-label: "Python CausalML docs"
 
 reference:
   - title: "Package Overview"
@@ -181,7 +189,6 @@ reference:
       - get_forest_weights
       - get_leaf_node
       - get_tree
-      - merge_forests
       - split_frequencies
       - test_calibration
 
@@ -286,7 +293,6 @@ reference:
       - castle
       - is_dag
       - simulate_dag
-      - evaluate_graph_recovery
       - count_accuracy
 
   - title: "Temporal & GNN Causal Models"
@@ -432,6 +438,122 @@ reference:
       - CausalVAE_ATE
       - estimate_ate_causalvae_ate
       - estimate_ate
+
+  - title: "S3 Methods — fit / predict / estimate_ate"
+    desc: >
+      Method dispatches for the generic `fit()`, `fit_predict()`,
+      `predict()`, and `estimate_ate()` interfaces shared across all learners.
+    contents:
+      - fit.SLearner
+      - fit.TMLELearner
+      - fit.DMLearner
+      - fit.DMLIVLearner
+      - fit.DomainAdaptationLearner
+      - fit.DRLearner
+      - fit.DRPolicyForest
+      - fit.DRPolicyTree
+      - fit.DynamicDMLearner
+      - fit.NonParamDMLIVLearner
+      - fit.OrthoIVLearner
+      - fit.policy_learner
+      - fit.AutomatedMLModel
+      - fit_predict.SLearner
+      - fit_predict.TLearner
+      - fit_predict.XLearner
+      - fit_predict.RLearner
+      - fit_predict.DMLearner
+      - fit_predict.DomainAdaptationLearner
+      - fit_predict.DRLearner
+      - fit_predict_cevae
+      - predict.SLearner
+      - predict.TLearner
+      - predict.XLearner
+      - predict.DMLearner
+      - predict.DMLIVLearner
+      - predict.DomainAdaptationLearner
+      - predict.DRLearner
+      - predict.DRPolicyForest
+      - predict.DRPolicyTree
+      - predict.DynamicDMLearner
+      - predict.NonParamDMLIVLearner
+      - predict.OrthoIVLearner
+      - predict.AutomatedMLModel
+      - predict.policy_learner
+      - predict.SingleTreeCateInterpreter
+      - predict.SingleTreePolicyInterpreter
+      - predict.dragonnet
+      - predict.tarnet
+      - predict.cfrnet
+      - predict.cevae
+      - predict.ganite
+      - predict.causal_vae
+      - predict.causalGAN
+      - predict.causal_forest
+      - predict.causal_egm
+      - predict.causal_discrepancy_vae
+      - predict.causal_inference_tree
+      - predict.interaction_tree
+      - predict.instrumental_forest
+      - predict.ivae
+      - predict.neural_granger_ml
+      - predict.driv_learner
+      - predict.dscm
+      - predict.castle
+      - predict.uplift_rf
+      - predict.uplift_rf_multi
+      - predict.uplift_tree_ddp
+      - predict.uplift_tree_iddp
+      - estimate_ate.SLearner
+      - estimate_ate.TLearner
+      - estimate_ate.XLearner
+      - estimate_ate.RLearner
+      - estimate_ate.DMLearner
+      - estimate_ate.DomainAdaptationLearner
+      - estimate_ate.DRLearner
+      - estimate_ate.TMLELearner
+      - estimate_ate.default
+
+  - title: "S3 Methods — coef / intercept / effect / interpret / treat"
+    desc: >
+      Additional method dispatches for coefficient extraction, effect
+      computation, interpretation, and treatment assignment.
+    contents:
+      - coef.LinearDML
+      - coef.LinearDRLearner
+      - intercept.LinearDML
+      - intercept.LinearDRLearner
+      - effect.DynamicDMLearner
+      - interpret.SingleTreeCateInterpreter
+      - interpret.SingleTreePolicyInterpreter
+      - treat.SingleTreePolicyInterpreter
+      - feature_importances.DRPolicyForest
+      - feature_importances.DRPolicyTree
+      - predict_proba.AutomatedMLModel
+      - predict_proba.DRPolicyForest
+      - predict_proba.DRPolicyTree
+      - predict_proba.policy_learner
+      - predict_value.DRPolicyTree
+      - predict_best_treatment.counterfactual_value_estimator
+      - rank_average_treatment_effect.fit
+
+  - title: "S3 Methods — print / summary / plot"
+    desc: >
+      Print, summary, and plot methods for package objects.
+    contents:
+      - print.causal_forest
+      - summary.causal_forest
+      - summary.castle
+      - plot.castle
+      - plot.grf_tree
+      - plot.rank_average_treatment_effect
+      - policy_feature_names
+      - notears-imports
+
+  - title: "Internal Functions"
+    desc: >
+      Low-level internal helpers (not intended for direct use).
+    contents:
+      - starts_with(".")
 
 authors:
   sidebar:

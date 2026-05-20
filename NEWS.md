@@ -1,6 +1,4 @@
-# CausalML (R) News
-
-## RCausalML 0.3.0
+# RCausalML 0.3.0
 
 ### Cross-platform install support
 
@@ -37,7 +35,7 @@
 
 ---
 
-## RCausalML 0.1.9
+# RCausalML 0.1.9
 
 ### New models — Structural Causal Models (SCMs) with Deep Components (`R/causalDeepNet.R`)
 
