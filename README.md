@@ -61,6 +61,30 @@ Three core modules align with [EconML](https://www.microsoft.com/en-us/research/
 
 For a step-by-step install and troubleshooting guide (including **Ubuntu** and **Windows** instructions), see [HELP_RCausalML_0.3.0.md](HELP_RCausalML_0.3.0.md).
 
+### From GitHub (easiest)
+
+Install directly from [GitHub](https://github.com/zia207/RCausalML) using `remotes` or `devtools`:
+
+``` r
+# Using remotes (recommended)
+install.packages("remotes")
+remotes::install_github("zia207/RCausalML")
+
+# Or using devtools
+install.packages("devtools")
+devtools::install_github("zia207/RCausalML")
+```
+
+To install a specific branch or tag:
+
+``` r
+# Install from a specific branch
+remotes::install_github("zia207/RCausalML", ref = "main")
+
+# Install with all suggested dependencies
+remotes::install_github("zia207/RCausalML", dependencies = TRUE)
+```
+
 ### Global (recommended): install missing dependencies + install RCausalML
 
 Run this **from the package root** (the directory that contains `DESCRIPTION`). It will **install any missing R package dependencies** declared in `DESCRIPTION` (Imports/Depends/Suggests), then install `RCausalML`.
