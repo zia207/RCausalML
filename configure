@@ -1,0 +1,74 @@
+#!/usr/bin/env sh
+
+set -eu
+
+if ! command -v Rscript >/dev/null 2>&1; then
+  echo "Rscript not found; skipping RCausalML dependency setup."
+  exit 0
+fi
+
+Rscript -e '
+desc_path <- "DESCRIPTION"
+if (!file.exists(desc_path)) {
+  message("DESCRIPTION not found; skipping dependency setup.")
+  quit(save = "no", status = 0L)
+}
+
+desc <- read.dcf(desc_path, all = TRUE)
+fields <- intersect(c("Imports", "Suggests"), colnames(desc))
+if (length(fields) == 0L) {
+  message("No dependency fields found; nothing to install.")
+  quit(save = "no", status = 0L)
+}
+
+parse_pkgs <- function(x) {
+  if (is.null(x) || is.na(x) || !nzchar(x)) return(character(0))
+  parts <- trimws(unlist(strsplit(x, ",")))
+  parts <- gsub("\\\\(.*?\\\\)", "", parts)
+  parts <- trimws(parts)
+  parts[nzchar(parts)]
+}
+
+pkgs <- unique(unlist(lapply(fields, function(f) parse_pkgs(desc[1, f]))))
+pkgs <- setdiff(pkgs, c("R"))
+if (length(pkgs) == 0L) {
+  message("No R package dependencies to install.")
+  quit(save = "no", status = 0L)
+}
+
+installed <- rownames(utils::installed.packages())
+missing_pkgs <- setdiff(pkgs, installed)
+
+old_pkgs <- rownames(utils::old.packages())
+if (is.null(old_pkgs)) {
+  old_pkgs <- character(0)
+}
+updatable_pkgs <- intersect(pkgs, old_pkgs)
+targets <- unique(c(missing_pkgs, updatable_pkgs))
+
+if (length(targets) == 0L) {
+  message("All RCausalML dependencies are already installed and up to date.")
+  quit(save = "no", status = 0L)
+}
+
+if (!interactive()) {
+  message(
+    "Skipping automatic dependency installation (non-interactive install). ",
+    "Install/update manually with: install.packages(c(",
+    paste(shQuote(targets), collapse = ", "),
+    "))"
+  )
+  quit(save = "no", status = 0L)
+}
+
+message("RCausalML dependencies requiring install/update:")
+message(" - ", paste(targets, collapse = ", "))
+ans <- readline(prompt = "Install/update these packages now? [y/N]: ")
+if (!tolower(trimws(ans)) %in% c("y", "yes")) {
+  message("Dependency install skipped by user.")
+  quit(save = "no", status = 0L)
+}
+
+utils::install.packages(targets, dependencies = TRUE)
+message("Dependency setup complete.")
+'

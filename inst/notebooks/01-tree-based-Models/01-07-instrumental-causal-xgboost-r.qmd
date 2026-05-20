@@ -1,0 +1,386 @@
+# 8. Instrumental Causal XGBoost (Boosted IV Forest) {.unnumbered}
+
+**Boosted IV Forest** (Instrumental Causal XGBoost) is a machine learning method that combines **cross-fitted C-XGBoost** nuisance estimation with **Generalized Random Forests (GRF)** instrumental forest to estimate **conditional local average treatment effects (LATE)** in the presence of endogeneity. It uses XGBoost to flexibly estimate $E[Y|X]$, $E[W|X]$, and $E[Z|X]$, residualises the outcome, treatment, and instrument, then fits an instrumental forest on the residuals—delivering robust, heterogeneous LATE estimates when a valid instrument is available.
+
+## Overview
+
+A **Boosted IV Forest** estimates treatment effects using an **instrumental variable (Z)** that affects the treatment (W) but not the outcome (Y) except through W. It extends the standard instrumental forest by using **C-XGBoost** (two-head XGBoost) in a **cross-fitting** pipeline to estimate nuisances, then passes residualised $(\tilde{Y}, \tilde{W}, \tilde{Z})$ and covariates $X$ to `grf::instrumental_forest`. The conditional LATE is:
+
+$$ \tau(X) = \frac{\text{Cov}[Y - \hat{m}(X), Z - \hat{p}(X) \mid X]}{\text{Cov}[W - \hat{e}(X), Z - \hat{p}(X) \mid X]} $$
+
+Where:
+
+-   $Y$: Outcome variable.
+-   $W$: Endogenous treatment (binary or continuous).
+-   $Z$: Instrument (binary or continuous).
+-   $X$: Covariates.
+-   $\hat{m}(X) = E[Y|X]$, $\hat{e}(X) = E[W|X]$, $\hat{p}(X) = E[Z|X]$ are estimated via cross-fitted C-XGBoost.
+
+::: callout-note
+
+### Why “Boosted” IV Forest?
+
+Standard instrumental forest uses regression forests to estimate nuisances (or none). Boosted IV Forest uses **C-XGBoost** (two-head XGBoost) in a **cross-fitting** setup to estimate $\hat{m}$, $\hat{e}$, and $\hat{p}$, which can capture stronger nonlinearities and interactions. The final stage is still an instrumental forest on residualised data, so you get the interpretability and inference of GRF with more flexible first-stage modelling.
+:::
+
+### Pipeline Summary
+
+1. **Impute** missing values in $X$ (median imputation).
+2. **Cross-fit nuisances** (parallel over folds): C-XGBoost for $E[Y|X]$, $E[W|X]$, $E[Z|X]$.
+3. **Residualise**: $\tilde{Y} = Y - \hat{m}(X)$, $\tilde{W} = W - \hat{e}(X)$, $\tilde{Z} = Z - \hat{p}(X)$.
+4. **Fit** `grf::instrumental_forest` on $(\tilde{Y}, \tilde{W}, \tilde{Z}, X)$.
+5. **Predict** $\hat{\tau}(x)$ and ATE via the fitted forest.
+
+### Key Features
+
+- **Endogeneity correction**: Instrument $Z$ isolates exogenous variation in $W$.
+- **Heterogeneous effects**: LATE $\tau(X)$ varies with covariates.
+- **Flexible first stage**: XGBoost nuisances can capture nonlinearities; cross-fitting avoids overfitting.
+- **Instrument diagnostics**: First-stage F-statistic and weak-instrument warnings.
+- **Subgroup analysis**, **variable importance**, and **calibration tests** via the underlying GRF object.
+
+## Scientific Terminology for Beginners
+
+This glossary introduces key scientific terms used in this notebook with simple examples.
+
+### 1) Instrumental Variable (IV)
+
+- **Explanation**: A variable that affects treatment but has no direct path to outcome.
+- **Example**: Distance to college affects education but not wages directly.
+
+### 2) Endogenous Treatment
+
+- **Explanation**: Treatment is correlated with unobserved factors affecting outcome.
+- **Example**: Ability influences both years of education and wages.
+
+### 3) Residualization
+
+- **Explanation**: Removing the part explained by covariates from Y, W, and Z.
+- **Example**: Use `Y - E[Y|X]` before final causal estimation.
+
+### 4) Cross-Fitting
+
+- **Explanation**: Train nuisance models on one fold and predict on another fold.
+- **Example**: Five-fold cross-fitting avoids using the same rows for fit and prediction.
+
+### 5) Nuisance Functions
+
+- **Explanation**: Auxiliary models such as `E[Y|X]`, `E[W|X]`, and `E[Z|X]`.
+- **Example**: XGBoost estimates these functions before the IV forest stage.
+
+### 6) LATE
+
+- **Explanation**: Local average treatment effect identified by the instrument.
+- **Example**: Return to education for people whose schooling changes due to college proximity.
+
+### 7) Weak Instrument
+
+- **Explanation**: Instrument has little predictive power for treatment.
+- **Example**: Very small first-stage F-statistic signals weak IV strength.
+
+### 8) Heterogeneous LATE
+
+- **Explanation**: LATE varies across covariate-defined subgroups.
+- **Example**: Education returns differ by region or parental education.
+
+## Boosted IV Forest with R
+
+This tutorial uses the **Card (1995)** dataset to estimate **returns to education** (effect of education on log wages) using **proximity to a 4-year college** as an instrument, implemented with the `BoostedIVForest` class from the RCausalML package (see `R/causalBoosted_IV.R`).
+
+### Load and Check Required Libraries
+
+```{r}
+#| label: packages-list
+packages <- c('tidyverse',
+              'plyr',
+              'RCausalML',
+              'haven',
+              'car',
+              'kernelshap',
+              'shapviz',
+              'Metrics',
+              'future',
+              'future.apply'
+         )
+```
+
+### Install Missing Packages
+
+```{r}
+#| label: install-missing-packages
+#| warning: false
+#| error: false
+# new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+# if (length(new_packages)) install.packages(new_packages)
+```
+
+### Verify and Load Libraries
+
+```{r}
+#| label: verify-load-libraries
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Ensure BoostedIVForest is Available
+
+```{r}
+#| label: ensure-boosted-iv-forest
+# When rendering, working dir is often the notebook dir; find package root and load from source if needed.
+if (!exists("BoostedIVForest")) {
+  pkg_root <- NULL
+  for (d in c(".", "..", "../..", "../../..")) {
+    if (file.exists(file.path(d, "DESCRIPTION")) && file.exists(file.path(d, "R", "causalBoosted_IV.R"))) {
+      pkg_root <- d
+      break
+    }
+  }
+  if (nzchar(pkg_root) && requireNamespace("devtools", quietly = TRUE)) {
+    devtools::load_all(pkg_root, quiet = TRUE)
+  }
+  if (!exists("BoostedIVForest") && !is.null(pkg_root)) {
+    source(file.path(pkg_root, "R", "causalBoosted_IV.R"))
+  }
+  if (!exists("BoostedIVForest")) {
+    tryCatch({
+      source(system.file("R", "causalBoosted_IV.R", package = "RCausalML"))
+    }, error = function(e) {
+      stop("BoostedIVForest not found. Install RCausalML or render from package root.")
+    })
+  }
+}
+```
+
+## Data: Returns to Education (Card Dataset)
+
+We estimate the causal effect of **education on wages** using **proximity to a 4-year college** as an instrument (Card, 1995).
+
+- `lwage`   = log(wage) — outcome (Y)
+- `educ`    = years of education — endogenous treatment (W)
+- `nearc4`  = grew up near 4-year college — instrument (Z)
+- `exper`, `expersq`, `black`, `smsa`, `south` — covariates (X)
+
+### Load and Prepare Data
+
+```{r}
+#| label: load-prepare-card-data
+card_url <- "https://storage.googleapis.com/causal-inference-mixtape.appspot.com/card.dta"
+card <- read_dta(card_url)
+
+card <- card %>%
+  dplyr::mutate(expersq = exper^2) %>%
+  dplyr::select(lwage, educ, nearc4, exper, expersq, black, smsa, south) %>%
+  na.omit()
+
+X <- card %>%
+  dplyr::select(exper, expersq, black, smsa, south) %>%
+  as.matrix()
+
+Y <- as.numeric(card$lwage)
+W <- as.numeric(card$educ)
+Z <- as.numeric(card$nearc4)
+```
+
+### Descriptive Statistics and First-Stage Check
+
+```{r}
+#| label: first-stage-regression
+#| fig.width: 7
+#| fig.height: 5
+first_stage <- lm(educ ~ nearc4 + exper + expersq + black + smsa + south, data = card)
+summary(first_stage)$coefficients["nearc4", 1:4]
+
+linearHypothesis(first_stage, "nearc4 = 0")
+```
+
+```{r}
+#| label: first-stage-boxplot
+#| fig.width: 7
+#| fig.height: 5
+ggplot(card, aes(x = factor(nearc4), y = educ)) +
+  geom_boxplot(fill = c("#E69F00", "#56B4E9")) +
+  labs(title = "First Stage: College Proximity and Years of Education",
+       x = "Grew up near 4-year college (nearc4)", y = "Years of Education (educ)") +
+  theme_minimal()
+```
+
+### Training a Boosted IV Forest
+
+We use `BoostedIVForest` with cross-fitting and optional parallelisation. Set `future::plan(multisession, workers = K)` before `$fit()` to speed up cross-fitting.
+
+```{r}
+#| label: fit-boosted-iv-forest
+# Ensure xgboost is both installed and attached, so that xgb.DMatrix is available in the workspace
+if (!requireNamespace("xgboost", quietly = TRUE)) {
+  install.packages("xgboost")
+}
+suppressPackageStartupMessages(library(xgboost)) # Ensures exported functions like xgb.DMatrix are attached
+
+# Optional: parallel cross-fitting (recommended for larger data)
+if (!requireNamespace("future", quietly = TRUE)) {
+  install.packages("future")
+}
+suppressPackageStartupMessages(library(future))
+future::plan(future::multisession, workers = min(4L, future::availableCores() - 1L))
+on.exit(future::plan(future::sequential), add = TRUE)
+
+model <- BoostedIVForest$new(
+  n_folds     = 5L,
+  nrounds     = 100L,
+  forest_args = list(num.trees = 1000L, honesty = TRUE, tune.parameters = "all")
+)
+model$fit(X, Y, W, Z, verbose = TRUE)
+```
+
+### Model Summary
+
+```{r}
+#| label: model-summary
+model$summary()
+```
+
+### Predicting Treatment Effects
+
+```{r}
+#| label: predict-late-ate
+# Out-of-sample (training) CATE predictions
+iv_pred   <- model$predict()
+tau_hat   <- iv_pred$predictions
+
+ate <- model$average_treatment_effect()
+cat("Average Treatment Effect (LATE):", round(ate["estimate"], 3),
+    "+/-", round(1.96 * ate["std.err"], 3), "\n")
+```
+
+### Visualizing Results
+
+```{r}
+#| label: plot-tau-by-experience
+#| fig.width: 6
+#| fig.height: 5
+plot(card$exper, tau_hat, pch = 16, col = rgb(0, 0, 0, 0.3),
+     xlab = "Potential Experience (exper)", ylab = "Estimated Return to Education (τ(X))",
+     main = "Heterogeneous Returns to Schooling by Experience (Boosted IV Forest)")
+abline(h = ate["estimate"], col = "red", lwd = 2, lty = 2)
+legend("topright", legend = "Average LATE", col = "red", lwd = 2, lty = 2)
+```
+
+### CATE Distribution and Partial Dependence
+
+```{r}
+#| label: plot-cate-partial-dependence
+#| fig.width: 8
+#| fig.height: 5
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  model$plot_cate(top_var = "exper")
+}
+```
+
+### Predicting for New Data
+
+```{r}
+#| label: predict-new-profile
+new_data <- data.frame(
+  exper   = 10,
+  expersq = 10^2,
+  black   = 0,
+  smsa    = 1,
+  south   = 0
+)
+new_X <- as.matrix(new_data)
+new_pred <- model$predict(X_new = new_X)
+cat("Predicted return to education (LATE) for this profile:", round(new_pred$predictions, 3), "\n")
+```
+
+### Subgroup Analysis
+
+```{r}
+#| label: subgroup-analysis
+model$subgroup_analysis(quantile = 0.5)
+```
+
+### Variable Importance
+
+```{r}
+#| label: variable-importance
+vi <- model$variable_importance()
+print(vi)
+```
+
+### Calibration Test
+
+```{r}
+#| label: calibration-test
+cal <- model$test_calibration()
+if (!is.null(cal)) {
+  print(cal$coefficients[, c("Estimate", "Std. Error", "Pr(>|t|)")])
+} else {
+  cat("Calibration test not supported for instrumental forest (grf).\n")
+}
+```
+
+### Kernel SHAP for CATE 
+
+```{r}
+#| label: compute-kernel-shap-boosted-iv
+#| fig.width: 7
+#| fig.height: 5
+#| eval: true
+
+library(kernelshap)
+library(shapviz)
+
+pred_tau <- function(object, newdata) {
+  p <- object$predict(X_new = newdata)
+  p$predictions
+}
+
+set.seed(42)
+n_bg <- min(50, nrow(X))
+bg_idx <- sample(nrow(X), n_bg)
+bg_small <- X[bg_idx, , drop = FALSE]
+
+invisible(capture.output({
+  shap_iv <- kernelshap(
+    object   = model,
+    X        = X,
+    bg_X     = bg_small,
+    pred_fun = pred_tau,
+    verbose  = FALSE
+  )
+}, type = "output"))
+
+shp_iv <- shapviz(shap_iv)
+
+sv_importance(shp_iv, kind = "both") +
+  ggtitle("Kernel SHAP: What Drives Heterogeneous Returns to Education? (Boosted IV Forest)")
+
+sv_dependence(shp_iv, v = "exper") +
+  ggtitle("SHAP Dependence: Experience")
+
+sv_dependence(shp_iv, v = "smsa") +
+  ggtitle("SHAP Dependence: Metropolitan Area")
+```
+
+::: callout-note
+
+- Check first-stage F-statistic > 10 (strong instrument).
+- Verify instrument validity (relevance and exclusion restriction) in your application.
+- Increase `n_folds`, `nrounds`, and `num.trees` for production use.
+- Use `future::plan(multisession, workers = K)` before `$fit()` to parallelise cross-fitting.
+:::
+
+## Summary and Conclusion
+
+**Boosted IV Forest** (Instrumental Causal XGBoost) combines cross-fitted C-XGBoost nuisance estimation with GRF instrumental forest to estimate heterogeneous LATE in the presence of endogeneity. This tutorial used the Card dataset and proximity to college as an instrument to estimate returns to education, demonstrated `BoostedIVForest` fit, summary, predictions, subgroup analysis, variable importance, calibration, and optional SHAP explanations. The same workflow applies to other IV settings with a valid instrument and covariates.
+
+## Resources
+
+1. Athey, Susan, Julie Tibshirani, and Stefan Wager. "Generalized Random Forests." *Annals of Statistics*, 47(2), 2019.
+2. Card, David (1995). "Using Geographic Variation in College Proximity to Estimate the Return to Schooling." In *Aspects of Labour Market Behaviour: Essays in Honour of John Vanderkamp*.
+3. Wang, Guihua, et al. "An Instrumental Variable Forest Approach for Detecting Heterogeneous Treatment Effects in Observational Studies." *Management Science*, 2021.
+4. RCausalML: `R/causalBoosted_IV.R` — BoostedIVForest implementation.

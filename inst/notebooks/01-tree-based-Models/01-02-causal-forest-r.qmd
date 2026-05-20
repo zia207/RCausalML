@@ -1,0 +1,782 @@
+# 3. Causal Forest (CF) for Heterogeneous Treatment Effect Estimation 
+
+This tutorial provides an overview of **Causal Forests** (CF) within the Generalized Random Forests (GRF) framework, focusing on estimating heterogeneous treatment effects in observational or experimental data. It includes a step-by-step guide to implementing Causal Forests using the `{grf}` package in R, with practical examples and explanations tailored to the **abortion** dataset from the `{causaldata}` package.
+
+## Overview
+
+A **Causal Forest** is a machine learning method within the Generalized Random Forests (GRF) framework, designed to estimate **Heterogeneous Treatment Effects (HTE)** in observational or experimental data studies. Specifically, it estimates the **Conditional Average Treatment Effect (CATE)**, which measures how the effect of a treatment varies across individuals based on their characteristics (covariates). It builds on the random forest algorithm but adapts it for causal inference, focusing on estimating causal effects rather than just predicting outcomes. Causal forests are particularly useful in fields like healthcare, economics, and social sciences, where understanding how different subgroups respond to treatments or interventions is crucial. They can handle complex interactions between covariates and treatment effects, making them a powerful tool for causal analysis.
+
+### Key Concepts
+
+-   `Treatment Effect`: The difference in outcomes between a treated and untreated state for an individual, often denoted as
+
+$$ \tau(x) = E[Y(1) - Y(0) | X = x] $$
+
+where:
+
+-   $Y(1)$: Outcome if treated.
+
+-   $Y(0)$: Outcome if not treated.
+
+-   $X$: Covariates (e.g., age, sex, income).
+
+-   $\tau(x)$: CATE, the expected treatment effect for individuals with covariates $X = x$.
+
+-   `Heterogeneity`: Causal forests identify how treatment effects differ across subgroups defined by covariates (e.g., a drug may work better for older patients).
+
+-   `Random Forest Foundation`: Like standard random forests, causal forests use an ensemble of decision trees, but the trees are constructed to optimize for treatment effect estimation rather than prediction accuracy.
+
+### How Causal Forests Work
+
+1.  Data Requirements
+
+-   Outcome ($Y$): The variable of interest (e.g., survival time, test score).
+
+-   Treatment ($W$): A binary or continuous variable indicating treatment status (e.g., 1 = treated, 0 = control).
+
+-   Covariates ($X$) : Features that may influence the treatment effect (e.g., age, gender).
+
+2.  Tree Construction
+
+-   Each tree is grown on a random subset of the data and features, similar to random forests.
+
+-   Splits are chosen to maximize **heterogeneity in treatment effects** rather than prediction accuracy. For example, a split might separate patients into groups where the treatment effect (difference in $Y$ between treated and control) is significantly different.
+
+-   The splitting criterion often uses a measure like the variance of treatment effects or a modified mean squared error tailored to causal inference.
+
+3.  Honest Estimation
+
+-   To reduce overfitting, causal forests use “honest” estimation: one subset of data builds the tree structure (determines splits), and another subset estimates treatment effects within each leaf.
+
+-   This ensures unbiased estimates of $\tau(x)$ within each subgroup defined by the tree.
+
+4.  Aggregation
+
+-   Treatment effect estimates from all trees are averaged to produce a robust estimate of $\tau(x)$ for each individual or covariate combination.
+
+-   The forest provides a smooth, non-parametric estimate of how treatment effects vary with covariates.
+
+5.  Output
+
+-   CATE Estimates: $\tau(x)$, the estimated treatment effect for
+
+-   each individual based on their covariates.
+
+-   Average Treatment Effect (ATE): The average of $\tau(x)$ across the population, $E[\tau(X)]$.
+
+-   Variable Importance: Identifies which covariates most influence heterogeneity in treatment effects.
+
+
+## Scientific Terminology for Beginners
+
+This glossary introduces key scientific terms used in this notebook with simple examples.
+
+### 1) Causal Effect
+
+- **Explanation**: The change in an outcome caused by treatment.
+- **Example**: A tutoring program increases average test scores by 5 points.
+
+### 2) CATE (Conditional Average Treatment Effect)
+
+- **Explanation**: The treatment effect for a subgroup defined by covariates.
+- **Example**: The tutoring effect may be larger for students with lower baseline scores.
+
+### 3) Covariate
+
+- **Explanation**: A background variable used to explain effect heterogeneity.
+- **Example**: Age, income, and education are covariates.
+
+### 4) Confounding
+
+- **Explanation**: A variable influences both treatment and outcome and can bias estimates.
+- **Example**: Motivation can affect both program participation and exam results.
+
+### 5) Honest Estimation
+
+- **Explanation**: Use different samples for split selection and effect estimation.
+- **Example**: One subsample builds tree structure, another computes leaf-level effects.
+
+### 6) Overlap
+
+- **Explanation**: Treated and control observations exist for similar covariate values.
+- **Example**: Both treated and untreated patients are present at each risk level.
+
+### 7) Heterogeneous Treatment Effect
+
+- **Explanation**: Treatment effects vary across individuals or groups.
+- **Example**: A drug may work better for older patients than younger patients.
+
+### 8) Variable Importance
+
+- **Explanation**: A ranking of which features most influence estimated treatment-effect variation.
+- **Example**: Income and age may appear as top drivers of CATE differences.
+
+
+## Causal Forest (CF) in  R
+
+This tutorial uses the `{RCausalML}` integrated with `{grf}` package for robust implementation of Causal Forests. The `grf`  package allows users to estimate Conditional Average Treatment Effects (CATE) and visualize treatment effect heterogeneity effectively.
+
+We'll cover: 
+
+- Getting started Causal Forest  with simulated data
+- Use case with the `abortion` dataset from `{causaldata}`
+
+
+### Load and Check Required Libraries
+
+
+```{r}
+#| label: load-packages
+packages <- c('tidyverse', 
+              'plyr',
+              'RCausalML',
+              'causaldata',
+              'mlbench',
+              'gridExtra',
+              'kernelshap',
+              'shapviz'
+         )
+```
+
+### Install Missing Packages
+
+```         
+#| warning: false
+#| error: false
+#| label: Install missing packages
+#new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+#if(length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r}
+#| label: verify-installation
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load Required Libraries
+
+```{r}
+#| label: load-libraries
+# Load packages with suppressed messages
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Check Loaded Packages
+
+```{r}
+#| label: check-loaded-packages
+# Check loaded packages
+cat("Successfully loaded packages:\n")
+print(search()[grepl("package:", search())])
+```
+
+## Causal Forest with Simulated Data
+
+Before applying Causal Forests to real data, it’s often helpful to understand the method using simulated data where the true treatment effects are known. This allows us to verify that the causal forest can recover the underlying heterogeneity in treatment effects.
+
+### Data Generation and Processing
+
+We use **simulated data** from `synthetic_data()` (see `R/synthetic_data.R`) to illustrate fitting a causal forest. The data has a known heterogeneous treatment effect structure, so we can compare estimated CATEs to the true effects.
+
+```{r}
+#| label: sim-cf-data-generation
+set.seed(42)
+dat_sim <- synthetic_data(mode = 2, n = 3000, p = 20, sigma = 5.5)
+
+# Extract components
+y_sim   <- dat_sim$y
+X_sim   <- dat_sim$X
+w_sim   <- dat_sim$w
+tau_sim <- dat_sim$tau   # true CATE (for evaluation)
+
+# Train/test split (80% / 20%)
+n_sim   <- nrow(X_sim)
+idx_tr  <- sample(n_sim, size = round(0.8 * n_sim))
+X_tr    <- X_sim[idx_tr, , drop = FALSE]
+Y_tr    <- y_sim[idx_tr]
+W_tr    <- w_sim[idx_tr]
+X_te    <- X_sim[-idx_tr, , drop = FALSE]
+tau_te  <- tau_sim[-idx_tr]   # hold-out true CATE for evaluation
+
+cat("Training: n =", length(Y_tr), "| Test: n =", length(tau_te), "\n")
+cat("True CATE (test) — mean:", round(mean(tau_te), 3), ", sd:", round(sd(tau_te), 3), "\n")
+```
+
+### Fitting Causal Forest on Simulated Data
+
+Fit a causal forest on the simulated training data. We use honest splitting and a moderate number of trees for speed; you can increase `num.trees` for production use.
+
+
+```{r}
+#| label: sim-cf-fit
+library(future)
+
+# Detect cores and set parallel threads
+n_cores <- max(1L, parallel::detectCores() - 1L)
+
+# Fit causal forest with tuning 
+if (nrow(X_tr) > 5000L) {
+  # Large data — reduce trees slightly, rely on parallelism
+  n_trees          <- 500L
+  samp_fraction    <- 0.4
+  min_node         <- 10L
+
+} else {
+  # Small/medium data — more trees for stability, finer nodes
+  n_trees          <- 200L
+  samp_fraction    <- 0.5
+  min_node         <- 5L
+}
+
+cf_sim <- causal_forest(
+  X                = X_tr,
+  Y                = Y_tr,
+  W                = W_tr,
+  num.trees        = n_trees,
+  sample.fraction  = samp_fraction,
+  min.node.size    = min_node,
+  honesty          = TRUE,
+  honesty.fraction = 0.5,
+  tune.parameters  = "all",   # auto-tunes key hyperparameters
+  num.threads      = n_cores, # built-in OpenMP parallelism
+  seed             = 123
+)
+
+#  Summarize 
+summary(cf_sim)
+
+```
+
+### ATE estimation on training data\
+
+. The ATE is the average treatment effect across the training population, with a 95% confidence interval.
+
+```{r}
+# ATE on training data
+ate_sim <- average_treatment_effect(cf_sim)
+cat("Training ATE:", round(ate_sim$estimate, 4), "±", round(1.96 * ate_sim$std.err, 4), "(95% CI)\n")
+```
+
+### Predicting CATE on Simulated Test Data
+
+Because we know the true CATE on the test set, we can evaluate how well the forest recovers heterogeneity (e.g., correlation between predicted and true CATE).
+
+```{r}
+#| label: sim-cf-predict
+#| fig.width: 7
+#| fig.height: 5
+
+cate_sim_pred <- predict(cf_sim, X_te)$predictions
+
+# Correlation between estimated and true CATE
+cor_te <- cor(cate_sim_pred, tau_te)
+cat("Correlation(estimated CATE, true CATE) on test set:", round(cor_te, 3), "\n")
+
+# Visualize: predicted vs true CATE
+plot(tau_te, cate_sim_pred, pch = 19, col = rgb(0.2, 0.4, 0.8, 0.4),
+     xlab = "True CATE", ylab = "Estimated CATE",
+     main = "Causal Forest: Estimated vs True CATE (Simulated Data)")
+abline(0, 1, lty = 2, col = "red", lwd = 2)
+legend("topleft", legend = paste0("Correlation = ", round(cor_te, 3)), bty = "n")
+```
+
+### Variable Importance
+
+Variable importance shows which covariates the forest used most when splitting to capture heterogeneity in treatment effects.
+
+```{r}
+#| label: sim-cf-varimp
+#| fig.width: 6
+#| fig.height: 5
+
+# Extract importance and feature names from the model itself 
+var_imp_sim  <- as.numeric(variable_importance(cf_sim))
+features_sim <- colnames(cf_sim$X.orig)   # source of truth — not X_tr
+
+# Fallback if column names are still missing 
+if (is.null(features_sim)) {
+  features_sim <- paste0("X", seq_along(var_imp_sim))
+}
+
+# Plot or warn 
+if (length(var_imp_sim) == length(features_sim) && length(var_imp_sim) > 0) {
+
+  importance_df_sim <- data.frame(
+    Feature    = features_sim,
+    Importance = var_imp_sim
+  ) |>
+    dplyr::arrange(Importance)   # stable order for coord_flip
+
+  ggplot(importance_df_sim, aes(x = reorder(Feature, Importance), y = Importance)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    coord_flip() +
+    labs(
+      title = "Variable Importance (Causal Forest — Simulated Data)",
+      x     = "Feature",
+      y     = "Importance"
+    ) +
+    theme_minimal()
+
+} else {
+  message(
+    "Length mismatch — var_imp: ", length(var_imp_sim),
+    " | features: ",               length(features_sim),
+    "\nRun the diagnostic block above to inspect."
+  )
+}
+
+```
+
+
+
+## Use Case
+
+This section of  tutorial demonstrates how to fit a Causal Forest using the **abortion** dataset: state-year observations on gonorrhea rates among 15–19 year olds, with treatment defined by early repeal of abortion prohibition.
+
+### Data
+
+R package `{causaldata}` provides a collection of datasets for causal inference. We integrate {causaldata} with {RCausalML} to easily load datasets. In this tutorial, we use the **abortion** dataset, which contains state-year observations on gonorrhea rates among 15–19 year olds, with a binary indicator for early repeal of abortion prohibition. This dataset is commonly used to study the effects of abortion legalization on risky sexual behavior among teenagers, proxied by gonorrhea rates.
+
+
+This dataset is commonly used to study the **causal effects of abortion legalization policies** (specifically, early repeal of abortion prohibitions in certain U.S. states) on **risky sexual behavior** among teenagers. Risky behavior is proxied by the **incidence of gonorrhea** (a sexually transmitted infection) among 15–19 year olds. The idea is that access to abortion might influence sexual decision-making or risk-taking behavior in this age group.
+
+Here are the most important columns (based on the package documentation):
+
+- **fip** — State FIPS code (numeric identifier for each U.S. state)
+- **age** — Age in years (focused on 15–19 year olds)
+- **race** — Race: 1 = white, 2 = black (or similar coding)
+- **year** — Calendar year
+- **t** — A rescaled time variable (often centered around policy change for DiD)
+- **sex** — Sex: 1 = male, 2 = female
+- **totpop** — Total population (state-level)
+- **ir** — Incarcerated males per 100,000 (proxy for criminal justice environment)
+- **crack** — Crack cocaine index (proxy for drug epidemic intensity)
+- **alcohol** — Alcohol consumption per capita
+- **income** — Real income per capita
+- **ur** — State unemployment rate
+- **poverty** — Poverty rate
+- **repeal** — Treatment indicator: 1 = state had an **early repeal** of abortion prohibition (treatment group), 0 = otherwise (control group). This is the main policy/treatment variable.
+- **pi** — Parental involvement law in effect (another policy control)
+- **bf15** — Indicator: Is a black female in the 15–19 age group (useful for subgroup analysis)
+
+
+```{r}
+#| label: list-causaldata-datasets
+# causaldata integration
+list_causaldata_datasets()
+```
+
+### Load Data
+
+The **outcome variable** is typically **lnr** (logged gonorrhea rate per 100,000 population among 15–19 year olds), which measures the logged incidence of gonorrhea as a proxy for risky sexual behavior.
+
+
+```{r}
+#| label: load-abortion-data
+# Load abortion dataset (use $data for the raw dataframe; load_causaldata returns list with X, w, y, data, citation)
+abortion <- load_causaldata("abortion")$data
+# Quick look
+head(abortion)
+str(abortion)
+summary(abortion$repeal)      # Treatment balance
+table(abortion$repeal, abortion$race)  # Example crosstab
+```
+
+### Data Visualization
+
+```{r}
+#| label: abortion-data-visualization
+#| fig.width: 12
+#| fig.height: 12
+
+# Visualize treatment assignment, outcome, and covariate distributions in a panel layout
+
+library(gridExtra)
+library(ggplot2)
+
+# Treatment assignment barplot (as ggplot)
+df_tab <- data.frame(group = factor(c("Control", "Treated"), levels = c("Control", "Treated")),
+                     n = as.numeric(table(abortion$repeal)))
+plt_treat <- ggplot(df_tab, aes(x = group, y = n, fill = group)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  scale_fill_manual(values = c("skyblue", "tomato")) +
+  labs(title = "Treatment Group Sizes", x = "", y = "Number of Observations") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Outcome by treatment boxplot (as ggplot)
+plt_outcome <- ggplot(abortion, aes(x = factor(repeal, labels = c("Control", "Treated")), y = lnr, fill = factor(repeal))) +
+  geom_boxplot(alpha = 0.8) +
+  scale_fill_manual(values = c("skyblue", "tomato")) +
+  labs(title = "Logged Gonorrhea Rate by Treatment Group", x = "", y = "lnr (log gonorrhea rate)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Covariate boxplots
+abortion$group <- factor(abortion$repeal, levels = c(0, 1), labels = c("Control", "Treated"))
+feature_vars <- c("totpop", "income", "alcohol", "ir", "crack", "poverty")
+covar_plots <- lapply(feature_vars, function(var) {
+  ggplot(abortion, aes_string(x = "group", y = var, fill = "group")) +
+    geom_boxplot(alpha = 0.8) +
+    theme_minimal() +
+    xlab("") +
+    ggtitle(paste("Distribution of", var, "by Treatment Group")) +
+    scale_fill_manual(values = c("skyblue", "tomato")) +
+    theme(legend.position = "none")
+})
+
+# Arrange plots in panels. We'll create a two-row panel: first row = assignment + outcome, next rows = covariates.
+grid.arrange(
+  plt_treat, plt_outcome,
+  covar_plots[[1]], covar_plots[[2]], covar_plots[[3]],
+  covar_plots[[4]], covar_plots[[5]], covar_plots[[6]],
+  ncol = 2,
+  top = "Treatment, Outcome and Covariate Distributions by Group"
+)
+
+```
+
+### Data Processing 
+
+```{r}
+#| label: abortion-data-processing
+# Select relevant subset (focus on 15-19 year olds, complete cases)
+abortion_clean <- abortion %>%
+  dplyr::filter(age >= 15 & age <= 19) %>%
+  na.omit()
+
+# Define covariates (X), outcome (Y), treatment (W)
+X <- abortion_clean[, c("age", "race", "sex", "totpop", "ir", "crack", 
+                        "alcohol", "income", "ur", "poverty")]
+
+Y <- abortion_clean$lnr          # Logged gonorrhea rate per 100,000 (continuous)
+W <- abortion_clean$repeal       # 1 = early repeal (treatment), 0 = otherwise
+
+# Convert X to numeric matrix
+X <- as.matrix(X)
+colnames(X) <- c("age", "race", "sex", "totpop", "ir", "crack", 
+                 "alcohol", "income", "ur", "poverty")
+
+# Remove near-zero variance columns (if any)
+X <- X[, apply(X, 2, stats::var) > 1e-10, drop = FALSE]
+cat("Covariates used:", colnames(X), "\n")
+```
+
+### Split Data into Training and Test Sets
+
+We’ll split the data into 80% training and 20% test sets using random sampling.
+
+```{R}
+#| label: train-test-split-abortion
+# Split data into training (80%) and test (20%) sets
+train_prop <- 0.8
+n <- nrow(abortion_clean)
+train_idx <- sample(1:n, size = round(train_prop * n))
+X_train <- X[train_idx, , drop = FALSE]
+Y_train <- Y[train_idx]
+W_train <- W[train_idx]
+X_test <- X[-train_idx, , drop = FALSE]
+Y_test <- Y[-train_idx]
+W_test <- W[-train_idx]
+cat("Training set size:", nrow(X_train), "\n")
+cat("Test set size:", nrow(X_test), "\n")
+cat("Column names of X_train:", colnames(X_train), "\n")
+```
+
+### Train Causal Forest on Training Data
+
+The `causal_forest()` function in the `grf` package in R is used to estimate heterogeneous treatment effects (Conditional Average Treatment Effects, CATE) using a causal forest, a specialized random forest for causal inference. Below is a concise overview of the most important arguments for the `causal_forest()` function, based on the `grf` package documentation (version 2.3.2, available at https://grf-labs.github.io/grf/). These arguments control the model’s behavior, estimation process, and performance tuning.
+
+Below are the important arguments of `causal_forest()` function:
+
+-   `X` (Required): Matrix of covariates (features) used to estimate heterogeneity in treatment effects. Each row is an observation, and each column is a covariate (e.g., age, sex).
+
+-   `Y` (Required): Vector of observed outcomes (e.g., survival time, test score).
+
+-   `W` (Required): Vector of treatment assignments (e.g., 1 = treated, 0 = control for binary treatment).
+
+-   `num.trees` (Default: 2000): Number of trees in the forest.
+
+-   `sample.fraction` (Default: 0.5): Fraction of data used to build each tree (subsampling rate).
+
+-   `mtry` : Number of covariates considered for splitting at each node. If `NULL`, defaults to $\min(\lceil \sqrt{p} \rceil, \lceil p/3 \rceil)$, where $p$ is the number of covariates.
+
+-   `min.node.size` (Default: 5): Minimum number of observations in each leaf node.
+
+-   `honesty` (Default: TRUE): Whether to use honest splitting (separate data for tree structure and effect estimation).
+
+-   `honesty.fraction` (Default: 0.5): Fraction of data used for honest estimation (when `honesty = TRUE`). The remaining fraction is used for tree structure.
+
+-   `ci.group.size` (Default: 2): Number of trees grouped to compute variance estimates for confidence intervals.
+
+-   `alpha` (Default: 0.05): Maximum imbalance allowed in treatment/control splits, controlling propensity score overlap.
+
+-   `imbalance.penalty` (Default: 0): Penalty for imbalanced splits in treatment/control groups.
+
+-   `stabilize.splits` (Default: TRUE): Whether to stabilize splits by enforcing balance in treatment/control groups.
+
+-   `tune.parameters` (Default: "none"): Specifies whether to tune hyperparameters (e.g., `mtry`,`min.node.size`) via cross-validation. For more details, refer to the`grf` documentation (https://grf-labs.github.io/grf/) or ask for specific clarifications!
+
+
+```{r}
+#| label: train-causal-forest-abortion
+# Detect available cores
+n_cores <- max(1L, parallel::detectCores() - 1L)
+
+# Adapt hyperparameters to data size
+n_obs  <- nrow(X_train)
+n_feat <- ncol(X_train)
+
+if (n_obs > 10000L) {
+  # Large data — fewer trees, coarser nodes, smaller fraction
+  n_trees       <- 500L
+  samp_frac     <- 0.35
+  min_node      <- 20L
+  ci_group      <- 4L
+
+} else if (n_obs > 2000L) {
+  # Medium data
+  n_trees       <- 300L
+  samp_frac     <- 0.45
+  min_node      <- 10L
+  ci_group      <- 2L
+
+} else {
+  # Small data — more trees for stability, fine nodes
+  n_trees       <- 200L
+  samp_frac     <- 0.5
+  min_node      <- 5L
+  ci_group      <- 2L
+}
+
+# Safe mtry calculation 
+mtry_val <- if (n_feat >= 3L) {
+  min(ceiling(sqrt(n_feat)), floor(n_feat / 3))
+} else {
+  # Too few features for /3 rule — use all
+  n_feat
+}
+
+# causal forest
+cf_model <- causal_forest(
+  X                  = X_train,
+  Y                  = Y_train,
+  W                  = W_train,
+  num.trees          = n_trees,
+  sample.fraction    = samp_frac,
+  mtry               = mtry_val,
+  min.node.size      = min_node,
+  honesty            = TRUE,
+  honesty.fraction   = 0.5,
+  ci.group.size      = ci_group,
+  alpha              = 0.05,
+  imbalance.penalty  = 0,
+  stabilize.splits   = TRUE,
+  tune.parameters    = "all",   # auto-tunes on top of your starting values
+  num.threads        = n_cores, # OpenMP parallelism — biggest single speedup
+  seed               = 123
+)
+
+# Summarize 
+summary(cf_model)
+
+```
+
+
+```{R}
+# Estimate ATE on training data
+ate_train <- average_treatment_effect(cf_model)
+cat("Training ATE:", ate_train$estimate, "±", 1.96 * ate_train$std.err, "(95% CI)\n")
+```
+
+The **ATE** is the average treatment effect on the logged gonorrhea rate (lnr) across the training population—i.e., how much early repeal of abortion prohibition is associated with a change in lnr—with a 95% confidence interval.
+
+### Predict CATE on Test Data
+
+```{R}
+#| label: predict-cate-test
+# Predict CATE on test set
+cate_test_pred <- predict(cf_model, X_test)$predictions
+hist(cate_test_pred, main = "CATE Distribution (Test Set)", xlab = "Estimated Treatment Effect (lnr)", col = "lightblue")
+```
+
+### Rank-Weighted Average Treatment Effect (RATE)
+
+The **Rank-Weighted Average Treatment Effect (RATE)** and **Area Under the Prioritization Curve (AUTOC)** are metrics for treatment effect heterogeneity. The `rank_average_treatment_effect()` function in the **{grf}** package computes AUTOC and a 95% CI. RCausalML’s causal forest does not implement RATE; use the **{grf}** package if you need this. Below we show a simple summary of CATE heterogeneity on the test set.
+
+```{r}
+#| label: cate-summary-test
+#| fig.width: 6
+#| fig.height: 5
+# Summarize CATE heterogeneity on test set (RATE/AUTOC available in {grf})
+cat("CATE on test set: mean =", round(mean(cate_test_pred), 3),
+    ", sd =", round(sd(cate_test_pred), 3), "\n")
+cat("Range:", round(min(cate_test_pred), 3), "to", round(max(cate_test_pred), 3), "\n")
+```
+
+### Variable Importance
+
+```{R}
+#| label: var-importance-test
+#| fig.width: 6
+#| fig.height: 5
+# Variable importance
+var_importance <- variable_importance(cf_model)
+features <- colnames(X_train)
+
+# Create a data frame for plotting
+importance_df <- data.frame(
+  Feature = features,
+  Importance = var_importance
+)
+
+# Create bar plot with ggplot2
+ggplot(importance_df, aes(x = reorder(Feature, Importance), y = Importance)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +  # Flip coordinates for better readability
+  labs(title = "Variable Importance in Causal Forest",
+       x = "Feature",
+       y = "Importance") +
+  theme_minimal()
+```
+
+### SHAP analysis
+
+We use the {shapviz} package for SHAP analysis. This package is integrated with {RCausalML} via `explain_cate()`: you compute SHAP values with {kernelshap} (or {permshap}), then pass the result to `shapviz()` for importance, dependence, waterfall, and force plots.
+
+#### SHAP estimation
+
+SHAP values are computed for the causal forest’s CATE predictions using `explain_cate()`, then visualized with {shapviz}. A subsample of the training data is used for speed.
+
+
+```{r}
+#| label: shap-estimation-setup
+library(future)
+#  Parallel backend 
+plan(multisession, workers = max(1L, parallel::detectCores() - 1L))
+# Separate explain vs background sets 
+# Using the same set for both leaks info — split them.
+set.seed(42)
+  n_explain <- min(80L, nrow(X_train))
+  n_bg      <- min(50L, nrow(X_train))
+  if (nrow(X_train) > n_explain + n_bg) {
+    # Enough rows — keep explain and background non-overlapping
+    idx_explain <- sample(nrow(X_train), n_explain)
+    idx_bg      <- sample(setdiff(seq_len(nrow(X_train)), idx_explain), n_bg)
+  } else {
+    # Small dataset — allow overlap rather than crash
+    idx_explain <- sample(nrow(X_train), n_explain)
+    idx_bg      <- sample(nrow(X_train), n_bg)
+  }
+  X_explain <- as.data.frame(X_train[idx_explain, , drop = FALSE])
+  bg_X      <- as.data.frame(X_train[idx_bg,      , drop = FALSE])
+```
+
+```{r}
+#| label: shap-estimation
+# Compute SHAP
+ks <- explain_cate(
+    cf_model,
+    X            = X_explain,
+    bg_X         = bg_X,
+    use_permshap = TRUE,
+    verbose      = FALSE
+  )
+# Reset workers
+plan(sequential)
+```
+
+### Visualize SHAP values
+
+```{r}
+#| label: shp-importance-beeswarm
+#| fig.width: 6
+#| fig.height: 5
+
+shp <- shapviz::shapviz(ks)
+shapviz::sv_importance(shp, kind = "beeswarm")
+```
+
+#### Importance plot (bar / beeswarm)
+
+```{r}
+#| label: shap-importance-plot
+#| fig.width: 6
+#| fig.height: 5
+
+if (exists("shp")) {
+  shapviz::sv_importance(shp, show_numbers = TRUE)
+}
+```
+
+#### SHAP dependence
+
+Dependence of SHAP values on each covariate (patchwork object).
+
+```{r}
+#| label: shap-dependence-plots
+#| fig.width: 8
+#| fig.height: 8
+
+if (exists("shp") && exists("xvars")) {
+  shapviz::sv_dependence(shp, v = xvars, share_y = TRUE)
+}
+```
+
+#### Decompose single predictions
+
+Waterfall and force plots show how each feature contributes to the predicted CATE for one observation.
+
+```{r}
+#| label: shap-single-prediction
+#| fig.width: 6
+#| fig.height: 5
+
+if (exists("shp")) {
+  shapviz::sv_waterfall(shp, row_id = 1) +
+    theme(axis.text = element_text(size = 11))
+
+  shapviz::sv_force(shp, row_id = 1)
+}
+```
+
+#### Averaged SHAP values (importance by subgroup)
+
+You can show waterfall plots for a subset of observations (e.g., by covariate). Here we show one observation where `sex == 2` (female) as an example; the bar importance plot above summarizes average |SHAP| across all explained rows.
+
+```{r}
+#| label: shap-female-waterfall
+#| fig.width: 6
+#| fig.height: 5
+
+if (exists("shp") && "sex" %in% names(shp$X)) {
+  idx_female <- which(shp$X$sex == 2)
+  row_show   <- if (length(idx_female) > 0) idx_female[1] else 1
+  shapviz::sv_waterfall(shp, row_id = row_show) +
+    theme(axis.text = element_text(size = 11))
+} else if (exists("shp")) {
+  shapviz::sv_waterfall(shp, row_id = 2) +
+    theme(axis.text = element_text(size = 11))
+}
+```
+
+
+## Summary and Conclusion
+
+Causal Forests are a powerful tool for estimating heterogeneous treatment effects in observational or experimental data. They extend the random forest framework to focus on causal inference, allowing researchers to understand how treatment effects vary across individuals based on their characteristics. This tutorial used **{RCausalML}** integrated with **{grf}** to fit causal forests and estimate Conditional Average Treatment Effects (CATE). It covered (1) **simulated data** from `synthetic_data()` to validate CATE recovery and variable importance, and (2) a **real-data use case** with the **abortion** dataset from `{causaldata}`. For the abortion example, we demonstrated data preprocessing, training and prediction, variable importance, SHAP-based interpretation via `explain_cate()`, and estimation of the Average Treatment Effect (ATE) and heterogeneity in the effect of early repeal of abortion prohibition on logged gonorrhea rates (lnr).
+
+## Resources
+
+1.  Athey, Susan, Julie Tibshirani, and Stefan Wager. "Generalized Random Forests". Annals of Statistics, 47(2), 2019.
+
+2.  Wager, Stefan, and Susan Athey. "Estimation and Inference of Heterogeneous Treatment Effects using Random Forests". Journal of the American Statistical Association, 113(523), 2018.
+
+3.  Nie, Xinkun, and Stefan Wager. "Quasi-Oracle Estimation of Heterogeneous Treatment Effects". Biometrika, 108(2), 2021.
+
+4.  [grf Causal Forest documentation](https://grf-labs.github.io/grf/reference/causal_forest.html#references)

@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>deepcausalml-generative-latent-variable-causal-models-introduction-r</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/clipboard/clipboard.min.js"></script>
+<script src="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/quarto-html/popper.min.js"></script>
+<script src="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/quarto-html/anchor.min.js"></script>
+<link href="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/quarto-html/quarto-syntax-highlighting-adfb2833bc15652ec5881dc6381ea988.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r_files/libs/bootstrap/bootstrap-58dc13426415cc10754fe96abed33356.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="generative-latent-variable-causal-models-glvcms" class="level1 unnumbered">
+<h1 class="unnumbered">Generative Latent-Variable Causal Models (GLVCMs)</h1>
+<p>Generative Latent-Variable Causal Models (GLVCMs) are a powerful class of models that combine the strengths of deep generative modeling, latent variable modeling, and causal inference. They provide a framework for learning interpretable, disentangled representations of data that capture underlying causal mechanisms, and enable reasoning about interventions and counterfactuals. This makes them particularly useful for applications in fields like genomics, healthcare, and any domain where understanding the causal structure of data is crucial.</p>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>A <strong>Generative Latent-Variable Causal Model</strong> sits at the intersection of three ideas — generative modeling, latent variable modeling, and causal structure — and fuses them into a single unified framework. Before explaining the fusion, it helps to understand each piece.</p>
+<section id="the-three-building-blocks" class="level3">
+<h3 class="anchored" data-anchor-id="the-three-building-blocks">The Three Building Blocks</h3>
+<p><strong>1. Latent Variables (Z)</strong> These are hidden, unobserved variables that explain the variation in what we actually see. Lots of variability in data (such as images) is due to factors like gender, eye color, pose, etc. — but unless data is annotated, these factors are not explicitly available and are therefore latent. The idea is to explicitly model these factors using latent variables Z.</p>
+<p><strong>2. Generative Models</strong> Deep latent variable models are generative frameworks that use latent variables and nonlinear mappings to represent complex, high-dimensional data. They integrate probabilistic inference with deep neural networks using techniques like variational autoencoders and normalizing flows for flexible, robust modeling.</p>
+<p><strong>3. Causal Structure</strong> Structural causal models (SCMs) describe data-generating processes and model complex causal relationships and mechanisms among variables in a system, and can naturally be combined with deep generative models.</p>
+<p>Putting these together:</p>
+<blockquote class="blockquote">
+<p><strong>A Generative Latent-Variable Causal Model learns a deep generative model where the latent space is not just a compressed representation — it is a structured causal graph, where each latent dimension corresponds to a distinct causal factor.</strong></p>
+</blockquote>
+<p><img src="images/generative_laten_variable_causal_model.png" class="img-fluid" width="598"></p>
+</section>
+<section id="the-formal-structure" class="level3">
+<h3 class="anchored" data-anchor-id="the-formal-structure">The Formal Structure</h3>
+<p>A GLVCM is defined by three interlocking components:</p>
+<p><strong>1. A Latent Causal Prior — the SCM on Z</strong></p>
+<p>The latent variables <span class="math inline">\(Z = \{Z_1, Z_2, \ldots, Z_k\}\)</span> are generated by a <strong>Structural Causal Model</strong>:</p>
+<p><span class="math inline">\(Z_k = f_k(\text{pa}(Z_k), \varepsilon_k), \ \varepsilon_k \sim p(\varepsilon)\)</span></p>
+<p>where <span class="math inline">\(\text{pa}(Z_k)\)</span> are the causal parents of <span class="math inline">\(Z_k\)</span> in a latent DAG <span class="math inline">\(G\)</span>, and <span class="math inline">\(\varepsilon_k\)</span> is independent noise. This means the latent space is not a flat cloud — it has internal causal architecture.</p>
+<p><strong>2. A Nonlinear Decoder — the Mixing Function</strong></p>
+<p>The observed data <span class="math inline">\(X\)</span> is generated from <span class="math inline">\(Z\)</span> through a deep neural network decoder:</p>
+<p><span class="math inline">\(X = f(Z) + \text{noise}\)</span>, with <span class="math inline">\(f\)</span> parameterized by a neural network</p>
+<p>The function f is typically estimated with deep neural networks, as in a deep generative model, and causal relationships are inferred through data arising from multiple environments such as different experimental interventions, time points, etc. Examples of generative models of this form include diffusion models, variational autoencoders, and flows.</p>
+<p><strong>3. An Encoder — the Inference Network</strong></p>
+<p>To learn from data, the model also needs to invert: given observed <span class="math inline">\(X\)</span>, infer which latent <span class="math inline">\(Z\)</span> caused it:</p>
+<p><span class="math inline">\(q(Z \mid X) \approx p(Z \mid X)\)</span> (approximate posterior / encoder)</p>
+<p>This is the variational inference step in VAE-based models, or the discriminator step in GAN-based models.</p>
+</section>
+</section>
+<section id="how-it-differs-from-a-regular-latent-variable-model" class="level2">
+<h2 class="anchored" data-anchor-id="how-it-differs-from-a-regular-latent-variable-model">How It Differs from a Regular Latent Variable Model</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 26%">
+<col style="width: 54%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Standard VAE / LVM</th>
+<th>Generative Latent-Variable <strong>Causal</strong> Model</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Latent prior p(Z)</td>
+<td>Factorized Gaussian (iid)</td>
+<td>Structured causal DAG (SCM on Z)</td>
+</tr>
+<tr class="even">
+<td>Latent dimensions</td>
+<td>Entangled, uninterpretable</td>
+<td>Each Zₖ = a distinct causal factor</td>
+</tr>
+<tr class="odd">
+<td>Interventions</td>
+<td>Not supported</td>
+<td><code>do(Zₖ = z)</code> directly in latent space</td>
+</tr>
+<tr class="even">
+<td>Counterfactuals</td>
+<td>Not possible</td>
+<td>Yes — fix Z, decode X*</td>
+</tr>
+<tr class="odd">
+<td>Identifiability</td>
+<td>Generally not identifiable</td>
+<td>Identifiable under causal + disentanglement constraints</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-core-goal-causal-representation-learning" class="level2">
+<h2 class="anchored" data-anchor-id="the-core-goal-causal-representation-learning">The Core Goal: Causal Representation Learning</h2>
+<p>Interpretability is achieved by enforcing sparsity (to simplify the model) and causality (to allow for an interventionist interpretation of the latent factors) through the use of causal graphical models. Transferability is achieved through the use of causal models, which are widely believed to yield stable, invariant, transferable predictions across changing contexts and environments.</p>
+<p>The dream is a latent space where each dimension means something causally real — not just a useful compression, but a genuine <strong>mechanism</strong> in the world.</p>
+<section id="key-model-architectures" class="level3">
+<h3 class="anchored" data-anchor-id="key-model-architectures">Key Model Architectures</h3>
+<section id="cevae-causal-effect-variational-autoencoder" class="level4">
+<h4 class="anchored" data-anchor-id="cevae-causal-effect-variational-autoencoder">1. CEVAE (Causal Effect Variational Autoencoder)</h4>
+<p>The pioneering model is <strong>CEVAE</strong>, introduced by Louizos et al.&nbsp;(NeurIPS 2017). It uses a variational autoencoder to learn a bidirectional mapping between high-dimensional observed covariates and a low-dimensional latent space. The architecture explicitly models how different subsets of latent variables influence treatment assignment and the outcome variable. By extracting latent features that affect both treatment and outcome, the model mitigates confounding bias when estimating causal effects.</p>
+<p><strong>Key insight</strong>: The latent variables <span class="math inline">\(Z\)</span> capture <strong>unmeasured confounders</strong>. The model jointly infers these confounders from proxy variables in the observed data and uses them to debias the causal effect estimation between treatment and outcome.</p>
+</section>
+<section id="causalvae" class="level4">
+<h4 class="anchored" data-anchor-id="causalvae">2. CausalVAE</h4>
+<p><strong>CausalVAE</strong> extends the standard VAE framework by replacing the independent Gaussian prior with a <strong>causal prior</strong> structured as a Directed Acyclic Graph (DAG) over the latent variables <span class="math inline">\(Z\)</span>. Each latent dimension corresponds to a node in the graph, and structural equations (typically linear or neural) govern how each <span class="math inline">\(Z_k\)</span> depends on its causal parents in the latent space. This design imparts full interventional semantics to the latent representations, enabling <span class="math inline">\(do\)</span>-operations and counterfactual generation directly in the latent space.</p>
+</section>
+<section id="ivae-identifiable-variational-autoencoder" class="level4">
+<h4 class="anchored" data-anchor-id="ivae-identifiable-variational-autoencoder">3. iVAE (Identifiable Variational Autoencoder)</h4>
+<ul>
+<li><strong>Paper</strong>: Khemakhem et al.&nbsp;(2019/2020) — “Variational Autoencoders and Nonlinear ICA: A Unifying Framework” (AISTATS 2020).</li>
+<li><strong>Core idea</strong>: Standard VAEs (and nonlinear ICA) suffer from identifiability issues due to rotational and functional ambiguities. iVAE achieves identifiability of the latent factors and generative parameters (up to permutation and scaling) by introducing <strong>auxiliary variables</strong> <span class="math inline">\(u\)</span> (e.g., class labels, additional observations, or time indices).</li>
+<li><strong>Generative model</strong>:
+<ul>
+<li>Latent variables <span class="math inline">\(Z\)</span> are conditionally independent given <span class="math inline">\(u\)</span>: <span class="math inline">\(p(Z \mid u) = \prod_i p(Z_i \mid u)\)</span>.</li>
+<li>The prior on <span class="math inline">\(Z\)</span> is a flexible conditional distribution (often parameterized by a neural network) that depends on <span class="math inline">\(u\)</span>.</li>
+<li>Observations follow <span class="math inline">\(X = g(Z) + \text{noise}\)</span>, where <span class="math inline">\(g\)</span> is a nonlinear mixing function.</li>
+</ul></li>
+<li><strong>Mechanism</strong>: The auxiliary information <span class="math inline">\(u\)</span> breaks the inherent ambiguities of unsupervised nonlinear ICA/VAE, enabling recovery of the true independent components.</li>
+<li><strong>Goal</strong>: Principled disentanglement and recovery of the underlying generative factors, effectively solving nonlinear Independent Component Analysis within a VAE framework. It emphasizes <strong>identifiability</strong> rather than explicit causal graphs or treatment-outcome modeling.</li>
+<li><strong>Key strength</strong>: Strong theoretical guarantees for recovering the true latent structure when auxiliary variables are available. The learned latents are not only statistically independent but <strong>identifiable</strong>.</li>
+</ul>
+</section>
+<section id="causalvae-opt-optimized-causalvae" class="level4">
+<h4 class="anchored" data-anchor-id="causalvae-opt-optimized-causalvae">4. CausalVAE-Opt (Optimized CausalVAE)</h4>
+<p>This is a practically tuned variant of the original <strong>CausalVAE</strong> (Yang et al., 2021), retaining the same core architecture—including the Causal Layer, DAG-based structural equations, acyclicity constraints, sparsity penalties, and support for counterfactuals and interventions. The main differences lie in implementation optimizations, such as improved hyperparameters, training schedules, or efficiency tweaks that enable faster convergence and better out-of-the-box performance without altering the fundamental causal modeling capabilities.</p>
+</section>
+<section id="causalgan" class="level4">
+<h4 class="anchored" data-anchor-id="causalgan">5. CausalGAN</h4>
+<p><strong>CausalGAN</strong> learns causal implicit generative models through adversarial training (Kocaoglu et al., ICLR 2018). The generator is conditioned on causal labels structured according to a known or assumed causal graph. The training procedure enforces that the learned distribution respects the causal structure for both observational and interventional queries, enabling sampling from interventional and counterfactual distributions.</p>
+</section>
+<section id="deep-structural-causal-models-dscm" class="level4">
+<h4 class="anchored" data-anchor-id="deep-structural-causal-models-dscm">6. Deep Structural Causal Models (DSCM)</h4>
+<p><strong>Deep Structural Causal Models</strong> (Pawlowski et al., NeurIPS 2020) integrate deep learning components (e.g., neural networks) into structural causal models and use normalizing flows in the decoder to achieve full invertibility. This invertibility allows exact (or highly accurate) mapping from observations <span class="math inline">\(X\)</span> back to the exogenous noise variables, which is essential for precise <strong>individual-level counterfactual inference</strong>—beyond mere population-level average effects.</p>
+</section>
+<section id="causaldiscrepancy-vae" class="level4">
+<h4 class="anchored" data-anchor-id="causaldiscrepancy-vae">7. CausalDiscrepancy VAE</h4>
+<p>The <strong>CausalDiscrepancy VAE</strong> augments the standard VAE objective with a maximum mean discrepancy (MMD) term. This term encourages the model’s generated data under virtual interventions to closely match real interventional data (when available). It has been applied, for example, to single-cell Perturb-Seq datasets involving CRISPR-based gene perturbations to improve estimation of causal effects from genetic interventions.</p>
+</section>
+<section id="causalegm" class="level4">
+<h4 class="anchored" data-anchor-id="causalegm">8. CausalEGM</h4>
+<p><strong>CausalEGM</strong> (Causal Encoding Generative Modeling) is a deep learning framework for nonlinear dimension reduction and generative modeling of dependencies among high-dimensional covariates that affect both treatment and outcome (Wang et al., PNAS 2024). It employs an autoencoder combined with GAN-based distribution matching and an adversarial loss to identify a compact set of latent confounders. By separating latent factors into those influencing treatment, outcome, both, or neither, it enables robust causal effect estimation in high-dimensional settings.</p>
+<p>These models represent key advancements in combining deep generative modeling (VAEs, GANs, flows) with causal reasoning, each addressing different aspects such as confounder adjustment, identifiability, interventional semantics, counterfactuals, and scalability to high-dimensional or interventional data.</p>
+</section>
+</section>
+<section id="comparison-table" class="level3">
+<h3 class="anchored" data-anchor-id="comparison-table">Comparison Table</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Model</th>
+<th>Core Technique</th>
+<th>Main Goal</th>
+<th>Key Innovation</th>
+<th>Causal Strength</th>
+<th>Best For</th>
+<th>Limitations</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>CEVAE</strong> (2017)</td>
+<td>Variational Autoencoder (VAE)</td>
+<td>Estimate average treatment effects (ATE) in the presence of unobserved confounding</td>
+<td>Treats unmeasured confounders as latent Z; joint modeling of X, T, Y via latent variables</td>
+<td>Adjusts for hidden confounding using proxies</td>
+<td>Causal effect estimation from observational data with high-dimensional covariates</td>
+<td>No explicit causal graph in latent space; identifiability not guaranteed; mainly population-level effects</td>
+</tr>
+<tr class="even">
+<td><strong>CausalVAE</strong> (2021)</td>
+<td>VAE with causal prior</td>
+<td>Disentangled representation learning with causal structure</td>
+<td>Replaces independent Gaussian prior with a <strong>DAG-structured causal prior</strong> over latents (Causal Layer + structural equations)</td>
+<td>Full interventional semantics (“do”-operations) and counterfactuals in latent space</td>
+<td>Learning causally disentangled, interpretable latents; “what-if” queries</td>
+<td>Assumes linear or simple causal relations in latent space initially; requires learning DAG structure</td>
+</tr>
+<tr class="odd">
+<td><strong>iVAE</strong> (2020)</td>
+<td>Identifiable VAE + auxiliary variables</td>
+<td>Identifiable nonlinear ICA / disentanglement</td>
+<td>Introduces auxiliary variables ( u ) to make latents conditionally independent given ( u ), breaking rotational ambiguity</td>
+<td>Strong theoretical <strong>identifiability</strong> guarantees (recover true factors up to permutation/scaling)</td>
+<td>Principled disentanglement when side information (labels, time, etc.) is available</td>
+<td>Does not explicitly model treatment-outcome or causal graphs; focuses on identifiability rather than interventions</td>
+</tr>
+<tr class="even">
+<td><strong>CausalVAE-Opt</strong></td>
+<td>Optimized version of CausalVAE</td>
+<td>Same as CausalVAE but with practical efficiency</td>
+<td>Hyperparameter tuning, better training schedules, implementation tweaks</td>
+<td>Same as CausalVAE</td>
+<td>Faster training and deployment of CausalVAE-style models</td>
+<td>Not a new model — just a tuned implementation</td>
+</tr>
+<tr class="odd">
+<td><strong>CausalGAN</strong> (2018)</td>
+<td>Generative Adversarial Network (GAN)</td>
+<td>Implicit causal generative modeling</td>
+<td>Adversarial training conditioned on causal labels; enforces causal graph in generated distribution</td>
+<td>Sampling from interventional and counterfactual distributions</td>
+<td>Image/data generation that respects causal structure (e.g., labeled images)</td>
+<td>Less stable training than VAEs; implicit model (harder to interpret exact mechanisms)</td>
+</tr>
+<tr class="even">
+<td><strong>DSCM</strong> (2020)</td>
+<td>Deep Structural Causal Models with normalizing flows</td>
+<td>Tractable <strong>individual-level counterfactuals</strong></td>
+<td>Uses invertible normalizing flows in the decoder for exact (or highly accurate) inversion X → noise</td>
+<td>Full Pearl’s ladder: association, intervention, <strong>and precise individual counterfactuals</strong></td>
+<td>Scenarios needing subject-specific “what if I had…” (e.g., medical imaging)</td>
+<td>Computationally heavier due to flows; requires careful design of invertible mechanisms</td>
+</tr>
+<tr class="odd">
+<td><strong>CausalDiscrepancy VAE</strong></td>
+<td>VAE + Maximum Mean Discrepancy (MMD)</td>
+<td>Causal disentanglement from interventions/soft interventions</td>
+<td>Adds MMD term to align virtual interventional distributions with real interventional data</td>
+<td>Improves identifiability and disentanglement when partial interventional data is available (e.g., Perturb-Seq)</td>
+<td>Single-cell or perturbation datasets with some known interventions</td>
+<td>Relies on availability of interventional data; MMD can be sensitive to kernel choice</td>
+</tr>
+<tr class="even">
+<td><strong>CausalEGM</strong> (2024)</td>
+<td>Encoding Generative Modeling (autoencoder + GAN-like matching)</td>
+<td>Nonlinear dimension reduction for high-dimensional causal inference</td>
+<td>Learns low-dimensional latent confounders by partitioning latents (affects treatment, outcome, both, or neither) with generative reconstruction</td>
+<td>Robust covariate adjustment in very high-dimensional settings via dependency-aware reduction</td>
+<td>Observational studies with massive covariates (genomics, etc.); scalable causal effect estimation</td>
+<td>Focuses more on dimension reduction than full generative counterfactuals; newer with fewer benchmarks</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="key-conceptual-differences" class="level3">
+<h3 class="anchored" data-anchor-id="key-conceptual-differences">Key Conceptual Differences</h3>
+<ul>
+<li><strong>Treatment-Outcome Focus vs.&nbsp;General Disentanglement</strong>:
+<ul>
+<li>CEVAE and CausalEGM are primarily designed for <strong>causal effect estimation</strong> (adjusting for confounding in observational data).</li>
+<li>iVAE focuses on <strong>identifiability</strong> of independent factors (more statistical/ML than applied causality).</li>
+<li>CausalVAE, CausalGAN, and DSCM emphasize <strong>generative capabilities</strong> with explicit causal structure for interventions and counterfactuals.</li>
+</ul></li>
+<li><strong>How They Handle Latent Structure</strong>:
+<ul>
+<li>Standard VAE (baseline): Assumes independent latents → suffers from entanglement and lack of identifiability.</li>
+<li>CEVAE: Learns latents that capture shared confounders but without structured DAG.</li>
+<li>CausalVAE: Explicit <strong>causal DAG</strong> in latent space → allows “do”-interventions on individual latent factors.</li>
+<li>iVAE: Uses auxiliary info to achieve <strong>identifiability</strong> without needing a causal graph.</li>
+<li>DSCM: Models full <strong>structural equations</strong> with deep invertible components → best for individual counterfactuals (abduction step is tractable).</li>
+</ul></li>
+<li><strong>Training Paradigm</strong>:
+<ul>
+<li>VAE-based (CEVAE, CausalVAE, iVAE, CausalDiscrepancy): Evidence Lower Bound (ELBO) optimization — stable but approximate inference.</li>
+<li>GAN-based (CausalGAN, elements in CausalEGM): Adversarial training — good for sharp samples but can be unstable.</li>
+<li>Flow-based (DSCM): Invertibility enables exact likelihood and precise noise inference.</li>
+</ul></li>
+<li><strong>Level of Causality (Pearl’s Ladder)</strong>:
+<ul>
+<li>Most handle <strong>association</strong> and <strong>intervention</strong>.</li>
+<li>DSCM and CausalVAE excel at <strong>counterfactuals</strong>.</li>
+<li>CEVAE is strongest for <strong>average treatment effects</strong>.</li>
+</ul></li>
+</ul>
+</section>
+<section id="practical-takeaways" class="level3">
+<h3 class="anchored" data-anchor-id="practical-takeaways">Practical Takeaways</h3>
+<ul>
+<li>Need <strong>fast causal effect estimation</strong> from observational data? → Start with <strong>CEVAE</strong> or <strong>CausalEGM</strong> (especially for very high dimensions).</li>
+<li>Want <strong>interpretable causal disentanglement</strong> with interventions? → <strong>CausalVAE</strong>.</li>
+<li>Have auxiliary information (labels, etc.)? → <strong>iVAE</strong> for theoretically grounded disentanglement.</li>
+<li>Need <strong>individual-level counterfactuals</strong> (e.g., personalized medicine)? → <strong>DSCM</strong>.</li>
+<li>Working with <strong>real interventions</strong> (like gene perturbations)? → <strong>CausalDiscrepancy VAE</strong>.</li>
+<li>Generating data (images, etc.) that respects causality? → <strong>CausalGAN</strong>.</li>
+</ul>
+<p>These models often complement each other. Many modern works combine ideas (e.g., causal priors + flows + identifiability constraints).</p>
+<p>Would you like a deeper dive into any specific pair (e.g., CEVAE vs CausalVAE), or examples of when to choose one over the others for a particular application?</p>
+</section>
+<section id="three-things-you-can-do-that-regular-models-cannot" class="level3">
+<h3 class="anchored" data-anchor-id="three-things-you-can-do-that-regular-models-cannot">Three Things You Can Do That Regular Models Cannot</h3>
+<p><strong>1. Interventional Sampling</strong> — <code>do(Zₖ = z)</code> Fix a latent causal factor to a specific value, propagate through the latent DAG, decode to X. This generates data from an interventional distribution P(X | do(Zₖ = z)) — impossible in a standard VAE.</p>
+<p><strong>2. Counterfactual Generation</strong> Given an observed individual X, infer their latent Z via the encoder, then ask: <em>“What would X have looked like if Z₂ had been different?”</em> This is the Rung 3 of Pearl’s causal ladder, and it requires both the encoder (abduction) and the decoder (prediction).</p>
+<p><strong>3. Disentangled, Interpretable Representations</strong> Generative models can be used to learn latent representations that better capture factors of variation — in particular, latent factors that capture causal dependencies. In cell microscopy, for example, each intervention may correspond to CRISPR knockouts or drug administration, where the effects act on latent factors rather than at the individual pixel level.</p>
+</section>
+<section id="the-identifiability-challenge" class="level3">
+<h3 class="anchored" data-anchor-id="the-identifiability-challenge">The Identifiability Challenge</h3>
+<p>The central theoretical problem: even when X is linear in Z, it is impossible to recover the causal graph G without at least one intervention on each latent factor. This is why modern GLVCM research heavily focuses on <strong>multi-environment data</strong>, <strong>interventional datasets</strong>, and <strong>contrastive learning</strong> to achieve identifiability — recovering not just a useful Z, but the <em>true</em> causal Z.</p>
+</section>
+</section>
+<section id="summary-and-conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusion">Summary and Conclusion</h2>
+<p>Generative Latent-Variable Causal Models (GLVCMs) are a powerful framework that combines deep generative modeling with causal inference. By structuring the latent space as a causal DAG, these models enable interventional and counterfactual reasoning directly in the latent space, while the decoder maps these causal latents to complex, high-dimensional observed data. This allows for learning disentangled representations that capture underlying causal mechanisms, and provides a principled way to perform causal inference and generate counterfactuals in complex domains.</p>
+<pre><code>Generative Latent-Variable Causal Model
+│
+├── Latent Space Z          ← Structured as a causal DAG (SCM)
+│   ├── Z₁, Z₂, ...        ← Each = one interpretable causal mechanism
+│   └── Zₖ = f(pa(Zₖ), ε) ← Structural equations govern Z
+│
+├── Decoder X = f(Z)        ← Deep neural net (VAE / Flow / GAN)
+│   └── Maps causal latents → observed high-dimensional data
+│
+├── Encoder q(Z|X)          ← Infers latent causes from observations
+│
+└── What you gain
+    ├── Interventional distributions  P(X | do(Z=z))
+    ├── Counterfactual generation     "What if Z₂ had been different?"
+    └── Disentangled, causal representations that transfer across domains</code></pre>
+<p>These models are now central to <strong>causal representation learning</strong> — one of the most active frontiers in deep learning, with applications from drug discovery and genomics to computer vision and robotics.</p>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">Resources</h2>
+<ol type="1">
+<li><p>Louizos, C., Shalit, U., Mooij, J. M., Sontag, D., Zemel, R., &amp; Welling, M. (2017). Causal Effect Inference with Deep Latent-Variable Models. <em>Advances in Neural Information Processing Systems (NeurIPS)</em>.<br>
+arXiv:1705.08821.</p></li>
+<li><p>Yang, M., Liu, F., Chen, Z., Shen, X., Hao, J., &amp; Wang, J. (2021). CausalVAE: Disentangled Representation Learning via Neural Structural Causal Models. <em>Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, 9588–9597.<br>
+arXiv:2004.08697 (earlier version).</p></li>
+<li><p>Khemakhem, I., Kingma, D. P., Monti, R. P., &amp; Hyvärinen, A. (2020). Variational Autoencoders and Nonlinear ICA: A Unifying Framework. <em>Proceedings of the 23rd International Conference on Artificial Intelligence and Statistics (AISTATS)</em>, 2207–2217.<br>
+arXiv:1907.04809.</p></li>
+<li><p>Kocaoglu, M., Snyder, C., Dimakis, A. G., &amp; Vishwanath, S. (2018). CausalGAN: Learning Causal Implicit Generative Models with Adversarial Training. <em>International Conference on Learning Representations (ICLR)</em>.<br>
+arXiv:1709.02023.</p></li>
+<li><p>Pawlowski, N., Castro, D. C., &amp; Glocker, B. (2020). Deep Structural Causal Models for Tractable Counterfactual Inference. <em>Advances in Neural Information Processing Systems (NeurIPS)</em>.<br>
+arXiv:2006.06485.</p></li>
+<li><p>Liu, Q., et al.&nbsp;(2024). An encoding generative modeling approach to dimension reduction and covariate adjustment in causal inference with observational studies. <em>Proceedings of the National Academy of Sciences (PNAS)</em>, 121(23), e2322376121.</p></li>
+</ol>
+<p><strong>Note on the remaining models:</strong></p>
+<ul>
+<li><p><strong>CausalVAE-Opt</strong>: This appears to be a practically optimized implementation or tuned variant of the original CausalVAE (Yang et al., 2021) rather than a distinct published model. No separate paper was identified; it typically refers to improved hyperparameters, training schedules, or codebase defaults built on the base CausalVAE architecture.</p></li>
+<li><p><strong>CausalDiscrepancy VAE</strong>: This refers to discrepancy-based VAE approaches for causal disentanglement, often linked to frameworks using Maximum Mean Discrepancy (MMD) to align virtual interventional distributions with observed interventional data (e.g., in single-cell Perturb-Seq settings). A closely related published work is:<br>
+Zhang, J., et al.&nbsp;(2023). Identifiability Guarantees for Causal Disentanglement from Soft Interventions. <em>Advances in Neural Information Processing Systems (NeurIPS)</em>.<br>
+Related code and extensions exist under “discrepancy_vae” for identifiability in causal disentanglement.</p></li>
+</ul>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

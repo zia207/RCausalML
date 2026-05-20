@@ -1,0 +1,729 @@
+# 7.  Doubly Robust Learners {.unnumbered}
+
+Doubly robust (DR) learning estimates heterogeneous treatment effects (CATE) in observational studies by combining **treatment-specific outcome models** and **propensity scores**, then fitting a **final-stage** model for $\tau(X)$. This notebook gives the statistical background, contrasts DR learning with **double machine learning (DML)**, and shows **RCausalML** implementations: DR meta-learners live in **`R/meta_learners.R`** (`DRLearner` and special cases); DML estimators live in **`R/DMLearner.R`** (`DMLearner`, `LinearDML`, `CausalForestDML`, and related constructors).
+
+## Overview
+
+Double robust learning is used when treatment is **discrete**, confounders are observed (possibly high-dimensional), and unconfoundedness holds. Two nuisance objects are estimated (usually with machine learning and **cross-fitting**):
+
+- **Outcome models**: $\hat{g}_t(X, W) \approx \mathbb{E}[Y \mid T=t, X, W]$.
+- **Propensity**: $\hat{p}_t(X, W) \approx \Pr(T=t \mid X, W)$.
+
+A DR pseudo-outcome debiases the regression using inverse-propensity structure; under regularity conditions, bias depends on the **product** of nuisance errors rather than a single misspecified model [[14]][[38]].
+
+Finally, a **final stage** regresses a contrast built from these objects on covariates to obtain $\hat{\tau}(X)$. **RCausalML** follows the **causalml / EconML-style** DR learner with **3-fold cross-fitting** by default (rotating which fold is used for nuisance estimation vs. pseudo-outcome construction vs. $\tau$-model fitting), as in Kennedy (2020).
+
+Finally, these objects are used so that the estimated CATE targets contrasts such as $\mathbb{E}[Y^{(t)} - Y^{(0)} \mid X]$ (control $0$ or `control_name` in code).
+
+Cross-fitting avoids optimistic bias from reusing the same observations to fit nuisances and the effect model.
+
+For **binary** $T \in \{0,1\}$, one common DR-style construction uses $\hat{\mu}_0(x)$, $\hat{\mu}_1(x)$, and $\hat{p}(x) = \Pr(T=1\mid X=x)$ to build a pseudo-outcome whose regression on $X$ targets the CATE; **RCausalML** implements the **cross-fitted** causalml/EconML DR-learner rotation (see `fit.DRLearner` in `meta_learners.R` and Kennedy 2020). **DML** instead uses $\hat{\mathbb{E}}[Y\mid X]$ and $\hat{\mathbb{E}}[T\mid X]$ to form **orthogonalized** residuals before the second stage (`fit.DMLearner` in `DMLearner.R`).
+
+
+This is the base class for implementing the general DRL methodology without strong assumptions on the functional form of the CATE. It serves as a flexible meta-learner for estimating heterogeneous treatment effects.
+
+- **Implementation**: It allows  regressor or classifier for the nuisance models (outcome and propensity). The final stage uses any regressor to fit the DR pseudo-outcomes on $X$. It supports cross-validation, grid search for hyperparameter tuning, and multi-treatment settings. Inference (e.g., confidence intervals) is valid when cross-fitting is enabled.
+
+- **Use Cases**: Ideal for scenarios requiring high flexibility, such as when the relationship between features and effects is unknown or complex, and no parametric structure is assumed.
+
+### Types of DRLearner
+
+Following the general DRLearner, in Rpcakge {RCausalML}  provides specialized classes that impose additional structure on the CATE for improved interpretability or performance in specific settings:
+
+#### `LinearDRLearner`
+
+This class specializes the DRL methodology under the assumption that the treatment effect is linear in the features $X$.
+
+- **Implementation**: It uses the same nuisance model fitting as DRLearner but employs an unregularized linear regression (via StatsModelsLinearRegression) in the final stage to model the CATE as a linear function: $\theta_t(X) = X \beta_t$. It provides asymptotic normality-based confidence intervals and p-values for the coefficients, assuming the linearity holds.
+
+- **Use Cases**: Best suited for low-dimensional settings where the number of features is small compared to the sample size, and interpretability of linear coefficients is desired.
+
+#### `SparseLinearDRLearner`
+
+This extends the linear assumption to high-dimensional, sparse settings where only a subset of features influences the heterogeneity.
+
+- **Implementation**: Similar to LinearDRLearner for nuisances, but the final stage uses an $\ell_1$-regularized (Lasso) linear model with debiasing (via DebiasedLasso) to induce sparsity in the coefficients. This handles cases where the number of features $p$ may exceed the sample size $n$. Inference relies on the asymptotic normality of the debiased estimator, providing confidence intervals under sparsity and regularity conditions.
+
+- **Use Cases**: Appropriate for high-dimensional data (e.g., many covariates) where the true drivers of treatment effect heterogeneity are sparse, balancing feature selection with causal estimation.
+
+#### `ForestDRLearner`
+
+This class provides a fully non-parametric implementation using tree-based ensemble methods for the final stage.
+
+- **Implementation**: Nuisance models are fitted as in the base class, but the final stage employs a subsampled honest random forest regressor (e.g., RegressionForest) to non-linearly model the DR pseudo-outcomes on $X$. It supports confidence intervals via Bootstrap-of-Little-Bags (BLB), a resampling method for variance estimation in forests.
+
+- **Use Cases**: Suitable for moderate-to-high dimensional data with complex, non-linear relationships between features and treatment effects, where no linearity or sparsity is assumed.
+
+#### `XGBDRLearner`
+
+This class implements the DRL methodology using gradient boosting machines (e.g., XGBoost) for the final stage. 
+
+- **Implementation**: Similar to ForestDRLearner for nuisances, but the final stage uses XGBoost regression to model the DR pseudo-outcomes. It can capture complex interactions and non-linearities in the CATE. Inference can be performed using methods like SHAP values or permutation importance, though formal confidence intervals are more challenging.
+
+- **Use Cases**: Ideal for scenarios with complex, non-linear relationships and interactions in the data, where predictive performance is prioritized over interpretability, and where the user is comfortable with the limitations of inference in boosted models.
+
+### Key Differences Between the Classes
+
+While all classes follow the same core DRL methodology (nuisance fitting → DR pseudo-outcomes → final regression), they differ primarily in the final-stage model, assumptions, scalability, and inference methods. Here's a comparison:
+
+| Aspect | DRLearner | LinearDRLearner | SparseLinearDRLearner | ForestDRLearner |
+|--------|-----------|-----------------|-----------------------|-----------------|
+| **Final Stage Model** | Any scikit-learn regressor (flexible ML) | Unregularized linear regression | \(\ell_1\)-regularized debiased Lasso | Subsampled honest random forest |
+| **Assumptions** | None on CATE form; general-purpose | Linearity in \( X \) | Linearity with sparsity in coefficients | None; fully non-parametric |
+| **Dimensionality Handling** | Depends on chosen models; moderate flexibility | Low-dimensional (\( p \ll n \)) | High-dimensional (\( p \geq n \)) with sparsity | Moderate-to-high dimensional; handles non-linearity |
+| **Inference Method** | Valid with cross-fitting; depends on final model | Asymptotic normality for coefficients | Asymptotic normality of debiased estimator | Bootstrap-of-Little-Bags (BLB) for forests |
+| **Strengths** | Maximum flexibility; integrates arbitrary ML algorithms | Simple, interpretable; efficient for low-dim linear effects | Feature selection in high-dim; balances sparsity and inference | Captures complex interactions; robust to non-linearity |
+| **Weaknesses** | Potentially higher variance if models overfit; less specialized inference | Fails in high-dim or non-linear settings | Assumes sparsity; may miss dense signals | Computationally intensive; less interpretable |
+| **Best For** | Exploratory analysis with custom models | Low-dim settings needing linear inference | High-dim sparse heterogeneity | Non-linear, complex effects in moderate data |
+
+
+
+### DR learning vs. double machine learning (DML)
+
+| Aspect | **DR learning** (`meta_learners.R`) | **DML** (`DMLearner.R`) |
+|--------|-------------------------------------|-------------------------|
+| **First-stage outcome** | $\hat{g}_t(X,W)$ **per treatment** | $\hat{\ell}(X,W) \approx \mathbb{E}[Y\mid X,W]$ only (residualized $Y$) |
+| **Robustness** | Doubly robust **nuisance** pairing for discrete $T$ [[14]] | **Neyman-orthogonal** scores; rates on **both** nuisances matter for refined inference |
+| **Treatment** | Binary / multi-valued discrete (and continuous DR mode in `DMLearner`) | Binary, continuous, and multivariate $T$ supported in `DMLearner` |
+| **RCausalML entry points** | `DRLearner`, `LinearDRLearner`, … | `DMLearner`, `LinearDML`, `SparseLinearDML`, `NonParamDML`, `CausalForestDML`, … |
+
+**When to prefer DR learners**: categorical treatment, desire for DR-style first stages, and EconML/causalml parity. **When to prefer `DMLearner`**: continuous or vector treatments, residualization-based pipeline, or `CausalForestDML` (first-stage DML + `grf::causal_forest`).
+
+
+## Implimention in R
+
+The {RCausalML} package exports the following **DR** constructors:
+
+| R constructor | Role | Final-stage learner (default) |
+|---------------|------|-------------------------------|
+| `DRLearner()` | General DR meta-learner | Same base learner for nuisances and $\tau$ (`learner`: `"lm"`, `"glmnet"`, `"ranger"`, `"xgb"`) |
+| `LinearDRLearner()` | Linear CATE on $X$ | OLS (`"lm"`); flexible nuisances (`model_regression`, `model_propensity`) |
+| `SparseLinearDRLearner()` | High-dimensional / sparse linear CATE | `glmnet` (Lasso-style) |
+| `ForestDRLearner()` | Nonparametric $\tau(X)$ | `ranger` for all stages |
+| `XGBDRLearner()` | Gradient boosting | `xgboost` for all stages |
+
+Use `fit(obj, X, treatment, y, ...)`, `predict(obj, newdata, ...)`, and `estimate_ate(obj, X, treatment, y, ...)` (generic `estimate_ate` dispatches to DR or DML methods as appropriate).
+
+**Useful arguments**: `control_name` (default `0`), `n_fold` (default `3`; internally capped to 3 for the DR rotation), `seed`, `ate_alpha`. For `DRLearner`, you can set **`control_outcome_learner`**, **`treatment_outcome_learner`**, and **`treatment_effect_learner`** separately. Ellipsis `...` is passed to `ranger`, `xgboost`, etc.
+
+For **linear** DR learners, **`coef()`** and **`intercept()`** summarize the final-stage slopes and intercept (averaged across cross-fitting folds where applicable).
+
+### Setup
+
+```{r}
+#| message: false
+#| warning: false
+library(RCausalML)
+library(ggplot2)
+fast_run <- Sys.getenv("CAUSALML_FAST_RENDER", "TRUE") == "TRUE"
+```
+
+Install **RCausalML** from source if you are developing the package (e.g. `devtools::load_all()`). Optional packages for the appendix: `mlr3`, `grf`, `DoubleML`, `xgboost`. Set `CAUSALML_FAST_RENDER=FALSE` for larger SHAP subsamples in Part B.
+
+## Part A: DR Learners with Sythetic Data
+
+First we show examples of the DR learners in {RCausaML}  on a shared synthetic data-generating process (DGP) with a binary treatment and linear CATE.
+
+### Shared simulation: binary treatment
+
+The DGP includes 5 effect modifiers (`X1`–`X5`) and 3 confounders (`W1`–`W3`), with treatment assignment depending on the confounders and the outcome depending on both confounders and the effect modifiers. The true CATE is linear in `X1` only, allowing us to evaluate how well each DR learner captures this structure.
+ 
+ 
+```{r}
+set.seed(42)
+
+n <- 2000
+X_mod <- matrix(rnorm(n * 5), n, 5)
+W <- matrix(rnorm(n * 3), n, 3)
+colnames(X_mod) <- paste0("X", 1:5)
+colnames(W) <- paste0("W", 1:3)
+
+# Full covariate matrix passed to learners (modifiers + confounders)
+X <- cbind(X_mod, W)
+colnames(X) <- c(colnames(X_mod), colnames(W))
+
+propensity <- 1 / (1 + exp(-W[, 1] - 0.5 * W[, 2]))
+treatment <- rbinom(n, 1L, propensity)
+
+true_cate <- 1 + 0.8 * X_mod[, 1]
+Y <- as.vector(2 + 0.5 * W %*% c(1, -1, 0.5) + true_cate * treatment + rnorm(n, 0, 0.5))
+
+mean_ate_true <- mean(true_cate)
+```
+
+
+### `ForestDRLearner`: random forest final stage
+
+```{r}
+dr_forest <- ForestDRLearner(control_name = 0L, n_fold = 3L, seed = 42)
+dr_forest <- fit(dr_forest, X, treatment, Y, num.trees = 300L)
+
+cate_forest <- predict(dr_forest, X)
+ate_dr_f <- estimate_ate(dr_forest, X, treatment, Y, pretrain = TRUE, seed = 42)
+
+cat("Mean predicted CATE:", round(mean(cate_forest), 4),
+    "| True mean CATE:", round(mean_ate_true, 4), "\n")
+cat("estimate_ate (point, CI):", round(ate_dr_f$ate, 4),
+    "[", round(ate_dr_f$ate_lb, 4), ",", round(ate_dr_f$ate_ub, 4), "]\n")
+```
+
+```{r}
+#| fig-cap: "Forest DR-Learner: predicted CATE vs true driver X1 (training sample)."
+phat <- dr_forest$propensity[["1"]]
+df_plot <- data.frame(
+  X1 = X_mod[, 1],
+  cate_hat = as.numeric(cate_forest),
+  true_cate = true_cate
+)
+
+df_ord <- df_plot[order(df_plot$X1), ]
+ggplot(df_plot, aes(x = X1, y = cate_hat)) +
+  geom_point(alpha = 0.15, color = "steelblue") +
+  geom_smooth(se = TRUE, color = "darkblue", linewidth = 0.8) +
+  geom_line(aes(x = X1, y = true_cate), color = "black", linewidth = 0.4, alpha = 0.6, data = df_ord) +
+  labs(x = expression(X[1]), y = "Predicted CATE", title = "ForestDRLearner") +
+  theme_minimal()
+```
+
+Overlap check using fitted propensity:
+
+```{r}
+#| fig-cap: "Propensity score distribution by treatment group."
+ggplot(data.frame(p = phat, T = factor(treatment)), aes(x = p, fill = T)) +
+  geom_density(alpha = 0.4) +
+  labs(x = expression(hat(p)(X)), title = "Overlap (ForestDRLearner propensity)") +
+  theme_minimal()
+```
+
+
+### `LinearDRLearner`: OLS final stage and coefficients
+
+```{r}
+dr_lin <- LinearDRLearner(
+  model_propensity = "ranger",
+  model_regression = "ranger",
+  control_name = 0L,
+  n_fold = 3L,
+  seed = 42
+)
+dr_lin <- fit(dr_lin, X, treatment, Y, num.trees = 200L)
+
+cate_lin <- predict(dr_lin, X)
+
+cat("Mean predicted CATE (linear DR):", round(mean(cate_lin), 4),
+    "| True mean CATE:", round(mean_ate_true, 4), "\n")
+
+# Final-stage linear CATE coefficients (slopes on columns of X)
+cat("coef() — slopes:\n")
+print(round(coef(dr_lin), 4))
+cat("intercept():\n")
+print(round(intercept(dr_lin), 4))
+```
+
+The simulation is linear in `X1` only; other columns enter through confounding and may appear with small estimated slopes.
+
+
+### `SparseLinearDRLearner`: Lasso-style final stage
+
+```{r}
+dr_sparse <- SparseLinearDRLearner(
+  model_propensity = "ranger",
+  model_regression = "ranger",
+  alpha = 1,
+  control_name = 0L,
+  n_fold = 3L,
+  seed = 42
+)
+dr_sparse <- fit(dr_sparse, X, treatment, Y, num.trees = 200L)
+
+cate_sparse <- predict(dr_sparse, X)
+cat("Mean predicted CATE (sparse linear DR):", round(mean(cate_sparse), 4), "\n")
+cat("Non-zero coef() entries (approximate selection):\n")
+print(round(coef(dr_sparse), 4))
+```
+
+
+### `XGBDRLearner` (optional)
+
+Requires the **xgboost** package.
+
+```{r}
+#| eval: false
+if (requireNamespace("xgboost", quietly = TRUE)) {
+  dr_xgb <- XGBDRLearner(control_name = 0L, n_fold = 3L, seed = 42)
+  dr_xgb <- fit(dr_xgb, X, treatment, Y, nrounds = 80L)
+  cate_xgb <- predict(dr_xgb, X)
+  cat("Mean predicted CATE (XGB DR):", round(mean(cate_xgb), 4), "\n")
+}
+```
+
+### Generic `DRLearner`: mix learners across stages
+
+Example: flexible nuisances with a **linear** CATE surface.
+
+```{r}
+dr_mixed <- DRLearner(
+  learner = "ranger",
+  control_outcome_learner = "ranger",
+  treatment_outcome_learner = "ranger",
+  treatment_effect_learner = "lm",
+  control_name = 0L,
+  n_fold = 3L,
+  seed = 42
+)
+dr_mixed <- fit(dr_mixed, X, treatment, Y, num.trees = 200L)
+cate_mixed <- predict(dr_mixed, X)
+cat("Mean predicted CATE (mixed DR):", round(mean(cate_mixed), 4), "\n")
+```
+
+### `LinearDML` (DML baseline for the comparison table)
+
+```{r}
+dml_lin <- LinearDML(
+  model_y = "ranger",
+  model_t = "ranger",
+  control_name = 0L,
+  n_fold = 3L,
+  seed = 42
+)
+dml_lin <- fit(dml_lin, X, treatment, Y, num.trees = 200L)
+cate_dml_lin <- predict(dml_lin, X)
+cat("Mean predicted CATE (LinearDML):", round(mean(cate_dml_lin), 4), "\n")
+```
+
+### Quick comparison on this DGP
+
+```{r}
+comparison <- data.frame(
+  method = c(
+    "True mean CATE",
+    "ForestDRLearner",
+    "LinearDRLearner",
+    "SparseLinearDRLearner",
+    "DRLearner (RF + lm tau)",
+    "LinearDML"
+  ),
+  mean_CATE_or_target = c(
+    mean_ate_true,
+    mean(cate_forest),
+    mean(cate_lin),
+    mean(cate_sparse),
+    mean(cate_mixed),
+    mean(cate_dml_lin)
+  )
+)
+comparison$mean_CATE_or_target <- round(comparison$mean_CATE_or_target, 4)
+print(comparison, row.names = FALSE)
+```
+
+## Part B: Use case — abortion data
+
+We apply the same meta-learner API to the **abortion** dataset from `{causaldata}` (state–year units; outcome **lnr**, logged gonorrhea rate among 15–19 year olds; treatment is **early repeal** of abortion prohibition). We load the raw table with `load_causaldata("abortion")$data`, restrict to ages 15–19, and encode treatment as a **binary factor** with levels `"Control"` (no early repeal) and `"Treated"` (early repeal). Internally, **RCausalML** maps that factor to numeric codes (1 = Control, 2 = Treated with `levels = c("Control", "Treated")`), so every meta-learner below is constructed with `control_name = 1L`.
+
+### Data
+
+```{r part-d-abortion-load}
+#| warning: false
+abortion <- load_causaldata("abortion")$data
+```
+
+
+### Data Preparation
+
+```{r part-d-abortion-prep}
+#| warning: false
+abortion_clean <- abortion[abortion$age >= 15 & abortion$age <= 19, , drop = FALSE]
+abortion_clean <- stats::na.omit(abortion_clean)
+
+X_ab <- abortion_clean[, c("age", "race", "sex", "totpop", "ir", "crack",
+                           "alcohol", "income", "ur", "poverty")]
+y_ab <- abortion_clean$lnr
+treatment_ab <- factor(
+  ifelse(abortion_clean$repeal == 0, "Control", "Treated"),
+  levels = c("Control", "Treated")
+)
+
+X_ab <- as.matrix(X_ab)
+colnames(X_ab) <- c("age", "race", "sex", "totpop", "ir", "crack",
+                    "alcohol", "income", "ur", "poverty")
+X_ab <- X_ab[, apply(X_ab, 2, stats::var) > 1e-10, drop = FALSE]
+```
+
+### Data split
+
+```{r part-d-abortion-split}
+#| warning: false
+set.seed(333)
+n_ab <- nrow(X_ab)
+idx_tr <- sample.int(n_ab, size = floor(0.8 * n_ab))
+X_ab_tr <- X_ab[idx_tr, , drop = FALSE]
+y_ab_tr <- y_ab[idx_tr]
+t_ab_tr <- treatment_ab[idx_tr]
+X_ab_te <- X_ab[-idx_tr, , drop = FALSE]
+y_ab_te <- y_ab[-idx_tr]
+t_ab_te <- treatment_ab[-idx_tr]
+cat("Training n =", nrow(X_ab_tr), ", test n =", nrow(X_ab_te), "\n")
+```
+
+We **fit** each learner on the training rows and report (**i**) **mean predicted CATE** on the **held-out test** covariates `X_ab_te` (heterogeneity summary on new units) and (**ii**) **ATE** on the **training** sample using `estimate_ate(..., pretrain = TRUE)` (point estimate and normal approx. interval from the DR learner’s `ate_alpha`).
+
+### `ForestDRLearner`
+
+```{r part-b-abortion-dr-forest}
+#| warning: false
+dr_ab_forest <- ForestDRLearner(control_name = 1L, n_fold = 3L, seed = 333)
+dr_ab_forest <- fit(dr_ab_forest, X_ab_tr, t_ab_tr, y_ab_tr, num.trees = 300L)
+cate_ab_forest_te <- predict(dr_ab_forest, X_ab_te)
+ate_ab_forest <- estimate_ate(
+  dr_ab_forest, X_ab_tr, t_ab_tr, y_ab_tr,
+  pretrain = TRUE, seed = 333
+)
+cat(
+  "ForestDRLearner — mean CATE (test):", round(mean(cate_ab_forest_te), 5),
+  "| ATE train [95% CI]:", round(ate_ab_forest$ate[1], 5),
+  "[", round(ate_ab_forest$ate_lb[1], 5), ",", round(ate_ab_forest$ate_ub[1], 5), "]\n"
+)
+```
+
+### `LinearDRLearner`
+
+```{r part-b-abortion-dr-linear}
+#| warning: false
+dr_ab_lin <- LinearDRLearner(
+  model_propensity = "ranger",
+  model_regression = "ranger",
+  control_name = 1L,
+  n_fold = 3L,
+  seed = 333
+)
+dr_ab_lin <- fit(dr_ab_lin, X_ab_tr, t_ab_tr, y_ab_tr, num.trees = 200L)
+cate_ab_lin_te <- predict(dr_ab_lin, X_ab_te)
+ate_ab_lin <- estimate_ate(
+  dr_ab_lin, X_ab_tr, t_ab_tr, y_ab_tr,
+  pretrain = TRUE, seed = 333
+)
+cat(
+  "LinearDRLearner — mean CATE (test):", round(mean(cate_ab_lin_te), 5),
+  "| ATE train [95% CI]:", round(ate_ab_lin$ate[1], 5),
+  "[", round(ate_ab_lin$ate_lb[1], 5), ",", round(ate_ab_lin$ate_ub[1], 5), "]\n"
+)
+```
+
+### `SparseLinearDRLearner`
+
+```{r part-b-abortion-dr-sparse}
+#| warning: false
+dr_ab_sparse <- SparseLinearDRLearner(
+  model_propensity = "ranger",
+  model_regression = "ranger",
+  alpha = 1,
+  control_name = 1L,
+  n_fold = 3L,
+  seed = 333
+)
+dr_ab_sparse <- fit(dr_ab_sparse, X_ab_tr, t_ab_tr, y_ab_tr, num.trees = 200L)
+cate_ab_sparse_te <- predict(dr_ab_sparse, X_ab_te)
+ate_ab_sparse <- estimate_ate(
+  dr_ab_sparse, X_ab_tr, t_ab_tr, y_ab_tr,
+  pretrain = TRUE, seed = 333
+)
+cat(
+  "SparseLinearDRLearner — mean CATE (test):", round(mean(cate_ab_sparse_te), 5),
+  "| ATE train [95% CI]:", round(ate_ab_sparse$ate[1], 5),
+  "[", round(ate_ab_sparse$ate_lb[1], 5), ",", round(ate_ab_sparse$ate_ub[1], 5), "]\n"
+)
+```
+
+### `XGBDRLearner`
+
+Runs when **xgboost** is installed; otherwise a single table row records that it was skipped.
+
+```{r part-b-abortion-dr-xgb}
+#| warning: false
+cate_ab_xgb_te <- NULL
+ate_ab_xgb <- NULL
+if (requireNamespace("xgboost", quietly = TRUE)) {
+  dr_ab_xgb <- XGBDRLearner(control_name = 1L, n_fold = 3L, seed = 333)
+  dr_ab_xgb <- fit(dr_ab_xgb, X_ab_tr, t_ab_tr, y_ab_tr, nrounds = 80L)
+  cate_ab_xgb_te <- predict(dr_ab_xgb, X_ab_te)
+  ate_ab_xgb <- estimate_ate(
+    dr_ab_xgb, X_ab_tr, t_ab_tr, y_ab_tr,
+    pretrain = TRUE, seed = 333
+  )
+  cat(
+    "XGBDRLearner — mean CATE (test):", round(mean(cate_ab_xgb_te), 5),
+    "| ATE train [95% CI]:", round(ate_ab_xgb$ate[1], 5),
+    "[", round(ate_ab_xgb$ate_lb[1], 5), ",", round(ate_ab_xgb$ate_ub[1], 5), "]\n"
+  )
+} else {
+  message("XGBDRLearner skipped: install.packages(\"xgboost\") to enable.")
+}
+```
+
+### Comparison (abortion, train / test split)
+
+```{r part-b-abortion-dr-compare}
+ab_cmp <- data.frame(
+  learner = c(
+    "ForestDRLearner",
+    "LinearDRLearner",
+    "SparseLinearDRLearner"
+  ),
+  mean_CATE_test = c(
+    mean(cate_ab_forest_te),
+    mean(cate_ab_lin_te),
+    mean(cate_ab_sparse_te)
+  ),
+  ATE_train = c(ate_ab_forest$ate[1], ate_ab_lin$ate[1], ate_ab_sparse$ate[1]),
+  ATE_lb = c(ate_ab_forest$ate_lb[1], ate_ab_lin$ate_lb[1], ate_ab_sparse$ate_lb[1]),
+  ATE_ub = c(ate_ab_forest$ate_ub[1], ate_ab_lin$ate_ub[1], ate_ab_sparse$ate_ub[1])
+)
+if (!is.null(cate_ab_xgb_te) && !is.null(ate_ab_xgb)) {
+  ab_cmp <- rbind(
+    ab_cmp,
+    data.frame(
+      learner = "XGBDRLearner",
+      mean_CATE_test = mean(cate_ab_xgb_te),
+      ATE_train = ate_ab_xgb$ate[1],
+      ATE_lb = ate_ab_xgb$ate_lb[1],
+      ATE_ub = ate_ab_xgb$ate_ub[1]
+    )
+  )
+} else {
+  ab_cmp <- rbind(
+    ab_cmp,
+    data.frame(
+      learner = "XGBDRLearner",
+      mean_CATE_test = NA_real_,
+      ATE_train = NA_real_,
+      ATE_lb = NA_real_,
+      ATE_ub = NA_real_
+    )
+  )
+}
+ab_cmp$mean_CATE_test <- round(ab_cmp$mean_CATE_test, 5)
+ab_cmp$ATE_train <- round(ab_cmp$ATE_train, 5)
+ab_cmp$ATE_lb <- round(ab_cmp$ATE_lb, 5)
+ab_cmp$ATE_ub <- round(ab_cmp$ATE_ub, 5)
+print(ab_cmp, row.names = FALSE)
+```
+
+### Visualize predicted CATE distribution on training split
+
+```{r part-b-abortion-dr-cate-hist}
+#| warning: false
+#| fig.width: 8
+#| fig.height: 5
+tau_f_tr <- as.numeric(predict(dr_ab_forest, X_ab_tr))
+tau_lin_tr <- as.numeric(predict(dr_ab_lin, X_ab_tr))
+tau_sp_tr <- as.numeric(predict(dr_ab_sparse, X_ab_tr))
+tau_xgb_tr <- if (exists("dr_ab_xgb")) as.numeric(predict(dr_ab_xgb, X_ab_tr)) else NULL
+xr <- range(c(tau_f_tr, tau_lin_tr, tau_sp_tr, tau_xgb_tr), na.rm = TRUE)
+par(mfrow = c(2, 2), mar = c(3, 3, 2, 1))
+hist(tau_f_tr, breaks = 30, main = "ForestDRLearner", xlab = expression(hat(tau)), xlim = xr)
+hist(tau_lin_tr, breaks = 30, main = "LinearDRLearner (ranger nuisances)", xlab = expression(hat(tau)), xlim = xr)
+hist(tau_sp_tr, breaks = 30, main = "SparseLinearDRLearner", xlab = expression(hat(tau)), xlim = xr)
+if (!is.null(tau_xgb_tr)) {
+  hist(tau_xgb_tr, breaks = 30, main = "XGBDRLearner", xlab = expression(hat(tau)), xlim = xr)
+} else {
+  plot.new()
+  text(0.5, 0.5, "XGBDRLearner not fit\n(install xgboost)", cex = 1)
+}
+par(mfrow = c(1, 1))
+```
+
+### SHAP for predicted CATE (abortion, training subsample)
+
+We attribute **predicted** $\hat{\tau}(X)$ from each fitted DR learner to covariates using **permutation SHAP** (`explain_cate(..., use_permshap = TRUE)`). Background and explanation rows are drawn **only from the training split** (`X_ab_tr`). `predict()` for DR learners evaluates the fitted nuisance and final-stage CATE model on any `newdata`, which **kernelshap** requires. Parallel workers use the same **future** / `parallel` pattern as the binary-treatment notebook, with **ranger**, **glmnet**, and **xgboost** included in `parallel_args$packages` where relevant.
+
+```{r part-b-abortion-dr-shap-meta}
+#| warning: false
+#| fig.width: 10
+#| fig.height: 9
+has_ks_dr <- requireNamespace("kernelshap", quietly = TRUE)
+has_sv_dr <- requireNamespace("shapviz", quietly = TRUE)
+shp_list_ab_dr <- NULL
+X_explain_ab_dr <- NULL
+if (!has_ks_dr || !has_sv_dr) {
+  message("Skipping Part B SHAP: install.packages(c(\"kernelshap\", \"shapviz\")) to run this section.")
+} else {
+  suppressPackageStartupMessages({
+    library(kernelshap)
+    library(shapviz)
+  })
+  set.seed(4242)
+  n_explain_ab <- if (fast_run) 80L else 200L
+  bg_size_ab <- if (fast_run) 100L else min(300L, nrow(X_ab_tr))
+  n_explain_ab <- min(n_explain_ab, nrow(X_ab_tr))
+  bg_size_ab <- min(bg_size_ab, nrow(X_ab_tr))
+  idx_ex_ab <- sample.int(nrow(X_ab_tr), n_explain_ab)
+  bg_idx_ab <- sample.int(nrow(X_ab_tr), bg_size_ab)
+  X_explain_ab_dr <- as.data.frame(X_ab_tr[idx_ex_ab, , drop = FALSE])
+  bg_X_ab <- as.data.frame(X_ab_tr[bg_idx_ab, , drop = FALSE])
+
+  has_future_dr <- requireNamespace("future", quietly = TRUE)
+  n_workers_shap_dr <- if (has_future_dr) {
+    min(4L, future::availableCores(omit = 1L))
+  } else {
+    1L
+  }
+  use_parallel_shap_dr <- isTRUE(n_workers_shap_dr > 1L)
+  if (use_parallel_shap_dr) {
+    shap_plan_old_dr <- future::plan()
+    on.exit(future::plan(shap_plan_old_dr), add = TRUE)
+    future::plan(future::multisession, workers = n_workers_shap_dr)
+  }
+
+  meta_ab_shap_dr <- list(
+    "ForestDRLearner" = dr_ab_forest,
+    "LinearDRLearner" = dr_ab_lin,
+    "SparseLinearDRLearner" = dr_ab_sparse
+  )
+  if (exists("dr_ab_xgb")) {
+    meta_ab_shap_dr[["XGBDRLearner"]] <- dr_ab_xgb
+  }
+
+  shap_parallel_args_dr <- if (use_parallel_shap_dr) {
+    list(packages = c("RCausalML", "ranger", "glmnet", "xgboost"))
+  } else {
+    NULL
+  }
+
+  ks_list_ab_dr <- vector("list", length(meta_ab_shap_dr))
+  names(ks_list_ab_dr) <- names(meta_ab_shap_dr)
+  for (i in seq_along(meta_ab_shap_dr)) {
+    ks_list_ab_dr[[i]] <- explain_cate(
+      meta_ab_shap_dr[[i]],
+      X = X_explain_ab_dr,
+      bg_X = bg_X_ab,
+      use_permshap = TRUE,
+      verbose = FALSE,
+      parallel = use_parallel_shap_dr,
+      parallel_args = shap_parallel_args_dr
+    )
+  }
+
+  shp_list_ab_dr <- lapply(ks_list_ab_dr, function(ks) shapviz(ks, X = X_explain_ab_dr))
+
+  imp_rows_ab_dr <- lapply(names(ks_list_ab_dr), function(lab) {
+    ks <- ks_list_ab_dr[[lab]]
+    S_mat <- as.matrix(ks$S)
+    data.frame(
+      feature = colnames(ks$X),
+      mean_abs_shap = colMeans(abs(S_mat)),
+      learner = lab,
+      stringsAsFactors = FALSE
+    )
+  })
+  imp_df_ab_dr <- do.call(rbind, imp_rows_ab_dr)
+
+  p_imp_ab_dr <- ggplot2::ggplot(imp_df_ab_dr, ggplot2::aes(x = reorder(feature, mean_abs_shap), y = mean_abs_shap)) +
+    ggplot2::geom_col(fill = "steelblue", width = 0.75) +
+    ggplot2::facet_wrap(~learner, scales = "free_y", ncol = 2) +
+    ggplot2::coord_flip() +
+    ggplot2::labs(
+      title = "Abortion data: mean |SHAP| for predicted CATE by DR learner (train subsample)",
+      x = NULL,
+      y = "Mean |SHAP|"
+    ) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(strip.text = ggplot2::element_text(face = "bold"))
+  print(p_imp_ab_dr)
+}
+```
+
+### Visualize SHAP with beeswarm and waterfall plots for one DR learner (LinearDRLearner)
+
+```{r part-b-abortion-dr-shap-beeswarm-waterfall}
+#| warning: false
+#| fig.width: 9
+#| fig.height: 11
+if (!is.null(shp_list_ab_dr) && length(shp_list_ab_dr) > 0) {
+  for (lab in names(shp_list_ab_dr)) {
+    print(sv_importance(shp_list_ab_dr[[lab]], kind = "beeswarm") + ggplot2::ggtitle(lab))
+  }
+  pred_lin_ab <- as.numeric(predict(dr_ab_lin, as.matrix(X_explain_ab_dr)))
+  row_hi_ab_dr <- which.max(pred_lin_ab)
+  print(
+    sv_waterfall(shp_list_ab_dr[["LinearDRLearner"]], row_id = row_hi_ab_dr) +
+      ggplot2::ggtitle("Waterfall SHAP — LinearDRLearner, highest predicted CATE in explain set (abortion)")
+  )
+}
+```
+
+CATE is **Treated minus Control** on the log outcome scale for this encoding; intervals follow the package’s DR ATE routine (see `estimate_ate.DRLearner`).
+
+
+### Summary and Conclusions
+
+- **DR learners** in **RCausalML** (`R/meta_learners.R`) implement cross-fitted, doubly robust meta-learning with several **final-stage** choices: forests (`ForestDRLearner`), OLS (`LinearDRLearner`), Lasso (`SparseLinearDRLearner`), and XGBoost (`XGBDRLearner`), or a fully custom mix via **`DRLearner()`**.
+- **DML** (`R/DMLearner.R`) residualizes $Y$ and $T$ (or vector $T$) and fits a **second-stage** model for heterogeneous effects; **`CausalForestDML`** connects that pipeline to **grf**.
+- Use **`estimate_ate()`** for a simple average effect summary with analytic (or bootstrap) uncertainty on the DR side; DML dispatch provides its own ATE helper.
+
+**References**: Kennedy (2020) [[45]]; Foster et al. (2019); Chernozhukov et al. (2018) for DML. **EconML**: [DR](https://www.pywhy.org/EconML/spec/estimation/dr.html), [DML](https://www.pywhy.org/EconML/spec/estimation/dml.html).
+
+
+## Resources
+
+- RCausalML source: `R/meta_learners.R` (DR learners), `R/DMLearner.R` (DML)
+- [EconML DR spec](https://www.pywhy.org/EconML/spec/estimation/dr.html)
+- [EconML DML spec](https://www.pywhy.org/EconML/spec/estimation/dml.html)
+- Kennedy, E. H. (2020). *Optimal doubly robust estimation of heterogeneous causal effects*. arXiv:2004.14497.
+- Chernozhukov, V., et al. (2018). *Double/debiased machine learning for treatment and structural parameters*. The Econometrics Journal.
+- [`grf`](https://grf-labs.github.io/grf/)
+- [`DoubleML` R](https://docs.doubleml.org/r/stable/)
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+

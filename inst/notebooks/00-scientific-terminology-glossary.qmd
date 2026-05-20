@@ -1,0 +1,1519 @@
+# Machine Learning and Statistics Terms {.unnumbered}
+
+This A-to-Z glossary compiles terminology used across the notebooks in this project, with professional definitions and expanded explanations.
+
+- Total terms: **183**
+
+## Terms
+
+### A
+
+**ACE**
+
+ACE is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ACE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/Time_series/structural-causal-models- (SCMs)-r.qmd`
+
+**ADF**
+
+ADF is an augmented dickey-fuller test. A statistical unit-root test used to assess stationarity in time-series processes. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ADF
+*Acronym Definition:* Augmented Dickey-Fuller
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-04-01-causal-time-series-granger-causality-var-r.qmd`
+
+**AIPW**
+
+AIPW is an augmented inverse probability weighting estimator. A semi-parametric doubly robust estimator that combines outcome regression and propensity weighting to estimate causal effects consistently if either nuisance model is correctly specified. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* AIPW
+*Acronym Definition:* Augmented Inverse Probability Weighting
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`
+
+**AISTATS**
+
+AISTATS is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* AISTATS
+*Acronym Definition:* International Conference on Artificial Intelligence and Statistics
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`
+
+**ANM**
+
+ANM is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ANM
+*Acronym Definition:* Additive Noise Model
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-03-DeepCausalML-gradient-based-neural-learning-GranDag-r.qmd`
+
+**ATE (Average Treatment Effect)**
+
+ATE (Average Treatment Effect) is an average treatment effect. The expected difference in outcomes between treatment and control across the full target population. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* ATE
+*Acronym Definition:* Average Treatment Effect
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`
+
+**ATTE**
+
+ATTE is an average treatment effect on the treated. The expected treatment effect for units that actually received treatment. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* ATTE
+*Acronym Definition:* Average Treatment Effect on the Treated
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-06-double-ml-weighted-double-ml.qmd`
+
+**AUTOC**
+
+AUTOC is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* AUTOC
+*Acronym Definition:* Area Under the Targeting/Ordering Curve
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`
+
+### B
+
+**Baseline Arm**
+
+Baseline Arm is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* BA
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`
+
+**BGM**
+
+BGM is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* BGM
+*Acronym Definition:* Bijective Generation Mechanisms
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.qmd`
+
+**Boosting**
+
+Boosting is a boosting ensemble methodology. A stage-wise ensemble strategy that sequentially fits weak learners to residual structure to improve predictive performance. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`
+
+### C
+
+**CART**
+
+CART is a classification and regression tree methodology. A recursive partitioning approach that learns piecewise prediction rules and serves as a building block for many tree-based learners. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CART
+*Acronym Definition:* Classification and Regression Trees
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`
+
+**CASTLE**
+
+CASTLE is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* CASTLE
+*Acronym Definition:* Causal Structure Learning via Regularization
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.qmd`
+
+**CASTLE — CAusal STructure LEarning Regularization**
+
+CASTLE — CAusal STructure LEarning Regularization is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CCSLR
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.qmd`
+
+**CATE**
+
+CATE is a conditional average treatment effect. The expected treatment effect conditional on covariates, used to characterize effect heterogeneity across subpopulations. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CATE
+*Acronym Definition:* Conditional Average Treatment Effect
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`
+
+**CATE (Conditional Average Treatment Effect)**
+
+CATE (Conditional Average Treatment Effect) is a conditional average treatment effect. The expected treatment effect conditional on covariates, used to characterize effect heterogeneity across subpopulations. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* ATE
+*Acronym Definition:* Average Treatment Effect
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`, `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`, `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`, `inst/notebooks/02-meta-learners/02-00-meta-learners-introduction-r.qmd`, `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`, and 5 more
+
+**Causal Effect**
+
+Causal Effect is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`, `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`
+
+**Causal Encoding Generative Modeling (CausalEGM)**
+
+Causal Encoding Generative Modeling (CausalEGM) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CEGMC
+*Acronym Definition:* CausalEGM
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-07-DeepCausalML-causal-encoding-generative-EGN-r.qmd`
+
+**Causal Forest (CF) for Heterogeneous Treatment Effect Estimation**
+
+Causal Forest (CF) for Heterogeneous Treatment Effect Estimation is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`
+
+**Causal Generative Network (CausalGAN)**
+
+Causal Generative Network (CausalGAN) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CGNC
+*Acronym Definition:* CausalGAN
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-05-DeepCausalML-causalGAN-r.qmd`
+
+**Causal Inference**
+
+Causal Inference is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CI
+*Acronym Definition:* Confidence Interval
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`
+
+**Causal ML with Targeted Maximum Likelihood Estimation (TMLE)**
+
+Causal ML with Targeted Maximum Likelihood Estimation (TMLE) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* TMLE
+*Acronym Definition:* Targeted Maximum Likelihood Estimation
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-04-tmle-model-r.qmd`
+
+**Causal Structure Learning with Deep Learning: An Introduction**
+
+Causal Structure Learning with Deep Learning: An Introduction is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CSLWDLAI
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-00-DeepCausalML-structural-learnering-introduction-r.qmd`
+
+**Causal Survival Forest (CSF)**
+
+Causal Survival Forest (CSF) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CSF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`
+
+**Causal Tree: Single Causal Tree for Heterogeneous Treatment Effects**
+
+Causal Tree: Single Causal Tree for Heterogeneous Treatment Effects is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`
+
+**Causal Variational Autoencoder (CausalVAE)**
+
+Causal Variational Autoencoder (CausalVAE) is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* VAE
+*Acronym Definition:* Variational Autoencoder
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-03-DeepCausalML-variational-autoencoder-causalVAE.qmd`
+
+**CausalDiscrepancy VAE: Discrepancy-Regularized Causal Representation Learning**
+
+CausalDiscrepancy VAE: Discrepancy-Regularized Causal Representation Learning is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CVDRCRL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-04-DeepCausalML-causaldiscrepancyVAE-r.qmd`
+
+**CausalML DMLearners - Single/multiple Treatment, Synthetic and Observational data**
+
+CausalML DMLearners - Single/multiple Treatment, Synthetic and Observational data is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-02-double-ml- single-multiple-treatment-r.qmd`
+
+**CEVAE**
+
+CEVAE is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In deep learning pipelines, it is often used for representation learning, high-dimensional prediction, or generative modeling.
+*Acronym:* CEVAE
+*Acronym Definition:* Causal Effect Variational Autoencoder
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.qmd`
+
+**CEVAE: Counterfactual Variational Autoencoder (CEVAE): Gnerative Model with Latent Confounders**
+
+CEVAE: Counterfactual Variational Autoencoder (CEVAE): Gnerative Model with Latent Confounders is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CEVAE
+*Acronym Definition:* Causal Effect Variational Autoencoder
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.qmd`
+
+**CF**
+
+CF is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`
+
+**CFRNet (Counterfactual Regression Network)**
+
+CFRNet (Counterfactual Regression Network) is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* CCRN
+*Acronym Definition:* Counterfactual Regression Network
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-01-02-DeepCausalML-CFRTNet-r.qmd`
+
+**CIT**
+
+CIT is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CIT
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/03-uplift-trees-forests/03-02-uplift-trees-regression-r.qmd`, `inst/notebooks/03-uplift-trees-forests/03-03-uplift-trees-regression-abortion-data-r.qmd`
+
+**Cluster Robust Double Machine Learning**
+
+Cluster Robust Double Machine Learning is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* DML
+*Acronym Definition:* Double Machine Learning
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-07-double-ml-cluster-robust-r.qmd`
+
+**Common Support (Overlap)**
+
+Common Support (Overlap) is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CSO
+*Acronym Definition:* Overlap
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`
+
+**Compliers**
+
+Compliers is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+**Confounder**
+
+Confounder is a statistical test or evaluation metric. This term is used to quantify model fit, uncertainty, discrimination, calibration, or statistical evidence in empirical analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`
+
+**Confounding**
+
+Confounding is a statistical test or evaluation metric. This term is used to quantify model fit, uncertainty, discrimination, calibration, or statistical evidence in empirical analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`, `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`, `inst/notebooks/02-meta-learners/02-00-meta-learners-introduction-r.qmd`, `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`, `inst/notebooks/02-meta-learners/02-02-meta-learners-multiple-discrete-treatment-r.qmd`, and 4 more
+
+**Continuous Optimization Models (NOTEARS)**
+
+Continuous Optimization Models (NOTEARS) is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* NOTEARS
+*Acronym Definition:* Non-combinatorial Optimization via Trace Exponential and Augmented lagRangian for Structure learning
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.qmd`
+
+**Contrast**
+
+Contrast is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`
+
+**Counterfactual**
+
+Counterfactual is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`, `inst/notebooks/02-meta-learners/02-00-meta-learners-introduction-r.qmd`, `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`, `inst/notebooks/02-meta-learners/02-02-meta-learners-multiple-discrete-treatment-r.qmd`, `inst/notebooks/02-meta-learners/02-03-meta-learners-continuous-treatment-r.qmd`, and 3 more
+
+**Counterfactual Prediction**
+
+Counterfactual Prediction is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CP
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`
+
+**Covariate**
+
+Covariate is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`, `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`
+
+**Covariate Profile**
+
+Covariate Profile is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CP
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`
+
+**CP**
+
+CP is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CP
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`
+
+**CPDAG**
+
+CPDAG is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* CPDAG
+*Acronym Definition:* Completed Partially Directed Acyclic Graph
+
+*Source notebooks:* `inst/notebooks/Time_series/structural-causal-models- (SCMs)-r.qmd`
+
+**CRL**
+
+CRL is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CRL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/32-causal-representation-learning-temporal-dynamical.qmd`, `inst/notebooks/33-causal-representation-learning-Interventional-r.qmd`
+
+**Cross-Fitting**
+
+Cross-Fitting is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`, `inst/notebooks/02-meta-learners/02-00-meta-learners-introduction-r.qmd`, `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`, `inst/notebooks/02-meta-learners/02-02-meta-learners-multiple-discrete-treatment-r.qmd`, `inst/notebooks/02-meta-learners/02-03-meta-learners-continuous-treatment-r.qmd`, and 3 more
+
+**CSF**
+
+CSF is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CSF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`
+
+**CVPR**
+
+CVPR is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* CVPR
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`
+
+### D
+
+**DAG**
+
+DAG is a directed acyclic graph. A graphical representation of directional dependency structure used for causal assumptions, identification, and model design. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* DAG
+*Acronym Definition:* Directed Acyclic Graph
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-03-DeepCausalML-variational-autoencoder-causalVAE.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-03-00-DeepCausalML-structural-learnering-introduction-r.qmd`, and 5 more
+
+**DAG-GNN**
+
+DAG-GNN is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* DAG-GNN
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-03-02-DeepCausalML-dag-structure-learning-graph-neural-networks-DagGNN-r.qmd`
+
+**DAG-GNN: DAG Structure Learning with Graph Neural Networks**
+
+DAG-GNN: DAG Structure Learning with Graph Neural Networks is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* GNN
+*Acronym Definition:* Graph Neural Network
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-02-DeepCausalML-dag-structure-learning-graph-neural-networks-DagGNN-r.qmd`
+
+**DAGMA and DAG-NoCurl for Causal Discovery**
+
+DAGMA and DAG-NoCurl for Causal Discovery is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* DADNFCD
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-04-DeepCausalML-DAGMA-NoCurl-r.qmd`
+
+**DAGMA-MLP**
+
+DAGMA-MLP is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* DAGMA-MLP
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-04-DeepCausalML-DAGMA-NoCurl-r.qmd`
+
+**Deep Causal Learning**
+
+Deep Causal Learning is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* DCL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`
+
+**DGM**
+
+DGM is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* DGM
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.qmd`
+
+**DML**
+
+DML is a double machine learning framework. An orthogonalized estimation framework that leverages machine learning for nuisance components while retaining valid statistical inference for target causal parameters. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* DML
+*Acronym Definition:* Double Machine Learning
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-03-meta-learners-continuous-treatment-r.qmd`, `inst/notebooks/02-meta-learners/02-04-tmle-model-r.qmd`, `inst/notebooks/02-meta-learners/02-06--meta-learners-doubly-robust-learners-r.qmd`, `inst/notebooks/04-double-debiased-learners/04-00-double-ml-introduction-r.qmd`, `inst/notebooks/04-double-debiased-learners/04-01-double-ml-from-basics-to-application-r.qmd`, and 5 more
+
+**DML-IV**
+
+DML-IV is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* DML-IV
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-04-double-ml-iv-r.qmd`
+
+**Domain Adaptation Learner (DA-Learner)**
+
+Domain Adaptation Learner (DA-Learner) is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* DALDL
+*Acronym Definition:* DA-Learner
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-05-meta-learners-domain-adaptation-learner-r.qmd`
+
+**Double Machine Learning with Instrumental Variables**
+
+Double Machine Learning with Instrumental Variables is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* DML
+*Acronym Definition:* Double Machine Learning
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-04-double-ml-iv-r.qmd`
+
+**Double Machine Learning: From Basics to Application**
+
+Double Machine Learning: From Basics to Application is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* DML
+*Acronym Definition:* Double Machine Learning
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-01-double-ml-from-basics-to-application-r.qmd`
+
+**Double/Debiased Machine Learning for Causal Inference (DoubleML)**
+
+Double/Debiased Machine Learning for Causal Inference (DoubleML) is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* DDMLFCID
+*Acronym Definition:* DoubleML
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-00-double-ml-introduction-r.qmd`
+
+**DoubleML for Difference-in-Differences**
+
+DoubleML for Difference-in-Differences is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* DiD
+*Acronym Definition:* Difference-in-Differences
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-03-double-ml-did-r.qmd`
+
+**DoubleML with Ensemble Learners**
+
+DoubleML with Ensemble Learners is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* DWEL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-08-double-ml-ensemble-learners-r.qmd`
+
+**Doubly Robust Learners**
+
+Doubly Robust Learners is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* DRL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-06--meta-learners-doubly-robust-learners-r.qmd`
+
+**DR**
+
+DR is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* DR
+*Acronym Definition:* Doubly Robust
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-06--meta-learners-doubly-robust-learners-r.qmd`, `inst/notebooks/Counterfactual reasoning and policy learning/23-policy-learner-binary-treatment.qmd`
+
+**DragonNet — Propensity-Adjusted Networks for Causal Inference**
+
+DragonNet — Propensity-Adjusted Networks for Causal Inference is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* DPANFCI
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-01-03-DeepCausalML-DragonNet-r.qmd`
+
+**DSCM**
+
+DSCM is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* DSCM
+*Acronym Definition:* Deep Structural Causal Model
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.qmd`
+
+**Dynamic Double Machine Learning**
+
+Dynamic Double Machine Learning is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* DML
+*Acronym Definition:* Double Machine Learning
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-05-double-ml-dynamic-ml.qmd`
+
+### E
+
+**ED**
+
+ED is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ED
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/03-uplift-trees-forests/03-00-uplift-trees-introduction-r.qmd`
+
+**EIF**
+
+EIF is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* EIF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-04-tmle-model-r.qmd`
+
+**ELBO**
+
+ELBO is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ELBO
+*Acronym Definition:* Evidence Lower Bound
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-04-DeepCausalML-causaldiscrepancyVAE-r.qmd`
+
+**Endogeneity**
+
+Endogeneity is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+**Endogenous Treatment**
+
+Endogenous Treatment is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ET
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+**Exclusion Restriction**
+
+Exclusion Restriction is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ER
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+**Exogeneity**
+
+Exogeneity is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+### F
+
+**F1**
+
+F1 is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* F1
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/03-uplift-trees-forests/03-03-uplift-trees-regression-abortion-data-r.qmd`
+
+**FEVD**
+
+FEVD is a statistical test or evaluation metric. This term is used to quantify model fit, uncertainty, discrimination, calibration, or statistical evidence in empirical analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* FEVD
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-04-01-causal-time-series-granger-causality-var-r.qmd`
+
+**FN**
+
+FN is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* FN
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.qmd`
+
+**FP**
+
+FP is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* FP
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.qmd`
+
+### G
+
+**GAN**
+
+GAN is a generative adversarial network. A generative modeling framework based on adversarial training between generator and discriminator networks. In deep learning pipelines, it is often used for representation learning, high-dimensional prediction, or generative modeling.
+*Acronym:* GAN
+*Acronym Definition:* Generative Adversarial Network
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`
+
+**GANITE: Generative Adversarial Network for Inference of Treatment Effects**
+
+GANITE: Generative Adversarial Network for Inference of Treatment Effects is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* GAN
+*Acronym Definition:* Generative Adversarial Network
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-01-04-DeepCausalML-GANITE-r.qmd`
+
+**Generative Latent-Variable Causal Models (GLVCMs)**
+
+Generative Latent-Variable Causal Models (GLVCMs) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* GLVCMG
+*Acronym Definition:* GLVCMs
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`
+
+**GraN-DAG: Gradient-Based Neural DAG Learning**
+
+GraN-DAG: Gradient-Based Neural DAG Learning is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* GDGBNDL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-03-DeepCausalML-gradient-based-neural-learning-GranDag-r.qmd`
+
+**Granger Causality & Vector Autoregression (VAR)**
+
+Granger Causality & Vector Autoregression (VAR) is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* VAR
+*Acronym Definition:* Vector Autoregression
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-04-01-causal-time-series-granger-causality-var-r.qmd`
+
+**GRF**
+
+GRF is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* GRF
+*Acronym Definition:* Generalized Random Forest
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+### H
+
+**Heterogeneity**
+
+Heterogeneity is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`
+
+**Heterogeneous Effects**
+
+Heterogeneous Effects is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* HE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+**Heterogeneous LATE**
+
+Heterogeneous LATE is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* HL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+**Heterogeneous Treatment Effect**
+
+Heterogeneous Treatment Effect is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* HTE
+*Acronym Definition:* Heterogeneous Treatment Effect
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`, `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`
+
+**Heterogeneous Treatment Effects**
+
+Heterogeneous Treatment Effects is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* HTE
+*Acronym Definition:* Heterogeneous Treatment Effect
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`, `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`
+
+**Honest Estimation**
+
+Honest Estimation is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* HE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`, `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`, `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`
+
+**Honest Splitting**
+
+Honest Splitting is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* HS
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+**HR**
+
+HR is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* HR
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/32-causal-representation-learning-temporal-dynamical.qmd`
+
+**HTE**
+
+HTE is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* HTE
+*Acronym Definition:* Heterogeneous Treatment Effect
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`, `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`, `inst/notebooks/02-meta-learners/02-00-meta-learners-introduction-r.qmd`, and 1 more
+
+### I
+
+**ICA**
+
+ICA is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ICA
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-02-DeepCausalML-identifiable-variational-autoencoders-CausaliVAEs.qmd`
+
+**ICLR**
+
+ICLR is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ICLR
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-03-00-DeepCausalML-structural-learnering-introduction-r.qmd`
+
+**ICML**
+
+ICML is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ICML
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-00-DeepCausalML-structural-learnering-introduction-r.qmd`
+
+**Identifiable Variational Autoencoders (iVAEs)**
+
+Identifiable Variational Autoencoders (iVAEs) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* VAE
+*Acronym Definition:* Variational Autoencoder
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-02-DeepCausalML-identifiable-variational-autoencoders-CausaliVAEs.qmd`
+
+**Ignorability**
+
+Ignorability is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`
+
+**IHDP**
+
+IHDP is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* IHDP
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-01-03-DeepCausalML-DragonNet-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.qmd`
+
+**Instrument (IV)**
+
+Instrument (IV) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* IV
+*Acronym Definition:* Instrumental Variable
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+**Instrumental Causal XGBoost (Boosted IV Forest)**
+
+Instrumental Causal XGBoost (Boosted IV Forest) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* ICXBIF
+*Acronym Definition:* Boosted IV Forest
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+**Instrumental Forest**
+
+Instrumental Forest is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* IF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+**Instrumental Variable (IV)**
+
+Instrumental Variable (IV) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* IV
+*Acronym Definition:* Instrumental Variable
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+**Interventional Causal Representation Learning (CRL)**
+
+Interventional Causal Representation Learning (CRL) is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* CRL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/33-causal-representation-learning-Interventional-r.qmd`
+
+**Introduction**
+
+Introduction is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/Sensitivity and calibration/25-propensity-calibration.qmd`
+
+**IPCW**
+
+IPCW is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* IPCW
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`
+
+**IPM**
+
+IPM is a statistical test or evaluation metric. This term is used to quantify model fit, uncertainty, discrimination, calibration, or statistical evidence in empirical analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* IPM
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-01-02-DeepCausalML-CFRTNet-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-01-03-DeepCausalML-DragonNet-r.qmd`
+
+**IRF**
+
+IRF is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* IRF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-04-01-causal-time-series-granger-causality-var-r.qmd`
+
+**IRM**
+
+IRM is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* IRM
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-06-double-ml-weighted-double-ml.qmd`, `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`
+
+**ITE**
+
+ITE is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ITE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`
+
+**IV**
+
+IV is an instrumental variable framework. An identification strategy for endogenous treatment settings that uses exogenous variation from valid instruments to recover causal effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* IV
+*Acronym Definition:* Instrumental Variable
+
+*Source notebooks:* `inst/notebooks/00-scientific-terminology-glossary.qmd`, `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`, `inst/notebooks/04-double-debiased-learners/04-04-double-ml-iv-r.qmd`
+
+### J
+
+**Joint Estimation**
+
+Joint Estimation is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* JE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`
+
+### K
+
+**KDE**
+
+KDE is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* KDE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`
+
+**KL**
+
+KL is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* KL
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/03-uplift-trees-forests/03-01-uplift-trees-classification-r.qmd`
+
+### L
+
+**LATE**
+
+LATE is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* LATE
+*Acronym Definition:* Local Average Treatment Effect
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+**LR**
+
+LR is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* LR
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`
+
+### M
+
+**Masked Loss**
+
+Masked Loss is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ML
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`
+
+**Mastering Structural Causal Models (SCMs) & Causal Discovery in R**
+
+Mastering Structural Causal Models (SCMs) & Causal Discovery in R is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* SCM
+*Acronym Definition:* Structural Causal Model
+
+*Source notebooks:* `inst/notebooks/Time_series/structural-causal-models- (SCMs)-r.qmd`
+
+**Meta Learner with Continuous Treatments**
+
+Meta Learner with Continuous Treatments is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* MLWCT
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-03-meta-learners-continuous-treatment-r.qmd`
+
+**Meta-Learner with Binary Treatments**
+
+Meta-Learner with Binary Treatments is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* MLWBT
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`
+
+**Meta-Learners with Multiple Discrete Treatments**
+
+Meta-Learners with Multiple Discrete Treatments is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* MLWMDT
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-02-meta-learners-multiple-discrete-treatment-r.qmd`
+
+**ML**
+
+ML is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* ML
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-04-tmle-model-r.qmd`, `inst/notebooks/04-double-debiased-learners/04-00-double-ml-introduction-r.qmd`
+
+**MLP**
+
+MLP is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* MLP
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-04-DeepCausalML-DAGMA-NoCurl-r.qmd`
+
+**MMD**
+
+MMD is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* MMD
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-01-02-DeepCausalML-CFRTNet-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-04-DeepCausalML-causaldiscrepancyVAE-r.qmd`
+
+**MMM**
+
+MMM is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* MMM
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`
+
+**Multi-Arm Treatment**
+
+Multi-Arm Treatment is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* MAT
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`
+
+**Multi-arm/multi-outcome Causal Forest**
+
+Multi-arm/multi-outcome Causal Forest is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* MAMOCF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`
+
+**Multi-Outcome**
+
+Multi-Outcome is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* MO
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`
+
+### N
+
+**NCM**
+
+NCM is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* NCM
+*Acronym Definition:* Neural Causal Model
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.qmd`
+
+**NOTEARS**
+
+NOTEARS is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* NOTEARS
+*Acronym Definition:* Non-combinatorial Optimization via Trace Exponential and Augmented lagRangian for Structure learning
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.qmd`
+
+**Nuisance Functions**
+
+Nuisance Functions is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* NF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+### O
+
+**OOB**
+
+OOB is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* OOB
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd`
+
+**Outcome**
+
+Outcome is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`
+
+**Outcome Model**
+
+Outcome Model is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* OM
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`
+
+**Overfitting**
+
+Overfitting is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`
+
+**Overlap**
+
+Overlap is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`
+
+**Overlap (Common Support)**
+
+Overlap (Common Support) is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* OCS
+*Acronym Definition:* Common Support
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`
+
+### P
+
+**PC**
+
+PC is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* PC
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.qmd`
+
+**PCMCI**
+
+PCMCI is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* PCMCI
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`
+
+**Permutation Test**
+
+Permutation Test is a statistical test or evaluation metric. This term is used to quantify model fit, uncertainty, discrimination, calibration, or statistical evidence in empirical analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* PT
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`
+
+**PLR**
+
+PLR is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* PLR
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-00-double-ml-introduction-r.qmd`, `inst/notebooks/04-double-debiased-learners/04-01-double-ml-from-basics-to-application-r.qmd`
+
+**PNAS**
+
+PNAS is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* PNAS
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`
+
+**PNS**
+
+PNS is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* PNS
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-03-DeepCausalML-gradient-based-neural-learning-GranDag-r.qmd`
+
+**Potential Outcomes**
+
+Potential Outcomes is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* PO
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`, `inst/notebooks/02-meta-learners/02-00-meta-learners-introduction-r.qmd`, `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`, `inst/notebooks/02-meta-learners/02-02-meta-learners-multiple-discrete-treatment-r.qmd`, `inst/notebooks/02-meta-learners/02-03-meta-learners-continuous-treatment-r.qmd`, and 3 more
+
+**Propensity Score**
+
+Propensity Score is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* PS
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`, `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`, `inst/notebooks/02-meta-learners/02-00-meta-learners-introduction-r.qmd`, `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`, `inst/notebooks/02-meta-learners/02-02-meta-learners-multiple-discrete-treatment-r.qmd`, and 4 more
+
+**Pruning**
+
+Pruning is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`
+
+### Q
+
+**Q1**
+
+Q1 is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* Q1
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-03-meta-learners-continuous-treatment-r.qmd`
+
+### R
+
+**RATE**
+
+RATE is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* RATE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`
+
+**Residualization**
+
+Residualization is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+**RF**
+
+RF is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* RF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`
+
+**Right-Censoring**
+
+Right-Censoring is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* RC
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`
+
+**RKHS**
+
+RKHS is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* RKHS
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-02-04-DeepCausalML-causaldiscrepancyVAE-r.qmd`
+
+**RMST (Restricted Mean Survival Time)**
+
+RMST (Restricted Mean Survival Time) is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* RRMST
+*Acronym Definition:* Restricted Mean Survival Time
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`
+
+### S
+
+**SAE**
+
+SAE is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* SAE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.qmd`
+
+**SCM**
+
+SCM is a structural causal model. A model class that represents causal mechanisms through structural equations and directed graphs, enabling interventional and counterfactual analysis. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* SCM
+*Acronym Definition:* Structural Causal Model
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-03-DeepCausalML-variational-autoencoder-causalVAE.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-05-DeepCausalML-causalGAN-r.qmd`
+
+**SEM**
+
+SEM is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* SEM
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-03-04-DeepCausalML-DAGMA-NoCurl-r.qmd`
+
+**SHAP Values**
+
+SHAP Values is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* SV
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`
+
+**Survival Outcome**
+
+Survival Outcome is a causal effect estimation concept. This term is used in causal inference to define identification assumptions, estimands, or estimation procedures for treatment effects. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* SO
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`
+
+**SVAR**
+
+SVAR is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* SVAR
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-04-01-causal-time-series-granger-causality-var-r.qmd`
+
+### T
+
+**TARNet (Treatment-Agnostic Representation Network)**
+
+TARNet (Treatment-Agnostic Representation Network) is a deep learning model concept. This term refers to a deep learning architecture used for representation learning, response modeling, or generative counterfactual analysis. In deep learning pipelines, it is often used for representation learning, high-dimensional prediction, or generative modeling.
+*Acronym:* TTARN
+*Acronym Definition:* Treatment-Agnostic Representation Network
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-01-01-DeepCausalML-TARNET-r.qmd`
+
+**TCDF**
+
+TCDF is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* TCDF
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`
+
+**The Boosted Model of Causal Inference (causalXGBoost)**
+
+The Boosted Model of Causal Inference (causalXGBoost) is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* TBMOCIC
+*Acronym Definition:* causalXGBoost
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd`
+
+**Time Horizon**
+
+Time Horizon is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* TH
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd`
+
+**TMLE**
+
+TMLE is a targeted maximum likelihood estimation. A doubly robust estimation procedure that updates initial predictions to optimize bias-variance tradeoffs while supporting asymptotically efficient inference. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* TMLE
+*Acronym Definition:* Targeted Maximum Likelihood Estimation
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-04-tmle-model-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-01-03-DeepCausalML-DragonNet-r.qmd`
+
+**Treatment**
+
+Treatment is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* N/A
+*Acronym Definition:* Not applicable (no standard acronym for this term).
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd`
+
+**Treatment Arm**
+
+Treatment Arm is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* TA
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd`
+
+**Treatment Contrast**
+
+Treatment Contrast is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* TC
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-08-multi-arm-causal-boost-r.qmd`
+
+**Treatment Effect**
+
+Treatment Effect is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* TE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`, `inst/notebooks/02-meta-learners/02-00-meta-learners-introduction-r.qmd`, `inst/notebooks/02-meta-learners/02-01-meta-learners-binary-treatments-r.qmd`, `inst/notebooks/02-meta-learners/02-02-meta-learners-multiple-discrete-treatment-r.qmd`, `inst/notebooks/02-meta-learners/02-03-meta-learners-continuous-treatment-r.qmd`, and 3 more
+
+**Treatment Effect Estimators**
+
+Treatment Effect Estimators is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* TEE
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.qmd`
+
+**Tree Based Modesl for Causal Inference**
+
+Tree Based Modesl for Causal Inference is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In causal inference practice, this concept helps define estimands, identification assumptions, or robust estimation procedures.
+*Acronym:* TBMFCI
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd`
+
+### U
+
+**Uplift Tree Approach**
+
+Uplift Tree Approach is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* UTA
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/03-uplift-trees-forests/03-00-uplift-trees-introduction-r.qmd`
+
+**Uplift Trees — Regression**
+
+Uplift Trees — Regression is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* UTR
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/03-uplift-trees-forests/03-02-uplift-trees-regression-r.qmd`
+
+**Uplift Trees — Regression (Abortion Data)**
+
+Uplift Trees — Regression (Abortion Data) is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* UTRAD
+*Acronym Definition:* Abortion Data
+
+*Source notebooks:* `inst/notebooks/03-uplift-trees-forests/03-03-uplift-trees-regression-abortion-data-r.qmd`
+
+**Uplift Trees- Classification**
+
+Uplift Trees- Classification is a machine learning modeling concept. This term denotes a modeling approach used to capture nonlinear patterns, interactions, or heterogeneous responses in predictive and causal-learning pipelines. In machine learning practice, it is typically applied to capture nonlinear structure, interactions, and out-of-sample generalization behavior.
+*Acronym:* UTC
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/03-uplift-trees-forests/03-01-uplift-trees-classification-r.qmd`
+
+### V
+
+**VAE**
+
+VAE is a variational autoencoder. A latent-variable generative model trained with variational inference to learn probabilistic representations of complex data. In deep learning pipelines, it is often used for representation learning, high-dimensional prediction, or generative modeling.
+*Acronym:* VAE
+*Acronym Definition:* Variational Autoencoder
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-00-DeepCausalML-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.qmd`, `inst/notebooks/05-deep-causal-learners/05-02-03-DeepCausalML-variational-autoencoder-causalVAE.qmd`, `inst/notebooks/32-causal-representation-learning-temporal-dynamical.qmd`
+
+**VAR**
+
+VAR is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* VAR
+*Acronym Definition:* Vector Autoregression
+
+*Source notebooks:* `inst/notebooks/05-deep-causal-learners/05-04-01-causal-time-series-granger-causality-var-r.qmd`
+
+**Variable Importance**
+
+Variable Importance is a causal structure learning concept. This term is used to represent or recover directed dependency structure for intervention analysis and counterfactual reasoning. In structure learning workflows, it supports reasoning about directional dependencies, interventions, and counterfactual queries.
+*Acronym:* VI
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd`
+
+### W
+
+**Weak Instrument**
+
+Weak Instrument is a statistical or machine learning concept. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* WI
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/01-tree-based-Models/01-07-instrumental-causal-xgboost-r.qmd`
+
+**Weighted Double Machine Learning**
+
+Weighted Double Machine Learning is a statistical or machine learning concept. This entry denotes a methodological topic area that organizes a set of related statistical and machine-learning techniques. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* DML
+*Acronym Definition:* Double Machine Learning
+
+*Source notebooks:* `inst/notebooks/04-double-debiased-learners/04-06-double-ml-weighted-double-ml.qmd`
+
+### X
+
+**X1**
+
+X1 is a technical acronym used in statistics or machine learning. This term is part of the core vocabulary used for statistical modeling, machine learning, and causal analysis. In applied analytics, it is used to improve model validity, interpretability, and decision quality.
+*Acronym:* X1
+*Acronym Definition:* Acronym used in the notebooks; expansion should be confirmed from original source context.
+
+*Source notebooks:* `inst/notebooks/02-meta-learners/02-03-meta-learners-continuous-treatment-r.qmd`

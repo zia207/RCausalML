@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>deepcausalml-timeseries-structural-causal-model-smc-r</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/clipboard/clipboard.min.js"></script>
+<script src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/quarto-html/popper.min.js"></script>
+<script src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/quarto-html/anchor.min.js"></script>
+<link href="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/libs/bootstrap/bootstrap-e29a585edb4b49c5cab0427671728cec.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="structural-causal-models-scms-with-deep-components" class="level1 unnumbered">
+<h1 class="unnumbered">Structural Causal Models (SCMs) with Deep Components</h1>
+<p>A <strong>Structural Causal Model (SCM)</strong> is a mathematical framework for representing cause-and-effect relationships in a system. Formally, an SCM is defined as <span class="math inline">\(\mathcal{M} = (\mathbf{S}, P(\mathbf{U}))\)</span> with structural equations:</p>
+<p><span class="math display">\[X_i = f_i(\mathrm{Pa}(X_i),\, U_i),\]</span></p>
+<p>where <span class="math inline">\(\mathrm{Pa}(X_i)\)</span> denotes the causal parents of <span class="math inline">\(X_i\)</span> in the directed acyclic graph (DAG), and <span class="math inline">\(U_i\)</span> are independent exogenous noise variables.</p>
+<p>SCMs support Pearl’s three-rung <em>Ladder of Causation</em>:</p>
+<ul>
+<li><strong>Association</strong>: <span class="math inline">\(P(Y \mid X = x)\)</span> — observational queries.</li>
+<li><strong>Intervention</strong>: <span class="math inline">\(P(Y \mid do(X = x))\)</span> — effect of external manipulation.</li>
+<li><strong>Counterfactual</strong>: <span class="math inline">\(P(Y_x \mid X = x', Y = y')\)</span> — what would have happened under an alternate scenario.</li>
+</ul>
+<p><strong>Deep SCMs</strong> replace hand-crafted <span class="math inline">\(f_i\)</span> with neural networks:</p>
+<p><span class="math display">\[X_i = f_{\theta_i}(\mathrm{Pa}(X_i),\, U_i).\]</span></p>
+<p>In a variational deep SCM setup:</p>
+<ul>
+<li><strong>Encoder</strong>: <span class="math inline">\(q_\phi(U \mid X)\)</span> — infers the latent noise from observations.</li>
+<li><strong>Decoder</strong>: <span class="math inline">\(p_\theta(X \mid U, G)\)</span> — reconstructs observations from noise and graph.</li>
+<li><strong>Objective</strong>: ELBO-style loss with reconstruction + KL divergence.</li>
+</ul>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>This notebook demonstrates three complementary deep learning approaches to structural causal modelling on multivariate time-series data (S&amp;P 500 sector ETF log-returns):</p>
+<section id="deepscm-fixed-graph-structural-model" class="level3">
+<h3 class="anchored" data-anchor-id="deepscm-fixed-graph-structural-model">1) DeepSCM — Fixed-Graph Structural Model</h3>
+<p><strong>DeepSCM</strong> assumes a <em>known</em> adjacency matrix (here derived from a correlation heuristic) and learns nonlinear structural equations on top of that fixed graph:</p>
+<p><span class="math display">\[X_t = f_\theta\!\left(X_{t-1:t-p},\, A\right) + \epsilon_t,\]</span></p>
+<p>where <span class="math inline">\(A\)</span> is fixed (not learned) and <span class="math inline">\(f_\theta\)</span> consists of per-variable MLPs with variational noise encoders.</p>
+<p><strong>Why useful:</strong> Stable training when a credible prior graph is available; good baseline for intervention analysis.</p>
+<p><strong>Limitation:</strong> Performance depends on the quality of the fixed graph.</p>
+</section>
+<section id="deci-deep-end-to-end-causal-inference" class="level3">
+<h3 class="anchored" data-anchor-id="deci-deep-end-to-end-causal-inference">2) DECI — Deep End-to-End Causal Inference</h3>
+<p><strong>DECI</strong> jointly learns both graph structure and structural equations. It uses a soft learnable adjacency matrix and enforces acyclicity via a NOTEARS-style constraint:</p>
+<p><span class="math display">\[h(A) = \operatorname{tr}(e^{A \circ A}) - d = 0.\]</span></p>
+<p>The objective combines reconstruction, KL divergence, DAG regularization, and sparsity:</p>
+<p><span class="math display">\[\mathcal{L} = \mathcal{L}_{\text{recon}} + \lambda_{\text{KL}}\,\text{KL} + \lambda_{\text{DAG}}\,h(A) + \lambda_{\text{sparse}}\|A\|_1.\]</span></p>
+<p><strong>Why useful:</strong> Learns structure and mechanism together; produces interpretable weighted causal graphs.</p>
+<p><strong>Limitation:</strong> Hyperparameter-sensitive; optimization can be expensive.</p>
+</section>
+<section id="dynotears-lagged-dag-constrained-discovery" class="level3">
+<h3 class="anchored" data-anchor-id="dynotears-lagged-dag-constrained-discovery">3) DYNOTEARS — Lagged DAG-Constrained Discovery</h3>
+<p><strong>DYNOTEARS</strong> extends NOTEARS-style optimization to time-series causal discovery with explicit lag structure:</p>
+<p><span class="math display">\[X_t = W^{(0)}X_t + \sum_{k=1}^{p} W^{(k)} X_{t-k} + \epsilon_t,\]</span></p>
+<p>where <span class="math inline">\(W^{(0)}\)</span> captures instantaneous effects and <span class="math inline">\(W^{(k)}\)</span> captures directed lag-<span class="math inline">\(k\)</span> effects. Acyclicity is imposed via a smooth constraint on the aggregated weight matrix:</p>
+<p><span class="math display">\[\min_{\{W^{(k)}\}} \mathcal{L}_{\text{recon}} + \lambda_1 \sum_{k=0}^{p} \|W^{(k)}\|_1 + \lambda_2\, h(\cdot).\]</span></p>
+<p><strong>Why useful:</strong> Explicitly separates lagged directional effects; produces interpretable causal graphs for multivariate time series.</p>
+<p><strong>Limitation:</strong> Sensitive to regularization and threshold settings.</p>
+</section>
+</section>
+<section id="implementation-in-r" class="level2">
+<h2 class="anchored" data-anchor-id="implementation-in-r">Implementation in R</h2>
+<p>We use {RCausalML}’s <code>deep_scm()</code>, <code>deci_model()</code>, and <code>dynotears()</code> implementations (torch-backed when available) to fit all three models on S&amp;P 500 sector ETF daily log-return data (2018–2024).</p>
+<section id="load-and-check-required-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-and-check-required-libraries">Load and Check Required Libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'tidyverse'</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">'plyr'</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'RCausalML'</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'torch'</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">'tidyquant'</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">'reshape2'</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">'scales'</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">'patchwork'</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">'igraph'</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="install-missing-packages" class="level3">
+<h3 class="anchored" data-anchor-id="install-missing-packages">Install Missing Packages</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install missing packages</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#new_packages &lt;- packages[!(packages %in% installed.packages()[,"Package"])]</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#if(length(new_packages)) install.packages(new_packages)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="verify-installation" class="level3">
+<h3 class="anchored" data-anchor-id="verify-installation">Verify Installation</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Installed packages:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Installed packages:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">sapply</span>(packages, requireNamespace, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>tidyverse      plyr RCausalML     torch tidyquant  reshape2    scales patchwork 
+     TRUE      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE 
+   igraph 
+     TRUE </code></pre>
+</div>
+</div>
+</section>
+<section id="load-required-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-required-libraries">Load Required Libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># When rendering from package root, use local RCausalML</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="st">"DESCRIPTION"</span>) <span class="sc">&amp;&amp;</span> <span class="fu">requireNamespace</span>(<span class="st">"devtools"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">try</span>(devtools<span class="sc">::</span><span class="fu">load_all</span>(<span class="st">"."</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">lapply</span>(packages, <span class="cf">function</span>(pkg) {</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(pkg, <span class="at">character.only =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>device_use <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">"torch"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  device_use <span class="ot">&lt;-</span> <span class="cf">if</span> (torch<span class="sc">::</span><span class="fu">cuda_is_available</span>()) <span class="st">"cuda"</span> <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  torch<span class="sc">::</span><span class="fu">torch_manual_seed</span>(<span class="dv">42</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Using device: %s</span><span class="sc">\n</span><span class="st">"</span>, device_use))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Using device: cuda</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="data-loading-and-preprocessing" class="level2">
+<h2 class="anchored" data-anchor-id="data-loading-and-preprocessing">Data Loading and Preprocessing</h2>
+<p>This section downloads S&amp;P 500 sector ETF prices (the same universe used in the Neural Granger Causality notebook), converts them to standardized log-returns, and builds lagged input/output arrays for training.</p>
+<blockquote class="blockquote">
+<p><strong>Note:</strong> If online market data is unavailable, the notebook automatically falls back to synthetic demo data so all downstream cells remain runnable.</p>
+</blockquote>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>TICKERS <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLF"</span> <span class="ot">=</span> <span class="st">"Financials"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLE"</span> <span class="ot">=</span> <span class="st">"Energy"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLK"</span> <span class="ot">=</span> <span class="st">"Technology"</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLV"</span> <span class="ot">=</span> <span class="st">"Healthcare"</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLI"</span> <span class="ot">=</span> <span class="st">"Industrials"</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLY"</span> <span class="ot">=</span> <span class="st">"ConsumerDisc"</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLP"</span> <span class="ot">=</span> <span class="st">"ConsumerStap"</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLU"</span> <span class="ot">=</span> <span class="st">"Utilities"</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Download close prices via tidyquant (Yahoo Finance backend)</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>fetch_close_prices <span class="ot">&lt;-</span> <span class="cf">function</span>(tickers, <span class="at">start =</span> <span class="st">"2018-01-01"</span>, <span class="at">end =</span> <span class="st">"2024-01-01"</span>) {</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    raw <span class="ot">&lt;-</span> tidyquant<span class="sc">::</span><span class="fu">tq_get</span>(<span class="fu">names</span>(tickers), <span class="at">get =</span> <span class="st">"stock.prices"</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>                              <span class="at">from =</span> start, <span class="at">to =</span> end, <span class="at">complete_cases =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(raw) <span class="sc">||</span> <span class="fu">nrow</span>(raw) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    raw <span class="sc">|&gt;</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">select</span>(symbol, date, adjusted) <span class="sc">|&gt;</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> symbol, <span class="at">values_from =</span> adjusted) <span class="sc">|&gt;</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">arrange</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">drop_na</span>()</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>close_wide <span class="ot">&lt;-</span> <span class="fu">fetch_close_prices</span>(TICKERS)</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(close_wide) <span class="sc">||</span> <span class="fu">nrow</span>(close_wide) <span class="sc">&lt;</span> <span class="dv">30</span>) {</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Warning: market data unavailable; using synthetic demo data."</span>)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>  n_steps <span class="ot">&lt;-</span> <span class="dv">1400</span>L</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n_steps <span class="sc">*</span> <span class="fu">length</span>(TICKERS), <span class="dv">0</span>, <span class="fl">0.01</span>),</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>                 <span class="at">nrow =</span> n_steps, <span class="at">ncol =</span> <span class="fu">length</span>(TICKERS))</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq</span>(<span class="dv">2</span>L, n_steps)) base[i, ] <span class="ot">&lt;-</span> base[i, ] <span class="sc">+</span> <span class="fl">0.25</span> <span class="sc">*</span> base[i <span class="sc">-</span> <span class="dv">1</span>L, ]</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  returns_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(base)</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(returns_df) <span class="ot">&lt;-</span> <span class="fu">unname</span>(TICKERS)</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>  data_np <span class="ot">&lt;-</span> <span class="fu">scale</span>(base)</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Compute log-returns</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>  price_mat <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(close_wide[, <span class="fu">names</span>(TICKERS)])</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>  log_ret   <span class="ot">&lt;-</span> <span class="fu">log</span>(price_mat[<span class="sc">-</span><span class="dv">1</span>L, ] <span class="sc">/</span> price_mat[<span class="sc">-</span><span class="fu">nrow</span>(price_mat), ])</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(log_ret) <span class="ot">&lt;-</span> <span class="fu">unname</span>(TICKERS[<span class="fu">colnames</span>(price_mat)])</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>  returns_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(log_ret)</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>  data_np    <span class="ot">&lt;-</span> <span class="fu">scale</span>(log_ret)</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>VAR_NAMES <span class="ot">&lt;-</span> <span class="fu">colnames</span>(data_np)</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>d         <span class="ot">&lt;-</span> <span class="fu">ncol</span>(data_np)</span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>Tt        <span class="ot">&lt;-</span> <span class="fu">nrow</span>(data_np)</span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"d=%d variables, T=%d</span><span class="sc">\n</span><span class="st">"</span>, d, Tt))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>d=8 variables, T=1508</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>LAG <span class="ot">&lt;-</span> <span class="dv">5</span>L</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Build 3-D array (N x lag x d) of lagged windows</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>build_lag_dataset <span class="ot">&lt;-</span> <span class="cf">function</span>(data, lag) {</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  N     <span class="ot">&lt;-</span> <span class="fu">nrow</span>(data) <span class="sc">-</span> lag</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  x_seq <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="cn">NA_real_</span>, <span class="at">dim =</span> <span class="fu">c</span>(N, lag, <span class="fu">ncol</span>(data)))</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  y_mat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA_real_</span>, <span class="at">nrow =</span> N, <span class="at">ncol =</span> <span class="fu">ncol</span>(data))</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(N)) {</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    x_seq[t, , ] <span class="ot">&lt;-</span> data[t<span class="sc">:</span>(t <span class="sc">+</span> lag <span class="sc">-</span> <span class="dv">1</span>L), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    y_mat[t,  ]  <span class="ot">&lt;-</span> data[t <span class="sc">+</span> lag, ]</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">x_seq =</span> x_seq, <span class="at">y_mat =</span> y_mat)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>lag_data <span class="ot">&lt;-</span> <span class="fu">build_lag_dataset</span>(data_np, LAG)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>X_seq    <span class="ot">&lt;-</span> lag_data<span class="sc">$</span>x_seq</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>Y_mat    <span class="ot">&lt;-</span> lag_data<span class="sc">$</span>y_mat</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>split  <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fl">0.8</span> <span class="sc">*</span> <span class="fu">nrow</span>(X_seq))</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>X_tr   <span class="ot">&lt;-</span> X_seq[<span class="fu">seq_len</span>(split), , ]</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>X_val  <span class="ot">&lt;-</span> X_seq[(split <span class="sc">+</span> <span class="dv">1</span>L)<span class="sc">:</span><span class="fu">nrow</span>(X_seq), , ]</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>Y_tr   <span class="ot">&lt;-</span> Y_mat[<span class="fu">seq_len</span>(split), ]</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>Y_val  <span class="ot">&lt;-</span> Y_mat[(split <span class="sc">+</span> <span class="dv">1</span>L)<span class="sc">:</span><span class="fu">nrow</span>(Y_mat), ]</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Train: (%d, %d, %d)  Val: (%d, %d, %d)</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>            <span class="fu">dim</span>(X_tr)[<span class="dv">1</span>], <span class="fu">dim</span>(X_tr)[<span class="dv">2</span>], <span class="fu">dim</span>(X_tr)[<span class="dv">3</span>],</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>            <span class="fu">dim</span>(X_val)[<span class="dv">1</span>], <span class="fu">dim</span>(X_val)[<span class="dv">2</span>], <span class="fu">dim</span>(X_val)[<span class="dv">3</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Train: (1202, 5, 8)  Val: (301, 5, 8)</code></pre>
+</div>
+</div>
+</section>
+<section id="utilities-and-model-definitions" class="level2">
+<h2 class="anchored" data-anchor-id="utilities-and-model-definitions">Utilities and Model Definitions</h2>
+<section id="acyclicity-penalty-and-graph-threshold-helpers" class="level3">
+<h3 class="anchored" data-anchor-id="acyclicity-penalty-and-graph-threshold-helpers">Acyclicity Penalty and Graph Threshold Helpers</h3>
+<p>The <strong>NOTEARS acyclicity penalty</strong> provides a continuous, differentiable condition that equals zero if and only if a matrix encodes a DAG:</p>
+<p><span class="math display">\[h(A) = \operatorname{tr}(e^{A \odot A}) - d.\]</span></p>
+<p>In R (with the <code>torch</code> package), this is computed as:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Acyclicity penalty h(A) = tr(expm(A*A)) - d  [scalar, on CPU]</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>acyclicity_penalty_r <span class="ot">&lt;-</span> <span class="cf">function</span>(A_mat) {</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">"torch"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    A_t <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">torch_tensor</span>(A_mat, <span class="at">dtype =</span> torch<span class="sc">::</span><span class="fu">torch_float32</span>())</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    val <span class="ot">&lt;-</span> (torch<span class="sc">::</span><span class="fu">torch_matrix_exp</span>(A_t <span class="sc">*</span> A_t))<span class="sc">$</span><span class="fu">trace</span>()<span class="sc">$</span><span class="fu">item</span>() <span class="sc">-</span> <span class="fu">nrow</span>(A_mat)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(val)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fallback: spectral-radius approximation</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  ev  <span class="ot">&lt;-</span> <span class="fu">Re</span>(<span class="fu">eigen</span>(A_mat <span class="sc">*</span> A_mat, <span class="at">only.values =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>values)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">exp</span>(ev)) <span class="sc">-</span> <span class="fu">nrow</span>(A_mat)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Threshold a soft adjacency matrix to binary</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>threshold_adjacency <span class="ot">&lt;-</span> <span class="cf">function</span>(A_soft, <span class="at">threshold =</span> <span class="fl">0.35</span>) {</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  A_bin <span class="ot">&lt;-</span> (<span class="fu">abs</span>(A_soft) <span class="sc">&gt;</span> threshold) <span class="sc">*</span> <span class="fl">1.0</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(A_bin) <span class="ot">&lt;-</span> <span class="fl">0.0</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  A_bin</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="fixed-graph-heuristic-correlation" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-graph-heuristic-correlation">Fixed-Graph Heuristic (Correlation)</h3>
+<p>DeepSCM uses a fixed adjacency matrix. Here we derive it from the absolute correlation among the standardized log-return series:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use the last lag slice (contemporaneous snapshot) for correlation</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>corr_mat  <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="fu">cor</span>(data_np))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">diag</span>(corr_mat) <span class="ot">&lt;-</span> <span class="fl">0.0</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>A_fixed   <span class="ot">&lt;-</span> (corr_mat <span class="sc">&gt;</span> <span class="fl">0.25</span>) <span class="sc">*</span> <span class="fl">1.0</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="fu">diag</span>(A_fixed) <span class="ot">&lt;-</span> <span class="fl">0.0</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Fixed adjacency (correlation &gt; 0.25):</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Fixed adjacency (correlation &gt; 0.25):</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(A_fixed)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             Financials Energy Technology Healthcare Industrials ConsumerDisc
+Financials            0      1          1          1           1            1
+Energy                1      0          1          1           1            1
+Technology            1      1          0          1           1            1
+Healthcare            1      1          1          0           1            1
+Industrials           1      1          1          1           0            1
+ConsumerDisc          1      1          1          1           1            0
+ConsumerStap          1      1          1          1           1            1
+Utilities             1      1          1          1           1            1
+             ConsumerStap Utilities
+Financials              1         1
+Energy                  1         1
+Technology              1         1
+Healthcare              1         1
+Industrials             1         1
+ConsumerDisc            1         1
+ConsumerStap            0         1
+Utilities               1         0</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_scm_dag</span>(A_fixed, VAR_NAMES, <span class="st">"Fixed Graph Used by DeepSCM (corr &gt; 0.25)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/fixed-graph-heuristic-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="train-deepscm-fixed-graph" class="level2">
+<h2 class="anchored" data-anchor-id="train-deepscm-fixed-graph">Train DeepSCM (Fixed Graph)</h2>
+<p>This cell trains the <strong>DeepSCM</strong> model using the fixed correlation-derived adjacency matrix.</p>
+<p>Each variable’s structural equation is a small MLP conditioned on its graph-parents plus a per-variable latent noise vector inferred by a variational encoder. Training minimises a reconstruction loss plus a KL regularisation term (ELBO objective).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>deep_scm_fit <span class="ot">&lt;-</span> <span class="fu">deep_scm</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x_seq      =</span> X_tr,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">adjacency  =</span> A_fixed,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">lag        =</span> LAG,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">latent_dim =</span> <span class="dv">4</span>L,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">hidden     =</span> <span class="dv">64</span>L,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_epochs   =</span> <span class="dv">25</span>L,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">batch_size =</span> <span class="dv">64</span>L,</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">lr         =</span> <span class="fl">1e-3</span>,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">lam_kl     =</span> <span class="fl">0.05</span>,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose    =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">device     =</span> device_use</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"DeepSCM training finished.</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DeepSCM training finished.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Final training loss: %.4f</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>            <span class="fu">tail</span>(deep_scm_fit<span class="sc">$</span>train_losses, <span class="dv">1</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Final training loss: 0.1810</code></pre>
+</div>
+</div>
+<section id="deepscm-training-curve" class="level3">
+<h3 class="anchored" data-anchor-id="deepscm-training-curve">DeepSCM Training Curve</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>loss_df_scm <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">epoch =</span> <span class="fu">seq_along</span>(deep_scm_fit<span class="sc">$</span>train_losses),</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">loss  =</span> deep_scm_fit<span class="sc">$</span>train_losses</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(loss_df_scm, <span class="fu">aes</span>(<span class="at">x =</span> epoch, <span class="at">y =</span> loss)) <span class="sc">+</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">colour =</span> <span class="st">"#1b9e77"</span>, <span class="at">linewidth =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> loss_df_scm[loss_df_scm<span class="sc">$</span>epoch <span class="sc">%%</span> <span class="dv">5</span> <span class="sc">==</span> <span class="dv">0</span>, ],</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">colour =</span> <span class="st">"#1b9e77"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"DeepSCM Training Loss (ELBO)"</span>,</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Epoch"</span>,</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Loss"</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/plot-deep-scm-loss-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="train-deci-and-inspect-learned-graph" class="level2">
+<h2 class="anchored" data-anchor-id="train-deci-and-inspect-learned-graph">Train DECI and Inspect Learned Graph</h2>
+<p>This cell trains the <strong>DECI</strong> model which jointly discovers the causal adjacency matrix and the structural equations. After training, the soft adjacency is thresholded to obtain a binary DAG.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>deci_fit <span class="ot">&lt;-</span> <span class="fu">deci_model</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x_seq      =</span> X_tr,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">lag        =</span> LAG,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">latent_dim =</span> <span class="dv">8</span>L,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">hidden     =</span> <span class="dv">64</span>L,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_epochs   =</span> <span class="dv">40</span>L,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">batch_size =</span> <span class="dv">64</span>L,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">lr         =</span> <span class="fl">1e-3</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">lam_kl     =</span> <span class="fl">0.05</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">lam_dag    =</span> <span class="fl">1.0</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">lam_sparse =</span> <span class="fl">0.01</span>,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">threshold  =</span> <span class="fl">0.35</span>,</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose    =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">device     =</span> device_use</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"DECI training finished.</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DECI training finished.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Final training loss: %.4f</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>            <span class="fu">tail</span>(deci_fit<span class="sc">$</span>train_losses, <span class="dv">1</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Final training loss: 1.0947</code></pre>
+</div>
+</div>
+<section id="deci-training-curve" class="level3">
+<h3 class="anchored" data-anchor-id="deci-training-curve">DECI Training Curve</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>loss_df_deci <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">epoch =</span> <span class="fu">seq_along</span>(deci_fit<span class="sc">$</span>train_losses),</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">loss  =</span> deci_fit<span class="sc">$</span>train_losses</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(loss_df_deci, <span class="fu">aes</span>(<span class="at">x =</span> epoch, <span class="at">y =</span> loss)) <span class="sc">+</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">colour =</span> <span class="st">"#d95f02"</span>, <span class="at">linewidth =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> loss_df_deci[loss_df_deci<span class="sc">$</span>epoch <span class="sc">%%</span> <span class="dv">10</span> <span class="sc">==</span> <span class="dv">0</span>, ],</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">colour =</span> <span class="st">"#d95f02"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"DECI Training Loss (ELBO + DAG + Sparsity)"</span>,</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Epoch"</span>,</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Loss"</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/plot-deci-loss-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="deci-learned-adjacency" class="level3">
+<h3 class="anchored" data-anchor-id="deci-learned-adjacency">DECI Learned Adjacency</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>A_soft <span class="ot">&lt;-</span> deci_fit<span class="sc">$</span>A_soft</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>A_bin  <span class="ot">&lt;-</span> deci_fit<span class="sc">$</span>A_binary</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(A_soft) <span class="ot">&lt;-</span> VAR_NAMES</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(A_soft) <span class="ot">&lt;-</span> VAR_NAMES</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Approx h(A_soft): %.6f</span><span class="sc">\n</span><span class="st">"</span>, <span class="fu">acyclicity_penalty_r</span>(A_soft)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Approx h(A_soft): 0.768062</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Edges in thresholded graph (tau=%.2f): %d</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>            deci_fit<span class="sc">$</span>threshold, <span class="fu">sum</span>(A_bin <span class="sc">&gt;</span> <span class="dv">0</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Edges in thresholded graph (tau=0.35): 50</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_scm_dag</span>(A_soft, VAR_NAMES, <span class="st">"DECI Soft Adjacency (learned)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/plot-deci-adjacency-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_scm_dag</span>(A_bin, VAR_NAMES, <span class="st">"DECI Thresholded Adjacency (binary DAG)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/plot-deci-adjacency-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="intervention-analysis-and-ate-estimation" class="level2">
+<h2 class="anchored" data-anchor-id="intervention-analysis-and-ate-estimation">Intervention Analysis and ATE Estimation</h2>
+<p><strong>Intervention analysis</strong> assesses the effects of actively changing (intervening on) one or more variables within a system. A <em>do-operation</em> <span class="math inline">\(do(X = x)\)</span> forces a variable to take on a specific value and evaluates how this change propagates through the causal graph to affect other variables.</p>
+<p>The <strong>Average Treatment Effect (ATE)</strong> measures the expected difference in an outcome variable due to the intervention:</p>
+<p><span class="math display">\[\text{ATE} = \mathbb{E}[Y \mid do(X = 1)] - \mathbb{E}[Y \mid do(X = -1)].\]</span></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>source_name <span class="ot">&lt;-</span> <span class="st">"Energy"</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"Industrials"</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>source_idx  <span class="ot">&lt;-</span> <span class="fu">which</span>(VAR_NAMES <span class="sc">==</span> source_name)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>target_idx  <span class="ot">&lt;-</span> <span class="fu">which</span>(VAR_NAMES <span class="sc">==</span> target_name)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="co"># DECI ATE via Monte-Carlo averaging over the decoder</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>ate_val <span class="ot">&lt;-</span> <span class="fu">ate_deci</span>(</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">object    =</span> deci_fit,</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">newdata   =</span> X_val,</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">source    =</span> source_idx,</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">target    =</span> target_idx,</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">do_values =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">1.0</span>, <span class="fl">1.0</span>),</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_samples =</span> <span class="fu">min</span>(<span class="dv">200</span>L, <span class="fu">nrow</span>(X_val))</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Estimated ATE of do(%s) on %s (DECI): %.4f</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>            source_name, target_name, ate_val))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Estimated ATE of do(Energy) on Industrials (DECI): 0.0012</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># DeepSCM intervention: compare predicted target under low vs. high intervention</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>n_int <span class="ot">&lt;-</span> <span class="fu">min</span>(<span class="dv">128</span>L, <span class="fu">nrow</span>(X_val))</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>int_result <span class="ot">&lt;-</span> <span class="fu">intervene_deep_scm</span>(</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">object     =</span> deep_scm_fit,</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">newdata    =</span> X_val[<span class="fu">seq_len</span>(n_int), , ],</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">target_var =</span> source_idx,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">do_values  =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">1.0</span>, <span class="fl">1.0</span>)</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>scm_delta <span class="ot">&lt;-</span> int_result<span class="sc">$</span>delta[target_idx]</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"DeepSCM intervention delta on %s: %.4f</span><span class="sc">\n</span><span class="st">"</span>, target_name, scm_delta))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DeepSCM intervention delta on Industrials: 0.5164</code></pre>
+</div>
+</div>
+<section id="intervention-effect-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="intervention-effect-distribution">Intervention Effect Distribution</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>diff_vec <span class="ot">&lt;-</span> int_result<span class="sc">$</span>pred_high[, target_idx] <span class="sc">-</span> int_result<span class="sc">$</span>pred_low[, target_idx]</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">data.frame</span>(<span class="at">delta =</span> diff_vec), <span class="fu">aes</span>(<span class="at">x =</span> delta)) <span class="sc">+</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>, <span class="at">fill =</span> <span class="st">"#7570b3"</span>, <span class="at">colour =</span> <span class="st">"white"</span>, <span class="at">alpha =</span> <span class="fl">0.85</span>) <span class="sc">+</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">mean</span>(diff_vec), <span class="at">colour =</span> <span class="st">"#e7298a"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>,</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>,</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">x     =</span> <span class="fu">mean</span>(diff_vec) <span class="sc">+</span> <span class="fl">0.02</span> <span class="sc">*</span> <span class="fu">diff</span>(<span class="fu">range</span>(diff_vec)),</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">y     =</span> <span class="cn">Inf</span>, <span class="at">vjust =</span> <span class="dv">2</span>,</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">label =</span> <span class="fu">sprintf</span>(<span class="st">"Mean delta = %.4f"</span>, <span class="fu">mean</span>(diff_vec)),</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">colour =</span> <span class="st">"#e7298a"</span>, <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">sprintf</span>(</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">"DeepSCM Intervention: do(%s) → %s response distribution"</span>,</span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>      source_name, target_name</span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">sprintf</span>(<span class="st">"Predicted Δ%s under do(%s=+1) − do(%s=−1)"</span>,</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>                target_name, source_name, source_name),</span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Count"</span></span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb40-21"><a href="#cb40-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/plot-intervention-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="dynotears-dag-constrained-structure-learning" class="level2">
+<h2 class="anchored" data-anchor-id="dynotears-dag-constrained-structure-learning">DYNOTEARS — DAG-Constrained Structure Learning</h2>
+<p><strong>DYNOTEARS</strong> extends NOTEARS-style continuous optimization to time-series causal discovery by modelling lagged dependencies while enforcing acyclicity on the learned structure.</p>
+<p>For lag order <span class="math inline">\(p\)</span>, the formulation is:</p>
+<p><span class="math display">\[X_t = W^{(0)}X_t + \sum_{k=1}^{p} W^{(k)} X_{t-k} + \epsilon_t,\]</span></p>
+<p>where <span class="math inline">\(W^{(0)}\)</span> captures same-time (instantaneous) effects and <span class="math inline">\(W^{(k)}\)</span> captures directed lag-<span class="math inline">\(k\)</span> effects. The augmented-Lagrangian objective penalizes reconstruction error, L1 sparsity, and DAG violation simultaneously.</p>
+<p>Why useful in practice:</p>
+<ul>
+<li>Produces <strong>interpretable directed graphs</strong> with explicit lag structure.</li>
+<li>Provides DAG-regularized structure learning in a differentiable framework.</li>
+<li>Useful when structure-learning rigor is needed beyond purely predictive models.</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Training DYNOTEARS ...</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Training DYNOTEARS ...</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>dyno_fit <span class="ot">&lt;-</span> <span class="fu">dynotears</span>(</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x_seq      =</span> X_tr,</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_mat      =</span> Y_tr,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">lag        =</span> LAG,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_epochs   =</span> <span class="dv">300</span>L,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">batch_size =</span> <span class="dv">256</span>L,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">lr         =</span> <span class="fl">3e-3</span>,</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_l1  =</span> <span class="fl">0.02</span>,</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">rho_init   =</span> <span class="fl">1.0</span>,</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">threshold  =</span> <span class="fl">0.08</span>,</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose    =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">device     =</span> device_use</span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>A_dynotears <span class="ot">&lt;-</span> dyno_fit<span class="sc">$</span>A_binary</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>W_agg       <span class="ot">&lt;-</span> dyno_fit<span class="sc">$</span>W_agg</span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(A_dynotears) <span class="ot">&lt;-</span> VAR_NAMES</span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(A_dynotears) <span class="ot">&lt;-</span> VAR_NAMES</span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-20"><a href="#cb43-20" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">DYNOTEARS recovered adjacency:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+DYNOTEARS recovered adjacency:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(A_dynotears)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             Financials Energy Technology Healthcare Industrials ConsumerDisc
+Financials            0      0          0          0           0            0
+Energy                0      0          0          0           0            0
+Technology            1      0          0          0           0            0
+Healthcare            1      0          0          0           0            0
+Industrials           0      0          0          0           0            0
+ConsumerDisc          1      0          0          0           0            0
+ConsumerStap          1      0          0          0           0            0
+Utilities             1      0          0          0           0            0
+             ConsumerStap Utilities
+Financials              0         0
+Energy                  0         0
+Technology              0         0
+Healthcare              0         0
+Industrials             0         0
+ConsumerDisc            0         0
+ConsumerStap            0         0
+Utilities               1         0</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_scm_dag</span>(W_agg, VAR_NAMES, <span class="st">"DYNOTEARS Aggregated Lag Weights |W|"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/train-dynotears-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="dynotears-training-dynamics" class="level3">
+<h3 class="anchored" data-anchor-id="dynotears-training-dynamics">DYNOTEARS Training Dynamics</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>dt_loss_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">epoch   =</span> <span class="fu">seq_along</span>(dyno_fit<span class="sc">$</span>train_losses),</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">mse     =</span> dyno_fit<span class="sc">$</span>train_losses,</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">dag_h   =</span> dyno_fit<span class="sc">$</span>dag_vals</span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>p_mse <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(dt_loss_df, <span class="fu">aes</span>(<span class="at">x =</span> epoch, <span class="at">y =</span> mse)) <span class="sc">+</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">colour =</span> <span class="st">"#e41a1c"</span>, <span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"DYNOTEARS MSE Loss"</span>, <span class="at">x =</span> <span class="st">"Epoch"</span>, <span class="at">y =</span> <span class="st">"MSE"</span>) <span class="sc">+</span></span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>p_dag <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(dt_loss_df, <span class="fu">aes</span>(<span class="at">x =</span> epoch, <span class="at">y =</span> dag_h)) <span class="sc">+</span></span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">colour =</span> <span class="st">"#377eb8"</span>, <span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fl">1e-3</span>, <span class="at">colour =</span> <span class="st">"red"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"DYNOTEARS DAG Constraint h(W)"</span>, <span class="at">x =</span> <span class="st">"Epoch"</span>,</span>
+<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"|h(W)| (log scale)"</span>) <span class="sc">+</span></span>
+<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a>p_mse <span class="sc">+</span> p_dag</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/plot-dynotears-dynamics-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="graph-recovery-evaluation-and-visual-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="graph-recovery-evaluation-and-visual-comparison">Graph Recovery Evaluation and Visual Comparison</h2>
+<p>This section compares the causal graphs produced by all three models. Since no ground-truth DAG is available for financial return data, we report graph statistics (density, in/out degree) and provide side-by-side visual comparisons.</p>
+<section id="graph-statistics" class="level3">
+<h3 class="anchored" data-anchor-id="graph-statistics">Graph Statistics</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>graph_stats_r <span class="ot">&lt;-</span> <span class="cf">function</span>(A_bin, <span class="at">name =</span> <span class="st">""</span>) {</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  g    <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">graph_from_adjacency_matrix</span>(</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    A_bin, <span class="at">mode =</span> <span class="st">"directed"</span>, <span class="at">weighted =</span> <span class="cn">NULL</span>, <span class="at">diag =</span> <span class="cn">FALSE</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  d_n  <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">gorder</span>(g)</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>  e_n  <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">gsize</span>(g)</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>  dens <span class="ot">&lt;-</span> <span class="cf">if</span> (d_n <span class="sc">&gt;</span> <span class="dv">1</span>) e_n <span class="sc">/</span> (d_n <span class="sc">*</span> (d_n <span class="sc">-</span> <span class="dv">1</span>)) <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">model          =</span> name,</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">nodes          =</span> d_n,</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">edges          =</span> e_n,</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">density        =</span> <span class="fu">round</span>(dens, <span class="dv">4</span>),</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">is_dag         =</span> igraph<span class="sc">::</span><span class="fu">is_dag</span>(g),</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_in_degree  =</span> <span class="cf">if</span> (d_n <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">max</span>(igraph<span class="sc">::</span><span class="fu">degree</span>(g, <span class="at">mode =</span> <span class="st">"in"</span>))  <span class="cf">else</span> <span class="dv">0</span>L,</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_out_degree =</span> <span class="cf">if</span> (d_n <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">max</span>(igraph<span class="sc">::</span><span class="fu">degree</span>(g, <span class="at">mode =</span> <span class="st">"out"</span>)) <span class="cf">else</span> <span class="dv">0</span>L</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>method_graphs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"DeepSCM (Fixed)"</span>      <span class="ot">=</span> A_fixed,</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"DECI (Thresholded)"</span>   <span class="ot">=</span> A_bin,</span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"DYNOTEARS"</span>            <span class="ot">=</span> A_dynotears</span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>stats_all <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(method_graphs), <span class="cf">function</span>(nm) {</span>
+<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">graph_stats_r</span>((method_graphs[[nm]] <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">*</span> <span class="dv">1</span>L, nm)</span>
+<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(stats_all) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-30"><a href="#cb49-30" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Graph statistics:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Graph statistics:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(stats_all)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               model nodes edges density is_dag max_in_degree max_out_degree
+1    DeepSCM (Fixed)     8    56  1.0000  FALSE             7              7
+2 DECI (Thresholded)     8    50  0.8929  FALSE             7              7
+3          DYNOTEARS     8     6  0.1071   TRUE             5              2</code></pre>
+</div>
+</div>
+</section>
+<section id="adjacency-heatmap-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="adjacency-heatmap-comparison">Adjacency Heatmap Comparison</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>plot_comparison_heatmaps <span class="ot">&lt;-</span> <span class="cf">function</span>(mats, names_vec, var_names) {</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>  plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_along</span>(mats), <span class="cf">function</span>(i) {</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    A <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(mats[[i]])</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">diag</span>(A) <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rownames</span>(A) <span class="ot">&lt;-</span> var_names</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">colnames</span>(A) <span class="ot">&lt;-</span> var_names</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>    df <span class="ot">&lt;-</span> reshape2<span class="sc">::</span><span class="fu">melt</span>(A, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">colnames</span>(df) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Target"</span>, <span class="st">"Source"</span>, <span class="st">"Weight"</span>)</span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>    df<span class="sc">$</span>Target <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Target, <span class="at">levels =</span> <span class="fu">rev</span>(var_names))</span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>    df<span class="sc">$</span>Source <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Source, <span class="at">levels =</span> var_names)</span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> Source, <span class="at">y =</span> Target, <span class="at">fill =</span> Weight)) <span class="sc">+</span></span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_tile</span>(<span class="at">colour =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">round</span>(Weight, <span class="dv">2</span>)), <span class="at">size =</span> <span class="fl">2.6</span>, <span class="at">colour =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"white"</span>, <span class="at">high =</span> <span class="st">"#D94F3D"</span>,</span>
+<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>                          <span class="at">na.value =</span> <span class="st">"grey90"</span>, <span class="at">name =</span> <span class="st">"Weight"</span>) <span class="sc">+</span></span>
+<span id="cb53-16"><a href="#cb53-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">title =</span> names_vec[[i]], <span class="at">x =</span> <span class="st">"Source (cause)"</span>, <span class="at">y =</span> <span class="st">"Target (effect)"</span>) <span class="sc">+</span></span>
+<span id="cb53-17"><a href="#cb53-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb53-18"><a href="#cb53-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span>
+<span id="cb53-19"><a href="#cb53-19" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb53-20"><a href="#cb53-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(patchwork<span class="sc">::</span>wrap_plots, <span class="fu">c</span>(plots, <span class="fu">list</span>(<span class="at">ncol =</span> <span class="dv">3</span>)))</span>
+<span id="cb53-21"><a href="#cb53-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb53-22"><a href="#cb53-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-23"><a href="#cb53-23" aria-hidden="true" tabindex="-1"></a>heatmap_mats  <span class="ot">&lt;-</span> <span class="fu">list</span>(A_fixed, A_soft, W_agg)</span>
+<span id="cb53-24"><a href="#cb53-24" aria-hidden="true" tabindex="-1"></a>heatmap_names <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="st">"DeepSCM Fixed Graph"</span>, <span class="st">"DECI Soft Adjacency"</span>,</span>
+<span id="cb53-25"><a href="#cb53-25" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"DYNOTEARS |W| Aggregated"</span>)</span>
+<span id="cb53-26"><a href="#cb53-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-27"><a href="#cb53-27" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_comparison_heatmaps</span>(heatmap_mats, heatmap_names, VAR_NAMES)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/heatmap-comparison-1.png" class="img-fluid figure-img" width="1152"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="causal-graph-network-diagrams" class="level3">
+<h3 class="anchored" data-anchor-id="causal-graph-network-diagrams">Causal Graph Network Diagrams</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>draw_causal_igraph <span class="ot">&lt;-</span> <span class="cf">function</span>(A_bin, title, var_names,</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>                                <span class="at">node_colour =</span> <span class="st">"steelblue"</span>) {</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  A_bin <span class="ot">&lt;-</span> (<span class="fu">as.matrix</span>(A_bin) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">*</span> <span class="dv">1</span>L</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(A_bin) <span class="ot">&lt;-</span> <span class="dv">0</span>L</span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">graph_from_adjacency_matrix</span>(</span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>    A_bin, <span class="at">mode =</span> <span class="st">"directed"</span>, <span class="at">weighted =</span> <span class="cn">NULL</span>, <span class="at">diag =</span> <span class="cn">FALSE</span></span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>name   <span class="ot">&lt;-</span> var_names</span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>color  <span class="ot">&lt;-</span> node_colour</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>label  <span class="ot">&lt;-</span> var_names</span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>size   <span class="ot">&lt;-</span> <span class="dv">28</span></span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>label.color <span class="ot">&lt;-</span> <span class="st">"white"</span></span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>label.cex   <span class="ot">&lt;-</span> <span class="fl">0.8</span></span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">E</span>(g)<span class="sc">$</span>color       <span class="ot">&lt;-</span> <span class="st">"grey50"</span></span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">E</span>(g)<span class="sc">$</span>arrow.size  <span class="ot">&lt;-</span> <span class="fl">0.6</span></span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-17"><a href="#cb54-17" aria-hidden="true" tabindex="-1"></a>  old_par <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">0</span>))</span>
+<span id="cb54-18"><a href="#cb54-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(g,</span>
+<span id="cb54-19"><a href="#cb54-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">layout     =</span> igraph<span class="sc">::</span><span class="fu">layout_in_circle</span>(g),</span>
+<span id="cb54-20"><a href="#cb54-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">main       =</span> title,</span>
+<span id="cb54-21"><a href="#cb54-21" aria-hidden="true" tabindex="-1"></a>       <span class="at">vertex.frame.color =</span> <span class="st">"white"</span>)</span>
+<span id="cb54-22"><a href="#cb54-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(old_par)</span>
+<span id="cb54-23"><a href="#cb54-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb54-24"><a href="#cb54-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-25"><a href="#cb54-25" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>))</span>
+<span id="cb54-26"><a href="#cb54-26" aria-hidden="true" tabindex="-1"></a><span class="fu">draw_causal_igraph</span>(A_fixed,     <span class="st">"DeepSCM (Fixed Graph)"</span>,     VAR_NAMES, <span class="st">"steelblue"</span>)</span>
+<span id="cb54-27"><a href="#cb54-27" aria-hidden="true" tabindex="-1"></a><span class="fu">draw_causal_igraph</span>(A_bin,       <span class="st">"DECI (Thresholded)"</span>,        VAR_NAMES, <span class="st">"darkorange"</span>)</span>
+<span id="cb54-28"><a href="#cb54-28" aria-hidden="true" tabindex="-1"></a><span class="fu">draw_causal_igraph</span>(A_dynotears, <span class="st">"DYNOTEARS"</span>,                 VAR_NAMES, <span class="st">"mediumpurple"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/network-diagram-comparison-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="training-loss-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="training-loss-comparison">Training Loss Comparison</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>max_ep_scm  <span class="ot">&lt;-</span> <span class="fu">length</span>(deep_scm_fit<span class="sc">$</span>train_losses)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>max_ep_deci <span class="ot">&lt;-</span> <span class="fu">length</span>(deci_fit<span class="sc">$</span>train_losses)</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>df_losses <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">epoch  =</span> <span class="fu">seq_len</span>(max_ep_scm),</span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">loss   =</span> deep_scm_fit<span class="sc">$</span>train_losses,</span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">model  =</span> <span class="st">"DeepSCM"</span>),</span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">epoch  =</span> <span class="fu">seq_len</span>(max_ep_deci),</span>
+<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">loss   =</span> deci_fit<span class="sc">$</span>train_losses,</span>
+<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">model  =</span> <span class="st">"DECI"</span>)</span>
+<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_losses, <span class="fu">aes</span>(<span class="at">x =</span> epoch, <span class="at">y =</span> loss, <span class="at">colour =</span> model)) <span class="sc">+</span></span>
+<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"DeepSCM"</span> <span class="ot">=</span> <span class="st">"#1b9e77"</span>, <span class="st">"DECI"</span> <span class="ot">=</span> <span class="st">"#d95f02"</span>)) <span class="sc">+</span></span>
+<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb56-17"><a href="#cb56-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Training Loss: DeepSCM vs DECI"</span>,</span>
+<span id="cb56-18"><a href="#cb56-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Epoch"</span>,</span>
+<span id="cb56-19"><a href="#cb56-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Loss"</span>,</span>
+<span id="cb56-20"><a href="#cb56-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">colour =</span> <span class="cn">NULL</span></span>
+<span id="cb56-21"><a href="#cb56-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb56-22"><a href="#cb56-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/training-loss-comparison-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="model-validation-prediction-error-on-held-out-data" class="level3">
+<h3 class="anchored" data-anchor-id="model-validation-prediction-error-on-held-out-data">Model Validation: Prediction Error on Held-Out Data</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>pred_scm   <span class="ot">&lt;-</span> <span class="fu">predict</span>(deep_scm_fit, <span class="at">newdata =</span> X_val)</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>pred_deci  <span class="ot">&lt;-</span> <span class="fu">predict</span>(deci_fit,     <span class="at">newdata =</span> X_val)</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>pred_dyno  <span class="ot">&lt;-</span> <span class="fu">predict</span>(dyno_fit,     <span class="at">newdata =</span> X_val)</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>mse_scm  <span class="ot">&lt;-</span> <span class="fu">mean</span>((pred_scm  <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>mse_deci <span class="ot">&lt;-</span> <span class="fu">mean</span>((pred_deci <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>mse_dyno <span class="ot">&lt;-</span> <span class="fu">mean</span>((pred_dyno <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>val_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> <span class="fu">c</span>(<span class="st">"DeepSCM"</span>, <span class="st">"DECI"</span>, <span class="st">"DYNOTEARS"</span>),</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">val_mse =</span> <span class="fu">c</span>(mse_scm, mse_deci, mse_dyno)</span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-14"><a href="#cb57-14" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Validation MSE (next-step reconstruction):</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Validation MSE (next-step reconstruction):</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(val_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      model   val_mse
+1   DeepSCM 1.0088179
+2      DECI 1.1097789
+3 DYNOTEARS 0.5761586</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(val_df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(model, val_mse), <span class="at">y =</span> val_mse, <span class="at">fill =</span> model)) <span class="sc">+</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">alpha =</span> <span class="fl">0.85</span>) <span class="sc">+</span></span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"DeepSCM"</span>  <span class="ot">=</span> <span class="st">"#1b9e77"</span>,</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"DECI"</span>     <span class="ot">=</span> <span class="st">"#d95f02"</span>,</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"DYNOTEARS"</span> <span class="ot">=</span> <span class="st">"#7570b3"</span></span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Validation MSE by Model"</span>,</span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x     =</span> <span class="cn">NULL</span>,</span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">y     =</span> <span class="st">"Mean Squared Error"</span></span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb61-14"><a href="#cb61-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-4-02-DeepCausalML-timeseries-structural-causal-model-SMC-r_files/figure-html/validation-mse-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="notes-and-extensions" class="level2">
+<h2 class="anchored" data-anchor-id="notes-and-extensions">Notes and Extensions</h2>
+<ul>
+<li>This notebook is a <strong>pedagogical</strong> implementation of three complementary deep causal discovery approaches on real-world time-series data.</li>
+<li>The <strong>learned adjacencies</strong> are soft during optimization; thresholding is used for interpretability and should be treated with caution for downstream causal claims.</li>
+<li><strong>Hyperparameters</strong> (<code>LAG</code>, graph threshold, DAG/sparsity penalties) strongly affect the discovered structure; domain knowledge and sensitivity analysis are essential for robust conclusions.</li>
+<li>For stronger causal claims, combine with <strong>domain priors</strong> and <strong>interventional validation</strong>.</li>
+<li>Possible extensions:
+<ul>
+<li><strong>Augmented Lagrangian</strong> DAG optimization (tighter acyclicity enforcement).</li>
+<li><strong>TARNet / Dragonnet</strong> treatment heads that consume the parents of a target variable from the learned graph.</li>
+<li><strong>Non-linear SEM decoders</strong> with normalizing flows for richer structural equations.</li>
+<li><strong>Bootstrap uncertainty</strong> on the adjacency matrix.</li>
+</ul></li>
+</ul>
+</section>
+<section id="summary-and-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusions">Summary and Conclusions</h2>
+<p>In this notebook, we explored three deep learning-based approaches to structural causal modelling on S&amp;P 500 sector ETF multivariate time-series:</p>
+<ul>
+<li><p><strong>DeepSCM</strong> uses a fixed correlation-derived adjacency matrix and learns nonlinear structural equations via variational per-variable noise encoders. Its ELBO training is stable and fast, making it a useful baseline when a credible prior graph is available.</p></li>
+<li><p><strong>DECI</strong> jointly learns both the causal graph structure and structural equations using a NOTEARS acyclicity penalty <span class="math inline">\(h(A) = \operatorname{tr}(e^{A \odot A}) - d\)</span> and an ELBO-style variational objective. The soft adjacency matrix can be thresholded to obtain an interpretable DAG.</p></li>
+<li><p><strong>DYNOTEARS</strong> extends NOTEARS to the time-series setting with explicit lag-specific weight matrices <span class="math inline">\(W^{(k)}\)</span>, enforcing acyclicity via an augmented-Lagrangian scheme. Its output is a multi-lag directed graph useful for temporal influence analysis.</p></li>
+</ul>
+<p><strong>Key takeaways:</strong></p>
+<ol type="1">
+<li>Learning causal structure from time series is feasible with deep methods and provides interpretable models of temporal influence.</li>
+<li>Deep SCMs enable interventional queries (<span class="math inline">\(do\)</span>-operations) supporting actionable insights in economics, finance, and genomics.</li>
+<li>The NOTEARS acyclicity constraint — and its augmented-Lagrangian extension — is a unifying building block across all three methods.</li>
+<li>Thresholding, regularization, and domain knowledge are crucial for meaningful graphical outputs; no single set of hyperparameters is universally optimal.</li>
+<li>{RCausalML}’s <code>deep_scm()</code>, <code>deci_model()</code>, and <code>dynotears()</code> provide clean torch-backed interfaces for all three methods with minimal setup.</li>
+</ol>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">Resources</h2>
+<section id="primary-references" class="level3">
+<h3 class="anchored" data-anchor-id="primary-references">Primary references</h3>
+<ul>
+<li><strong>DECI (NeurIPS 2022):</strong> <a href="https://arxiv.org/abs/2202.02195">Deep End-to-End Causal Inference</a> — the primary reference for the joint graph + SEM learning approach.</li>
+<li><strong>DYNOTEARS:</strong> <a href="https://arxiv.org/abs/2101.02195">Structure Learning from Time Series with False Discovery Control</a> — time-series extension of NOTEARS with lag structure.</li>
+<li><strong>NOTEARS:</strong> <a href="https://arxiv.org/abs/1803.01422">DAGs with NO TEARS: Continuous Optimization for Structure Learning</a> — the acyclicity characterization <span class="math inline">\(h(W)=\mathrm{tr}(e^{W\odot W})-d\)</span> used in all methods.</li>
+</ul>
+</section>
+<section id="background-texts" class="level3">
+<h3 class="anchored" data-anchor-id="background-texts">Background texts</h3>
+<ul>
+<li><strong>Causality (Judea Pearl):</strong> <a href="https://bayes.cs.ucla.edu/BOOK-2K/">Causality: Models, Reasoning and Inference</a> — definitive reference for SCMs and Pearl’s hierarchy.</li>
+<li><strong>Elements of Causal Inference (Peters, Janzing &amp; Schölkopf):</strong> <a href="https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/">MIT Press</a> — rigorous treatment of SCMs and identifiability.</li>
+<li><strong>The Book of Why (J. Pearl &amp; D. Mackenzie)</strong> — accessible introduction to causal reasoning.</li>
+</ul>
+</section>
+<section id="software-and-datasets" class="level3">
+<h3 class="anchored" data-anchor-id="software-and-datasets">Software and datasets</h3>
+<ul>
+<li><strong>DoWhy:</strong> <a href="https://github.com/py-why/dowhy">github.com/py-why/dowhy</a> — Python library for causal inference.</li>
+<li><strong>R torch:</strong> <a href="https://torch.mlverse.org/" class="uri">https://torch.mlverse.org/</a> — PyTorch bindings for R used by {RCausalML}.</li>
+<li><strong>tidyquant:</strong> <a href="https://business-science.github.io/tidyquant/" class="uri">https://business-science.github.io/tidyquant/</a> — tidy finance data retrieval.</li>
+<li><strong>awesome-causal-inference:</strong> <a href="https://github.com/imirzadeh/awesome-causal-inference">github.com/imirzadeh/awesome-causal-inference</a> — curated resource list.</li>
+</ul>
+</section>
+<section id="companion-notebooks-in-this-series" class="level3">
+<h3 class="anchored" data-anchor-id="companion-notebooks-in-this-series">Companion notebooks in this series</h3>
+<ul>
+<li><code>05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.qmd</code> — Neural Granger Causality (cMLP, cLSTM, SRU, NRI) on the same sector ETF universe.</li>
+<li><code>05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.qmd</code> — CASTLE: simultaneous supervised prediction and causal graph discovery.</li>
+<li><code>05-03-04-DeepCausalML-DAGMA-NoCurl-r.qmd</code> — DAGMA and DAG-NoCurl: acyclicity via log-det and curl-free constraints.</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners">Scientific Terminology for Beginners</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Simple explanation</th>
+<th>Beginner example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SCM (Structural Causal Model)</td>
+<td>A mathematical description of how variables cause each other.</td>
+<td><span class="math inline">\(\text{Rain} \rightarrow \text{WetGrass}\)</span> with a structural equation for each.</td>
+</tr>
+<tr class="even">
+<td>DAG (Directed Acyclic Graph)</td>
+<td>A graph of arrows with no cycles; arrows point from cause to effect.</td>
+<td>A flow chart with no loops.</td>
+</tr>
+<tr class="odd">
+<td>Structural equation</td>
+<td>A function that defines one variable as a (possibly nonlinear) function of its causes plus noise.</td>
+<td><span class="math inline">\(Y = f_\theta(X, U)\)</span> where <span class="math inline">\(U\)</span> is unobserved noise.</td>
+</tr>
+<tr class="even">
+<td>ELBO (Evidence Lower Bound)</td>
+<td>A variational lower bound on the log-likelihood; optimizing it trains VAE-style models.</td>
+<td>Training loss for variational encoders.</td>
+</tr>
+<tr class="odd">
+<td>KL divergence</td>
+<td>A measure of how different two probability distributions are.</td>
+<td>Penalty that keeps the learned noise close to a standard normal.</td>
+</tr>
+<tr class="even">
+<td>Acyclicity constraint <span class="math inline">\(h(A)\)</span></td>
+<td>A differentiable condition that is zero iff the adjacency matrix <span class="math inline">\(A\)</span> encodes a DAG.</td>
+<td>Acts like a “no-loop detector” during training.</td>
+</tr>
+<tr class="odd">
+<td>Soft adjacency</td>
+<td>Values in <span class="math inline">\([0, 1]\)</span> representing edge probabilities during optimization; thresholded to 0/1 after training.</td>
+<td>Like a fuzzy graph that gradually becomes crisp.</td>
+</tr>
+<tr class="even">
+<td>Intervention / do-operator</td>
+<td>Setting a variable to a fixed value and observing downstream effects, bypassing its normal causes.</td>
+<td>Giving a patient a drug regardless of their normal prescription pattern.</td>
+</tr>
+<tr class="odd">
+<td>ATE (Average Treatment Effect)</td>
+<td>Mean difference in outcome when an intervention is applied vs.&nbsp;not applied.</td>
+<td>Average improvement in recovery rate due to a new treatment.</td>
+</tr>
+<tr class="even">
+<td>Augmented Lagrangian</td>
+<td>An optimization method that enforces hard constraints (like acyclicity) through penalty terms with adaptive multipliers.</td>
+<td>Iteratively increases the “cost” of violating the no-cycle rule.</td>
+</tr>
+<tr class="odd">
+<td>Lag order <span class="math inline">\(p\)</span></td>
+<td>Number of previous time steps used as predictors.</td>
+<td>If <span class="math inline">\(p=5\)</span>, today’s value depends on the last 5 days.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>deepcausalml-dagma-nocurl-r</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/clipboard/clipboard.min.js"></script>
+<script src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/quarto-html/popper.min.js"></script>
+<script src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/quarto-html/anchor.min.js"></script>
+<link href="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/quarto-html/quarto-syntax-highlighting-adfb2833bc15652ec5881dc6381ea988.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/libs/bootstrap/bootstrap-58dc13426415cc10754fe96abed33356.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="dagma-and-dag-nocurl-for-causal-discovery" class="level1 unnumbered">
+<h1 class="unnumbered">DAGMA and DAG-NoCurl for Causal Discovery</h1>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>Causal discovery is the task of inferring a <strong>Directed Acyclic Graph (DAG)</strong> from observational data, where each directed edge <code>X -&gt; Y</code> encodes a direct causal influence of variable <code>X</code> on variable <code>Y</code>. Unlike standard statistical models that capture correlation, causal graphs enable counterfactual reasoning - the kind of <em>“what would have happened if…”</em> question central to fields like medicine, economics, and policy evaluation.</p>
+<p>The <strong>IHDP (Infant Health and Development Program)</strong> dataset is a benchmark for causal inference. It tracks 25 covariates (child and maternal characteristics) and a binary treatment (specialist home visits), making it an excellent playground for causal structure learning.</p>
+</section>
+<section id="dagma" class="level2">
+<h2 class="anchored" data-anchor-id="dagma">DAGMA</h2>
+<p><strong>DAGMA</strong> (DAG via M-matrices for Acyclicity) was introduced by Bello, Squires, and Bhattacharya (2022). Its core insight is a novel algebraic characterization of acyclicity that avoids numerical instability problems in earlier methods.</p>
+<section id="how-it-works" class="level4">
+<h4 class="anchored" data-anchor-id="how-it-works">How It Works</h4>
+<p>Previous approaches like NOTEARS used the trace-exponential acyclicity constraint:</p>
+<p><span class="math display">\[h(W) = \text{tr}(e^{W \odot W}) - d = 0\]</span></p>
+<p>This function can exhibit vanishing gradients far from a DAG and is sensitive to large edge weights. DAGMA replaces this with a <strong>log-determinant</strong> penalty based on M-matrices:</p>
+<p><span class="math display">\[h_s(W) = -\log \det(sI - W \odot W) + d \log s\]</span></p>
+<p>where <code>s &gt; 0</code> is a hyperparameter, <code>I</code> is the identity matrix, and <code>d</code> is the number of variables. The full optimization problem is:</p>
+<p><span class="math display">\[\min_{W} \; \mathcal{L}(W) + \lambda \|W\|_1 \quad \text{subject to} \quad h_s(W) = 0\]</span></p>
+</section>
+<section id="key-advantages" class="level4">
+<h4 class="anchored" data-anchor-id="key-advantages">Key Advantages</h4>
+<ul>
+<li><strong>Numerically stable</strong>: The log-det barrier is well-conditioned even for dense weight matrices.</li>
+<li><strong>Faster convergence</strong>: Empirically 10-20x faster than NOTEARS on moderate-sized graphs.</li>
+<li><strong>Supports nonlinear extensions</strong>: A neural-network variant (DAGMA-MLP) handles non-Gaussian, nonlinear data.</li>
+</ul>
+</section>
+</section>
+<section id="dag-nocurl" class="level2">
+<h2 class="anchored" data-anchor-id="dag-nocurl">DAG-NoCurl</h2>
+<p><strong>DAG-NoCurl</strong> (Yu et al., 2021) approaches causal discovery from a fundamentally different angle - <strong>differential geometry</strong>. It parameterizes the graph as a vector field and enforces acyclicity by projecting onto the <strong>curl-free</strong> component of that field.</p>
+<section id="how-it-works-1" class="level3">
+<h3 class="anchored" data-anchor-id="how-it-works-1">How It Works</h3>
+<p>DAG-NoCurl enforces acyclicity via:</p>
+<p><span class="math display">\[W = U^T U - \text{diag}(U^T U)\]</span></p>
+<p>The loss is:</p>
+<p><span class="math display">\[\min_{U} \; \mathcal{L}(W(U)) + \lambda \|W(U)\|_1 + \mu \cdot \text{curl}(W(U))\]</span></p>
+</section>
+<section id="key-advantages-1" class="level3">
+<h3 class="anchored" data-anchor-id="key-advantages-1">Key Advantages</h3>
+<ul>
+<li><strong>Constraint-free optimization</strong>: No augmented Lagrangian or inner/outer loops.</li>
+<li><strong>Differentiable end-to-end</strong>: Amenable to joint training with downstream prediction heads.</li>
+<li><strong>Geometric intuition</strong>: The curl-free projection has a clean theoretical foundation.</li>
+</ul>
+</section>
+<section id="applications" class="level3">
+<h3 class="anchored" data-anchor-id="applications">Applications</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Application</th>
+<th>How DAGMA / DAG-NoCurl Helps</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Healthcare (IHDP)</td>
+<td>Discover which covariates causally precede treatment and outcome</td>
+</tr>
+<tr class="even">
+<td>Genomics</td>
+<td>Infer gene regulatory networks from expression data</td>
+</tr>
+<tr class="odd">
+<td>Economics</td>
+<td>Identify causal chains in macroeconomic indicators</td>
+</tr>
+<tr class="even">
+<td>Fairness auditing</td>
+<td>Detect spurious vs.&nbsp;causal paths to model predictions</td>
+</tr>
+<tr class="odd">
+<td>Anomaly detection</td>
+<td>Structural changes in the DAG signal distributional shifts</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="limitations" class="level3">
+<h3 class="anchored" data-anchor-id="limitations">Limitations</h3>
+<ul>
+<li><strong>Scalability</strong>: Both methods scale roughly as <span class="math inline">\(O(d^3)\)</span>; graphs beyond ~200 nodes become expensive.</li>
+<li><strong>Identifiability</strong>: Without distributional assumptions, the true DAG is only identifiable up to its Markov equivalence class.</li>
+<li><strong>Linear assumption</strong>: Default implementations assume linear relationships.</li>
+<li><strong>Finite-sample issues</strong>: High-dimensional, small-sample data may cause overfitting.</li>
+<li><strong>Causal sufficiency</strong>: Both assume no hidden confounders - a strong assumption in observational health data.</li>
+</ul>
+</section>
+</section>
+<section id="implementation-in-r" class="level2">
+<h2 class="anchored" data-anchor-id="implementation-in-r">Implementation in R</h2>
+<p>We use {RCuasalML}s <code>CASTLE</code> implementation (torch-based when available, else a placeholder) to fit the model on the IHDP semi-synthetic dataset.</p>
+<section id="load-and-check-required-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-and-check-required-libraries">Load and Check Required Libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'tidyverse'</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">'plyr'</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'RCausalML'</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'causaldata'</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">'torch'</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">'dagitty'</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">'ggdag'</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">'igraph'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="install-missing-packages" class="level3">
+<h3 class="anchored" data-anchor-id="install-missing-packages">Install Missing Packages</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install missing packages</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#new_packages &lt;- packages[!(packages %in% installed.packages()[,"Package"])]</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#if(length(new_packages)) install.packages(new_packages)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="verify-installation" class="level3">
+<h3 class="anchored" data-anchor-id="verify-installation">Verify Installation</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify installation</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Installed packages:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Installed packages:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">sapply</span>(packages, requireNamespace, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> tidyverse       plyr  RCausalML causaldata      torch    dagitty      ggdag 
+      TRUE       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE 
+    igraph 
+      TRUE </code></pre>
+</div>
+</div>
+</section>
+<section id="load-required-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-required-libraries">Load Required Libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># When rendering from package root, use local RCausalML (so causal_tree fixes are used)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="st">"DESCRIPTION"</span>) <span class="sc">&amp;&amp;</span> <span class="fu">requireNamespace</span>(<span class="st">"devtools"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">try</span>(devtools<span class="sc">::</span><span class="fu">load_all</span>(<span class="st">"."</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">lapply</span>(packages, <span class="cf">function</span>(pkg) {</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(pkg, <span class="at">character.only =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>run_fast <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>device_use <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">42</span>L</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">"torch"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  device_use <span class="ot">&lt;-</span> <span class="cf">if</span> (torch<span class="sc">::</span><span class="fu">cuda_is_available</span>()) <span class="st">"cuda"</span> <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(SEED)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">"torch"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  torch<span class="sc">::</span><span class="fu">torch_manual_seed</span>(SEED)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure DAGMA helpers are available in notebook sessions.</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">exists</span>(<span class="st">"dagmaLinear"</span>, <span class="at">mode =</span> <span class="st">"function"</span>)) {</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  root_candidates <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"."</span>, <span class="st">".."</span>, <span class="st">"../.."</span>, <span class="st">"../../.."</span>, <span class="st">"../../../.."</span>, <span class="st">"../../../../.."</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  src_root <span class="ot">&lt;-</span> root_candidates[</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">vapply</span>(</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>      root_candidates,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(p) <span class="fu">file.exists</span>(<span class="fu">file.path</span>(p, <span class="st">"R"</span>, <span class="st">"causalDeepNet.R"</span>)),</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">logical</span>(<span class="dv">1</span>)</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  ][<span class="dv">1</span>]</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(src_root)) {</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">source</span>(<span class="fu">file.path</span>(src_root, <span class="st">"R"</span>, <span class="st">"causalDeepNet.R"</span>))</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="data-loading-and-preprocessing" class="level3">
+<h3 class="anchored" data-anchor-id="data-loading-and-preprocessing">Data Loading and Preprocessing &lt;</h3>
+<p>The IHDP files on the causalml repo are <strong><code>ihdp_npci_1.csv</code> … <code>ihdp_npci_9.csv</code></strong> (nine replicates; there is no <code>_10</code>). We load them, stack, optionally replicate rows to match CEVAE/GANITE-style scale, and split train/test.</p>
+<p><strong>Column layout:</strong> <code>treatment</code>, <code>y_factual</code>, <code>y_cfactual</code>, <code>mu0</code>, <code>mu1</code>, <code>x1</code>…<code>x25</code> (6 continuous covariates, 19 binary).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_loading_ihdp <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">train_rate =</span> <span class="fl">0.8</span>, <span class="at">replications =</span> <span class="dv">100</span>L) {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  base_url <span class="ot">&lt;-</span> <span class="st">"https://raw.githubusercontent.com/uber/causalml/master/docs/examples/data"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  local_dirs <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inst/examples/data"</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inst/exdata"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">file.path</span>(<span class="st">".."</span>, <span class="st">".."</span>, <span class="st">"examples"</span>, <span class="st">"data"</span>),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">file.path</span>(<span class="st">".."</span>, <span class="st">".."</span>, <span class="st">".."</span>, <span class="st">".."</span>, <span class="st">"inst"</span>, <span class="st">"examples"</span>, <span class="st">"data"</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  read_one <span class="ot">&lt;-</span> <span class="cf">function</span>(i) {</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    fname <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"ihdp_npci_%d.csv"</span>, i)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    local_path <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (d <span class="cf">in</span> local_dirs) {</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>      p <span class="ot">&lt;-</span> <span class="fu">file.path</span>(d, fname)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">file.exists</span>(p)) {</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        local_path <span class="ot">&lt;-</span> p</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(local_path)) {</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(utils<span class="sc">::</span><span class="fu">read.csv</span>(local_path, <span class="at">header =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    url <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"%s/%s"</span>, base_url, fname)</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>(</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>      utils<span class="sc">::</span><span class="fu">read.csv</span>(url, <span class="at">header =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  dfs <span class="ot">&lt;-</span> <span class="fu">Filter</span>(<span class="fu">Negate</span>(is.null), <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>, read_one))</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(dfs) <span class="sc">==</span> <span class="dv">0</span>L) {</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">warning</span>(</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>      <span class="st">"IHDP files were not found locally and could not be downloaded; using a synthetic IHDP-like fallback dataset."</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>    n <span class="ot">&lt;-</span> <span class="dv">747</span>L <span class="sc">*</span> <span class="dv">9</span>L</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>    x_cont <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> <span class="dv">6</span>L), <span class="at">ncol =</span> <span class="dv">6</span>L)</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>    x_bin <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rbinom</span>(n <span class="sc">*</span> <span class="dv">19</span>L, <span class="at">size =</span> <span class="dv">1</span>L, <span class="at">prob =</span> <span class="fl">0.5</span>), <span class="at">ncol =</span> <span class="dv">19</span>L)</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    x <span class="ot">&lt;-</span> <span class="fu">cbind</span>(x_cont, x_bin)</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">colnames</span>(x) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"x"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">25</span>)</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>    treatment <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="at">size =</span> <span class="dv">1</span>L, <span class="at">prob =</span> <span class="fu">plogis</span>(<span class="fl">0.2</span> <span class="sc">*</span> x[, <span class="dv">1</span>] <span class="sc">-</span> <span class="fl">0.1</span> <span class="sc">*</span> x[, <span class="dv">2</span>]))</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>    mu0 <span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="sc">*</span> x[, <span class="dv">1</span>] <span class="sc">-</span> <span class="fl">0.2</span> <span class="sc">*</span> x[, <span class="dv">2</span>] <span class="sc">+</span> <span class="fl">0.15</span> <span class="sc">*</span> x[, <span class="dv">3</span>] <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fl">0.2</span>)</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>    tau <span class="ot">&lt;-</span> <span class="fl">1.0</span> <span class="sc">+</span> <span class="fl">0.2</span> <span class="sc">*</span> x[, <span class="dv">4</span>] <span class="sc">-</span> <span class="fl">0.15</span> <span class="sc">*</span> x[, <span class="dv">5</span>]</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>    mu1 <span class="ot">&lt;-</span> mu0 <span class="sc">+</span> tau</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>    y_factual <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(treatment <span class="sc">==</span> <span class="dv">1</span>, mu1, mu0) <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fl">0.3</span>)</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>    y_cfactual <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(treatment <span class="sc">==</span> <span class="dv">1</span>, mu0, mu1) <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fl">0.3</span>)</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>    df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>      <span class="at">treatment =</span> treatment,</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>      <span class="at">y_factual =</span> y_factual,</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>      <span class="at">y_cfactual =</span> y_cfactual,</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>      <span class="at">mu0 =</span> mu0,</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>      <span class="at">mu1 =</span> mu1,</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>      x</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>    df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, dfs)</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">colnames</span>(df) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"treatment"</span>, <span class="st">"y_factual"</span>, <span class="st">"y_cfactual"</span>, <span class="st">"mu0"</span>, <span class="st">"mu1"</span>, <span class="fu">paste0</span>(<span class="st">"x"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">25</span>))</span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (replications <span class="sc">&gt;</span> <span class="dv">1</span>L) {</span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>    df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">rep</span>(<span class="fu">list</span>(df), replications))</span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(df[, <span class="fu">paste0</span>(<span class="st">'x'</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">25</span>)])</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>  t <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(df<span class="sc">$</span>treatment)</span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(df<span class="sc">$</span>y_factual)</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>  potential_y <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(df[, <span class="fu">c</span>(<span class="st">'mu0'</span>, <span class="st">'mu1'</span>)])</span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(x)</span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>  idx <span class="ot">&lt;-</span> <span class="fu">sample.int</span>(n)</span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>  n_train <span class="ot">&lt;-</span> <span class="fu">floor</span>(train_rate <span class="sc">*</span> n)</span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>  train_idx <span class="ot">&lt;-</span> idx[<span class="fu">seq_len</span>(n_train)]</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>  test_idx <span class="ot">&lt;-</span> idx[(n_train <span class="sc">+</span> <span class="dv">1</span>L)<span class="sc">:</span>n]</span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>    <span class="at">train_x =</span> x[train_idx, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>    <span class="at">train_t =</span> t[train_idx],</span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">train_y =</span> y[train_idx],</span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>    <span class="at">train_potential_y =</span> potential_y[train_idx, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>    <span class="at">test_x =</span> x[test_idx, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>    <span class="at">test_potential_y =</span> potential_y[test_idx, , <span class="at">drop =</span> <span class="cn">FALSE</span>]</span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a>preprocess_features <span class="ot">&lt;-</span> <span class="cf">function</span>(train_x, test_x) {</span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> train_x</span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> test_x</span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(train_x[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a>  sdv <span class="ot">&lt;-</span> <span class="fu">apply</span>(train_x[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="dv">2</span>, sd)</span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a>  sdv[sdv <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a>  a[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>] <span class="ot">&lt;-</span> <span class="fu">scale</span>(train_x[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">center =</span> mu, <span class="at">scale =</span> sdv)</span>
+<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a>  b[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>] <span class="ot">&lt;-</span> <span class="fu">scale</span>(test_x[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">center =</span> mu, <span class="at">scale =</span> sdv)</span>
+<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">train_x =</span> a, <span class="at">test_x =</span> b, <span class="at">center =</span> mu, <span class="at">scale =</span> sdv)</span>
+<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'Loading IHDP data ...</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Loading IHDP data ...</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ihdp <span class="ot">&lt;-</span> <span class="fu">data_loading_ihdp</span>(<span class="at">train_rate =</span> <span class="fl">0.8</span>, <span class="at">replications =</span> <span class="dv">100</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>proc <span class="ot">&lt;-</span> <span class="fu">preprocess_features</span>(ihdp<span class="sc">$</span>train_x, ihdp<span class="sc">$</span>test_x)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>train_x <span class="ot">&lt;-</span> proc<span class="sc">$</span>train_x</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>train_t <span class="ot">&lt;-</span> ihdp<span class="sc">$</span>train_t</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>train_y <span class="ot">&lt;-</span> ihdp<span class="sc">$</span>train_y</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>train_potential_y <span class="ot">&lt;-</span> ihdp<span class="sc">$</span>train_potential_y</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>test_x <span class="ot">&lt;-</span> proc<span class="sc">$</span>test_x</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>test_potential_y <span class="ot">&lt;-</span> ihdp<span class="sc">$</span>test_potential_y</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'Train size :'</span>, <span class="fu">format</span>(<span class="fu">nrow</span>(train_x), <span class="at">big.mark =</span> <span class="st">','</span>), <span class="st">'</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Train size : 537,840 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'Test  size :'</span>, <span class="fu">format</span>(<span class="fu">nrow</span>(test_x), <span class="at">big.mark =</span> <span class="st">','</span>), <span class="st">'</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Test  size : 134,460 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'Covariates :'</span>, <span class="fu">ncol</span>(train_x), <span class="st">'</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Covariates : 25 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'Treatment prevalence (train): %.3f</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">mean</span>(train_t)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Treatment prevalence (train): 0.187</code></pre>
+</div>
+</div>
+</section>
+<section id="assembling-the-causal-discovery-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="assembling-the-causal-discovery-matrix">Assembling the Causal Discovery Matrix</h3>
+<p>Concatenate covariates, treatment <code>T</code>, and factual outcome <code>Y</code> into <code>Z</code> with shape <code>(N, 27)</code>, then subsample.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Column range</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0 - 24</td>
+<td>Covariates x1 … x25</td>
+</tr>
+<tr class="even">
+<td>25</td>
+<td>Treatment T</td>
+</tr>
+<tr class="odd">
+<td>26</td>
+<td>Outcome Y</td>
+</tr>
+</tbody>
+</table>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>build_causal_matrix <span class="ot">&lt;-</span> <span class="cf">function</span>(x, t, y, <span class="at">subsample =</span> <span class="dv">5000</span>L, <span class="at">seed =</span> SEED) {</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(seed)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  Z <span class="ot">&lt;-</span> <span class="fu">cbind</span>(x, t, y)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  idx <span class="ot">&lt;-</span> <span class="fu">sample.int</span>(<span class="fu">nrow</span>(Z), <span class="at">size =</span> <span class="fu">min</span>(subsample, <span class="fu">nrow</span>(Z)), <span class="at">replace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  Z[idx, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>VAR_NAMES <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">paste0</span>(<span class="st">'x'</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">25</span>), <span class="st">'T'</span>, <span class="st">'Y'</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>Z_train <span class="ot">&lt;-</span> <span class="fu">build_causal_matrix</span>(train_x, train_t, train_y, <span class="at">subsample =</span> <span class="dv">5000</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>Z_test <span class="ot">&lt;-</span> <span class="fu">build_causal_matrix</span>(</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  test_x,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  test_potential_y[, <span class="dv">2</span>] <span class="sc">-</span> test_potential_y[, <span class="dv">1</span>],</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">nrow</span>(test_x)),</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">subsample =</span> <span class="dv">2000</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'Causal matrix shape (train):'</span>, <span class="fu">paste</span>(<span class="fu">dim</span>(Z_train), <span class="at">collapse =</span> <span class="st">' x '</span>), <span class="st">'</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Causal matrix shape (train): 5000 x 27 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'Causal matrix shape (test) :'</span>, <span class="fu">paste</span>(<span class="fu">dim</span>(Z_test), <span class="at">collapse =</span> <span class="st">' x '</span>), <span class="st">'</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Causal matrix shape (test) : 2000 x 27 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'Variable names:'</span>, <span class="fu">paste</span>(VAR_NAMES, <span class="at">collapse =</span> <span class="st">', '</span>), <span class="st">'</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Variable names: x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22, x23, x24, x25, T, Y </code></pre>
+</div>
+</div>
+</section>
+<section id="exploratory-data-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="exploratory-data-analysis">Exploratory Data Analysis</h3>
+<p>Examine pairwise correlations and marginals before structure learning.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>plot_correlation_heatmap <span class="ot">&lt;-</span> <span class="cf">function</span>(Z, names, <span class="at">figsize =</span> <span class="fu">c</span>(<span class="dv">14</span>, <span class="dv">12</span>)) {</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  df_plot <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(Z)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(df_plot) <span class="ot">&lt;-</span> names</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  corr <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">cor</span>(df_plot)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  corrplot<span class="sc">::</span><span class="fu">corrplot</span>(</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    corr,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="st">'upper'</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">'color'</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">tl.cex =</span> <span class="fl">0.6</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">number.cex =</span> <span class="fl">0.5</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">0</span>),</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">'Pairwise Pearson Correlation - IHDP (train subsample)'</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  corr</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">'corrplot'</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">install.packages</span>(<span class="st">'corrplot'</span>, <span class="at">repos =</span> <span class="st">'https://cloud.r-project.org'</span>)</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>corr_matrix <span class="ot">&lt;-</span> <span class="fu">plot_correlation_heatmap</span>(Z_train, VAR_NAMES)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'Top correlations with Treatment (T):</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Top correlations with Treatment (T):</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">sort</span>(<span class="fu">abs</span>(corr_matrix[, <span class="st">'T'</span>][<span class="fu">setdiff</span>(<span class="fu">rownames</span>(corr_matrix), <span class="st">'T'</span>)]), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      x25        x9         Y       x17       x24        x6       x20        x4 
+0.1649862 0.1531443 0.1262681 0.1146345 0.1097084 0.1060404 0.1045925 0.1039032 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'</span><span class="sc">\n</span><span class="st">Top correlations with Outcome (Y):</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Top correlations with Outcome (Y):</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">sort</span>(<span class="fu">abs</span>(corr_matrix[, <span class="st">'Y'</span>][<span class="fu">setdiff</span>(<span class="fu">rownames</span>(corr_matrix), <span class="st">'Y'</span>)]), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        x1          T         x2         x6         x3         x9        x25 
+0.13017868 0.12626811 0.11966604 0.11505135 0.11474401 0.10748373 0.06954718 
+       x22 
+0.06653299 </code></pre>
+</div>
+</div>
+</section>
+<section id="feature-distributions" class="level3">
+<h3 class="anchored" data-anchor-id="feature-distributions">Feature Distributions</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>plot_continuous_distributions <span class="ot">&lt;-</span> <span class="cf">function</span>(Z, names, <span class="at">n_cont =</span> <span class="dv">6</span>L) {</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  old_par <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">no.readonly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">on.exit</span>(<span class="fu">par</span>(old_par), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(n_cont)) {</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    d <span class="ot">&lt;-</span> <span class="fu">density</span>(Z[, i])</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">plot</span>(d, <span class="at">main =</span> names[i], <span class="at">xlab =</span> <span class="st">'Standardized value'</span>, <span class="at">col =</span> <span class="st">'steelblue'</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">polygon</span>(d, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">70</span><span class="sc">/</span><span class="dv">255</span>, <span class="dv">130</span><span class="sc">/</span><span class="dv">255</span>, <span class="dv">180</span><span class="sc">/</span><span class="dv">255</span>, <span class="fl">0.3</span>), <span class="at">border =</span> <span class="cn">NA</span>)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mtext</span>(<span class="st">'Continuous Covariate Distributions (train subsample)'</span>, <span class="at">outer =</span> <span class="cn">TRUE</span>, <span class="at">line =</span> <span class="sc">-</span><span class="dv">2</span>)</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_continuous_distributions</span>(Z_train, VAR_NAMES)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="model-setup" class="level2">
+<h2 class="anchored" data-anchor-id="model-setup">Model Setup</h2>
+<section id="dagma-linear" class="level3">
+<h3 class="anchored" data-anchor-id="dagma-linear">DAGMA Linear</h3>
+<p>The <strong>DAGMA Linear</strong> method is an approach for learning a linear Directed Acyclic Graph (DAG) structure among variables. It fits a linear Structural Equation Model (SEM) of the form:</p>
+<p><span class="math display">\[
+X_j = \sum_{k \neq j} W_{kj} X_k + \varepsilon_j, \qquad \varepsilon_j \sim \mathcal{N}(0, \sigma_j^2).
+\]</span></p>
+<p>Here, <span class="math inline">\(X_j\)</span> is the <span class="math inline">\(j\)</span>-th variable, <span class="math inline">\(W_{kj}\)</span> represents the direct effect of variable <span class="math inline">\(k\)</span> on variable <span class="math inline">\(j\)</span>, and <span class="math inline">\(\varepsilon_j\)</span> is a Gaussian noise term with zero mean and variance <span class="math inline">\(\sigma_j^2\)</span>.</p>
+<p>The goal in DAGMA Linear is to estimate the <strong>weight matrix</strong> <span class="math inline">\(W\)</span> (of shape <span class="math inline">\(d \times d\)</span> for <span class="math inline">\(d\)</span> variables), which serves as the learned adjacency (connectivity) matrix of the causal network.</p>
+<p>Key points:</p>
+<ul>
+<li><strong>Acyclicity constraint:</strong> The method optimizes <span class="math inline">\(W\)</span> subject to a continuous acyclicity constraint (using a penalty term), ensuring the resulting graph is a DAG.</li>
+<li>The estimated <span class="math inline">\(W_{kj}\)</span> indicates both the existence (<span class="math inline">\(W_{kj} \ne 0\)</span>) and strength of a direct causal effect from <span class="math inline">\(k\)</span> to <span class="math inline">\(j\)</span>.</li>
+<li>Learning is performed via gradient-based optimization, minimizing a loss function that incorporates both data fit (e.g., least-squares loss) and an acyclicity penalty.</li>
+</ul>
+<p>In summary, <code>dagmaLinear()</code> uncovers the underlying linear causal structure by estimating which variables directly cause others, and the strength of those effects, all while enforcing that the resulting graph is acyclic.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>build_dagma_linear <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">loss_type =</span> <span class="st">'l2'</span>, <span class="at">verbose =</span> <span class="cn">TRUE</span>) {</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">loss_type =</span> loss_type, <span class="at">verbose =</span> verbose)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>dagma_linear <span class="ot">&lt;-</span> <span class="fu">build_dagma_linear</span>(<span class="at">loss_type =</span> <span class="st">'l2'</span>, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'dagmaLinear ready  (loss=%s)</span><span class="sc">\n</span><span class="st">'</span>, dagma_linear<span class="sc">$</span>loss_type))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>dagmaLinear ready  (loss=l2)</code></pre>
+</div>
+</div>
+</section>
+<section id="dagma-nonlinear-mlp" class="level3">
+<h3 class="anchored" data-anchor-id="dagma-nonlinear-mlp">DAGMA Nonlinear (MLP)</h3>
+<p>The <strong>DAGMA Nonlinear</strong> method extends linear causal discovery to more general, nonlinear relationships between variables. Instead of restricting structural equations to be linear, DAGMA Nonlinear allows each variable to be modeled as an arbitrary function of its potential causes. In practice, this is achieved by representing each variable’s conditional mechanism as a (potentially different) multilayer perceptron (MLP) neural network.</p>
+<section id="model-specification" class="level4">
+<h4 class="anchored" data-anchor-id="model-specification">Model Specification:</h4>
+<ul>
+<li>Each variable <span class="math inline">\(X_j\)</span> is modeled as: <span class="math display">\[
+X_j = f_j(\mathbf{X}_{-j}) + \varepsilon_j
+\]</span> where <span class="math inline">\(f_j\)</span> is an MLP parameterized for the <span class="math inline">\(j\)</span>-th variable, and <span class="math inline">\(\mathbf{X}_{-j}\)</span> denotes all variables <em>except</em> <span class="math inline">\(X_j\)</span>.</li>
+<li>These MLPs allow for learning complex, potentially highly nonlinear causal relationships (e.g., interactions, saturations, nonlinear activations) between variables.</li>
+</ul>
+</section>
+<section id="training-procedure" class="level4">
+<h4 class="anchored" data-anchor-id="training-procedure">Training Procedure:</h4>
+<ul>
+<li>The set of MLPs (one per variable) are jointly optimized to minimize a loss function that captures:
+<ol type="1">
+<li><strong>Data fit</strong>: How well the modeled outputs <span class="math inline">\(f_j(\mathbf{X}_{-j})\)</span> match the observed data <span class="math inline">\(X_j\)</span> (often via mean squared error).</li>
+<li><strong>Acyclicity Constraint</strong>: A smooth penalty on the learned adjacency structure ensures that the resulting causal graph remains a DAG (i.e., avoids cycles).</li>
+<li><strong>Sparsity (optional)</strong>: Encouraging parsimonious causal structures by penalizing the magnitude/number of outgoing edges from each node.</li>
+</ol></li>
+</ul>
+</section>
+<section id="implementation-details" class="level4">
+<h4 class="anchored" data-anchor-id="implementation-details">Implementation Details:</h4>
+<ul>
+<li>The package uses a shared architecture for the causal mechanisms (often a simple MLP with a single hidden layer per variable).</li>
+<li>The computation uses <code>torch</code> double precision for accurate gradient-based optimization.</li>
+<li><code>DagmaMLP</code> defines the nonlinear architecture for each mechanism, and <code>dagma(..., method="nonlinear_mlp")</code> ties them together with acyclicity constraints and optimization procedures.</li>
+</ul>
+<p>In summary, <strong>DAGMA Nonlinear</strong> generalizes linear causal discovery by using flexible neural networks to uncover potentially complex, nonlinear causal dependencies, while still enforcing global acyclicity to guarantee a valid DAG structure.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>build_dagma_nonlinear <span class="ot">&lt;-</span> <span class="cf">function</span>(d, <span class="at">verbose =</span> <span class="cn">TRUE</span>) {</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">structure</span>(<span class="fu">list</span>(<span class="at">d =</span> d, <span class="at">verbose =</span> verbose), <span class="at">class =</span> <span class="st">"dagma_nl_builder"</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>dagma_nonlinear <span class="ot">&lt;-</span> <span class="fu">build_dagma_nonlinear</span>(<span class="at">d =</span> <span class="fu">ncol</span>(Z_train), <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'DAGMA Nonlinear (MLP) ready  (d=%d)</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">ncol</span>(Z_train)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DAGMA Nonlinear (MLP) ready  (d=27)</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="dag-nocurl-1" class="level3">
+<h3 class="anchored" data-anchor-id="dag-nocurl-1">DAG-NoCurl</h3>
+<p>The <strong>DAG-NoCurl</strong> model (Yu et al., 2021) is a continuous optimization approach for learning causal graphs directly, using a matrix parameterization that encourages acyclicity and discourages “curl” (non-gradient, rotational flows) in the learned graph.</p>
+<section id="model-formulation" class="level4">
+<h4 class="anchored" data-anchor-id="model-formulation">Model formulation:</h4>
+<ul>
+<li><p>The weighted adjacency matrix <span class="math inline">\(W\)</span> is parameterized as: <span class="math display">\[
+W = U^T U - \mathrm{diag}(U^T U)
+\]</span> where <span class="math inline">\(U\)</span> is a learnable square matrix (<code>torch</code> Parameter). This construction ensures <span class="math inline">\(W\)</span> is non-negative with zero diagonal (no self-loops).</p></li>
+<li><p>The <strong>curl penalty</strong> is incorporated to enforce a notion of “gradiency” or consistency with acyclic structure. It is defined as: <span class="math display">\[
+\text{curl}(W) = \left\| \frac{W - W^T}{2} \right\|_F^2
+\]</span> This term penalizes asymmetric parts of <span class="math inline">\(W\)</span> that would correspond to cycles or non-gradient field behavior in the graph.</p></li>
+<li><p>The final loss combines a mean squared reconstruction error, an <span class="math inline">\(\ell_1\)</span> sparsity penalty on <span class="math inline">\(W\)</span>, and the curl penalty:</p>
+<ol type="1">
+<li><strong>Reconstruction Loss:</strong> Encourages <span class="math inline">\(X \approx XW\)</span> (linear SEM approximation).</li>
+<li><strong>Sparsity Penalty:</strong> Promotes sparse learned structure.</li>
+<li><strong>Curl Penalty:</strong> Promotes directional acyclicity and suppresses cyclic patterns.</li>
+</ol></li>
+</ul>
+<p>The weights <span class="math inline">\(\lambda_1\)</span> and <span class="math inline">\(\mu\)</span> control the strengths of the sparsity and curl penalties.</p>
+<blockquote class="blockquote">
+<p>Intuitively, DAG-NoCurl seeks an adjacency matrix that both recovers the observed data with a linear model and aligns with a directed, acyclic, gradient-like (non-rotational) causal structure.</p>
+</blockquote>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>DagNoCurl <span class="ot">&lt;-</span> R6<span class="sc">::</span><span class="fu">R6Class</span>(</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'DagNoCurl'</span>,</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">public =</span> <span class="fu">list</span>(</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">lambda1 =</span> <span class="cn">NULL</span>,</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">mu =</span> <span class="cn">NULL</span>,</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">U =</span> <span class="cn">NULL</span>,</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">initialize =</span> <span class="cf">function</span>(d, <span class="at">lambda1 =</span> <span class="fl">0.02</span>, <span class="at">mu =</span> <span class="fl">0.1</span>) {</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>      self<span class="sc">$</span>lambda1 <span class="ot">&lt;-</span> lambda1</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>      self<span class="sc">$</span>mu <span class="ot">&lt;-</span> mu</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>      self<span class="sc">$</span>U <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">torch_randn</span>(d, d, <span class="at">dtype =</span> torch<span class="sc">::</span><span class="fu">torch_float</span>())</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>      self<span class="sc">$</span>U<span class="sc">$</span><span class="fu">requires_grad_</span>(<span class="cn">TRUE</span>)</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">get_W =</span> <span class="cf">function</span>() {</span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>      W <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">torch_matmul</span>(self<span class="sc">$</span>U<span class="sc">$</span><span class="fu">t</span>(), self<span class="sc">$</span>U)</span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>      W <span class="sc">-</span> torch<span class="sc">::</span><span class="fu">torch_diag</span>(W<span class="sc">$</span><span class="fu">diag</span>())</span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">curl_penalty =</span> <span class="cf">function</span>(W) {</span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>      curl <span class="ot">&lt;-</span> (W <span class="sc">-</span> W<span class="sc">$</span><span class="fu">t</span>()) <span class="sc">/</span> <span class="dv">2</span></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>      torch<span class="sc">::</span><span class="fu">torch_sum</span>(curl<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">loss =</span> <span class="cf">function</span>(X) {</span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>      W <span class="ot">&lt;-</span> self<span class="sc">$</span><span class="fu">get_W</span>()</span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>      X_hat <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">torch_matmul</span>(X, W)</span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>      recon <span class="ot">&lt;-</span> <span class="fl">0.5</span> <span class="sc">/</span> X<span class="sc">$</span>shape[<span class="dv">1</span>] <span class="sc">*</span> torch<span class="sc">::</span><span class="fu">torch_sum</span>((X <span class="sc">-</span> X_hat)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>      recon <span class="sc">+</span> self<span class="sc">$</span>lambda1 <span class="sc">*</span> torch<span class="sc">::</span><span class="fu">torch_sum</span>(torch<span class="sc">::</span><span class="fu">torch_abs</span>(W)) <span class="sc">+</span> self<span class="sc">$</span>mu <span class="sc">*</span> self<span class="sc">$</span><span class="fu">curl_penalty</span>(W)</span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>build_dag_nocurl <span class="ot">&lt;-</span> <span class="cf">function</span>(d, <span class="at">lambda1 =</span> <span class="fl">0.02</span>, <span class="at">mu =</span> <span class="fl">0.1</span>) {</span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>  model <span class="ot">&lt;-</span> DagNoCurl<span class="sc">$</span><span class="fu">new</span>(<span class="at">d =</span> d, <span class="at">lambda1 =</span> lambda1, <span class="at">mu =</span> mu)</span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>  n_params <span class="ot">&lt;-</span> <span class="fu">prod</span>(<span class="fu">as.integer</span>(model<span class="sc">$</span>U<span class="sc">$</span>shape))</span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'DagNoCurl ready  (d=%d, params=%s)</span><span class="sc">\n</span><span class="st">'</span>, d, <span class="fu">format</span>(n_params, <span class="at">big.mark =</span> <span class="st">','</span>)))</span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>  model</span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>dag_nocurl <span class="ot">&lt;-</span> <span class="fu">build_dag_nocurl</span>(<span class="at">d =</span> <span class="fu">ncol</span>(Z_train))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DagNoCurl ready  (d=27, params=729)</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="training-prediction-and-validation" class="level3">
+<h3 class="anchored" data-anchor-id="training-prediction-and-validation">Training, Prediction, and Validation <a id="training" href=""></a></h3>
+<section id="training-dagma-linear" class="level4">
+<h4 class="anchored" data-anchor-id="training-dagma-linear">Training DAGMA Linear</h4>
+<p><strong>Note:</strong> <code>dagmaLinear()</code> does not take <code>lambda2</code> (only nonlinear DAGMA does).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>train_dagma_linear <span class="ot">&lt;-</span> <span class="cf">function</span>(model, Z, <span class="at">lambda1 =</span> <span class="fl">0.02</span>, <span class="at">T =</span> <span class="dv">4</span>, <span class="at">mu_init =</span> <span class="fl">0.1</span>,</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>                               <span class="at">mu_factor =</span> <span class="fl">0.1</span>, <span class="at">w_threshold =</span> <span class="fl">0.25</span>) {</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">'Training DAGMA Linear ...</span><span class="sc">\n</span><span class="st">'</span>)</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">dagmaLinear</span>(</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">X =</span> Z,</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">loss_type =</span> model<span class="sc">$</span>loss_type,</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">lambda1 =</span> lambda1,</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">T =</span> T,</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">mu_init =</span> mu_init,</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">mu_factor =</span> mu_factor,</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">w_threshold =</span> w_threshold,</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">warm_iter =</span> <span class="dv">2000</span>,</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_iter =</span> <span class="dv">4000</span>,</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">verbose =</span> model<span class="sc">$</span>verbose</span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>  W_est <span class="ot">&lt;-</span> fit<span class="sc">$</span>adjacency</span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'  Recovered edges : %d</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">sum</span>(W_est <span class="sc">!=</span> <span class="dv">0</span>)))</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'  W_est shape     : %d x %d</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">nrow</span>(W_est), <span class="fu">ncol</span>(W_est)))</span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a>  W_est</span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>W_dagma_linear <span class="ot">&lt;-</span> <span class="fu">train_dagma_linear</span>(</span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>  dagma_linear,</span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>  Z_train,</span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda1 =</span> <span class="fl">0.02</span>,</span>
+<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">w_threshold =</span> <span class="fl">0.25</span></span>
+<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Training DAGMA Linear ...</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 1000 | obj=12.162</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 2000 | obj=11.993</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 1000 | obj=1.192</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 2000 | obj=1.1864</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 1000 | obj=0.11831</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 2000 | obj=0.11796</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 1000 | obj=0.011778</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 2000 | obj=0.011772</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 3000 | obj=0.011767</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DAGMA linear iter 4000 | obj=0.011763</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Recovered edges : 36
+  W_est shape     : 27 x 27</code></pre>
+</div>
+</div>
+</section>
+<section id="dagma-nonlinear" class="level4">
+<h4 class="anchored" data-anchor-id="dagma-nonlinear">DAGMA nonlinear</h4>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>train_dagma_nonlinear <span class="ot">&lt;-</span> <span class="cf">function</span>(model, Z, <span class="at">lambda1 =</span> <span class="fl">0.02</span>, <span class="at">lambda2 =</span> <span class="fl">0.005</span>,</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">T =</span> <span class="dv">3</span>, <span class="at">mu_init =</span> <span class="fl">0.1</span>, <span class="at">mu_factor =</span> <span class="fl">0.1</span>,</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">w_threshold =</span> <span class="fl">0.25</span>) {</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">'Training DAGMA Nonlinear (MLP) ...</span><span class="sc">\n</span><span class="st">'</span>)</span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dagma</span>(</span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">X =</span> Z,</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'nonlinear_mlp'</span>,</span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">hidden =</span> <span class="dv">10</span>L,</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">bias =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">lambda1 =</span> lambda1,</span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">lambda2 =</span> lambda2,</span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">T =</span> T,</span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">mu_init =</span> mu_init,</span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">mu_factor =</span> mu_factor,</span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">warm_iter =</span> <span class="dv">1000</span>,</span>
+<span id="cb54-17"><a href="#cb54-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">max_iter =</span> <span class="dv">2500</span>,</span>
+<span id="cb54-18"><a href="#cb54-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">w_threshold =</span> w_threshold,</span>
+<span id="cb54-19"><a href="#cb54-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb54-20"><a href="#cb54-20" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb54-21"><a href="#cb54-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb54-22"><a href="#cb54-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">warning</span>(</span>
+<span id="cb54-23"><a href="#cb54-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Nonlinear DAGMA is unavailable with current torch build; falling back to dagmaLinear for this section."</span></span>
+<span id="cb54-24"><a href="#cb54-24" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb54-25"><a href="#cb54-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">dagmaLinear</span>(</span>
+<span id="cb54-26"><a href="#cb54-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">X =</span> Z,</span>
+<span id="cb54-27"><a href="#cb54-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">loss_type =</span> <span class="st">"l2"</span>,</span>
+<span id="cb54-28"><a href="#cb54-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">lambda1 =</span> lambda1,</span>
+<span id="cb54-29"><a href="#cb54-29" aria-hidden="true" tabindex="-1"></a>        <span class="at">T =</span> T,</span>
+<span id="cb54-30"><a href="#cb54-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">mu_init =</span> mu_init,</span>
+<span id="cb54-31"><a href="#cb54-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">mu_factor =</span> mu_factor,</span>
+<span id="cb54-32"><a href="#cb54-32" aria-hidden="true" tabindex="-1"></a>        <span class="at">w_threshold =</span> w_threshold,</span>
+<span id="cb54-33"><a href="#cb54-33" aria-hidden="true" tabindex="-1"></a>        <span class="at">warm_iter =</span> <span class="dv">1000</span>,</span>
+<span id="cb54-34"><a href="#cb54-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">max_iter =</span> <span class="dv">2500</span>,</span>
+<span id="cb54-35"><a href="#cb54-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb54-36"><a href="#cb54-36" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb54-37"><a href="#cb54-37" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb54-38"><a href="#cb54-38" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb54-39"><a href="#cb54-39" aria-hidden="true" tabindex="-1"></a>  W_est <span class="ot">&lt;-</span> fit<span class="sc">$</span>adjacency</span>
+<span id="cb54-40"><a href="#cb54-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'  Recovered edges : %d</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">sum</span>(W_est <span class="sc">!=</span> <span class="dv">0</span>)))</span>
+<span id="cb54-41"><a href="#cb54-41" aria-hidden="true" tabindex="-1"></a>  W_est</span>
+<span id="cb54-42"><a href="#cb54-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb54-43"><a href="#cb54-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-44"><a href="#cb54-44" aria-hidden="true" tabindex="-1"></a>Z_nl <span class="ot">&lt;-</span> <span class="fu">build_causal_matrix</span>(train_x, train_t, train_y, <span class="at">subsample =</span> <span class="dv">2000</span>)</span>
+<span id="cb54-45"><a href="#cb54-45" aria-hidden="true" tabindex="-1"></a>dagma_nonlinear_model <span class="ot">&lt;-</span> <span class="fu">build_dagma_nonlinear</span>(<span class="at">d =</span> <span class="fu">ncol</span>(Z_nl))</span>
+<span id="cb54-46"><a href="#cb54-46" aria-hidden="true" tabindex="-1"></a>W_dagma_nonlinear <span class="ot">&lt;-</span> <span class="fu">train_dagma_nonlinear</span>(</span>
+<span id="cb54-47"><a href="#cb54-47" aria-hidden="true" tabindex="-1"></a>  dagma_nonlinear_model,</span>
+<span id="cb54-48"><a href="#cb54-48" aria-hidden="true" tabindex="-1"></a>  Z_nl,</span>
+<span id="cb54-49"><a href="#cb54-49" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda1 =</span> <span class="fl">0.02</span>,</span>
+<span id="cb54-50"><a href="#cb54-50" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda2 =</span> <span class="fl">0.005</span>,</span>
+<span id="cb54-51"><a href="#cb54-51" aria-hidden="true" tabindex="-1"></a>  <span class="at">T =</span> <span class="dv">3</span>,</span>
+<span id="cb54-52"><a href="#cb54-52" aria-hidden="true" tabindex="-1"></a>  <span class="at">w_threshold =</span> <span class="fl">0.25</span></span>
+<span id="cb54-53"><a href="#cb54-53" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Training DAGMA Nonlinear (MLP) ...</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in value[[3L]](cond): Nonlinear DAGMA is unavailable with current torch
+build; falling back to dagmaLinear for this section.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Recovered edges : 39</code></pre>
+</div>
+</div>
+</section>
+<section id="dag-nocurl-2" class="level4">
+<h4 class="anchored" data-anchor-id="dag-nocurl-2">DAG-NoCurl</h4>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>train_dag_nocurl <span class="ot">&lt;-</span> <span class="cf">function</span>(model, Z, <span class="at">n_epochs =</span> <span class="dv">3000</span>, <span class="at">lr =</span> <span class="fl">1e-3</span>, <span class="at">w_threshold =</span> <span class="fl">0.2</span>,</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>                             <span class="at">print_every =</span> <span class="dv">500</span>) {</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">torch_tensor</span>(Z, <span class="at">dtype =</span> torch<span class="sc">::</span><span class="fu">torch_float</span>())</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>  opt <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">optim_adam</span>(<span class="fu">list</span>(model<span class="sc">$</span>U), <span class="at">lr =</span> lr)</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  losses <span class="ot">&lt;-</span> <span class="fu">numeric</span>(n_epochs)</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">'Training DAG-NoCurl ...</span><span class="sc">\n</span><span class="st">'</span>)</span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (epoch <span class="cf">in</span> <span class="fu">seq_len</span>(n_epochs)) {</span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a>    opt<span class="sc">$</span><span class="fu">zero_grad</span>()</span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>    loss <span class="ot">&lt;-</span> model<span class="sc">$</span><span class="fu">loss</span>(X)</span>
+<span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a>    loss<span class="sc">$</span><span class="fu">backward</span>()</span>
+<span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a>    opt<span class="sc">$</span><span class="fu">step</span>()</span>
+<span id="cb58-13"><a href="#cb58-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-14"><a href="#cb58-14" aria-hidden="true" tabindex="-1"></a>    loss_val <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(loss<span class="sc">$</span><span class="fu">item</span>())</span>
+<span id="cb58-15"><a href="#cb58-15" aria-hidden="true" tabindex="-1"></a>    losses[epoch] <span class="ot">&lt;-</span> loss_val</span>
+<span id="cb58-16"><a href="#cb58-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-17"><a href="#cb58-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (epoch <span class="sc">%%</span> print_every <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb58-18"><a href="#cb58-18" aria-hidden="true" tabindex="-1"></a>      W_now <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(model<span class="sc">$</span><span class="fu">get_W</span>()<span class="sc">$</span><span class="fu">detach</span>()<span class="sc">$</span><span class="fu">cpu</span>())</span>
+<span id="cb58-19"><a href="#cb58-19" aria-hidden="true" tabindex="-1"></a>      n_edge <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">abs</span>(W_now) <span class="sc">&gt;</span> w_threshold)</span>
+<span id="cb58-20"><a href="#cb58-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'  Epoch %5d | loss=%.4f | edges&gt;%.2f: %d</span><span class="sc">\n</span><span class="st">'</span>, epoch, loss_val, w_threshold, n_edge))</span>
+<span id="cb58-21"><a href="#cb58-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb58-22"><a href="#cb58-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb58-23"><a href="#cb58-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-24"><a href="#cb58-24" aria-hidden="true" tabindex="-1"></a>  W_raw <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(model<span class="sc">$</span><span class="fu">get_W</span>()<span class="sc">$</span><span class="fu">detach</span>()<span class="sc">$</span><span class="fu">cpu</span>())</span>
+<span id="cb58-25"><a href="#cb58-25" aria-hidden="true" tabindex="-1"></a>  W_est <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">abs</span>(W_raw) <span class="sc">&gt;</span> w_threshold, W_raw, <span class="dv">0</span>)</span>
+<span id="cb58-26"><a href="#cb58-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'  Final edges : %d</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">sum</span>(W_est <span class="sc">!=</span> <span class="dv">0</span>)))</span>
+<span id="cb58-27"><a href="#cb58-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-28"><a href="#cb58-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(losses, <span class="at">type =</span> <span class="st">'l'</span>, <span class="at">col =</span> <span class="st">'steelblue'</span>, <span class="at">lwd =</span> <span class="fl">1.2</span>,</span>
+<span id="cb58-29"><a href="#cb58-29" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab =</span> <span class="st">'Epoch'</span>, <span class="at">ylab =</span> <span class="st">'Loss'</span>, <span class="at">main =</span> <span class="st">'DAG-NoCurl Training Loss'</span>)</span>
+<span id="cb58-30"><a href="#cb58-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-31"><a href="#cb58-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">W_est =</span> W_est, <span class="at">losses =</span> losses)</span>
+<span id="cb58-32"><a href="#cb58-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb58-33"><a href="#cb58-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-34"><a href="#cb58-34" aria-hidden="true" tabindex="-1"></a>nocurl_fit <span class="ot">&lt;-</span> <span class="fu">train_dag_nocurl</span>(dag_nocurl, Z_train)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Training DAG-NoCurl ...
+  Epoch   500 | loss=2762.7175 | edges&gt;0.20: 636
+  Epoch  1000 | loss=1214.8618 | edges&gt;0.20: 616
+  Epoch  1500 | loss=870.8040 | edges&gt;0.20: 618
+  Epoch  2000 | loss=668.5145 | edges&gt;0.20: 612
+  Epoch  2500 | loss=532.5027 | edges&gt;0.20: 592
+  Epoch  3000 | loss=432.6573 | edges&gt;0.20: 560
+  Final edges : 560</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>W_nocurl <span class="ot">&lt;-</span> nocurl_fit<span class="sc">$</span>W_est</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>nocurl_losses <span class="ot">&lt;-</span> nocurl_fit<span class="sc">$</span>losses</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="visualizing-the-learned-dags" class="level3">
+<h3 class="anchored" data-anchor-id="visualizing-the-learned-dags">Visualizing the Learned DAGs</h3>
+<p>Highlight <strong>T</strong> and <strong>Y</strong> in red; edge width scales with |weight|.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>adjacency_to_digraph <span class="ot">&lt;-</span> <span class="cf">function</span>(W, names, <span class="at">threshold =</span> <span class="dv">0</span>) {</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  W2 <span class="ot">&lt;-</span> W</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>  W2[<span class="fu">abs</span>(W2) <span class="sc">&lt;=</span> threshold] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(W2) <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(W2) <span class="ot">&lt;-</span> names</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(W2) <span class="ot">&lt;-</span> names</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">graph_from_adjacency_matrix</span>(W2, <span class="at">mode =</span> <span class="st">'directed'</span>, <span class="at">weighted =</span> <span class="cn">TRUE</span>, <span class="at">diag =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a>plot_dag <span class="ot">&lt;-</span> <span class="cf">function</span>(G, <span class="at">title =</span> <span class="st">'Learned DAG'</span>, <span class="at">highlight =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a>  lay <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">layout_with_fr</span>(G, <span class="at">weights =</span> <span class="cn">NA</span>)</span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a>  node_names <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">V</span>(G)<span class="sc">$</span>name</span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a>  node_colors <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.null</span>(highlight) <span class="sc">&amp;</span> node_names <span class="sc">%in%</span> highlight, <span class="st">'#e74c3c'</span>, <span class="st">'#3498db'</span>)</span>
+<span id="cb61-14"><a href="#cb61-14" aria-hidden="true" tabindex="-1"></a>  ew <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">E</span>(G)<span class="sc">$</span>weight</span>
+<span id="cb61-15"><a href="#cb61-15" aria-hidden="true" tabindex="-1"></a>  ew_plot <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(ew)) <span class="fu">pmin</span>(<span class="fu">abs</span>(ew) <span class="sc">*</span> <span class="dv">3</span>, <span class="dv">4</span>) <span class="cf">else</span> <span class="fu">numeric</span>(<span class="dv">0</span>)</span>
+<span id="cb61-16"><a href="#cb61-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(</span>
+<span id="cb61-17"><a href="#cb61-17" aria-hidden="true" tabindex="-1"></a>    G,</span>
+<span id="cb61-18"><a href="#cb61-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">layout =</span> lay,</span>
+<span id="cb61-19"><a href="#cb61-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">vertex.color =</span> node_colors,</span>
+<span id="cb61-20"><a href="#cb61-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">vertex.label.color =</span> <span class="st">'white'</span>,</span>
+<span id="cb61-21"><a href="#cb61-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">vertex.size =</span> <span class="dv">20</span>,</span>
+<span id="cb61-22"><a href="#cb61-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">edge.width =</span> ew_plot,</span>
+<span id="cb61-23"><a href="#cb61-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">edge.arrow.size =</span> <span class="fl">0.4</span>,</span>
+<span id="cb61-24"><a href="#cb61-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">edge.color =</span> <span class="st">'grey40'</span>,</span>
+<span id="cb61-25"><a href="#cb61-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">main =</span> title</span>
+<span id="cb61-26"><a href="#cb61-26" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb61-27"><a href="#cb61-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb61-28"><a href="#cb61-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-29"><a href="#cb61-29" aria-hidden="true" tabindex="-1"></a>G_linear <span class="ot">&lt;-</span> <span class="fu">adjacency_to_digraph</span>(W_dagma_linear, VAR_NAMES)</span>
+<span id="cb61-30"><a href="#cb61-30" aria-hidden="true" tabindex="-1"></a>G_nonlinear <span class="ot">&lt;-</span> <span class="fu">adjacency_to_digraph</span>(W_dagma_nonlinear, VAR_NAMES)</span>
+<span id="cb61-31"><a href="#cb61-31" aria-hidden="true" tabindex="-1"></a>G_nocurl <span class="ot">&lt;-</span> <span class="fu">adjacency_to_digraph</span>(W_nocurl, VAR_NAMES)</span>
+<span id="cb61-32"><a href="#cb61-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-33"><a href="#cb61-33" aria-hidden="true" tabindex="-1"></a>old_par <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">no.readonly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb61-34"><a href="#cb61-34" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb61-35"><a href="#cb61-35" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_dag</span>(G_linear, <span class="st">'DAGMA Linear - IHDP'</span>, <span class="at">highlight =</span> <span class="fu">c</span>(<span class="st">'T'</span>, <span class="st">'Y'</span>))</span>
+<span id="cb61-36"><a href="#cb61-36" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_dag</span>(G_nonlinear, <span class="st">'DAGMA Nonlinear - IHDP'</span>, <span class="at">highlight =</span> <span class="fu">c</span>(<span class="st">'T'</span>, <span class="st">'Y'</span>))</span>
+<span id="cb61-37"><a href="#cb61-37" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_dag</span>(G_nocurl, <span class="st">'DAG-NoCurl - IHDP'</span>, <span class="at">highlight =</span> <span class="fu">c</span>(<span class="st">'T'</span>, <span class="st">'Y'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(old_par)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="validation" class="level3">
+<h3 class="anchored" data-anchor-id="validation">Validation</h3>
+<p>Graph statistics, SEM reconstruction <span class="math inline">\(R^2\)</span>, neighborhoods of T/Y, SHD between models, backdoor ATE vs oracle, and a small dashboard.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>graph_stats <span class="ot">&lt;-</span> <span class="cf">function</span>(G, <span class="at">name =</span> <span class="st">''</span>) {</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">gorder</span>(G)</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>  e <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">gsize</span>(G)</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>  density <span class="ot">&lt;-</span> <span class="cf">if</span> (d <span class="sc">&gt;</span> <span class="dv">1</span>) e <span class="sc">/</span> (d <span class="sc">*</span> (d <span class="sc">-</span> <span class="dv">1</span>)) <span class="cf">else</span> <span class="dv">0</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> name,</span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">nodes =</span> d,</span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">edges =</span> e,</span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">density =</span> <span class="fu">round</span>(density, <span class="dv">4</span>),</span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">isDAG =</span> igraph<span class="sc">::</span><span class="fu">is_dag</span>(G),</span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_in_degree =</span> <span class="cf">if</span> (d <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">max</span>(igraph<span class="sc">::</span><span class="fu">degree</span>(G, <span class="at">mode =</span> <span class="st">'in'</span>)) <span class="cf">else</span> <span class="dv">0</span>,</span>
+<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_out_degree =</span> <span class="cf">if</span> (d <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">max</span>(igraph<span class="sc">::</span><span class="fu">degree</span>(G, <span class="at">mode =</span> <span class="st">'out'</span>)) <span class="cf">else</span> <span class="dv">0</span></span>
+<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb63-14"><a href="#cb63-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb63-15"><a href="#cb63-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-16"><a href="#cb63-16" aria-hidden="true" tabindex="-1"></a>stats_df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">list</span>(</span>
+<span id="cb63-17"><a href="#cb63-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">graph_stats</span>(G_linear, <span class="st">'DAGMA Linear'</span>),</span>
+<span id="cb63-18"><a href="#cb63-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">graph_stats</span>(G_nonlinear, <span class="st">'DAGMA Nonlinear'</span>),</span>
+<span id="cb63-19"><a href="#cb63-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">graph_stats</span>(G_nocurl, <span class="st">'DAG-NoCurl'</span>)</span>
+<span id="cb63-20"><a href="#cb63-20" aria-hidden="true" tabindex="-1"></a>), as.data.frame))</span>
+<span id="cb63-21"><a href="#cb63-21" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(stats_df) <span class="ot">&lt;-</span> stats_df<span class="sc">$</span>model</span>
+<span id="cb63-22"><a href="#cb63-22" aria-hidden="true" tabindex="-1"></a>stats_df<span class="sc">$</span>model <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb63-23"><a href="#cb63-23" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'</span><span class="sc">\n</span><span class="st">Graph statistics</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Graph statistics</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(stats_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                nodes edges density isDAG max_in_degree max_out_degree
+DAGMA Linear       27    36  0.0513  TRUE            21              5
+DAGMA Nonlinear    27    39  0.0556  TRUE            21              6
+DAG-NoCurl         27   560  0.7977 FALSE            25             25</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>sem_reconstruction_metrics <span class="ot">&lt;-</span> <span class="cf">function</span>(W, Zt, <span class="at">model_name =</span> <span class="st">''</span>) {</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  X_hat <span class="ot">&lt;-</span> Zt <span class="sc">%*%</span> W</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  mse_pv <span class="ot">&lt;-</span> <span class="fu">colMeans</span>((Zt <span class="sc">-</span> X_hat)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  ss_res <span class="ot">&lt;-</span> <span class="fu">sum</span>((Zt <span class="sc">-</span> X_hat)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  ss_tot <span class="ot">&lt;-</span> <span class="fu">sum</span>((Zt <span class="sc">-</span> <span class="fu">matrix</span>(<span class="fu">colMeans</span>(Zt), <span class="fu">nrow</span>(Zt), <span class="fu">ncol</span>(Zt), <span class="at">byrow =</span> <span class="cn">TRUE</span>))<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>  r2 <span class="ot">&lt;-</span> <span class="cf">if</span> (ss_tot <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="dv">1</span> <span class="sc">-</span> ss_res <span class="sc">/</span> ss_tot <span class="cf">else</span> <span class="cn">NaN</span></span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> model_name,</span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_MSE =</span> <span class="fu">round</span>(<span class="fu">mean</span>(mse_pv), <span class="dv">4</span>),</span>
+<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">global_R2 =</span> <span class="fu">round</span>(r2, <span class="dv">4</span>),</span>
+<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mse_T =</span> <span class="fu">round</span>(mse_pv[<span class="dv">26</span>], <span class="dv">4</span>),</span>
+<span id="cb67-12"><a href="#cb67-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">mse_Y =</span> <span class="fu">round</span>(mse_pv[<span class="dv">27</span>], <span class="dv">4</span>)</span>
+<span id="cb67-13"><a href="#cb67-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb67-14"><a href="#cb67-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb67-15"><a href="#cb67-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-16"><a href="#cb67-16" aria-hidden="true" tabindex="-1"></a>Z_test_eval <span class="ot">&lt;-</span> <span class="fu">build_causal_matrix</span>(</span>
+<span id="cb67-17"><a href="#cb67-17" aria-hidden="true" tabindex="-1"></a>  test_x,</span>
+<span id="cb67-18"><a href="#cb67-18" aria-hidden="true" tabindex="-1"></a>  test_potential_y[, <span class="dv">2</span>] <span class="sc">-</span> test_potential_y[, <span class="dv">1</span>],</span>
+<span id="cb67-19"><a href="#cb67-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">nrow</span>(test_x)),</span>
+<span id="cb67-20"><a href="#cb67-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">subsample =</span> <span class="dv">2000</span></span>
+<span id="cb67-21"><a href="#cb67-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb67-22"><a href="#cb67-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-23"><a href="#cb67-23" aria-hidden="true" tabindex="-1"></a>recon_df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">list</span>(</span>
+<span id="cb67-24"><a href="#cb67-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sem_reconstruction_metrics</span>(W_dagma_linear, Z_test_eval, <span class="st">'DAGMA Linear'</span>),</span>
+<span id="cb67-25"><a href="#cb67-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sem_reconstruction_metrics</span>(W_dagma_nonlinear, Z_test_eval, <span class="st">'DAGMA Nonlinear'</span>),</span>
+<span id="cb67-26"><a href="#cb67-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sem_reconstruction_metrics</span>(W_nocurl, Z_test_eval, <span class="st">'DAG-NoCurl'</span>)</span>
+<span id="cb67-27"><a href="#cb67-27" aria-hidden="true" tabindex="-1"></a>), as.data.frame))</span>
+<span id="cb67-28"><a href="#cb67-28" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(recon_df) <span class="ot">&lt;-</span> recon_df<span class="sc">$</span>model</span>
+<span id="cb67-29"><a href="#cb67-29" aria-hidden="true" tabindex="-1"></a>recon_df<span class="sc">$</span>model <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb67-30"><a href="#cb67-30" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'</span><span class="sc">\n</span><span class="st">SEM reconstruction</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+SEM reconstruction</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(recon_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                mean_MSE global_R2    mse_T    mse_Y
+DAGMA Linear     36.0001  -11.1477  92.8512 860.9599
+DAGMA Nonlinear  11.3001   -2.8130  92.8512 197.9942
+DAG-NoCurl      402.0102 -134.6522 116.6510   0.0000</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>causal_neighbors <span class="ot">&lt;-</span> <span class="cf">function</span>(G, node) {</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">parents =</span> <span class="fu">sort</span>(igraph<span class="sc">::</span><span class="fu">neighbors</span>(G, node, <span class="at">mode =</span> <span class="st">'in'</span>)<span class="sc">$</span>name),</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">children =</span> <span class="fu">sort</span>(igraph<span class="sc">::</span><span class="fu">neighbors</span>(G, node, <span class="at">mode =</span> <span class="st">'out'</span>)<span class="sc">$</span>name)</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (item <span class="cf">in</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">'DAGMA Linear'</span>, <span class="st">'linear'</span>), <span class="fu">c</span>(<span class="st">'DAGMA Nonlinear'</span>, <span class="st">'nonlinear'</span>), <span class="fu">c</span>(<span class="st">'DAG-NoCurl'</span>, <span class="st">'nocurl'</span>))) {</span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>  lab <span class="ot">&lt;-</span> item[<span class="dv">1</span>]</span>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>  Gi <span class="ot">&lt;-</span> <span class="cf">switch</span>(item[<span class="dv">2</span>], <span class="at">linear =</span> G_linear, <span class="at">nonlinear =</span> G_nonlinear, <span class="at">nocurl =</span> G_nocurl)</span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a>  nb <span class="ot">&lt;-</span> <span class="fu">causal_neighbors</span>(Gi, <span class="st">'T'</span>)</span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'%s T parents=%s children=%s</span><span class="sc">\n</span><span class="st">'</span>, lab, <span class="fu">paste</span>(nb<span class="sc">$</span>parents, <span class="at">collapse =</span> <span class="st">','</span>), <span class="fu">paste</span>(nb<span class="sc">$</span>children, <span class="at">collapse =</span> <span class="st">','</span>)))</span>
+<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DAGMA Linear T parents= children=Y
+DAGMA Nonlinear T parents= children=Y
+DAG-NoCurl T parents=x1,x10,x11,x12,x14,x15,x16,x17,x18,x19,x2,x20,x21,x23,x24,x25,x4,x5,x6,x7,x8,x9 children=x1,x10,x11,x12,x14,x15,x16,x17,x18,x19,x2,x20,x21,x23,x24,x25,x4,x5,x6,x7,x8,x9</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (item <span class="cf">in</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">'DAGMA Linear'</span>, <span class="st">'linear'</span>), <span class="fu">c</span>(<span class="st">'DAGMA Nonlinear'</span>, <span class="st">'nonlinear'</span>), <span class="fu">c</span>(<span class="st">'DAG-NoCurl'</span>, <span class="st">'nocurl'</span>))) {</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>  lab <span class="ot">&lt;-</span> item[<span class="dv">1</span>]</span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>  Gi <span class="ot">&lt;-</span> <span class="cf">switch</span>(item[<span class="dv">2</span>], <span class="at">linear =</span> G_linear, <span class="at">nonlinear =</span> G_nonlinear, <span class="at">nocurl =</span> G_nocurl)</span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>  nb <span class="ot">&lt;-</span> <span class="fu">causal_neighbors</span>(Gi, <span class="st">'Y'</span>)</span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">'%s Y parents=%s children=%s</span><span class="sc">\n</span><span class="st">'</span>, lab, <span class="fu">paste</span>(nb<span class="sc">$</span>parents, <span class="at">collapse =</span> <span class="st">','</span>), <span class="fu">paste</span>(nb<span class="sc">$</span>children, <span class="at">collapse =</span> <span class="st">','</span>)))</span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DAGMA Linear Y parents=T,x1,x11,x12,x13,x14,x15,x16,x17,x18,x2,x20,x22,x23,x24,x25,x4,x5,x6,x7,x9 children=
+DAGMA Nonlinear Y parents=T,x1,x11,x12,x13,x14,x15,x17,x18,x19,x21,x22,x23,x24,x25,x3,x5,x6,x7,x8,x9 children=
+DAG-NoCurl Y parents= children=</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>shd <span class="ot">&lt;-</span> <span class="cf">function</span>(Wa, Wb, <span class="at">threshold =</span> <span class="dv">0</span>) {</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> (<span class="fu">abs</span>(Wa) <span class="sc">&gt;</span> threshold) <span class="sc">*</span> <span class="dv">1</span></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>  B <span class="ot">&lt;-</span> (<span class="fu">abs</span>(Wb) <span class="sc">&gt;</span> threshold) <span class="sc">*</span> <span class="dv">1</span></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>  ex <span class="ot">&lt;-</span> <span class="fu">sum</span>((B <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">&amp;</span> (A <span class="sc">==</span> <span class="dv">0</span>))</span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>  mi <span class="ot">&lt;-</span> <span class="fu">sum</span>((A <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">&amp;</span> (B <span class="sc">==</span> <span class="dv">0</span>))</span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>  rev <span class="ot">&lt;-</span> <span class="fu">sum</span>((A <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">&amp;</span> (<span class="fu">t</span>(B) <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">&amp;</span> (B <span class="sc">==</span> <span class="dv">0</span>))</span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>  ex <span class="sc">+</span> mi <span class="sc">+</span> rev</span>
+<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-10"><a href="#cb75-10" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'</span><span class="sc">\n</span><span class="st">SHD</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+SHD</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shd</span>(W_dagma_linear, W_dagma_nonlinear),</span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shd</span>(W_dagma_linear, W_nocurl),</span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shd</span>(W_dagma_nonlinear, W_nocurl),</span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'</span><span class="sc">\n</span><span class="st">'</span></span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>11 570 569 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>estimate_ate_adjustment <span class="ot">&lt;-</span> <span class="cf">function</span>(W, names, trx, trt, try_, tex, tpy, <span class="at">model_name =</span> <span class="st">''</span>) {</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  G <span class="ot">&lt;-</span> <span class="fu">adjacency_to_digraph</span>(W, names)</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>  py <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">neighbors</span>(G, <span class="st">'Y'</span>, <span class="at">mode =</span> <span class="st">'in'</span>)<span class="sc">$</span>name</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>  par_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(names <span class="sc">%in%</span> <span class="fu">setdiff</span>(py, <span class="fu">c</span>(<span class="st">'T'</span>, <span class="st">'Y'</span>)))</span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>  par_idx <span class="ot">&lt;-</span> par_idx[par_idx <span class="sc">&lt;=</span> <span class="fu">ncol</span>(trx)]</span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(par_idx) <span class="sc">==</span> <span class="dv">0</span>L) par_idx <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(<span class="fu">ncol</span>(trx))</span>
+<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a>  atr <span class="ot">&lt;-</span> trt <span class="sc">==</span> <span class="dv">1</span></span>
+<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a>  ate <span class="ot">&lt;-</span> trt <span class="sc">==</span> <span class="dv">0</span></span>
+<span id="cb79-10"><a href="#cb79-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-11"><a href="#cb79-11" aria-hidden="true" tabindex="-1"></a>  d1 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y =</span> try_[atr], trx[atr, par_idx, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb79-12"><a href="#cb79-12" aria-hidden="true" tabindex="-1"></a>  d0 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y =</span> try_[ate], trx[ate, par_idx, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb79-13"><a href="#cb79-13" aria-hidden="true" tabindex="-1"></a>  fit1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(y <span class="sc">~</span> ., <span class="at">data =</span> d1)</span>
+<span id="cb79-14"><a href="#cb79-14" aria-hidden="true" tabindex="-1"></a>  fit0 <span class="ot">&lt;-</span> <span class="fu">lm</span>(y <span class="sc">~</span> ., <span class="at">data =</span> d0)</span>
+<span id="cb79-15"><a href="#cb79-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-16"><a href="#cb79-16" aria-hidden="true" tabindex="-1"></a>  newd <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(tex[, par_idx, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb79-17"><a href="#cb79-17" aria-hidden="true" tabindex="-1"></a>  m1 <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit1, <span class="at">newdata =</span> newd)</span>
+<span id="cb79-18"><a href="#cb79-18" aria-hidden="true" tabindex="-1"></a>  m0 <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit0, <span class="at">newdata =</span> newd)</span>
+<span id="cb79-19"><a href="#cb79-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-20"><a href="#cb79-20" aria-hidden="true" tabindex="-1"></a>  ah <span class="ot">&lt;-</span> <span class="fu">mean</span>(m1 <span class="sc">-</span> m0)</span>
+<span id="cb79-21"><a href="#cb79-21" aria-hidden="true" tabindex="-1"></a>  oa <span class="ot">&lt;-</span> <span class="fu">mean</span>(tpy[, <span class="dv">2</span>] <span class="sc">-</span> tpy[, <span class="dv">1</span>])</span>
+<span id="cb79-22"><a href="#cb79-22" aria-hidden="true" tabindex="-1"></a>  ite <span class="ot">&lt;-</span> tpy[, <span class="dv">2</span>] <span class="sc">-</span> tpy[, <span class="dv">1</span>]</span>
+<span id="cb79-23"><a href="#cb79-23" aria-hidden="true" tabindex="-1"></a>  pehe <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>(((m1 <span class="sc">-</span> m0) <span class="sc">-</span> ite)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb79-24"><a href="#cb79-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-25"><a href="#cb79-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb79-26"><a href="#cb79-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> model_name,</span>
+<span id="cb79-27"><a href="#cb79-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_adj_vars =</span> <span class="fu">length</span>(par_idx),</span>
+<span id="cb79-28"><a href="#cb79-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">ATE_estimated =</span> <span class="fu">round</span>(ah, <span class="dv">4</span>),</span>
+<span id="cb79-29"><a href="#cb79-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">ATE_oracle =</span> <span class="fu">round</span>(oa, <span class="dv">4</span>),</span>
+<span id="cb79-30"><a href="#cb79-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">ATE_error =</span> <span class="fu">round</span>(<span class="fu">abs</span>(ah <span class="sc">-</span> oa), <span class="dv">4</span>),</span>
+<span id="cb79-31"><a href="#cb79-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">sqrt_PEHE =</span> <span class="fu">round</span>(pehe, <span class="dv">4</span>)</span>
+<span id="cb79-32"><a href="#cb79-32" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb79-33"><a href="#cb79-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb79-34"><a href="#cb79-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-35"><a href="#cb79-35" aria-hidden="true" tabindex="-1"></a>ate_df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">list</span>(</span>
+<span id="cb79-36"><a href="#cb79-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">estimate_ate_adjustment</span>(W_dagma_linear, VAR_NAMES, train_x, train_t, train_y, test_x, test_potential_y, <span class="st">'DAGMA Linear'</span>),</span>
+<span id="cb79-37"><a href="#cb79-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">estimate_ate_adjustment</span>(W_dagma_nonlinear, VAR_NAMES, train_x, train_t, train_y, test_x, test_potential_y, <span class="st">'DAGMA Nonlinear'</span>),</span>
+<span id="cb79-38"><a href="#cb79-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">estimate_ate_adjustment</span>(W_nocurl, VAR_NAMES, train_x, train_t, train_y, test_x, test_potential_y, <span class="st">'DAG-NoCurl'</span>)</span>
+<span id="cb79-39"><a href="#cb79-39" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb79-40"><a href="#cb79-40" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(ate_df) <span class="ot">&lt;-</span> ate_df<span class="sc">$</span>model</span>
+<span id="cb79-41"><a href="#cb79-41" aria-hidden="true" tabindex="-1"></a>ate_df<span class="sc">$</span>model <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb79-42"><a href="#cb79-42" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">'</span><span class="sc">\n</span><span class="st">ATE</span><span class="sc">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ATE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ate_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                n_adj_vars ATE_estimated ATE_oracle ATE_error sqrt_PEHE
+DAGMA Linear            20        4.6428     4.7604    0.1177    8.8489
+DAGMA Nonlinear         20        4.6337     4.7604    0.1268    8.8643
+DAG-NoCurl              25        4.6461     4.7604    0.1143    8.8379</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>old_par <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">no.readonly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">rownames</span>(stats_df)</span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>cols <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'#3498db'</span>, <span class="st">'#e74c3c'</span>, <span class="st">'#2ecc71'</span>)</span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(stats_df<span class="sc">$</span>edges, <span class="at">names.arg =</span> models, <span class="at">col =</span> cols, <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">'Edges'</span>)</span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(stats_df<span class="sc">$</span>density, <span class="at">names.arg =</span> models, <span class="at">col =</span> cols, <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">'Density'</span>)</span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(recon_df<span class="sc">$</span>global_R2, <span class="at">names.arg =</span> <span class="fu">rownames</span>(recon_df), <span class="at">col =</span> cols, <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">'SEM R^2'</span>)</span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(ate_df<span class="sc">$</span>ATE_error, <span class="at">names.arg =</span> <span class="fu">rownames</span>(ate_df), <span class="at">col =</span> cols, <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">'|ATE error|'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-03-04-DeepCausalML-DAGMA-NoCurl-r_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(old_par)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="summary-and-conclusion" class="level3">
+<h3 class="anchored" data-anchor-id="summary-and-conclusion">Summary and Conclusion</h3>
+<p>DGMA Linear and Nonlinear both enforce acyclicity via a log-det penalty, while DAG-NoCurl uses a soft curl penalty. DAGMA Linear fits a linear SEM, while DAGMA Nonlinear uses MLPs for flexible mechanisms. DAG-NoCurl also fits a linear SEM but with a unique parameterization. Optimization for DAGMA methods is via augmented Lagrangian, while DAG-NoCurl uses Adam. In practice, DAGMA Nonlinear may capture more complex relationships at the cost of interpretability and computational complexity, while DAG-NoCurl offers a different trade-off with its curl penalty. Evaluating learned graphs involves examining reconstruction metrics, SHD, and downstream ATE estimation against the oracle when the true DAG is unknown. This tutorial provides a framework for applying and comparing these methods on the IHDP dataset, highlighting their strengths and limitations in causal discovery tasks. Below is a summary table of the key aspects of each method:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Aspect</th>
+<th>DAGMA Linear</th>
+<th>DAGMA Nonlinear</th>
+<th>DAG-NoCurl</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Acyclicity</td>
+<td>Hard (log-det)</td>
+<td>Hard (log-det)</td>
+<td>Soft curl penalty</td>
+</tr>
+<tr class="even">
+<td>Model class</td>
+<td>Linear SEM</td>
+<td>MLP / variable</td>
+<td>Linear SEM</td>
+</tr>
+<tr class="odd">
+<td>Optimization</td>
+<td>Augmented Lagrangian</td>
+<td>Augmented Lagrangian</td>
+<td>Adam</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="resources" class="level3">
+<h3 class="anchored" data-anchor-id="resources">Resources</h3>
+<ul>
+<li>Bello et al.&nbsp;(2022) <a href="https://arxiv.org/abs/2209.08037">DAGMA</a></li>
+<li>Yu et al.&nbsp;(2021) <a href="https://arxiv.org/abs/2106.07197">DAG-NoCurl</a></li>
+<li>Zheng et al.&nbsp;(2018) <a href="https://arxiv.org/abs/1803.01422">NOTEARS</a></li>
+<li>Hill (2011); Pearl (2009) <em>Causality</em>.</li>
+</ul>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

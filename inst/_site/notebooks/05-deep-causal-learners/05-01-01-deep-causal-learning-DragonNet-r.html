@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>deep-causal-learning-dragonnet-r</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="05-01-01-deep-causal-learning-DragonNet-r_files/libs/clipboard/clipboard.min.js"></script>
+<script src="05-01-01-deep-causal-learning-DragonNet-r_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="05-01-01-deep-causal-learning-DragonNet-r_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="05-01-01-deep-causal-learning-DragonNet-r_files/libs/quarto-html/popper.min.js"></script>
+<script src="05-01-01-deep-causal-learning-DragonNet-r_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="05-01-01-deep-causal-learning-DragonNet-r_files/libs/quarto-html/anchor.min.js"></script>
+<link href="05-01-01-deep-causal-learning-DragonNet-r_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="05-01-01-deep-causal-learning-DragonNet-r_files/libs/quarto-html/quarto-syntax-highlighting-adfb2833bc15652ec5881dc6381ea988.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="05-01-01-deep-causal-learning-DragonNet-r_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="05-01-01-deep-causal-learning-DragonNet-r_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="05-01-01-deep-causal-learning-DragonNet-r_files/libs/bootstrap/bootstrap-58dc13426415cc10754fe96abed33356.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="propensity-adjusted-networks-dragonnet" class="level1 unnumbered">
+<h1 class="unnumbered">Propensity-Adjusted Networks (DragonNet)</h1>
+<p><strong>DragonNet</strong> is a deep neural network architecture for causal effect estimation that adapts the design and training of neural networks to improve the quality of treatment effect estimates. It was introduced by Shi, Blei, and Veitch (2019), “Adapting Neural Networks for the Estimation of Treatment Effects” (<a href="https://arxiv.org/pdf/1906.02120.pdf">arXiv:1906.02120</a>), with reference implementation at <a href="https://github.com/claudiashi57/dragonnet">github.com/claudiashi57/dragonnet</a> and in <a href="https://github.com/uber/causalml/blob/master/causalml/inference/tf/dragonnet.py">Uber’s CausalML</a>.</p>
+<p>This notebook fits a DragonNet model using <code>dragonnet()</code> from {RCausalML} (torch-backed), following the architecture and training scheme from Python package <code>CausalML</code>. DragonNet introduces two key innovations:</p>
+<ol type="1">
+<li><strong>A new architecture (the DragonNet)</strong> that exploits the <strong>sufficiency of the propensity score</strong> for estimation adjustment: a shared representation feeds three “heads”—propensity score <span class="math inline">\(\hat{e}(X)\)</span>, and potential outcomes <span class="math inline">\(\hat{Y}(0)\)</span> and <span class="math inline">\(\hat{Y}(1)\)</span>.</li>
+<li><strong>Targeted regularization</strong> that induces a bias towards estimators with nonparametrically optimal asymptotic properties, analogous to <strong>targeted maximum likelihood estimation (TMLE)</strong>.</li>
+</ol>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p><strong>Propensity-Adjusted Networks (DragonNet)</strong> are a deep learning architecture for causal effect estimation that jointly models the propensity score alongside potential outcomes. This design encourages the shared representation to capture information relevant to both treatment assignment and outcomes, improving overlap and stability of effect estimates. DragonNet also incorporates targeted regularization to achieve semiparametric efficiency.</p>
+<p>The <code>{RCausalML}</code> implementation follows the same architecture as <a href="https://github.com/uber/causalml/blob/master/causalml/inference/tf/dragonnet.py">CausalML’s <code>dragonnet.py</code></a>, implemented through the <code>dragonnet()</code> and <code>predict.dragonnet()</code> functions.</p>
+<section id="why-propensity-matters" class="level3">
+<h3 class="anchored" data-anchor-id="why-propensity-matters">Why propensity matters</h3>
+<p>Under ignorability, the propensity score <span class="math inline">\(e(X) = P(T=1|X)\)</span> is sufficient for adjustment: conditioning on <span class="math inline">\(e(X)\)</span> balances covariates. By explicitly modeling the propensity head alongside outcome heads, the shared representation is encouraged to capture information relevant both for treatment assignment and for outcomes, improving overlap and stability of effect estimates.</p>
+</section>
+<section id="architecture" class="level3">
+<h3 class="anchored" data-anchor-id="architecture">Architecture</h3>
+<ul>
+<li><strong>Shared representation</strong>: Several fully connected layers (e.g., 3 × 200 units with ELU activation) map covariates <span class="math inline">\(X\)</span> to a representation <span class="math inline">\(\Phi(X)\)</span>.</li>
+<li><strong>Three heads</strong> (from <span class="math inline">\(\Phi(X)\)</span>):
+<ul>
+<li><strong>Propensity head</strong>: <span class="math inline">\(\hat{e}(X) = \sigma(\text{linear}(\Phi(X)))\)</span> (sigmoid for binary treatment).</li>
+<li><strong>Outcome heads</strong>: Two branches (each with hidden layers and L2 regularization) produce <span class="math inline">\(\hat{Y}(0)\)</span> and <span class="math inline">\(\hat{Y}(1)\)</span>.</li>
+</ul></li>
+<li>Training uses a <strong>multi-task loss</strong>: factual outcome regression (MSE) plus propensity classification (binary cross-entropy). With <strong>targeted regularization</strong> enabled, an additional term (involving a learnable <span class="math inline">\(\varepsilon\)</span> and inverse propensity weighting) is added so that the estimator satisfies the efficient influence function equation and can achieve semiparametric efficiency.</li>
+</ul>
+</section>
+<section id="targeted-regularization" class="level3">
+<h3 class="anchored" data-anchor-id="targeted-regularization">Targeted regularization</h3>
+<p>The targeted regularization loss can be written in the form (conceptually):</p>
+<p><span class="math display">\[\mathcal{L}_{\text{tar}} = \mathbb{E}\left[\left(Y - \hat{\mu}_T(X) - \varepsilon \cdot \left(\frac{T}{\hat{e}(X)} - \frac{1-T}{1-\hat{e}(X)}\right)\right)^2\right]\]</span></p>
+<p>where <span class="math inline">\(\hat{\mu}_T(X)\)</span> is the factual outcome prediction (e.g.&nbsp;<span class="math inline">\(T \hat{Y}(1) + (1-T)\hat{Y}(0)\)</span>) and <span class="math inline">\(\varepsilon\)</span> is a learnable scalar. This correction is similar to a one-step TMLE update and helps debias the CATE estimator.</p>
+</section>
+<section id="comparison-with-tarnet-cfrnet" class="level3">
+<h3 class="anchored" data-anchor-id="comparison-with-tarnet-cfrnet">Comparison with TARNet / CFRNet</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 47%">
+<col style="width: 31%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Aspect</th>
+<th>TARNet / CFRNet</th>
+<th>DragonNet</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Propensity</td>
+<td>Not modeled</td>
+<td>Explicit propensity head (three-headed)</td>
+</tr>
+<tr class="even">
+<td>Balancing</td>
+<td>Implicit (TARNet) or IPM on <span class="math inline">\(\Phi\)</span> (CFRNet)</td>
+<td>Propensity sufficiency in shared <span class="math inline">\(\Phi\)</span></td>
+</tr>
+<tr class="odd">
+<td>Extra regularization</td>
+<td>Optional MMD (CFRNet)</td>
+<td>Optional targeted (TMLE-style) regularization</td>
+</tr>
+<tr class="even">
+<td>Outputs</td>
+<td><span class="math inline">\(\hat{Y}(0)\)</span>, <span class="math inline">\(\hat{Y}(1)\)</span></td>
+<td><span class="math inline">\(\hat{Y}(0)\)</span>, <span class="math inline">\(\hat{Y}(1)\)</span>, <span class="math inline">\(\hat{e}(X)\)</span> (and <span class="math inline">\(\varepsilon\)</span> if tar-reg)</td>
+</tr>
+</tbody>
+</table>
+<p>DragonNet is a standard benchmark on semi-synthetic datasets such as IHDP (see <a href="https://causalml.readthedocs.io/en/latest/examples/dragonnet_example.html">CausalML DragonNet example</a>).</p>
+</section>
+</section>
+<section id="implementation-in-r" class="level2">
+<h2 class="anchored" data-anchor-id="implementation-in-r">Implementation in R</h2>
+<p>We fit <strong>DragonNet</strong> with <strong><code>RCausalML::dragonnet()</code></strong> (<code>R/causalDeepNet.R</code>), which uses <strong>torch</strong> when available (Adam then SGD, shared trunk, three heads, targeted regularization). We use the same <strong>real-world dataset</strong> as in the TARNet/CFRNet tutorial (NSW/Lalonde from <code>causaldata</code>) for consistency.</p>
+<section id="setup" class="level3">
+<h3 class="anchored" data-anchor-id="setup">Setup</h3>
+</section>
+<section id="load-and-check-required-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-and-check-required-libraries">Load and Check Required Libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'tidyverse'</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">'plyr'</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'RCausalML'</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'causaldata'</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">'torch'</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">'ForCausality'</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">'mlbench'</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">'xgboost'</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">'future'</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="install-missing-packages" class="level3">
+<h3 class="anchored" data-anchor-id="install-missing-packages">Install Missing Packages</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install missing packages</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#new_packages &lt;- packages[!(packages %in% installed.packages()[,"Package"])]</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#if(length(new_packages)) install.packages(new_packages)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="verify-installation" class="level3">
+<h3 class="anchored" data-anchor-id="verify-installation">Verify Installation</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify installation</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Installed packages:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Installed packages:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">sapply</span>(packages, requireNamespace, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   tidyverse         plyr    RCausalML   causaldata        torch ForCausality 
+        TRUE         TRUE         TRUE         TRUE         TRUE         TRUE 
+     mlbench      xgboost       future 
+        TRUE         TRUE         TRUE </code></pre>
+</div>
+</div>
+</section>
+<section id="load-required-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-required-libraries">Load Required Libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># When rendering from package root, use local RCausalML (so causal_tree fixes are used)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="st">"DESCRIPTION"</span>) <span class="sc">&amp;&amp;</span> <span class="fu">requireNamespace</span>(<span class="st">"devtools"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">try</span>(devtools<span class="sc">::</span><span class="fu">load_all</span>(<span class="st">"."</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">lapply</span>(packages, <span class="cf">function</span>(pkg) {</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(pkg, <span class="at">character.only =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">torch_manual_seed</span>(<span class="dv">42</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="load-real-world-data-and-prepare-x-t-y" class="level3">
+<h3 class="anchored" data-anchor-id="load-real-world-data-and-prepare-x-t-y">Load real-world data and prepare (X, t, y)</h3>
+<p>We use <strong>NSW (nsw_mixtape)</strong>: treatment <code>treat</code>, outcome <code>re78</code>, and covariates (age, education, race, marriage, degree, earnings 1974/1975). Covariates are standardized.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(nsw_mixtape, <span class="at">package =</span> <span class="st">"causaldata"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(nsw_mixtape)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>treat <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(df<span class="sc">$</span>treat)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>y_col <span class="ot">&lt;-</span> <span class="st">"re78"</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>t_col <span class="ot">&lt;-</span> <span class="st">"treat"</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>x_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"educ"</span>, <span class="st">"black"</span>, <span class="st">"hisp"</span>, <span class="st">"marr"</span>, <span class="st">"nodegree"</span>, <span class="st">"re74"</span>, <span class="st">"re75"</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df[<span class="fu">complete.cases</span>(df[, <span class="fu">c</span>(y_col, t_col, x_cols)]), ]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(df[, x_cols])</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">scale</span>(X)                    <span class="co"># standardize covariates (already in your code)</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>t_vec <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(df[[t_col]])</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>y_vec <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(df[[y_col]])</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co"># === NEW: Scale the outcome (critical for DragonNet stability) ===</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>y_mean <span class="ot">&lt;-</span> <span class="fu">mean</span>(y_vec)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>y_sd   <span class="ot">&lt;-</span> <span class="fu">sd</span>(y_vec)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>y_scaled <span class="ot">&lt;-</span> (y_vec <span class="sc">-</span> y_mean) <span class="sc">/</span> y_sd</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>input_dim <span class="ot">&lt;-</span> <span class="fu">ncol</span>(X)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Sample size:"</span>, n, <span class="st">"| Covariates:"</span>, input_dim, </span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"| Treated:"</span>, <span class="fu">sum</span>(t_vec), <span class="st">"| Control:"</span>, <span class="fu">sum</span>(<span class="dv">1</span>L <span class="sc">-</span> t_vec), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sample size: 445 | Covariates: 8 | Treated: 185 | Control: 260 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Outcome (re78) mean:"</span>, <span class="fu">round</span>(y_mean, <span class="dv">1</span>), <span class="st">" sd:"</span>, <span class="fu">round</span>(y_sd, <span class="dv">1</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Outcome (re78) mean: 5300.8  sd: 6631.5 </code></pre>
+</div>
+</div>
+</section>
+<section id="trainvalidation-split" class="level3">
+<h3 class="anchored" data-anchor-id="trainvalidation-split">Train/validation split</h3>
+<p>We hold out a validation fold for reporting ATE and MSE. <strong><code>dragonnet()</code></strong> (in <code>causalDeepNet.R</code>) performs its own random train/validation partition of the rows you pass in (<code>val_split</code>, default <code>0.2</code>); those held-out rows are not used in the training loop. To train on almost all of <code>X_train</code>, pass a small <code>val_split</code> (the implementation reserves at least one row).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>p_train <span class="ot">&lt;-</span> <span class="fl">0.8</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4343</span>)                     <span class="co"># for reproducibility</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">sample.int</span>(n, <span class="at">size =</span> <span class="fu">round</span>(p_train <span class="sc">*</span> n))</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>X_train <span class="ot">&lt;-</span> X[idx, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>t_train <span class="ot">&lt;-</span> t_vec[idx]</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>y_train <span class="ot">&lt;-</span> y_scaled[idx]           <span class="co"># use scaled y</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>X_val <span class="ot">&lt;-</span> X[<span class="sc">-</span>idx, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>t_val <span class="ot">&lt;-</span> t_vec[<span class="sc">-</span>idx]</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>y_val <span class="ot">&lt;-</span> y_vec[<span class="sc">-</span>idx]               <span class="co"># keep original scale for reporting</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>y_val_scaled <span class="ot">&lt;-</span> y_scaled[<span class="sc">-</span>idx]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="fit-dragonnet-with-rcausalmldragonnet" class="level3">
+<h3 class="anchored" data-anchor-id="fit-dragonnet-with-rcausalmldragonnet">Fit DragonNet with <code>RCausalML::dragonnet()</code></h3>
+<p>The exported function builds the same <strong>shared representation + three heads</strong> (propensity <span class="math inline">\(\hat{e}(X)\)</span>, <span class="math inline">\(\hat{Y}(0)\)</span>, <span class="math inline">\(\hat{Y}(1)\)</span>) and <strong>learnable <span class="math inline">\(\varepsilon\)</span></strong> for targeted regularization, then runs <strong>Adam</strong> followed by <strong>SGD with momentum</strong>. See <code>?dragonnet</code> for all arguments.</p>
+<div class="cell" data-warn="false">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>fit_dn <span class="ot">&lt;-</span> <span class="fu">dragonnet</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  X_train,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">treatment =</span> t_train,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> y_train,                     <span class="co"># scaled outcome</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">neurons =</span> <span class="dv">200</span>L,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">reg_l2 =</span> <span class="fl">0.05</span>,                   <span class="co"># increased a bit for stability</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">targeted_reg =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">ratio_tar =</span> <span class="dv">1</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">batch_size =</span> <span class="dv">64</span>L,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">val_split =</span> <span class="fl">0.05</span>,                <span class="co"># small but enough for monitoring</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">adam_epochs =</span> <span class="dv">50</span>L,               <span class="co"># more epochs with Adam</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">adam_lr =</span> <span class="fl">5e-4</span>,                  <span class="co"># lower learning rate</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">sgd_epochs =</span> <span class="dv">30</span>L,                <span class="co"># fewer SGD epochs (was causing NaN)</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">sgd_lr =</span> <span class="fl">1e-6</span>,                   <span class="co"># much smaller</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">sgd_momentum =</span> <span class="fl">0.9</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">TRUE</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DragonNet Adam epoch 10 loss: 2.5746</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DragonNet Adam epoch 20 loss: 2.5361</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DragonNet Adam epoch 30 loss: 2.3565</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DragonNet Adam epoch 40 loss: 2.4645</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DragonNet Adam epoch 50 loss: 2.4356</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>DragonNet SGD epoch 25 loss: 2.3119</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(fit_dn<span class="sc">$</span>type, <span class="st">"dragonnet_torch"</span>))</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Final epsilon (targeted reg):"</span>, <span class="fu">round</span>(<span class="fu">as.numeric</span>(fit_dn<span class="sc">$</span>model<span class="sc">$</span>epsilon), <span class="dv">5</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Final epsilon (targeted reg): 0.00194 </code></pre>
+</div>
+</div>
+</section>
+<section id="predict-ite-ate-and-propensity" class="level3">
+<h3 class="anchored" data-anchor-id="predict-ite-ate-and-propensity">Predict ITE, ATE, and propensity</h3>
+<p>For any unit, <span class="math inline">\(\widehat{\text{ITE}}(x) = \hat{Y}(1) - \hat{Y}(0)\)</span>; ATE is the mean of ITE. Use <strong><code>predict()</code></strong> with <code>propensity = TRUE</code> to obtain propensity scores (torch models only).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>dragon_res <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_dn, X_val, <span class="at">propensity =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>ite_val <span class="ot">&lt;-</span> dragon_res<span class="sc">$</span>ite</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>ate_val <span class="ot">&lt;-</span> <span class="fu">mean</span>(ite_val)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"DragonNet ATE (val):"</span>, <span class="fu">round</span>(ate_val, <span class="dv">2</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DragonNet ATE (val): 0.39 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Naive diff-in-means (val):"</span>, <span class="fu">round</span>(<span class="fu">mean</span>(y_val[t_val <span class="sc">==</span> <span class="dv">1</span>]) <span class="sc">-</span> <span class="fu">mean</span>(y_val[t_val <span class="sc">==</span> <span class="dv">0</span>]), <span class="dv">2</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Naive diff-in-means (val): 2788.22 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Epsilon (targeted reg):"</span>, <span class="fu">round</span>(<span class="fu">as.numeric</span>(fit_dn<span class="sc">$</span>model<span class="sc">$</span>epsilon), <span class="dv">4</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Epsilon (targeted reg): 0.0019 </code></pre>
+</div>
+</div>
+</section>
+<section id="compare-with-tarnet-optional-baseline" class="level3">
+<h3 class="anchored" data-anchor-id="compare-with-tarnet-optional-baseline">Compare with TARNet (optional baseline)</h3>
+<p>If you have trained a TARNet on the same data (e.g.&nbsp;from the <a href="02-08-04-05-01-deep-causal-learning-TARNet-CFRNet-r.qmd">TARNet/CFRNet tutorial</a>), you can compare ATE and factual MSE. Here we report DragonNet factual MSE on the validation set.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Factual MSE on original scale</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>fit_dn<span class="sc">$</span>model<span class="sc">$</span><span class="fu">eval</span>()</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>torch<span class="sc">::</span><span class="fu">with_no_grad</span>({</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  x_v <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">torch_tensor</span>(X_val, <span class="at">dtype =</span> torch<span class="sc">::</span><span class="fu">torch_float32</span>())</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  t_v <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">torch_tensor</span>(t_val, <span class="at">dtype =</span> torch<span class="sc">::</span><span class="fu">torch_float32</span>())</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  y_v <span class="ot">&lt;-</span> torch<span class="sc">::</span><span class="fu">torch_tensor</span>(y_val, <span class="at">dtype =</span> torch<span class="sc">::</span><span class="fu">torch_float32</span>())  <span class="co"># original y</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> fit_dn<span class="sc">$</span><span class="fu">model</span>(x_v)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  y_hat <span class="ot">&lt;-</span> (<span class="dv">1</span> <span class="sc">-</span> t_v) <span class="sc">*</span> out<span class="sc">$</span>y0 <span class="sc">+</span> t_v <span class="sc">*</span> out<span class="sc">$</span>y1</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Unscale predictions if model was trained on scaled y</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  y_hat_unscaled <span class="ot">&lt;-</span> y_hat <span class="sc">*</span> y_sd <span class="sc">+</span> y_mean</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  mse_dragon <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(torch<span class="sc">::</span><span class="fu">nnf_mse_loss</span>(</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    y_hat_unscaled<span class="sc">$</span><span class="fu">unsqueeze</span>(<span class="dv">2</span>), y_v<span class="sc">$</span><span class="fu">unsqueeze</span>(<span class="dv">2</span>)</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"DragonNet factual MSE (val):"</span>, <span class="fu">round</span>(mse_dragon, <span class="dv">2</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DragonNet factual MSE (val): 31675688 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Propensity calibration</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>dragon_res <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_dn, X_val, <span class="at">propensity =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean predicted propensity | T=0:"</span>, </span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="fu">mean</span>(dragon_res<span class="sc">$</span>propensity[t_val <span class="sc">==</span> <span class="dv">0</span>]), <span class="dv">3</span>),</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"| T=1:"</span>, <span class="fu">round</span>(<span class="fu">mean</span>(dragon_res<span class="sc">$</span>propensity[t_val <span class="sc">==</span> <span class="dv">1</span>]), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mean predicted propensity | T=0: 0.43 | T=1: 0.439 </code></pre>
+</div>
+</div>
+</section>
+<section id="permutation-based-feature-importance" class="level3">
+<h3 class="anchored" data-anchor-id="permutation-based-feature-importance">Permutation-based feature importance</h3>
+<p>We assess how much <strong>predicted CATE</strong> <span class="math inline">\(\hat{\tau}(X) = \hat{Y}(1|X) - \hat{Y}(0|X)\)</span> on the <strong>validation</strong> fold depends on each covariate using <strong>permutation importance</strong>: for feature <span class="math inline">\(j\)</span>, replace column <span class="math inline">\(j\)</span> by a random permutation of its values (breaking the link between that feature and the rest), recompute <span class="math inline">\(\hat{\tau}\)</span>, and record the mean absolute change <span class="math inline">\(|\hat{\tau}(X) - \hat{\tau}(X^{\text{perm}}_j)|\)</span>. Larger values indicate the model’s CATE surface is more sensitive to that feature. This is <strong>descriptive of the fitted model</strong>, not a causal attribution of treatment effect heterogeneity.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Helper function to safely extract predicted ITE / CATE</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>pred_ite_mat <span class="ot">&lt;-</span> <span class="cf">function</span>(Xm) {</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  r <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_dn, Xm)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.list</span>(r)) {</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Common names returned by DragonNet / causal ML packages</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(r<span class="sc">$</span>ite)) {</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(<span class="fu">as.numeric</span>(r<span class="sc">$</span>ite))</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(r<span class="sc">$</span>predictions)) {</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(<span class="fu">as.numeric</span>(r<span class="sc">$</span>predictions))</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(r<span class="sc">$</span>pred) <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.null</span>(r<span class="sc">$</span>cate)) {</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(<span class="fu">as.numeric</span>(r<span class="sc">$</span>pred <span class="sc">%||%</span> r<span class="sc">$</span>cate))</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>      <span class="co"># fallback: take first numeric element</span></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(<span class="fu">as.numeric</span>(<span class="fu">unlist</span>(r[<span class="fu">sapply</span>(r, is.numeric)]))[<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(<span class="fu">nrow</span>(Xm))])</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">as.numeric</span>(r))</span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Main permutation importance</span></span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a>ite_base <span class="ot">&lt;-</span> <span class="fu">pred_ite_mat</span>(X_val)</span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ncol</span>(X_val)</span>
+<span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>n_rep <span class="ot">&lt;-</span> <span class="dv">8</span>L</span>
+<span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4343</span>L)</span>
+<span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a>imp_mat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA_real_</span>, <span class="at">nrow =</span> n_rep, <span class="at">ncol =</span> p)</span>
+<span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-31"><a href="#cb33-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (r <span class="cf">in</span> <span class="fu">seq_len</span>(n_rep)) {</span>
+<span id="cb33-32"><a href="#cb33-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="fu">seq_len</span>(p)) {</span>
+<span id="cb33-33"><a href="#cb33-33" aria-hidden="true" tabindex="-1"></a>    Xp <span class="ot">&lt;-</span> X_val</span>
+<span id="cb33-34"><a href="#cb33-34" aria-hidden="true" tabindex="-1"></a>    Xp[, j] <span class="ot">&lt;-</span> <span class="fu">sample</span>(Xp[, j])          <span class="co"># random permutation of column j</span></span>
+<span id="cb33-35"><a href="#cb33-35" aria-hidden="true" tabindex="-1"></a>    imp_mat[r, j] <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">abs</span>(ite_base <span class="sc">-</span> <span class="fu">pred_ite_mat</span>(Xp)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb33-36"><a href="#cb33-36" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb33-37"><a href="#cb33-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb33-38"><a href="#cb33-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-39"><a href="#cb33-39" aria-hidden="true" tabindex="-1"></a>imp_mean <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(imp_mat, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb33-40"><a href="#cb33-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-41"><a href="#cb33-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Feature names</span></span>
+<span id="cb33-42"><a href="#cb33-42" aria-hidden="true" tabindex="-1"></a>feat_names <span class="ot">&lt;-</span> <span class="fu">colnames</span>(X_val)</span>
+<span id="cb33-43"><a href="#cb33-43" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(feat_names)) {</span>
+<span id="cb33-44"><a href="#cb33-44" aria-hidden="true" tabindex="-1"></a>  feat_names <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"X"</span>, <span class="fu">seq_len</span>(p))   <span class="co"># better fallback than relying on x_cols</span></span>
+<span id="cb33-45"><a href="#cb33-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb33-46"><a href="#cb33-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-47"><a href="#cb33-47" aria-hidden="true" tabindex="-1"></a>impdf <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb33-48"><a href="#cb33-48" aria-hidden="true" tabindex="-1"></a>  <span class="at">feature   =</span> feat_names,</span>
+<span id="cb33-49"><a href="#cb33-49" aria-hidden="true" tabindex="-1"></a>  <span class="at">importance =</span> imp_mean,</span>
+<span id="cb33-50"><a href="#cb33-50" aria-hidden="true" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb33-51"><a href="#cb33-51" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb33-52"><a href="#cb33-52" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(impdf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   feature importance
+1      age 0.28301456
+2     educ 0.14510722
+3    black 0.10035977
+4     hisp 0.08834791
+5     marr 0.08481342
+6 nodegree 0.08036322</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(impdf, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(feature, importance), <span class="at">y =</span> importance)) <span class="sc">+</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">fill =</span> <span class="st">"#1B998B"</span>, <span class="at">width =</span> <span class="fl">0.72</span>) <span class="sc">+</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"DragonNet: Permutation Importance for Predicted CATE (Validation)"</span>,</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="fu">paste0</span>(</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Mean |τ̂(X) − τ̂(X_perm)| per feature; "</span>,</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>      n_rep, <span class="st">" permutation rounds — descriptive of model surface"</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Mean |Δ predicted ITE|"</span></span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>)</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-01-01-deep-causal-learning-DragonNet-r_files/figure-html/plot-importance-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="practical-tips" class="level2">
+<h2 class="anchored" data-anchor-id="practical-tips">Practical tips</h2>
+<ul>
+<li><strong>Hyperparameters</strong>: Tune <code>neurons</code> (e.g.&nbsp;200), <code>reg_l2</code>, <code>ratio_tar</code>, <code>adam_lr</code>, <code>sgd_lr</code>, <code>batch_size</code>, and epoch counts in <code>dragonnet()</code>. Defaults match the usual CausalML schedule (30 Adam + 100 SGD).</li>
+<li><strong>Targeted regularization</strong>: Pass <code>targeted_reg = FALSE</code> or <code>ratio_tar = 0</code> to turn off the TMLE-style term; otherwise keep <code>targeted_reg = TRUE</code> and <code>ratio_tar</code> (e.g.&nbsp;1).</li>
+<li><strong>Benchmarks</strong>: For PEHE/ATE on semi-synthetic data (e.g.&nbsp;IHDP), see <a href="https://causalml.readthedocs.io/en/latest/examples/dragonnet_example.html">CausalML DragonNet example</a>. Real-world data (e.g.&nbsp;NSW) has no ground-truth ITE; compare ATE and factual MSE across methods.</li>
+<li><strong>Stability</strong>: Clip propensity in the loss (e.g.&nbsp;to <span class="math inline">\([10^{-5},\, 1 - 10^{-5}]\)</span>) to avoid division by zero.</li>
+</ul>
+</section>
+<section id="summary-and-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusions">Summary and Conclusions</h2>
+<p>This note shows how to fit <strong>DragonNet</strong> with <strong>RCausalML</strong> (<code>dragonnet()</code> in <code>R/causalDeepNet.R</code>), which mirrors CausalML’s architecture and training (torch, Adam then SGD, targeted regularization). We evaluate ATE and factual MSE on a held-out validation fold.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 70%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Install/load <code>torch</code>, <code>causaldata</code>, <code>RCausalML</code>; set seeds</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Load NSW data; define X, t, y; standardize; train/val split</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Call <strong><code>dragonnet(X_train, treatment, y)</code></strong> with desired hyperparameters</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><strong><code>predict(fit, newdata, propensity = TRUE)</code></strong> for ITE and <span class="math inline">\(\hat{e}(X)\)</span> on validation covariates</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Report ATE, factual MSE, and propensity calibration</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td><strong>Permutation importance</strong> on validation predicted <span class="math inline">\(\hat{\tau}(X)\)</span> (mean <span class="math inline">\(|\Delta\hat{\tau}|\)</span> per covariate)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">Resources</h2>
+<ul>
+<li><p><a href="https://arxiv.org/pdf/1906.02120.pdf">Shi, Blei, Veitch (2019)</a> — Adapting Neural Networks for the Estimation of Treatment Effects</p></li>
+<li><p><a href="https://github.com/claudiashi57/dragonnet">claudiashi57/dragonnet</a> — Original DragonNet implementation</p></li>
+<li><p><a href="https://github.com/uber/causalml/blob/master/causalml/inference/tf/dragonnet.py">Uber CausalML — dragonnet.py</a> — TensorFlow/Keras implementation</p></li>
+<li><p><a href="https://causalml.readthedocs.io/en/latest/examples/dragonnet_example.html">CausalML DragonNet example (IHDP)</a> — Benchmark with meta-learners</p></li>
+</ul>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

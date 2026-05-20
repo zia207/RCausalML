@@ -1,0 +1,204 @@
+# 1. Meta-Learners for Treatment Effect Estimation {.unnumbered}
+
+This tutorial provides an overview of **meta-learners** for estimating heterogeneous treatment effects (HTE) in causal inference. Meta-learners are flexible frameworks that decompose the causal estimation problem into standard supervised learning tasks, allowing practitioners to leverage any base machine learning model to estimate the **Conditional Average Treatment Effect (CATE)**:
+
+## Overview
+
+**Meta-learners** are flexible algorithmic frameworks that estimate *heterogeneous treatment effects* (HTE)—how a treatment's impact varies across individuals with different characteristics—by decomposing the causal estimation problem into standard supervised learning tasks. They operate as "meta-algorithms" that wrap around any base machine learning model (e.g., random forests, gradient boosting, neural networks) to estimate the **Conditional Average Treatment Effect (CATE)**:
+
+$$\tau(x) = \mathbb{E}[Y(1) - Y(0) \mid X = x]$$
+
+where $Y(1)$ and $Y(0)$ are potential outcomes under treatment and control, and $X$ represents covariates [[3]].
+
+Unlike methods requiring specialized causal architectures (e.g., causal forests), meta-learners leverage familiar predictive models while addressing causal identification challenges—primarily confounding in observational data.
+
+### Popular Meta-Learner Variants
+
+####  S-Learner (Single Learner)*
+
+- **Approach**: Trains a *single* regression model $ \hat{\mu}(x, t) $ to predict outcomes using **both features $X$ and treatment indicator $T$** as inputs:  
+  $Y \sim f(X, T)$
+- **CATE estimation**: $\hat{\tau}_S(x) = \hat{\mu}(x, 1) - \hat{\mu}(x, 0)$
+- **Strengths**: 
+  - Simple implementation; naturally captures treatment-covariate interactions if the model is flexible enough
+  - Less prone to bias when treatment effects are small [[16]]
+- **Weaknesses**: 
+  - Requires the model to *explicitly learn* treatment effects from the joint $(X,T)$ representation
+  - May underperform if the base learner doesn't adequately model $T$'s influence (e.g., tree-based models may ignore $T$ if it has weak marginal predictive power) 
+
+#### T-Learner (Two Learners)
+
+- **Approach**: Fits **two separate models**:
+  - $\hat{\mu}_0(x)$ on control group ($T=0$)
+  - $\hat{\mu}_1(x)$ on treated group ($T=1$)
+- **CATE estimation**: $\hat{\tau}_T(x) = \hat{\mu}_1(x) - \hat{\mu}_0(x)$
+- **Strengths**: 
+  - Explicitly models group-specific outcome surfaces
+  - Intuitive and easy to implement
+- **Weaknesses**: 
+  - Inefficient with imbalanced treatment groups (e.g., 95% control / 5% treated)—the minority group model suffers from high variance [[13]]
+  - Doesn't leverage information across groups during training
+
+#### X-Learner (Cross-Fitted Learner)
+
+- **Approach**: An enhancement of T-Learner that **cross-fits** predictions between groups [[13]]:
+  1. Fit initial T-learner models $\hat{\mu}_0, \hat{\mu}_1$
+  2. Compute *imputed treatment effects*:
+     - For controls: $D_i^0 = \hat{\mu}_1(X_i) - Y_i$ (where $T_i=0$)
+     - For treated: $D_i^1 = Y_i - \hat{\mu}_0(X_i)$ (where $T_i=1$)
+  3. Fit two new models on these imputed effects: $\hat{\tau}_0(x)$ on controls, $\hat{\tau}_1(x)$ on treated
+  4. Combine using propensity score weighting:  
+     $\hat{\tau}_X(x) = g(x)\hat{\tau}_0(x) + (1-g(x))\hat{\tau}_1(x)$  
+     where $g(x) = P(T=1 \mid X=x)$ is the propensity score
+- **Strengths**: 
+  - **Highly efficient with imbalanced designs**—uses all data to estimate effects in both groups [[13]]
+  - Often outperforms T-learner empirically when treatment groups are uneven
+- **Weaknesses**: 
+  - Requires accurate propensity score estimation
+  - More complex pipeline with multiple model-fitting stages
+
+#### R-Learner (Robinson Residual Learner)
+
+- **Approach**: Based on **Robinson's transformation** (1988), directly targets the treatment effect by regressing *outcome residuals* on *treatment residuals*:
+  1. Estimate nuisance functions:
+  
+     - $\hat{\mu}(x) = \mathbb{E}[Y \mid X=x]$ (outcome model)
+     - $\hat{e}(x) = P(T=1 \mid X=x)$ (propensity score)
+  2. Compute residuals:
+     - Outcome residual: $Y - \hat{\mu}(X)$
+     - Treatment residual: $T - \hat{e}(X)$
+  3. Fit model $\hat{\tau}_R(x)$ by solving:  
+     $\min_{\tau} \mathbb{E}\left[ \left( (Y - \hat{\mu}(X)) - \tau(X)(T - \hat{e}(X)) \right)^2 \right]$
+- **Strengths**: 
+  - **Orthogonal/debiased estimation**: Nuisance estimation errors don't propagate linearly into $\tau(x)$ estimates
+  - Theoretically optimal convergence rates under regularity conditions (Nie & Wager, 2021)
+  - Less sensitive to misspecification of nuisance models than S/T/X-learners
+- **Weaknesses**: 
+  - Requires accurate nuisance function estimation (though errors are "orthogonalized")
+  - Implementation more complex than S/T-learners
+
+#### DR-Learner (Doubly Robust Learner)
+
+- **Approach**: Combines outcome modeling and propensity scores in a **doubly robust** estimator:
+  1. Estimate nuisance functions $\hat{\mu}_0(x), \hat{\mu}_1(x), \hat{e}(x)$ on one data split
+  2. Compute *augmented inverse propensity weighting (AIPW)* scores on held-out data:  
+  
+$$\hat{\phi}_i = \frac{T_i(Y_i - \hat{\mu}_1(X_i))}{\hat{e}(X_i)} - \frac{(1-T_i)(Y_i - \hat{\mu}_0(X_i))}{1-\hat{e}(X_i)} + \hat{\mu}_1(X_i) - \hat{\mu}_0(X_i)$$
+     
+  3. Regress $\hat{\phi}_i$ on $X_i$ to estimate $\tau(x)$
+  
+- **Strengths**: 
+  - **Doubly robust property**: Consistent if *either* outcome models *or* propensity scores are correctly specified [[39]]
+  - Provides formal statistical guarantees (asymptotic normality) for inference
+  - Robust to moderate confounding in observational studies
+- **Weaknesses**: 
+  - Sensitive to extreme propensity scores (near 0 or 1)
+  - Requires careful cross-fitting to avoid overfitting bias
+
+### Practical Guidance
+
+| Scenario | Recommended Meta-Learner |
+|----------|--------------------------|
+| **Balanced RCT** | S-learner (simplicity) or X-learner (efficiency) |
+| **Imbalanced treatment groups** | X-learner or R-learner |
+| **Observational data with confounding** | R-learner or DR-learner (orthogonality/double robustness) |
+| **Need for statistical inference** | DR-learner (asymptotic guarantees) |
+| **Small treatment effects** | S-learner (less prone to bias) [[16]] |
+
+**Key insight**: Meta-learners don't replace causal assumptions—they require unconfoundedness ($Y(1),Y(0) \perp T \mid X$) to identify causal effects. Their value lies in flexibly estimating *how* effects vary across $X$ once identification is established [[1]].
+
+For implementation, libraries like **EconML** (Microsoft), **CausalML** (Uber), and **scikit-learn extensions** provide production-ready meta-learner estimators with cross-fitting and nuisance parameter tuning built-in.
+
+### Implementation in R
+
+This tutorial series provides a **production-ready guide** to estimating heterogeneous treatment effects across three increasingly complex scenarios:
+
+1. **Binary treatment** (control vs. single intervention)  
+2. **Multiple discrete treatments** (≥3 arms: e.g., Drug A, Drug B, Placebo)  
+3. **Continuous treatments** (dose-response functions)
+
+We implement all meta-learners natively in R with **ground-truth validation** using synthetic data. While Python's `CausalML` offers multi-treatment support (as referenced), this tutorial demonstrates **equivalent capabilities in R** using `grf`, `DoubleML`, and custom implementations.
+
+
+###  Causal Framework Across Treatment Types
+
+| Treatment Type | Notation | Target Estimand | Key Challenge |
+|----------------|----------|-----------------|---------------|
+| **Binary** | $T \in \{0,1\}$ | $\tau(x) = \mathbb{E}[Y(1)-Y(0)\|X=x]$ | Confounding adjustment |
+| **Multiple Discrete** | $T \in \{0,1,\dots,K\}$ | $\tau_k(x) = \mathbb{E}[Y(k)-Y(0)\|X=x], \ k=1..K$ | Multinomial propensity scores; treatment group sparsity |
+| **Continuous** | $D \in \mathbb{R}^+$ | $\tau(d,x) = \frac{\partial}{\partial d}\mathbb{E}[Y(d)\|X=x]$ | Smoothness constraints; functional estimation |
+
+**Core identification assumption** (all cases):  
+
+$$ (Y(t))_{t \in \mathcal{T}} \perp T \mid X \quad \text{(unconfoundedness)} $$
+
+## Summary and Conclusions
+
+- **Meta-learners** are meta-algorithms that estimate heterogeneous treatment effects (CATE) by reducing causal estimation to standard supervised learning tasks.
+- **S-, T-, X-, R-, and DR-Learners** each trade off simplicity, efficiency under imbalance, orthogonality, and double robustness; choice depends on design (RCT vs observational), balance, and need for inference.
+- **Identification** relies on unconfoundedness; meta-learners then flexibly estimate how effects vary with covariates $X$.
+- **Implementation in R** uses `grf`, `DoubleML`, and `mlr3`; the same packages and data generators support binary, multiple discrete, and continuous treatment tutorials in this series.
+
+This introduction established the conceptual and practical basis for meta-learners: what they estimate (CATE), how the main variants work (S, T, X, R, DR), when to prefer which one, and how the causal framework extends to binary, multi-arm, and continuous treatments. The data generators provided here are used in the following tutorials to benchmark and compare meta-learner performance with known ground truth.
+
+## Resources
+
+1. Künzel et al. (2019). *PNAS*: Metalearners for HTE estimation  
+2. Nie & Wager (2021). *Biometrika*: Quasi-oracle estimation (R-Learner theory)  
+3. Athey & Wager (2019). *arXiv*: Generalized random forests  
+4. Chernozhukov et al. (2018). *Econometrica*: Double/debiased ML
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+

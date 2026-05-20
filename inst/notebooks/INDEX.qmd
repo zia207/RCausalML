@@ -1,0 +1,103 @@
+---
+title: "CausalML Notebooks by Topic"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+---
+
+This index organizes all Quarto notebooks in this folder **by topic** for easier discovery. Notebooks are grouped by methodological similarity.
+
+## Meta-learners (S-, T-, X-, R-Learners)
+
+Core tutorials and benchmarks for meta-learner estimation of CATE/ATE.
+
+| Notebook | Description |
+|----------|-------------|
+| [01-meta-learners-training-estimation-validation-visualization.qmd](01-meta-learners-training-estimation-validation-visualization.qmd) | Meta-learners with synthetic data: training, ATE/CATE estimation, validation, visualization |
+| [03-meta-learners-single-multiple-treatment.qmd](03-meta-learners-single-multiple-treatment.qmd) | S-, T-, X-, R-Learners for single and multiple treatment arms |
+| [16-meta-learners-benchmark-nie-wager.qmd](16-meta-learners-benchmark-nie-wager.qmd) | Benchmark X-, R-, T-, S-learners across Nie & Wager (2020) simulation modes |
+| [22-benchmark-semi-synthetic-Schuler-et-al.qmd](22-benchmark-semi-synthetic-Schuler-et-al.qmd) | Meta-learner benchmarks with semi-synthetic data (Schuler et al., IHDP) |
+
+## Meta-learner vs other methods (benchmarks)
+
+Comparing meta-learners with neural nets, CEVAE, GANITE, and DR/DRIV.
+
+| Notebook | Description |
+|----------|-------------|
+| [07-Dragonnet-TarNet-CRFNet-metalearner.qmd](07-Dragonnet-TarNet-CRFNet-metalearner.qmd) | DragonNet, TARNet, CFRNet vs meta-learners (IHDP + synthetic) |
+| [14-CEVAE-GANITE-metalearner-benchmark.qmd](14-CEVAE-GANITE-metalearner-benchmark.qmd) | CEVAE, GANITE & meta-learners on IHDP and synthetic data |
+| [15-dr-driv-xr-benchmark.qmd](15-dr-driv-xr-benchmark.qmd) | DR Learner vs DR-IV vs X-Learner with synthetic data (including hidden confounder) |
+
+## Uplift and causal trees/forests
+
+Tree-based uplift and causal forest methods.
+
+| Notebook | Description |
+|----------|-------------|
+| [02-uplift-trees-synthetic.qmd](02-uplift-trees-synthetic.qmd) | Uplift trees with synthetic classification data |
+| [04-uplift-tree-forest-visualization.qmd](04-uplift-tree-forest-visualization.qmd) | Visualizing uplift tree/forest structure and predictions |
+| [12-feature-selection-uplift.qmd](12-feature-selection-uplift.qmd) | Feature selection for uplift (Zhao et al. 2020): filters and AUUC evaluation |
+| [17-causal-trees-forests-treatment-effects-estimation-visualization.qmd](17-causal-trees-forests-treatment-effects-estimation-visualization.qmd) | Causal trees/forests for treatment effects and tree visualization |
+
+## Model interpretation (feature importance, SHAP)
+
+Feature importance and SHAP for meta-learners and tree models.
+
+| Notebook | Description |
+|----------|-------------|
+| [05-model-interpretation-feature-importance-shap.qmd](05-model-interpretation-feature-importance-shap.qmd) | Feature importance and SHAP for S-, T-, X-, R-Learners and uplift trees |
+| [18-causal-trees-interpretation-feature-importance-SHAP.qmd](18-causal-trees-interpretation-feature-importance-SHAP.qmd) | Causal trees/forests interpretation with feature importance and SHAP |
+
+## Uplift curves and validation
+
+Uplift/gain curves, TMLE-based validation, Qini curves.
+
+| Notebook | Description |
+|----------|-------------|
+| [06-uplift-curves-tmle.qmd](06-uplift-curves-tmle.qmd) | Uplift curves with TMLE (validation with/without ground truth) |
+| [20-qini-curves-multiple-costly-treatments-arms.qmd](20-qini-curves-multiple-costly-treatments-arms.qmd) | Qini curves with multiple costly treatment arms |
+
+## Instrumental variables and Double ML
+
+IV, 2SLS, DML, OrthoIV, DRIV, dynamic and weighted DML.
+
+| Notebook | Description |
+|----------|-------------|
+| [08-IV-2SLS-NLSYM.qmd](08-IV-2SLS-NLSYM.qmd) | 2SLS with NLSYM and synthetic datasets |
+| [23-double-machine-learning-usecases-examples.qmd](23-double-machine-learning-usecases-examples.qmd) | DML use cases: single/multiple treatment, synthetic and observational data |
+| [24-orthoiv-driv-use-cases-examples.qmd](24-orthoiv-driv-use-cases-examples.qmd) | OrthoIV and DRIV: ATE and heterogeneous CATE with instruments |
+| [25-dynamic-double-ml.qmd](25-dynamic-double-ml.qmd) | Dynamic Double ML for panel/sequential treatments |
+| [26-weighted-double-ml.qmd](26-weighted-double-ml.qmd) | Weighted DML: summarized data and interpretability (LinearDML, CausalForestDML) |
+
+## Counterfactual reasoning and policy learning
+
+Unit selection, value estimation, and policy learners.
+
+| Notebook | Description |
+|----------|-------------|
+| [10-counterfactual-unit-selection.qmd](10-counterfactual-unit-selection.qmd) | Unit selection based on counterfactual logic (Li & Pearl 2019) |
+| [11-counterfactual-value-estimation.qmd](11-counterfactual-value-estimation.qmd) | Counterfactual value estimation with conversion/impression costs |
+| [13-policy-learner-binary-treatment.qmd](13-policy-learner-binary-treatment.qmd) | Policy learner (Athey & Wager 2018) for binary treatment |
+
+## Sensitivity and calibration
+
+Robustness checks and propensity calibration.
+
+| Notebook | Description |
+|----------|-------------|
+| [09-sensitivity-analysis.qmd](09-sensitivity-analysis.qmd) | Sensitivity analysis: placebo treatment, random cause, subset, selection bias, random replace |
+| [21-propensity-calibration.qmd](21-propensity-calibration.qmd) | Propensity score calibration (e.g. isotonic/sigmoid) |
+
+## Data generation
+
+Synthetic and semi-synthetic data for uplift/causal ML.
+
+| Notebook | Description |
+|----------|-------------|
+| [19-logistic-regression-data-generation-uplift-classification.qmd](19-logistic-regression-data-generation-uplift-classification.qmd) | Logistic-regression-based data generation for uplift classification |
+
+---
+
+*To render a notebook from the package root:  
+`quarto render inst/examples/Notebook/<filename>.qmd`*

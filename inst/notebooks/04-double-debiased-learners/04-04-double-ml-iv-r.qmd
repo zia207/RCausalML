@@ -1,0 +1,924 @@
+# 5. Double Machine Learning with Instrumental Variables {.unnumbered}
+
+In this tutorial we implement **DML-IV** in R using **RCausalML**’s native `DMLIVLearner()` (defined in the package source file `R/DMLearner.R`). We use **synthetic data** to show why a naive regression of the outcome on the treatment is biased, then fit **DML IV** and **standard DML (without the instrument)** with several first-stage learners—**ordinary least squares (`"lm"`)**, **random forest (`"ranger"`)**, and **gradient boosting (`"xgb"`)**—and compare **bias relative to the true effect**, **uncertainty**, and **runtime**. **Part B** repeats the same model comparison on the **401(k) IV** sample (`fetch_401k(..., instrument = TRUE)` from **DoubleML**), with **eligibility** (`e401`) instrumenting **participation** (`p401`). The statistical ideas align with the [DoubleML R: Basic Instrumental Variables Calculation](https://docs.doubleml.org/stable/examples/R_double_ml_basic_iv.html) and with **two-stage least squares (2SLS)** / sieve IV perspectives (e.g., [EconML Sieve 2SLS](https://www.pywhy.org/EconML/spec/estimation/two_sls.html)); here the implementation is **RCausalML only**—no `DoubleML` package required.
+
+
+## Overview
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Instrumental Variable (IV) | A variable that affects treatment but does not directly affect the outcome. | "Lottery assignment changes program attendance but not earnings directly." |
+| Endogeneity | When treatment is correlated with unobserved factors affecting outcome. | "More motivated people choose treatment and also perform better." |
+| PLIV (Partially Linear IV model) | DML model for causal effects with an instrument and covariates. | "Estimate effect of education on wages using distance-to-college as IV." |
+| Relevance (IV condition) | Instrument must strongly predict treatment. | "If IV barely changes treatment, estimates become unstable." |
+| Exclusion restriction | Instrument affects outcome only through treatment. | "The instrument should not have its own direct path to the outcome." |
+| Local Average Treatment Effect (LATE) | Effect for compliers, i.e., people whose treatment changes because of IV. | "Effect among students who attend college only because of distance changes." |
+
+**Double machine learning with instrumental variables (DML-IV)** combines IV identification with double/debiased machine learning: an instrument $Z$ addresses endogeneity of the treatment $D$, while ML (or linear models) and cross-fitting estimate nuisance functions without overfitting bias. RCausalML’s `DMLIVLearner()` builds cross-fitted $\hat{\mathbb{E}}[Y \mid X,W]$, $\hat{\mathbb{E}}[T \mid X,W]$, and $\hat{\mathbb{E}}[T \mid X,W,Z]$, forms the DMLIV pseudo-outcome, and fits a **linear** CATE in $X$ (see `?DMLIVLearner`).
+
+**Key idea**: DML-IV uses cross-fitting and flexible first stages to estimate nuisances, then combines them in a pseudo-outcome regression on $X$ for the effect of $D$ on $Y$ (e.g., a **local average treatment effect**, LATE, under standard IV assumptions).
+
+In the basic IV DAG:
+
+- **$Z$** is the instrument (assumed to affect $D$, and to affect $Y$ only through $D$).
+- **$C$** are unobserved confounders (e.g., motivation, ability).
+- **$D$** is the treatment or decision variable.
+- **$Y$** is the outcome.
+
+A **naive** regression of $Y$ on $D$ is biased because $D$ is correlated with $C$. **2SLS** and **sieve 2SLS** project $D$ onto $Z$ (and covariates) in the first stage; **DML IV** in RCausalML generalizes the nuisance steps with optional ML (`"ranger"`, `"glmnet"`, `"xgb"`) and cross-fitting (`cv`).
+
+**Standard DML** (`LinearDML`) uses the same cross-fitted nuisance idea **without** an instrument. It does **not** correct for bias from **unobserved** confounders that affect both $D$ and $Y$; we include it here so you can see **IV vs non-IV** side by side for each learner.
+
+## Implementation in R
+
+The workflow is:
+
+1. **Simulate IV data** with a binary instrument, binary treatment, continuous outcome, and unobserved confounders.
+2. **Optional nuisance covariates** `W`: extra columns for the first stages so tree methods (`"ranger"`, `"xgb"`) have features to learn (with only an intercept, random forests are not meaningful).
+3. **Naive estimation**: Show that a simple mean comparison is biased.
+4. **Fit `DMLIVLearner()`** (with $Z$) and **`LinearDML()`** (without $Z$) for each first-stage string (`"lm"`, `"ranger"`, `"xgb"`).
+5. **Compare** estimates to the true effect, standard errors, and elapsed time.
+
+### Setup and Libraries
+
+```{r}
+#| label: setup-packages
+#| code-summary: "Packages and optional dependency messages"
+packages <- c("RCausalML",
+              "tidyverse")
+if (!requireNamespace("DoubleML", quietly = TRUE)) {
+  message("Install suggested package 'DoubleML' for Part B (`fetch_401k`): install.packages(\"DoubleML\")")
+}
+if (!requireNamespace("xgboost", quietly = TRUE)) {
+  message("Install optional package 'xgboost' for the `\"xgb\"` nuisance rows: install.packages(\"xgboost\")")
+}
+if (!requireNamespace("kernelshap", quietly = TRUE) || !requireNamespace("shapviz", quietly = TRUE)) {
+  message("Install optional packages 'kernelshap' and 'shapviz' for Part B SHAP: install.packages(c(\"kernelshap\", \"shapviz\"))")
+}
+```
+
+### Install Missing Packages
+
+```{r}
+#| label: install-packages
+#| code-summary: "Install missing packages (chunk eval disabled by default)"
+#| eval: false
+#| warning: false
+#| error: false
+new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+if(length(new_packages)) install.packages(new_packages)
+```
+
+### Load Libraries and Options
+
+```{r}
+#| label: load-libraries
+#| code-summary: "Load libraries (RCausalML, tidyverse, optional DoubleML / SHAP)"
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+if (requireNamespace("DoubleML", quietly = TRUE)) {
+  suppressPackageStartupMessages(library(DoubleML))
+}
+if (requireNamespace("kernelshap", quietly = TRUE)) {
+  suppressPackageStartupMessages(library(kernelshap))
+}
+if (requireNamespace("shapviz", quietly = TRUE)) {
+  suppressPackageStartupMessages(library(shapviz))
+}
+```
+
+## Part A: DML-IV with Synthetic Data
+
+### IV Data-Generation
+
+We generate synthetic data compatible with the IV DAG: a binary unobserved confounder $C$, a binary instrument $Z$, a binary treatment $D$ (influenced by $Z$ and $C$), and a continuous outcome $Y$. The target is the **decision effect** (impact of $D$ on $Y$).
+
+We also draw **noise covariates** `W` (not in the structural outcome equation) so that **random forest** and **XGBoost** nuisances in `DMLIVLearner(..., W = W)` and `LinearDML(..., X = W)` see a nontrivial design matrix. The second stage for IV remains a **constant** CATE (`X = NULL`); for non-IV DML we summarize performance by the **sample mean** of the fitted CATE $\hat\theta(W_i)$ (heterogeneity driven only by `W`).
+
+
+```{r}
+#| label: iv-data-generate
+#| code-summary: "Simulate synthetic IV data (instrument, treatment, outcome, W)"
+n <- 10000
+decision_effect <- -2
+instrument_effect <- 0.7
+
+set.seed(1234)
+
+confounder <- rbinom(n, 1, 0.3)
+instrument <- rbinom(n, 1, 0.5)
+decision <- as.numeric(runif(n) <= instrument_effect * instrument + 0.4 * confounder)
+outcome <- 30 + decision_effect * decision + 10 * confounder + rnorm(n, sd = 2)
+
+W_ctrl <- matrix(stats::rnorm(n * 3L), nrow = n, ncol = 3L)
+colnames(W_ctrl) <- paste0("W", 1:3)
+
+df <- data.frame(instrument, decision, outcome)
+```
+
+### Naive Estimation (Biased)
+
+Estimating the effect of `decision` on `outcome` by the difference in mean outcomes between decision groups ignores endogeneity. Because the confounder $C$ affects both $D$ and $Y$, this difference is **biased** (we expect a value near 1 here, not the true effect $-2$).
+
+```{r}
+#| label: naive-ate
+#| code-summary: "Naive ATE (difference in mean outcome by treatment)"
+naive_ate <- mean(df[df$decision == 1, "outcome"]) - mean(df[df$decision == 0, "outcome"])
+naive_ate
+```
+
+The naive estimate is far from the true `decision_effect = -2`. We need IV (or DML-IV) to recover the causal effect.
+
+### Comparison: IV (`DMLIVLearner`) vs non-IV (`LinearDML`) for `lm`, `ranger`, and `xgb`
+
+- **With IV**: `DMLIVLearner` uses `Z = instrument`, first stages on `(W)` (and implicit intercept via `dml_iv_XW`), and a **linear** second stage on `X = NULL` (constant effect). We read $\hat\theta$ and its SE from `summary(fitted$model_cate$model)`.
+- **Without IV**: `LinearDML` fits the usual **partially linear DML** with the same `Y`, `T`, and nuisance features `X = W_ctrl` (CATE may vary with `W`; we report the **mean** $\frac{1}{n}\sum_i \hat\theta(W_i)$ as a scalar summary and an SE $\sqrt{\widehat{\mathrm{Var}}(\hat\theta(W_i))/n}$).
+
+Both use `discrete_treatment = TRUE` for IV (binary $T$ nuisances); `LinearDML` treats binary treatment via its default binary path. Cross-fitting uses `cv = 3` and `num.trees = 200` for ranger to keep the vignette build fast.
+
+```{r}
+#| label: dml-iv-vs-linear-dml
+#| code-summary: "Compare DML-IV vs LinearDML (lm, ranger, xgb nuisances)"
+#| message: false
+#| warning: false
+truth <- decision_effect
+cv_fold <- 3L
+rf_trees <- 200L
+
+learners <- c("lm", "ranger", "xgb")
+if (!requireNamespace("xgboost", quietly = TRUE)) {
+  learners <- setdiff(learners, "xgb")
+}
+
+se_mean_cate <- function(fit, X) {
+  te <- predict(fit, X)
+  sqrt(stats::var(as.vector(te), na.rm = TRUE) / length(as.vector(te)))
+}
+
+run_one <- function(learner, use_iv) {
+  tm <- system.time({
+    if (use_iv) {
+      mod <- DMLIVLearner(
+        model_y_xw = learner,
+        model_t_xw = learner,
+        model_t_xwz = learner,
+        fit_cate_intercept = FALSE,
+        discrete_treatment = TRUE,
+        cv = cv_fold,
+        random_state = 1234L
+      )
+      fit_obj <- fit(
+        mod,
+        Y = df$outcome,
+        T = df$decision,
+        Z = df$instrument,
+        X = NULL,
+        W = W_ctrl,
+        num.trees = rf_trees
+      )
+      sm <- summary(fit_obj$model_cate$model)$coefficients
+      est <- as.numeric(sm[1L, "Estimate"])
+      se <- as.numeric(sm[1L, "Std. Error"])
+    } else {
+      mod <- LinearDML(
+        model_y = learner,
+        model_t = learner,
+        fit_cate_intercept = TRUE,
+        n_fold = cv_fold,
+        seed = 1234L
+      )
+      fit_obj <- fit(
+        mod,
+        X = W_ctrl,
+        treatment = df$decision,
+        y = df$outcome,
+        num.trees = rf_trees
+      )
+      est <- mean(as.vector(predict(fit_obj, W_ctrl)))
+      se <- se_mean_cate(fit_obj, W_ctrl)
+    }
+  })
+  tibble::tibble(
+    learner = learner,
+    instrumental_variable = use_iv,
+    estimate = est,
+    std_error = se,
+    abs_bias = abs(est - truth),
+    time_sec = as.numeric(tm["elapsed"])
+  )
+}
+
+cmp <- purrr::map_dfr(learners, function(lrn) {
+  dplyr::bind_rows(
+    run_one(lrn, use_iv = TRUE),
+    run_one(lrn, use_iv = FALSE)
+  )
+})
+
+cmp <- cmp |>
+  dplyr::mutate(
+    learner = dplyr::case_when(
+      learner == "lm" ~ "lm",
+      learner == "ranger" ~ "ranger (random forest)",
+      learner == "xgb" ~ "xgboost",
+      TRUE ~ as.character(learner)
+    ),
+    instrumental_variable = ifelse(instrumental_variable, "yes (DML-IV)", "no (Linear DML)")
+  ) |>
+  dplyr::arrange(learner, dplyr::desc(instrumental_variable))
+
+cmp
+```
+
+```{r}
+#| label: tbl-comparison-results
+#| code-summary: "Table: synthetic-data comparison (hidden code)"
+#| echo: false
+#| tbl-cap: "Point estimates, standard errors, absolute bias vs true effect, and elapsed time. IV-based rows should be near the true effect; non-IV rows stay biased by unobserved confounding."
+knitr::kable(
+  cmp,
+  digits = 3,
+  col.names = c(
+    "First-stage learner",
+    "Uses instrument Z",
+    "Estimate",
+    "Std. error",
+    "|Bias|",
+    "Time (s)"
+  )
+)
+```
+
+```{r}
+#| label: fig-abs-bias
+#| code-summary: "Figure: absolute bias by learner (IV vs non-IV)"
+#| fig-cap: "Absolute bias |estimate - true effect| for each learner, split by whether the instrument is used."
+ggplot2::ggplot(cmp, ggplot2::aes(x = learner, y = abs_bias, fill = instrumental_variable)) +
+  ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.75) +
+  ggplot2::labs(
+    x = NULL,
+    y = "Absolute bias",
+    fill = NULL
+  ) +
+  ggplot2::theme_minimal() +
+  ggplot2::theme(legend.position = "top")
+```
+
+**Takeaway**: For every first-stage learner, **DML-IV** (instrument used) tracks the true `decision_effect` of **-2**, while **Linear DML without the instrument** remains near the **naive** confounded comparison (around **1**). Random forest and XGBoost nuisances behave sensibly once `W` is supplied; **absolute bias** and **runtime** let you compare methods on this simulation.
+
+### Single IV fit (reference)
+
+The following reproduces the minimal **linear** nuisance specification from the DoubleML-style workflow (`lm` only, no `W`).
+
+```{r}
+#| label: iv-fit-lm-reference
+#| code-summary: "Reference DML-IV fit (linear nuisances, no W)"
+iv_mod_lm <- DMLIVLearner(
+  model_y_xw = "lm",
+  model_t_xw = "lm",
+  model_t_xwz = "lm",
+  fit_cate_intercept = FALSE,
+  discrete_treatment = TRUE,
+  cv = 5L,
+  random_state = 1234L
+)
+
+iv_fit_lm <- fit(
+  iv_mod_lm,
+  Y = df$outcome,
+  T = df$decision,
+  Z = df$instrument,
+  X = NULL
+)
+
+summary(iv_fit_lm$model_cate$model)
+```
+
+For richer DGPs, set `model_*` to `"ranger"`, `"glmnet"`, or `"xgb"` (defaults map `"auto"` to `"ranger"`). For a **nonlinear** CATE in $X$, see `NonParamDMLIVLearner()` in the same source file.
+
+### DML-IV Results and Summary
+
+The **linear second stage** is stored as `iv_fit$model_cate$model` (an `lm` object). The coefficient named `X1` is the estimated constant effect when `X` is omitted (internal column of ones).
+
+```{r}
+#| label: iv-summary-coefficients
+#| code-summary: "Second-stage coefficients (DML-IV lm reference)"
+sm <- summary(iv_fit_lm$model_cate$model)$coefficients
+data.frame(
+  estimate = sm[, "Estimate"],
+  std_error = sm[, "Std. Error"],
+  t_value = sm[, "t value"],
+  p_value = sm[, "Pr(>|t|)"]
+)
+```
+
+The **DML-IV estimate** for the effect of `decision` on `outcome` is close to the true value $-2$, with a standard error from the final `lm`. The naive estimate was biased; the IV-based DML estimate recovers the estimand under the usual IV assumptions.
+
+### Comparison and Interpretation
+
+| Estimator   | Estimate (approx.) | Interpretation |
+|------------|--------------------|----------------|
+| Naive      | $\approx 1$        | Biased (confounding) |
+| DMLIV (`DMLIVLearner`)   | $\approx -1.9$     | Constant CATE / LATE-style estimand |
+
+The DMLIV construction targets an IV estimand comparable in spirit to the **LATE** when $Z$ and $D$ are binary; with only a constant effect in $X$, the second-stage coefficient summarizes the average causal effect recovered by the instrument.
+
+## Part B: DML-IV with the 401(k) data
+
+We use the **401(k) dataset** bundled with **DoubleML** (`fetch_401k()`; Chernozhukov et al., 2018, 2020) in the **instrumental-variables** form used in the replication code: **outcome** $Y$ is `net_tfa` (net total financial assets), **endogenous treatment** $D$ is `p401` (participation in a 401(k)), and **instrument** $Z$ is `e401` (employer offers a plan). Covariates $X$ are age, income, family size, education, pension and household indicators (`age`, `inc`, `fsize`, `educ`, `db`, `marr`, `twoearn`, `pira`, `hown`). Under standard IV assumptions, DML-IV targets a **LATE**-style estimand for the effect of participation on wealth, using eligibility as excluded variation.
+
+We fit on an **80% / 20%** train split **stratified on `p401`** so both folds keep similar participation rates, and **compare all models** from Part A on the training rows: **naive** difference in mean `net_tfa` by `p401`, **`DMLIVLearner()`** with $Z =$ `e401` (nuisances on covariates `W`; constant second stage, `X = NULL`), and **`LinearDML()`** without the instrument (partially linear DML for the effect of `p401` on `net_tfa` given $X$ only—**not** the same causal estimand as IV if participation is endogenous). First-stage learners are again **`"lm"`**, **`"ranger"`**, and **`"xgb"`** where available.
+
+### Data
+
+```{r}
+#| label: real-load-data
+#| code-summary: "Load 401(k) data (instrument = TRUE: p401, e401)"
+#| message: false
+#| warning: false
+if (!requireNamespace("DoubleML", quietly = TRUE)) {
+  stop("Install DoubleML for fetch_401k: install.packages(\"DoubleML\")")
+}
+
+df_401k <- fetch_401k(return_type = "data.frame", instrument = TRUE)
+
+# Y = net_tfa; D = p401 (participation); Z = e401 (eligibility); X = covariates
+x_cols_401k <- c("age", "inc", "fsize", "educ", "db", "marr", "twoearn", "pira", "hown")
+
+cat("Dimensions:", nrow(df_401k), "x", ncol(df_401k), "\n")
+head(df_401k)
+```
+
+### Train–test split and model comparison (`lm`, `ranger`, `xgb`)
+
+```{r}
+#| label: real-dml-401k-compare
+#| code-summary: "401(k): train split, naive ATE, DML-IV vs LinearDML loop"
+#| message: false
+#| warning: false
+X_401k <- as.matrix(df_401k[, x_cols_401k, drop = FALSE])
+y_401k <- df_401k$net_tfa
+t_401k <- df_401k$p401
+z_401k <- df_401k$e401
+
+set.seed(3141)
+train_frac <- 0.8
+i1 <- which(t_401k == 1L)
+i0 <- which(t_401k == 0L)
+n1_tr <- max(1L, floor(train_frac * length(i1)))
+n0_tr <- max(1L, floor(train_frac * length(i0)))
+train_idx <- c(sample(i1, n1_tr), sample(i0, n0_tr))
+test_idx <- setdiff(seq_along(t_401k), train_idx)
+
+W_tr <- X_401k[train_idx, , drop = FALSE]
+y_tr <- y_401k[train_idx]
+t_tr <- t_401k[train_idx]
+z_tr <- z_401k[train_idx]
+
+cat(
+  "Train n =", length(train_idx), "| Test n =", length(test_idx),
+  "| mean(p401) train =", round(mean(t_tr), 3),
+  "| mean(e401) train =", round(mean(z_tr), 3), "\n"
+)
+
+cv_fold <- 3L
+rf_trees <- 200L
+
+learners_401k <- c("lm", "ranger", "xgb")
+if (!requireNamespace("xgboost", quietly = TRUE)) {
+  learners_401k <- setdiff(learners_401k, "xgb")
+}
+
+naive_401k <- mean(y_tr[t_tr == 1L]) - mean(y_tr[t_tr == 0L])
+
+se_mean_cate <- function(fit, X) {
+  te <- predict(fit, X)
+  sqrt(stats::var(as.vector(te), na.rm = TRUE) / length(as.vector(te)))
+}
+
+run_one_401k <- function(learner, use_iv) {
+  tm <- system.time({
+    if (use_iv) {
+      mod <- DMLIVLearner(
+        model_y_xw = learner,
+        model_t_xw = learner,
+        model_t_xwz = learner,
+        fit_cate_intercept = FALSE,
+        discrete_treatment = TRUE,
+        discrete_instrument = TRUE,
+        cv = cv_fold,
+        random_state = 3141L
+      )
+      fit_obj <- fit(
+        mod,
+        Y = y_tr,
+        T = t_tr,
+        Z = z_tr,
+        X = NULL,
+        W = W_tr,
+        num.trees = rf_trees
+      )
+      sm <- summary(fit_obj$model_cate$model)$coefficients
+      est <- as.numeric(sm[1L, "Estimate"])
+      se <- as.numeric(sm[1L, "Std. Error"])
+    } else {
+      mod <- LinearDML(
+        model_y = learner,
+        model_t = learner,
+        fit_cate_intercept = TRUE,
+        n_fold = cv_fold,
+        seed = 3141L
+      )
+      fit_obj <- fit(
+        mod,
+        X = W_tr,
+        treatment = t_tr,
+        y = y_tr,
+        num.trees = rf_trees
+      )
+      est <- mean(as.vector(predict(fit_obj, W_tr)))
+      se <- se_mean_cate(fit_obj, W_tr)
+    }
+  })
+  tibble::tibble(
+    learner = learner,
+    instrumental_variable = use_iv,
+    estimate = est,
+    std_error = se,
+    time_sec = as.numeric(tm["elapsed"])
+  )
+}
+
+cmp_401k <- purrr::map_dfr(learners_401k, function(lrn) {
+  dplyr::bind_rows(
+    run_one_401k(lrn, use_iv = TRUE),
+    run_one_401k(lrn, use_iv = FALSE)
+  )
+})
+
+cmp_401k <- cmp_401k |>
+  dplyr::mutate(
+    learner = dplyr::case_when(
+      learner == "lm" ~ "lm",
+      learner == "ranger" ~ "ranger (random forest)",
+      learner == "xgb" ~ "xgboost",
+      TRUE ~ as.character(learner)
+    ),
+    instrumental_variable = ifelse(
+      instrumental_variable,
+      "yes (DML-IV)",
+      "no (Linear DML)"
+    )
+  ) |>
+  dplyr::arrange(learner, dplyr::desc(instrumental_variable))
+
+cmp_naive <- tibble::tibble(
+  learner = "naive (mean diff.)",
+  instrumental_variable = "—",
+  estimate = naive_401k,
+  std_error = NA_real_,
+  time_sec = NA_real_
+)
+
+cmp_401k_all <- dplyr::bind_rows(cmp_naive, cmp_401k)
+
+cmp_401k_all
+```
+
+### Model comparison
+
+```{r}
+#| label: tbl-401k-comparison
+#| code-summary: "Table: 401(k) comparison (hidden code)"
+#| echo: false
+#| tbl-cap: "401(k) training sample: naive mean difference, DML-IV (e401 instruments p401), and Linear DML without Z for each nuisance learner. Estimates are in the same units as net_tfa; standard errors are omitted for the naive row."
+knitr::kable(
+  cmp_401k_all,
+  digits = 3,
+  col.names = c(
+    "Model / first-stage learner",
+    "Uses instrument Z (e401)",
+    "Estimate",
+    "Std. error",
+    "Time (s)"
+  )
+)
+```
+
+### Visualize the Results
+
+```{r}
+#| label: fig-401k-estimates
+#| code-summary: "Figure: 401(k) point estimates with error bars"
+#| fig-cap: "Point estimates on the training subsample: naive mean difference and, for each first-stage learner, DML-IV vs Linear DML without the instrument."
+est_plot <- cmp_401k_all |>
+  dplyr::filter(learner != "naive (mean diff.)") |>
+  dplyr::mutate(
+    series = paste(learner, instrumental_variable, sep = " — ")
+  )
+est_plot <- dplyr::bind_rows(
+  cmp_401k_all |>
+    dplyr::filter(learner == "naive (mean diff.)") |>
+    dplyr::mutate(series = learner),
+  est_plot
+)
+
+ggplot2::ggplot(est_plot, ggplot2::aes(x = series, y = estimate, fill = series)) +
+  ggplot2::geom_col(width = 0.75) +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(ymin = estimate - std_error, ymax = estimate + std_error),
+    width = 0.2,
+    na.rm = TRUE
+  ) +
+  ggplot2::coord_flip() +
+  ggplot2::labs(x = NULL, y = "Estimate (net_tfa units)", fill = NULL) +
+  ggplot2::theme_minimal() +
+  ggplot2::theme(legend.position = "none")
+```
+
+**Reading the table**: **DML-IV** rows use eligibility `e401` as an instrument for participation `p401`, with nuisances on the covariate matrix `W`. **Linear DML** rows ignore `e401` and estimate a partially linear effect of `p401` on `net_tfa` given $X$ (summary is the mean predicted CATE on the training fold). The **naive** row is the raw mean outcome difference by `p401` on the same training rows. Magnitudes and ordering across learners illustrate stability of the IV pipeline vs the non-IV and naive comparisons on real data (there is no simulation truth here).
+
+### SHAP Analysis
+
+This section shows how to compute and interpret SHAP values for **predicted** conditional treatment effects $\hat{\tau}(X)$ from the IV and partial-linear DML fits. We use:
+
+- **`explain_cate()`** — wrapper integrating **{RCausalML}** with **{kernelshap}** / permutation SHAP  
+- **{shapviz}** — importance, dependence, waterfall, and force plots  
+
+These summaries are **descriptive** (how the fitted surface attributes $\hat{\tau}(X)$ to covariates), not additional causal claims. [SHAP](https://github.com/shap/shap) is defined for **model predictions**; see `R/shapviz_integration.R` for the implementation.
+
+The comparison table above uses a **scalar** DML-IV fit (`X = NULL`). For SHAP we need $\hat{\tau}(X)$ that **varies with covariates**, so we refit **`DMLIVLearner()`** with a **linear heterogeneous** second stage (`X =` covariates, `W = NULL`) while keeping $Z =$ `e401` and $D =$ `p401`, and we pair that with **`LinearDML()`** (heterogeneous CATE in $X$). The **naive** mean difference is not a covariate-based predictor, so it is **omitted**.
+
+Because SHAP is expensive, we use **permutation SHAP** (`use_permshap = TRUE`) on a **small explanation subsample** and a **background** sample from the training fold. **Use non-overlapping rows** for explanation vs background when the pool is large enough, to avoid leakage between the points being explained and the reference distribution. When **{future}** is available, **`permshap(..., parallel = TRUE)`** can use multiple workers (see `?kernelshap::permshap`).
+
+#### 1. SHAP estimation
+
+SHAP values describe how each covariate contributes to the **individual** predicted CATE on the explanation rows — i.e. which features push $\hat{\tau}(X)$ up or down for that observation.
+
+```{r}
+#| label: shap-401k-has
+#| code-summary: "Detect kernelshap and shapviz"
+#| message: false
+#| warning: false
+#| dependson: real-dml-401k-compare
+
+has_shap <- requireNamespace("kernelshap", quietly = TRUE) &&
+  requireNamespace("shapviz", quietly = TRUE)
+```
+
+```{r}
+#| label: shap-401k-fit
+#| code-summary: "SHAP: refit DML-IV (heterogeneous X) and LinearDML on training data"
+#| message: false
+#| warning: false
+#| dependson: shap-401k-has
+
+if (has_shap) {
+  W_tr_n <- W_tr
+  colnames(W_tr_n) <- x_cols_401k
+
+  fit_shap_dmliv <- function(learner) {
+    mod <- DMLIVLearner(
+      model_y_xw = learner,
+      model_t_xw = learner,
+      model_t_xwz = learner,
+      fit_cate_intercept = TRUE,
+      discrete_treatment = TRUE,
+      discrete_instrument = TRUE,
+      cv = cv_fold,
+      random_state = 3141L
+    )
+    fit(
+      mod,
+      Y = y_tr,
+      T = t_tr,
+      Z = z_tr,
+      X = W_tr_n,
+      W = NULL,
+      num.trees = rf_trees
+    )
+  }
+
+  fit_shap_ldml <- function(learner) {
+    mod <- LinearDML(
+      model_y = learner,
+      model_t = learner,
+      fit_cate_intercept = TRUE,
+      n_fold = cv_fold,
+      seed = 3141L
+    )
+    fit(mod, X = W_tr_n, treatment = t_tr, y = y_tr, num.trees = rf_trees)
+  }
+
+  fits_iv <- stats::setNames(lapply(learners_401k, fit_shap_dmliv), learners_401k)
+  fits_pl <- stats::setNames(lapply(learners_401k, fit_shap_ldml), learners_401k)
+}
+```
+
+```{r}
+#| label: shap-401k-pool
+#| code-summary: "SHAP: distinct moderator rows + non-overlapping explain vs background"
+#| message: false
+#| warning: false
+#| dependson: shap-401k-fit
+
+if (!has_shap) {
+  message("Skipping SHAP: install.packages(c(\"kernelshap\", \"shapviz\"))")
+} else {
+  W_pool <- as.data.frame(W_tr)
+  colnames(W_pool) <- x_cols_401k
+  X_shap_pool <- W_pool[!duplicated(W_pool), , drop = FALSE]
+
+  set.seed(3150L)
+  nexplain <- min(80L, nrow(X_shap_pool))
+  nbg <- min(50L, nrow(X_shap_pool))
+
+  if (nrow(X_shap_pool) > nexplain + nbg) {
+    idxexplain <- sample.int(nrow(X_shap_pool), nexplain)
+    idxbg <- sample(setdiff(seq_len(nrow(X_shap_pool)), idxexplain), nbg)
+  } else {
+    idxexplain <- sample.int(nrow(X_shap_pool), nexplain)
+    idxbg <- sample.int(nrow(X_shap_pool), nbg)
+  }
+
+  X_explain <- X_shap_pool[idxexplain, , drop = FALSE]
+  bg_X_df <- X_shap_pool[idxbg, , drop = FALSE]
+}
+```
+
+```{r}
+#| label: shap-401k-explain
+#| code-summary: "SHAP: permshap via explain_cate (tryCatch + reset future)"
+#| message: false
+#| warning: false
+#| dependson: shap-401k-pool
+
+if (has_shap && exists("X_explain")) {
+  n_workers <- if (requireNamespace("future", quietly = TRUE)) {
+    min(4L, max(1L, future::availableCores() - 1L))
+  } else {
+    1L
+  }
+  use_parallel <- n_workers > 1L && requireNamespace("future", quietly = TRUE)
+
+  fg_prev <- getOption("future.globals.maxSize", default = 500 * 1024^2)
+  if (use_parallel) {
+    options(future.globals.maxSize = max(2 * 1024^3, fg_prev))
+    future::plan(future::multisession, workers = n_workers)
+  }
+
+  explain_one <- function(fit_obj, label) {
+    tryCatch(
+      {
+        args <- list(
+          fit_obj,
+          X = X_explain,
+          bg_X = bg_X_df,
+          use_permshap = TRUE,
+          verbose = FALSE,
+          max_iter = 60L,
+          tol = 0.02,
+          parallel = use_parallel,
+          parallel_args = list(packages = c("RCausalML", "ranger", "xgboost"))
+        )
+        if (!requireNamespace("xgboost", quietly = TRUE)) {
+          args$parallel_args$packages <- setdiff(args$parallel_args$packages, "xgboost")
+        }
+        do.call(explain_cate, args)
+      },
+      error = function(e) {
+        warning("SHAP failed for ", label, ": ", conditionMessage(e))
+        NULL
+      }
+    )
+  }
+
+  tryCatch(
+    {
+      ks_iv <- mapply(
+        explain_one,
+        fits_iv,
+        paste0("DML-IV (", names(fits_iv), ")"),
+        SIMPLIFY = FALSE
+      )
+      ks_pl <- mapply(
+        explain_one,
+        fits_pl,
+        paste0("Linear DML (", names(fits_pl), ")"),
+        SIMPLIFY = FALSE
+      )
+      shp_iv <- lapply(ks_iv, function(k) {
+        if (!is.null(k)) shapviz::shapviz(k) else NULL
+      })
+      shp_pl <- lapply(ks_pl, function(k) {
+        if (!is.null(k)) shapviz::shapviz(k) else NULL
+      })
+    },
+    finally = {
+      if (use_parallel) {
+        future::plan(future::sequential)
+        options(future.globals.maxSize = fg_prev)
+      }
+    }
+  )
+}
+```
+
+#### 2. Visualize SHAP values
+
+**2.1 Beeswarm importance** — distribution of SHAP values per feature; large |SHAP| means a strong influence on $\hat{\tau}(X)$ for the explanation sample. Below we show **ranger** nuisances side by side (DML-IV vs Linear DML).
+
+```{r}
+#| label: fig-shap-401k-beeswarm-ranger
+#| code-summary: "Figure: SHAP beeswarm — ranger DML-IV vs Linear DML"
+#| fig-cap: "Beeswarm SHAP summary for predicted $\\hat{\\tau}(X)$ (ranger nuisances): DML-IV vs Linear DML."
+#| fig-width: 8
+#| fig-height: 5
+#| echo: false
+#| dependson: shap-401k-explain
+
+if (has_shap && exists("shp_iv") && exists("shp_pl")) {
+  if (!is.null(shp_iv[["ranger"]]) && !is.null(shp_pl[["ranger"]])) {
+    b1 <- shapviz::sv_importance(shp_iv[["ranger"]], kind = "beeswarm") +
+      ggplot2::labs(title = "DML-IV (ranger)")
+    b2 <- shapviz::sv_importance(shp_pl[["ranger"]], kind = "beeswarm") +
+      ggplot2::labs(title = "Linear DML (ranger)")
+    if (requireNamespace("patchwork", quietly = TRUE)) {
+      patchwork::wrap_plots(b1, b2, ncol = 2L)
+    } else {
+      print(b1)
+      print(b2)
+    }
+  }
+}
+```
+
+**2.2 Bar importance (mean |SHAP|)** — good for ranking features. **All** nuisance learners: DML-IV and Linear DML panels. Values are contributions to predicted $\hat{\tau}(X)$ on the explanation subsample, not to the scalar ATE in the table above.
+
+```{r}
+#| label: fig-shap-401k-dmliv
+#| code-summary: "Figure: SHAP bar importance — DML-IV (hidden code)"
+#| fig-cap: "SHAP variable importance for predicted heterogeneous CATE from DML-IV (e401 instruments p401), linear second stage in covariates."
+#| fig-width: 10
+#| fig-height: 3.5
+#| echo: false
+#| dependson: shap-401k-explain
+
+if (has_shap && exists("shp_iv") && length(shp_iv)) {
+  plots_iv <- lapply(seq_along(shp_iv), function(i) {
+    if (is.null(shp_iv[[i]])) {
+      return(NULL)
+    }
+    nm <- names(shp_iv)[i]
+    shapviz::sv_importance(shp_iv[[i]], max_display = 9L, show_numbers = TRUE) +
+      ggplot2::labs(title = paste0("DML-IV (", nm, ")")) +
+      ggplot2::theme(plot.title = ggplot2::element_text(size = 10))
+  })
+  plots_iv <- Filter(Negate(is.null), plots_iv)
+  if (length(plots_iv)) {
+    if (requireNamespace("patchwork", quietly = TRUE)) {
+      patchwork::wrap_plots(plots_iv, ncol = 3L)
+    } else {
+      for (g in plots_iv) print(g)
+    }
+  }
+}
+```
+
+```{r}
+#| label: fig-shap-401k-lineardml
+#| code-summary: "Figure: SHAP bar importance — Linear DML (hidden code)"
+#| fig-cap: "SHAP variable importance for predicted CATE from Linear DML (no instrument), same nuisance learners."
+#| fig-width: 10
+#| fig-height: 3.5
+#| echo: false
+#| dependson: shap-401k-explain
+
+if (has_shap && exists("shp_pl") && length(shp_pl)) {
+  plots_pl <- lapply(seq_along(shp_pl), function(i) {
+    if (is.null(shp_pl[[i]])) {
+      return(NULL)
+    }
+    nm <- names(shp_pl)[i]
+    shapviz::sv_importance(shp_pl[[i]], max_display = 9L, show_numbers = TRUE) +
+      ggplot2::labs(title = paste0("Linear DML (", nm, ")")) +
+      ggplot2::theme(plot.title = ggplot2::element_text(size = 10))
+  })
+  plots_pl <- Filter(Negate(is.null), plots_pl)
+  if (length(plots_pl)) {
+    if (requireNamespace("patchwork", quietly = TRUE)) {
+      patchwork::wrap_plots(plots_pl, ncol = 3L)
+    } else {
+      for (g in plots_pl) print(g)
+    }
+  }
+}
+```
+
+#### 3. SHAP dependence plots
+
+How each feature drives attributed CATE on the explanation sample (colour may encode another variable). **Ranger** nuisances: full covariate set, shared $y$-axis for comparability.
+
+```{r}
+#| label: fig-shap-401k-dependence-ranger
+#| code-summary: "Figure: SHAP dependence — all covariates, ranger (hidden code)"
+#| fig-cap: "SHAP dependence for ranger-based DML-IV and Linear DML (predicted $\\hat{\\tau}(X)$)."
+#| fig-width: 8
+#| fig-height: 8
+#| echo: false
+#| dependson: shap-401k-explain
+
+if (has_shap && exists("shp_iv") && exists("shp_pl")) {
+  if (!is.null(shp_iv[["ranger"]]) && !is.null(shp_pl[["ranger"]])) {
+    xv <- colnames(shp_iv[["ranger"]]$X)
+    d1 <- shapviz::sv_dependence(shp_iv[["ranger"]], v = xv, share_y = TRUE) +
+      ggplot2::labs(title = "DML-IV (ranger)")
+    d2 <- shapviz::sv_dependence(shp_pl[["ranger"]], v = xv, share_y = TRUE) +
+      ggplot2::labs(title = "Linear DML (ranger)")
+    if (requireNamespace("patchwork", quietly = TRUE)) {
+      patchwork::wrap_plots(d1, d2, ncol = 1L)
+    } else {
+      print(d1)
+      print(d2)
+    }
+  }
+}
+```
+
+*Example read*: if SHAP for `age` increases with `age`, the fitted surface attributes higher $\hat{\tau}(X)$ to older units on this subsample (exploratory; not a standalone causal statement).
+
+#### 4. SHAP for a single prediction
+
+Waterfall and force plots show how the baseline and each feature contribution build up to one row’s predicted CATE. We use the **ranger** DML-IV object when available.
+
+```{r}
+#| label: fig-shap-401k-single
+#| code-summary: "Figure: waterfall and force for one row (ranger DML-IV)"
+#| fig-cap: "Single-row SHAP decomposition for predicted $\\hat{\\tau}(X)$ (ranger DML-IV)."
+#| fig-width: 6
+#| fig-height: 5
+#| echo: false
+#| dependson: shap-401k-explain
+
+if (has_shap && exists("shp_iv") && !is.null(shp_iv[["ranger"]])) {
+  shapviz::sv_waterfall(shp_iv[["ranger"]], row_id = 1L)
+  shapviz::sv_force(shp_iv[["ranger"]], row_id = 1L)
+}
+```
+
+#### 5. Subgroup-specific SHAP (optional)
+
+Example: waterfall for the first training row with **`marr == 1`** (married), if that column exists in the explanation matrix.
+
+```{r}
+#| label: fig-shap-401k-subgroup
+#| code-summary: "Figure: waterfall for first married row (ranger DML-IV)"
+#| fig-width: 6
+#| fig-height: 5
+#| echo: false
+#| dependson: shap-401k-explain
+
+if (has_shap && exists("shp_iv") && !is.null(shp_iv[["ranger"]])) {
+  sx <- shp_iv[["ranger"]]$X
+  if ("marr" %in% names(sx)) {
+    idx_m <- which(sx$marr == 1L)
+    row_show <- if (length(idx_m) > 0L) idx_m[1L] else 1L
+  } else {
+    row_show <- 1L
+  }
+  shapviz::sv_waterfall(shp_iv[["ranger"]], row_id = row_show)
+}
+```
+
+**Reading the plots**: **DML-IV** and **Linear DML** surfaces can differ in level and shape; treat comparisons as **exploratory**, not as a test of IV validity. If **patchwork** is not installed, panels print sequentially.
+
+
+## Summary and Conclusion
+
+This tutorial used **synthetic data** (Part A) and the **401(k) IV sample** from `fetch_401k(..., instrument = TRUE)` (Part B) to illustrate **double machine learning with instrumental variables** using **RCausalML**’s `DMLIVLearner()` and `fit()` from `R/DMLearner.R`, and contrasted it with **`LinearDML()`** **without** an instrument under the same nuisance learners. The logic parallels **ML-based 2SLS** and the DoubleML **IIVM** story: flexible nuisances, cross-fitting, and a final stage for the structural parameter.
+
+| Step | Description |
+|------|-------------|
+| **IV structure** | Instrument $Z$, treatment $D$, outcome $Y$; unobserved confounders $C$ make naive comparisons biased |
+| **`DMLIVLearner()`** | Choose `model_y_xw`, `model_t_xw`, `model_t_xwz`, `discrete_treatment`, `cv`, `random_state` |
+| **`fit(Y, T, Z, X, W)`** | Cross-fitted nuisances and linear CATE in `X` (use `X = NULL` for constant effect; set `fit_cate_intercept` consistently) |
+| **`LinearDML()` (no IV)** | Same `Y`, `T`, and covariates `X` / `W`; **does not** use $Z$—biased when unobserved confounding drives $D$ and $Y$ |
+| **Inference** | `summary(fitted$model_cate$model)` for OLS standard errors on the IV second stage |
+| **Nonlinear CATE** | `NonParamDMLIVLearner()` for ranger/`lm` final stage on pseudo-outcomes |
+| **SHAP (401(k))** | `explain_cate()` + **shapviz** on predicted $\hat{\tau}(X)$ (refit DML-IV with heterogeneous $X$); non-overlapping explain vs background when possible; beeswarm/bar importance, dependence, waterfall/force, optional subgroup row |
+
+
+## References
+
+- Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., & Robins, J. (2018). Double/debiased machine learning for treatment and structural parameters. *The Econometrics Journal*, 21(1), C1–C68. <https://doi.org/10.1111/ectj.12097>
+
+- Ruiz de Villa, A. (2024). *Causal Inference for Data Science*. Manning Publications.
+
+- [DoubleML R: Basic Instrumental Variables Calculation](https://docs.doubleml.org/stable/examples/R_double_ml_basic_iv.html) (conceptual reference; this notebook uses RCausalML)
+
+- [DoubleML User Guide](https://docs.doubleml.org/stable/guide/index.html)
+
+- [EconML: Sieve 2SLS Instrumental Variable Estimation](https://www.pywhy.org/EconML/spec/estimation/two_sls.html)

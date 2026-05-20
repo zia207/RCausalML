@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>deepcausalml-attension-transformer-r</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="05-04-03-DeepCausalML-attension-transformer-r_files/libs/clipboard/clipboard.min.js"></script>
+<script src="05-04-03-DeepCausalML-attension-transformer-r_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="05-04-03-DeepCausalML-attension-transformer-r_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="05-04-03-DeepCausalML-attension-transformer-r_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="05-04-03-DeepCausalML-attension-transformer-r_files/libs/quarto-html/popper.min.js"></script>
+<script src="05-04-03-DeepCausalML-attension-transformer-r_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="05-04-03-DeepCausalML-attension-transformer-r_files/libs/quarto-html/anchor.min.js"></script>
+<link href="05-04-03-DeepCausalML-attension-transformer-r_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="05-04-03-DeepCausalML-attension-transformer-r_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="05-04-03-DeepCausalML-attension-transformer-r_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="05-04-03-DeepCausalML-attension-transformer-r_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="05-04-03-DeepCausalML-attension-transformer-r_files/libs/bootstrap/bootstrap-e29a585edb4b49c5cab0427671728cec.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="attention-based-transformer-causal-models" class="level1 unnumbered">
+<h1 class="unnumbered">Attention-Based / Transformer Causal Models</h1>
+<p><strong>Attention mechanisms</strong> compute pairwise relevance scores between all time steps and variables simultaneously, creating a natural inductive structure for causal discovery:</p>
+<ul>
+<li><strong>Temporal attention</strong> → which past time steps influence the present (lag selection)</li>
+<li><strong>Variable attention</strong> → which variables influence which (causal graph)</li>
+<li><strong>Causal masking</strong> → structural constraint preventing future information leakage</li>
+</ul>
+<p>The self-attention score between query <span class="math inline">\(q_i\)</span> and key <span class="math inline">\(k_j\)</span>:</p>
+<p><span class="math display">\[
+\alpha_{ij} = \frac{\exp\!\left(q_i^\top k_j / \sqrt{d_k}\right)}{\sum_l \exp\!\left(q_i^\top k_l / \sqrt{d_k}\right)}
+\]</span></p>
+<p>When interpreted causally, <span class="math inline">\(\alpha_{ij}\)</span> approximates the influence of variable/time <span class="math inline">\(j\)</span> on variable/time <span class="math inline">\(i\)</span>.</p>
+<section id="the-three-models" class="level2">
+<h2 class="anchored" data-anchor-id="the-three-models">The Three Models</h2>
+<section id="tcdf-temporal-causal-discovery-framework" class="level3">
+<h3 class="anchored" data-anchor-id="tcdf-temporal-causal-discovery-framework">TCDF — Temporal Causal Discovery Framework</h3>
+<p>TCDF (Nauta et al., 2019) uses depthwise separable causal convolutions + self-attention to discover time-delayed causal relationships.</p>
+<p>Key ideas:</p>
+<ul>
+<li><strong>Dilated causal convolutions</strong>: receptive field grows exponentially with depth without data leakage — each output depends only on past inputs.</li>
+<li><strong>Attention mechanism</strong>: scores which input channels (variables) contribute most to each target variable.</li>
+<li><strong>Causal discovery</strong>: for target <span class="math inline">\(Y_i\)</span>, trains a separate network; variables with high attention weights are declared causal parents.</li>
+</ul>
+<p>The convolution at dilation <span class="math inline">\(r\)</span>:</p>
+<p><span class="math display">\[\text{Conv}(x, t) = \sum_{k=0}^{K-1} w_k \cdot x(t - r \cdot k)\]</span></p>
+<p>Causal mask ensures <span class="math inline">\(x(t - r \cdot k)\)</span> uses only past values (<span class="math inline">\(k \geq 0\)</span>, never <span class="math inline">\(k &lt; 0\)</span>).</p>
+</section>
+<section id="causal-transformer" class="level3">
+<h3 class="anchored" data-anchor-id="causal-transformer">Causal Transformer</h3>
+<p>A Transformer with three structural modifications that enforce causal reasoning:</p>
+<ol type="1">
+<li><strong>Autoregressive masking</strong>: upper-triangular mask on attention so position <span class="math inline">\(t\)</span> only attends to positions <span class="math inline">\(\leq t\)</span>.</li>
+<li><strong>Inter-variable attention head</strong>: separate attention heads dedicated to cross-variable influence, whose weights are extracted as the causal graph.</li>
+<li><strong>Positional encoding</strong>: sinusoidal temporal embeddings that encode lag distance.</li>
+</ol>
+<p>The causal attention output:</p>
+<p><span class="math display">\[\text{CausalAttn}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}} + M_{\text{causal}}\right) V\]</span></p>
+<p>where <span class="math inline">\(M_{\text{causal}}[i,j] = -\infty\)</span> if <span class="math inline">\(j &gt; i\)</span>, else <span class="math inline">\(0\)</span>.</p>
+</section>
+<section id="tft-temporal-fusion-transformer" class="level3">
+<h3 class="anchored" data-anchor-id="tft-temporal-fusion-transformer">TFT — Temporal Fusion Transformer</h3>
+<p>TFT (Lim et al., 2021, Google) is the state-of-the-art architecture for interpretable multi-horizon forecasting. Its causal structure comes from:</p>
+<ul>
+<li><strong>Variable Selection Networks (VSN)</strong>: soft gating that selects which input variables are relevant at each time step — directly interpretable as variable-level causal weights.</li>
+<li><strong>Gated Residual Networks (GRN)</strong>: nonlinear transformation with skip connections and gating for stable training.</li>
+<li><strong>Multi-head attention with interpretable weights</strong>: attention across time steps, averaged across heads to produce temporal importance scores.</li>
+</ul>
+<p>TFT architecture flow:</p>
+<pre><code>Input variables
+      │
+      ▼
+Variable Selection Network  ← learns which vars matter (causal weights)
+      │
+      ▼
+LSTM Encoder/Decoder        ← captures local temporal dynamics
+      │
+      ▼
+Multi-Head Self-Attention   ← captures long-range dependencies
+      │
+      ▼
+Gated Residual + LayerNorm  ← stabilize gradients
+      │
+      ▼
+Output Head                 ← one-step-ahead forecast per variable</code></pre>
+</section>
+</section>
+<section id="implementation-in-r" class="level2">
+<h2 class="anchored" data-anchor-id="implementation-in-r">Implementation in R</h2>
+<p>We use {RCausalML}’s <code>attn_causal_model()</code> function (and its convenience wrappers <code>tcdf_model()</code>, <code>causal_transformer_model()</code>, <code>tft_model()</code>) to fit all three architectures on S&amp;P 500 sector ETF daily log-return data (2018–2024).</p>
+<section id="load-and-check-required-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-and-check-required-libraries">Load and Check Required Libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'tidyverse'</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">'plyr'</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'RCausalML'</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'torch'</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">'tidyquant'</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">'reshape2'</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">'scales'</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">'patchwork'</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">'igraph'</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="install-missing-packages" class="level3">
+<h3 class="anchored" data-anchor-id="install-missing-packages">Install Missing Packages</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install missing packages</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#new_packages &lt;- packages[!(packages %in% installed.packages()[,"Package"])]</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#if(length(new_packages)) install.packages(new_packages)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="verify-installation" class="level3">
+<h3 class="anchored" data-anchor-id="verify-installation">Verify Installation</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Installed packages:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Installed packages:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">sapply</span>(packages, requireNamespace, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>tidyverse      plyr RCausalML     torch tidyquant  reshape2    scales patchwork 
+     TRUE      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE 
+   igraph 
+     TRUE </code></pre>
+</div>
+</div>
+</section>
+<section id="load-required-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-required-libraries">Load Required Libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># When rendering from package root, use local RCausalML</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="st">"DESCRIPTION"</span>) <span class="sc">&amp;&amp;</span> <span class="fu">requireNamespace</span>(<span class="st">"devtools"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">try</span>(devtools<span class="sc">::</span><span class="fu">load_all</span>(<span class="st">"."</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">lapply</span>(packages, <span class="cf">function</span>(pkg) {</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(pkg, <span class="at">character.only =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>device_use <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">"torch"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  device_use <span class="ot">&lt;-</span> <span class="cf">if</span> (torch<span class="sc">::</span><span class="fu">cuda_is_available</span>()) <span class="st">"cuda"</span> <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  torch<span class="sc">::</span><span class="fu">torch_manual_seed</span>(<span class="dv">42</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Using device: %s</span><span class="sc">\n</span><span class="st">"</span>, device_use))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Using device: cuda</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="data-loading-and-preprocessing" class="level2">
+<h2 class="anchored" data-anchor-id="data-loading-and-preprocessing">Data Loading and Preprocessing</h2>
+<p>This section downloads S&amp;P 500 sector ETF prices (the same universe used in the companion notebooks), converts them to standardized log-returns, and builds lagged input/output arrays for training.</p>
+<blockquote class="blockquote">
+<p><strong>Note:</strong> If online market data is unavailable, the notebook automatically falls back to synthetic demo data so all downstream cells remain runnable.</p>
+</blockquote>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>TICKERS <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLF"</span> <span class="ot">=</span> <span class="st">"Financials"</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLE"</span> <span class="ot">=</span> <span class="st">"Energy"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLK"</span> <span class="ot">=</span> <span class="st">"Technology"</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLV"</span> <span class="ot">=</span> <span class="st">"Healthcare"</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLI"</span> <span class="ot">=</span> <span class="st">"Industrials"</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLY"</span> <span class="ot">=</span> <span class="st">"ConsumerDisc"</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLP"</span> <span class="ot">=</span> <span class="st">"ConsumerStap"</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"XLU"</span> <span class="ot">=</span> <span class="st">"Utilities"</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>fetch_close_prices <span class="ot">&lt;-</span> <span class="cf">function</span>(tickers, <span class="at">start =</span> <span class="st">"2018-01-01"</span>, <span class="at">end =</span> <span class="st">"2024-01-01"</span>) {</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    raw <span class="ot">&lt;-</span> tidyquant<span class="sc">::</span><span class="fu">tq_get</span>(<span class="fu">names</span>(tickers), <span class="at">get =</span> <span class="st">"stock.prices"</span>,</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                              <span class="at">from =</span> start, <span class="at">to =</span> end, <span class="at">complete_cases =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(raw) <span class="sc">||</span> <span class="fu">nrow</span>(raw) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    raw <span class="sc">|&gt;</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">select</span>(symbol, date, adjusted) <span class="sc">|&gt;</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> symbol, <span class="at">values_from =</span> adjusted) <span class="sc">|&gt;</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">arrange</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">drop_na</span>()</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>close_wide <span class="ot">&lt;-</span> <span class="fu">fetch_close_prices</span>(TICKERS)</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(close_wide) <span class="sc">||</span> <span class="fu">nrow</span>(close_wide) <span class="sc">&lt;</span> <span class="dv">30</span>) {</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Warning: market data unavailable; using synthetic demo data."</span>)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>  n_steps <span class="ot">&lt;-</span> <span class="dv">1600</span>L</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>  d_syn   <span class="ot">&lt;-</span> <span class="fu">length</span>(TICKERS)</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  A_syn   <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, d_syn, d_syn)</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(d_syn)) {</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    A_syn[i, i] <span class="ot">&lt;-</span> <span class="fl">0.45</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (i <span class="sc">&gt;</span> <span class="dv">1</span>)             A_syn[i, i <span class="sc">-</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fl">0.25</span></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (i <span class="sc">&gt;</span> <span class="dv">2</span> <span class="sc">&amp;&amp;</span> i <span class="sc">%%</span> <span class="dv">2</span> <span class="sc">==</span> <span class="dv">1</span>) A_syn[i, i <span class="sc">-</span> <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fl">0.15</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>  x_syn <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, n_steps, d_syn)</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>  x_syn[<span class="dv">1</span>, ] <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(d_syn)</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>  noise_syn  <span class="ot">&lt;-</span> <span class="fl">0.15</span> <span class="sc">*</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n_steps <span class="sc">*</span> d_syn), n_steps, d_syn)</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq</span>(<span class="dv">2</span>L, n_steps)) x_syn[t, ] <span class="ot">&lt;-</span> x_syn[t <span class="sc">-</span> <span class="dv">1</span>L, ] <span class="sc">%*%</span> <span class="fu">t</span>(A_syn) <span class="sc">+</span> noise_syn[t, ]</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>  returns_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(x_syn)</span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(returns_df) <span class="ot">&lt;-</span> <span class="fu">unname</span>(TICKERS)</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>  data_np <span class="ot">&lt;-</span> <span class="fu">scale</span>(x_syn)</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>  price_mat <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(close_wide[, <span class="fu">names</span>(TICKERS)])</span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>  log_ret   <span class="ot">&lt;-</span> <span class="fu">log</span>(price_mat[<span class="sc">-</span><span class="dv">1</span>L, ] <span class="sc">/</span> price_mat[<span class="sc">-</span><span class="fu">nrow</span>(price_mat), ])</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(log_ret) <span class="ot">&lt;-</span> <span class="fu">unname</span>(TICKERS[<span class="fu">colnames</span>(price_mat)])</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>  returns_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(log_ret)</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>  data_np    <span class="ot">&lt;-</span> <span class="fu">scale</span>(log_ret)</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>VAR_NAMES <span class="ot">&lt;-</span> <span class="fu">colnames</span>(data_np)</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>d         <span class="ot">&lt;-</span> <span class="fu">ncol</span>(data_np)</span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>Tt        <span class="ot">&lt;-</span> <span class="fu">nrow</span>(data_np)</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"d=%d variables, T=%d</span><span class="sc">\n</span><span class="st">"</span>, d, Tt))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>d=8 variables, T=1508</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Variables:"</span>, <span class="fu">paste</span>(VAR_NAMES, <span class="at">collapse =</span> <span class="st">", "</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Variables: Financials, Energy, Technology, Healthcare, Industrials, ConsumerDisc, ConsumerStap, Utilities </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>LAG   <span class="ot">&lt;-</span> <span class="dv">20</span>L</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>AHEAD <span class="ot">&lt;-</span> <span class="dv">1</span>L</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>build_lag_dataset <span class="ot">&lt;-</span> <span class="cf">function</span>(data, lag, <span class="at">ahead =</span> <span class="dv">1</span>L) {</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  N     <span class="ot">&lt;-</span> <span class="fu">nrow</span>(data) <span class="sc">-</span> lag <span class="sc">-</span> ahead <span class="sc">+</span> <span class="dv">1</span>L</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  x_seq <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="cn">NA_real_</span>, <span class="at">dim =</span> <span class="fu">c</span>(N, lag, <span class="fu">ncol</span>(data)))</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  y_mat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA_real_</span>, <span class="at">nrow =</span> N, <span class="at">ncol =</span> <span class="fu">ncol</span>(data))</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(N)) {</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    x_seq[t, , ] <span class="ot">&lt;-</span> data[t<span class="sc">:</span>(t <span class="sc">+</span> lag <span class="sc">-</span> <span class="dv">1</span>L), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    y_mat[t,  ]  <span class="ot">&lt;-</span> data[t <span class="sc">+</span> lag <span class="sc">+</span> ahead <span class="sc">-</span> <span class="dv">1</span>L, ]</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">x_seq =</span> x_seq, <span class="at">y_mat =</span> y_mat)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>lag_data <span class="ot">&lt;-</span> <span class="fu">build_lag_dataset</span>(data_np, LAG, AHEAD)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>X_seq    <span class="ot">&lt;-</span> lag_data<span class="sc">$</span>x_seq</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>Y_mat    <span class="ot">&lt;-</span> lag_data<span class="sc">$</span>y_mat</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>split  <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fl">0.8</span> <span class="sc">*</span> <span class="fu">nrow</span>(X_seq))</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>X_tr   <span class="ot">&lt;-</span> X_seq[<span class="fu">seq_len</span>(split), , ]</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>X_val  <span class="ot">&lt;-</span> X_seq[(split <span class="sc">+</span> <span class="dv">1</span>L)<span class="sc">:</span><span class="fu">nrow</span>(X_seq), , ]</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>Y_tr   <span class="ot">&lt;-</span> Y_mat[<span class="fu">seq_len</span>(split), ]</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>Y_val  <span class="ot">&lt;-</span> Y_mat[(split <span class="sc">+</span> <span class="dv">1</span>L)<span class="sc">:</span><span class="fu">nrow</span>(Y_mat), ]</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Train: (%d, %d, %d)  Val: (%d, %d, %d)</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>            <span class="fu">dim</span>(X_tr)[<span class="dv">1</span>], <span class="fu">dim</span>(X_tr)[<span class="dv">2</span>], <span class="fu">dim</span>(X_tr)[<span class="dv">3</span>],</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>            <span class="fu">dim</span>(X_val)[<span class="dv">1</span>], <span class="fu">dim</span>(X_val)[<span class="dv">2</span>], <span class="fu">dim</span>(X_val)[<span class="dv">3</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Train: (1190, 20, 8)  Val: (298, 20, 8)</code></pre>
+</div>
+</div>
+</section>
+<section id="model-architectures-overview" class="level2">
+<h2 class="anchored" data-anchor-id="model-architectures-overview">Model Architectures Overview</h2>
+<p>In this section, we describe the three attention-based neural network models implemented in <code>{RCausalML}</code> and fitted using <code>attn_causal_model()</code>. Each architecture is designed for multivariate time-series causal inference.</p>
+<section id="causal-dilated-conv-block-used-by-tcdf" class="level3">
+<h3 class="anchored" data-anchor-id="causal-dilated-conv-block-used-by-tcdf">Causal Dilated Conv Block (used by TCDF)</h3>
+<p>The foundational building block for TCDFNet is a <strong>causal dilated convolutional block</strong>:</p>
+<ul>
+<li>A 1-D convolution with dilation <span class="math inline">\(2^i\)</span> at layer <span class="math inline">\(i\)</span> (exponentially growing receptive field).</li>
+<li>Left-only padding ensures no future leakage.</li>
+<li>LayerNorm over features + GELU nonlinearity.</li>
+</ul>
+<p>In R (via <code>{torch}</code>), the internal <code>.deepnet_attn_tcdf_net()</code> constructor stacks <code>n_layers</code> such blocks, then applies a linear attention projection head and a two-layer MLP prediction head.</p>
+</section>
+<section id="causaltransformer" class="level3">
+<h3 class="anchored" data-anchor-id="causaltransformer">CausalTransformer</h3>
+<p>The R implementation of <code>CausalTransformer</code>:</p>
+<ol type="1">
+<li><strong>Input projection</strong>: linear map from <span class="math inline">\(d\)</span> variables to <span class="math inline">\(d_{\text{model}}\)</span> dimensions.</li>
+<li><strong>Sinusoidal positional encoding</strong>: adds temporal position information.</li>
+<li><strong>Causal TransformerEncoder</strong>: standard multi-head self-attention with an upper-triangular mask (causal masking).</li>
+<li><strong>Cross-variable attention head</strong>: separate <code>nn_multihead_attention()</code> that computes inter-variable attention — averaged weights form the causal matrix.</li>
+<li><strong>Per-variable GRN + linear heads</strong>: one Gated Residual Network and linear layer per output variable.</li>
+</ol>
+</section>
+<section id="tftnet-temporal-fusion-transformer" class="level3">
+<h3 class="anchored" data-anchor-id="tftnet-temporal-fusion-transformer">TFTNet (Temporal Fusion Transformer)</h3>
+<p>The R implementation of <code>TFTNet</code>:</p>
+<ol type="1">
+<li><strong>Variable Selection Network (VSN)</strong>: per-variable GRNs produce embeddings; a context GRN produces soft selection weights — these weights are the variable-level causal importances.</li>
+<li><strong>Temporal projection + LSTM encoder</strong>: projects <span class="math inline">\(d\)</span> variables to <span class="math inline">\(d_{\text{model}}\)</span> then runs an LSTM.</li>
+<li><strong>Causal multi-head attention</strong>: LSTM outputs attend to each other with a causal mask.</li>
+<li><strong>Final GRN + linear head</strong>: combines LSTM context with VSN context through a GRN before the prediction head.</li>
+<li><strong>Causal matrix</strong>: outer product of mean VSN weights <span class="math inline">\(\rightarrow\)</span> variable-to-variable causal matrix.</li>
+</ol>
+</section>
+</section>
+<section id="fit-all-three-models" class="level2">
+<h2 class="anchored" data-anchor-id="fit-all-three-models">Fit All Three Models</h2>
+<p><code>attn_causal_model()</code> is the single entry point that fits TCDF, CausalTransformer, and TFT in sequence. Internally it:</p>
+<ul>
+<li>Builds windowed (lag, d) input/output tensors.</li>
+<li>Trains each model with AdamW + cosine LR schedule + early stopping.</li>
+<li>Applies an optional sparsity penalty <span class="math inline">\(\lambda_{\text{sparse}}\)</span> on attention weights.</li>
+<li>Extracts the <span class="math inline">\(d \times d\)</span> causal matrix from each trained model.</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Fitting TCDF, CausalTransformer, and TFT ...</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Fitting TCDF, CausalTransformer, and TFT ...</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>attn_fit <span class="ot">&lt;-</span> <span class="fu">attn_causal_model</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data        =</span> data_np,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">lag         =</span> LAG,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">models      =</span> <span class="fu">c</span>(<span class="st">"tcdf"</span>, <span class="st">"causal_transformer"</span>, <span class="st">"tft"</span>),</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">hidden      =</span> <span class="dv">48</span>L,</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">d_model     =</span> <span class="dv">64</span>L,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_heads     =</span> <span class="dv">4</span>L,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_layers    =</span> <span class="dv">4</span>L,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">dropout     =</span> <span class="fl">0.1</span>,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">epochs      =</span> <span class="dv">20</span>L,</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">lr          =</span> <span class="fl">3e-4</span>,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">patience    =</span> <span class="dv">6</span>L,</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">lam_sparse  =</span> <span class="fl">1e-4</span>,</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">batch_size  =</span> <span class="dv">64</span>L,</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">val_split   =</span> <span class="fl">0.2</span>,</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">device      =</span> device_use,</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose     =</span> <span class="cn">TRUE</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Training complete.</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Training complete.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Validation MSE:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Validation MSE:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">round</span>(attn_fit<span class="sc">$</span>val_mse, <span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              tcdf causal_transformer                tft 
+          0.311805           0.013286           0.229753 </code></pre>
+</div>
+</div>
+<section id="validation-mse-summary-table" class="level3">
+<h3 class="anchored" data-anchor-id="validation-mse-summary-table">Validation MSE Summary Table</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>val_mse_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model   =</span> <span class="fu">names</span>(attn_fit<span class="sc">$</span>val_mse),</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Val_MSE =</span> <span class="fu">unname</span>(attn_fit<span class="sc">$</span>val_mse)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">arrange</span>(Val_MSE)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(val_mse_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               Model    Val_MSE
+1 causal_transformer 0.01328565
+2                tft 0.22975338
+3               tcdf 0.31180525</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="training-loss-curves" class="level2">
+<h2 class="anchored" data-anchor-id="training-loss-curves">Training Loss Curves</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Collect validation loss histories from all three models</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>hist_list <span class="ot">&lt;-</span> attn_fit<span class="sc">$</span>histories</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>make_loss_df <span class="ot">&lt;-</span> <span class="cf">function</span>(nm) {</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  h <span class="ot">&lt;-</span> hist_list[[nm]]</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(h)) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">epoch =</span> <span class="fu">seq_along</span>(h<span class="sc">$</span>val),</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">val   =</span> h<span class="sc">$</span>val,</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">train =</span> h<span class="sc">$</span>train,</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> nm</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>loss_df <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">bind_rows</span>(<span class="fu">lapply</span>(<span class="fu">names</span>(hist_list), make_loss_df))</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>loss_df<span class="sc">$</span>model <span class="ot">&lt;-</span> <span class="fu">factor</span>(loss_df<span class="sc">$</span>model,</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>                         <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"tcdf"</span>, <span class="st">"causal_transformer"</span>, <span class="st">"tft"</span>),</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>                         <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"TCDF"</span>, <span class="st">"CausalTransformer"</span>, <span class="st">"TFT"</span>))</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(loss_df, <span class="fu">aes</span>(<span class="at">x =</span> epoch, <span class="at">y =</span> val, <span class="at">colour =</span> model)) <span class="sc">+</span></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TCDF"</span>              <span class="ot">=</span> <span class="st">"#1b9e77"</span>,</span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"CausalTransformer"</span> <span class="ot">=</span> <span class="st">"#d95f02"</span>,</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TFT"</span>               <span class="ot">=</span> <span class="st">"#7570b3"</span></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">title  =</span> <span class="st">"Validation Loss Curves"</span>,</span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">x      =</span> <span class="st">"Epoch"</span>,</span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">y      =</span> <span class="st">"MSE"</span>,</span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">colour =</span> <span class="cn">NULL</span></span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-04-03-DeepCausalML-attension-transformer-r_files/figure-html/plot-training-loss-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="training-vs.-validation-loss-per-model" class="level3">
+<h3 class="anchored" data-anchor-id="training-vs.-validation-loss-per-model">Training vs.&nbsp;Validation Loss per Model</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>plot_model_loss <span class="ot">&lt;-</span> <span class="cf">function</span>(nm, colour) {</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  h <span class="ot">&lt;-</span> hist_list[[nm]]</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(h)) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">epoch =</span> <span class="fu">seq_along</span>(h<span class="sc">$</span>val),</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">Train =</span> h<span class="sc">$</span>train,</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Val   =</span> h<span class="sc">$</span>val</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="sc">-</span>epoch, <span class="at">names_to =</span> <span class="st">"split"</span>, <span class="at">values_to =</span> <span class="st">"loss"</span>)</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> epoch, <span class="at">y =</span> loss, <span class="at">colour =</span> split)) <span class="sc">+</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.85</span>) <span class="sc">+</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Train"</span> <span class="ot">=</span> colour, <span class="st">"Val"</span> <span class="ot">=</span> <span class="st">"grey40"</span>)) <span class="sc">+</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> nm, <span class="at">x =</span> <span class="st">"Epoch"</span>, <span class="at">y =</span> <span class="st">"MSE"</span>, <span class="at">colour =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">9</span>)</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">plot_model_loss</span>(<span class="st">"tcdf"</span>,              <span class="st">"#1b9e77"</span>)</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">plot_model_loss</span>(<span class="st">"causal_transformer"</span>,<span class="st">"#d95f02"</span>)</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> <span class="fu">plot_model_loss</span>(<span class="st">"tft"</span>,               <span class="st">"#7570b3"</span>)</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(p1, p2, p3, <span class="at">ncol =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-04-03-DeepCausalML-attension-transformer-r_files/figure-html/plot-train-val-loss-1.png" class="img-fluid figure-img" width="1152"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="causal-matrix-visualization" class="level2">
+<h2 class="anchored" data-anchor-id="causal-matrix-visualization">Causal Matrix Visualization</h2>
+<p>For each model, the learned causal matrix <span class="math inline">\(C \in \mathbb{R}^{d \times d}\)</span> encodes variable-to-variable influence as learned through attention weights:</p>
+<ul>
+<li><strong>TCDF</strong>: the softmax attention projection head averaged over validation batches.</li>
+<li><strong>CausalTransformer</strong>: the inter-variable cross-attention matrix averaged over validation batches.</li>
+<li><strong>TFT</strong>: the outer product of mean VSN variable-selection weights.</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>C_tcdf <span class="ot">&lt;-</span> <span class="fu">causal_matrix_attn</span>(attn_fit, <span class="at">model =</span> <span class="st">"tcdf"</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>C_ctrf <span class="ot">&lt;-</span> <span class="fu">causal_matrix_attn</span>(attn_fit, <span class="at">model =</span> <span class="st">"causal_transformer"</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>C_tft  <span class="ot">&lt;-</span> <span class="fu">causal_matrix_attn</span>(attn_fit, <span class="at">model =</span> <span class="st">"tft"</span>)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"TCDF causal matrix (first 3 rows):</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>TCDF causal matrix (first 3 rows):</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">round</span>(C_tcdf[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, ], <span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           Financials Energy Technology Healthcare Industrials ConsumerDisc
+Financials     0.0632 0.0632     0.0632     0.0632      0.0632       0.0632
+Energy         0.1084 0.1084     0.1084     0.1084      0.1084       0.1084
+Technology     0.1234 0.1234     0.1234     0.1234      0.1234       0.1234
+           ConsumerStap Utilities
+Financials       0.0632    0.0632
+Energy           0.1084    0.1084
+Technology       0.1234    0.1234</code></pre>
+</div>
+</div>
+<section id="heatmap-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="heatmap-comparison">Heatmap Comparison</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>plot_causal_heatmap <span class="ot">&lt;-</span> <span class="cf">function</span>(C, title, var_names) {</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(C)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(A) <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(A) <span class="ot">&lt;-</span> var_names</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(A) <span class="ot">&lt;-</span> var_names</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">&lt;-</span> reshape2<span class="sc">::</span><span class="fu">melt</span>(A, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(df) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Target"</span>, <span class="st">"Source"</span>, <span class="st">"Weight"</span>)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  df<span class="sc">$</span>Target <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Target, <span class="at">levels =</span> <span class="fu">rev</span>(var_names))</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  df<span class="sc">$</span>Source <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Source, <span class="at">levels =</span> var_names)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> Source, <span class="at">y =</span> Target, <span class="at">fill =</span> Weight)) <span class="sc">+</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_tile</span>(<span class="at">colour =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">round</span>(Weight, <span class="dv">2</span>)), <span class="at">size =</span> <span class="fl">2.5</span>, <span class="at">colour =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"white"</span>, <span class="at">high =</span> <span class="st">"#2C7BB6"</span>,</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>                        <span class="at">na.value =</span> <span class="st">"grey90"</span>, <span class="at">name =</span> <span class="st">"Weight"</span>) <span class="sc">+</span></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> title, <span class="at">x =</span> <span class="st">"Source (cause)"</span>, <span class="at">y =</span> <span class="st">"Target (effect)"</span>) <span class="sc">+</span></span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>p_tcdf <span class="ot">&lt;-</span> <span class="fu">plot_causal_heatmap</span>(C_tcdf, <span class="st">"TCDF Causal Matrix"</span>,              VAR_NAMES)</span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a>p_ctrf <span class="ot">&lt;-</span> <span class="fu">plot_causal_heatmap</span>(C_ctrf, <span class="st">"Causal Transformer Matrix"</span>,        VAR_NAMES)</span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>p_tft  <span class="ot">&lt;-</span> <span class="fu">plot_causal_heatmap</span>(C_tft,  <span class="st">"TFT Variable-Selection Matrix"</span>,    VAR_NAMES)</span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a>patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(p_tcdf, p_ctrf, p_tft, <span class="at">ncol =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-04-03-DeepCausalML-attension-transformer-r_files/figure-html/heatmap-comparison-1.png" class="img-fluid figure-img" width="1440"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="causal-graph-network-diagrams" class="level3">
+<h3 class="anchored" data-anchor-id="causal-graph-network-diagrams">Causal Graph Network Diagrams</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>draw_attn_igraph <span class="ot">&lt;-</span> <span class="cf">function</span>(C, title, var_names, <span class="at">threshold =</span> <span class="fl">0.12</span>,</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>                              <span class="at">node_colour =</span> <span class="st">"steelblue"</span>) {</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  A_bin <span class="ot">&lt;-</span> (<span class="fu">as.matrix</span>(C) <span class="sc">&gt;</span> threshold) <span class="sc">*</span> <span class="dv">1</span>L</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(A_bin) <span class="ot">&lt;-</span> <span class="dv">0</span>L</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">graph_from_adjacency_matrix</span>(</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    A_bin, <span class="at">mode =</span> <span class="st">"directed"</span>, <span class="at">weighted =</span> <span class="cn">NULL</span>, <span class="at">diag =</span> <span class="cn">FALSE</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>name        <span class="ot">&lt;-</span> var_names</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>color       <span class="ot">&lt;-</span> node_colour</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>label       <span class="ot">&lt;-</span> var_names</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>size        <span class="ot">&lt;-</span> <span class="dv">28</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>label.color <span class="ot">&lt;-</span> <span class="st">"white"</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">V</span>(g)<span class="sc">$</span>label.cex   <span class="ot">&lt;-</span> <span class="fl">0.8</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">E</span>(g)<span class="sc">$</span>color       <span class="ot">&lt;-</span> <span class="st">"grey50"</span></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>  igraph<span class="sc">::</span><span class="fu">E</span>(g)<span class="sc">$</span>arrow.size  <span class="ot">&lt;-</span> <span class="fl">0.6</span></span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>  old_par <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">0</span>))</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(g,</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">layout =</span> igraph<span class="sc">::</span><span class="fu">layout_in_circle</span>(g),</span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">main   =</span> title,</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>       <span class="at">vertex.frame.color =</span> <span class="st">"white"</span>)</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(old_par)</span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>))</span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a><span class="fu">draw_attn_igraph</span>(C_tcdf, <span class="st">"TCDF (threshold &gt; 0.12)"</span>,              VAR_NAMES, <span class="fl">0.12</span>, <span class="st">"steelblue"</span>)</span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a><span class="fu">draw_attn_igraph</span>(C_ctrf, <span class="st">"CausalTransformer (threshold &gt; 0.12)"</span>, VAR_NAMES, <span class="fl">0.12</span>, <span class="st">"darkorange"</span>)</span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a><span class="fu">draw_attn_igraph</span>(C_tft,  <span class="st">"TFT (threshold &gt; 0.12)"</span>,               VAR_NAMES, <span class="fl">0.12</span>, <span class="st">"mediumpurple"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-04-03-DeepCausalML-attension-transformer-r_files/figure-html/network-diagram-comparison-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="graph-statistics" class="level2">
+<h2 class="anchored" data-anchor-id="graph-statistics">Graph Statistics</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>graph_stats_attn <span class="ot">&lt;-</span> <span class="cf">function</span>(C, <span class="at">threshold =</span> <span class="fl">0.12</span>, <span class="at">name =</span> <span class="st">""</span>) {</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  A_bin <span class="ot">&lt;-</span> (<span class="fu">as.matrix</span>(C) <span class="sc">&gt;</span> threshold) <span class="sc">*</span> <span class="dv">1</span>L</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(A_bin) <span class="ot">&lt;-</span> <span class="dv">0</span>L</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  g    <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">graph_from_adjacency_matrix</span>(</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    A_bin, <span class="at">mode =</span> <span class="st">"directed"</span>, <span class="at">weighted =</span> <span class="cn">NULL</span>, <span class="at">diag =</span> <span class="cn">FALSE</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  d_n  <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">gorder</span>(g)</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  e_n  <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">gsize</span>(g)</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  dens <span class="ot">&lt;-</span> <span class="cf">if</span> (d_n <span class="sc">&gt;</span> <span class="dv">1</span>) e_n <span class="sc">/</span> (d_n <span class="sc">*</span> (d_n <span class="sc">-</span> <span class="dv">1</span>)) <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">model          =</span> name,</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">nodes          =</span> d_n,</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">edges          =</span> e_n,</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">density        =</span> <span class="fu">round</span>(dens, <span class="dv">4</span>),</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">is_dag         =</span> igraph<span class="sc">::</span><span class="fu">is_dag</span>(g),</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_in_degree  =</span> <span class="cf">if</span> (d_n <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">max</span>(igraph<span class="sc">::</span><span class="fu">degree</span>(g, <span class="at">mode =</span> <span class="st">"in"</span>))  <span class="cf">else</span> <span class="dv">0</span>L,</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_out_degree =</span> <span class="cf">if</span> (d_n <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">max</span>(igraph<span class="sc">::</span><span class="fu">degree</span>(g, <span class="at">mode =</span> <span class="st">"out"</span>)) <span class="cf">else</span> <span class="dv">0</span>L</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>stats_all <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">list</span>(</span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">graph_stats_attn</span>(C_tcdf, <span class="fl">0.12</span>, <span class="st">"TCDF"</span>),</span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">graph_stats_attn</span>(C_ctrf, <span class="fl">0.12</span>, <span class="st">"CausalTransformer"</span>),</span>
+<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">graph_stats_attn</span>(C_tft,  <span class="fl">0.12</span>, <span class="st">"TFT"</span>)</span>
+<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(stats_all) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Graph statistics (threshold = 0.12):</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Graph statistics (threshold = 0.12):</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(stats_all)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              model nodes edges density is_dag max_in_degree max_out_degree
+1              TCDF     8    21   0.375  FALSE             3              7
+2 CausalTransformer     8    56   1.000  FALSE             7              7
+3               TFT     8     0   0.000   TRUE             0              0</code></pre>
+</div>
+</div>
+</section>
+<section id="model-validation-prediction-error-on-held-out-data" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-prediction-error-on-held-out-data">Model Validation: Prediction Error on Held-Out Data</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>pred_tcdf <span class="ot">&lt;-</span> <span class="fu">predict</span>(attn_fit, <span class="at">model =</span> <span class="st">"tcdf"</span>,              <span class="at">newdata =</span> X_val)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>pred_ctrf <span class="ot">&lt;-</span> <span class="fu">predict</span>(attn_fit, <span class="at">model =</span> <span class="st">"causal_transformer"</span>, <span class="at">newdata =</span> X_val)</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>pred_tft  <span class="ot">&lt;-</span> <span class="fu">predict</span>(attn_fit, <span class="at">model =</span> <span class="st">"tft"</span>,               <span class="at">newdata =</span> X_val)</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>mse_tcdf <span class="ot">&lt;-</span> <span class="fu">mean</span>((pred_tcdf <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>mse_ctrf <span class="ot">&lt;-</span> <span class="fu">mean</span>((pred_ctrf <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>mse_tft  <span class="ot">&lt;-</span> <span class="fu">mean</span>((pred_tft  <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>val_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">model   =</span> <span class="fu">c</span>(<span class="st">"TCDF"</span>, <span class="st">"CausalTransformer"</span>, <span class="st">"TFT"</span>),</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">val_mse =</span> <span class="fu">c</span>(mse_tcdf, mse_ctrf, mse_tft)</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Validation MSE (next-step reconstruction):</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Validation MSE (next-step reconstruction):</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(val_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              model   val_mse
+1              TCDF 0.8769762
+2 CausalTransformer 1.0331640
+3               TFT 0.9528924</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(val_df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(model, val_mse), <span class="at">y =</span> val_mse, <span class="at">fill =</span> model)) <span class="sc">+</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">alpha =</span> <span class="fl">0.85</span>) <span class="sc">+</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TCDF"</span>              <span class="ot">=</span> <span class="st">"#1b9e77"</span>,</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"CausalTransformer"</span> <span class="ot">=</span> <span class="st">"#d95f02"</span>,</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TFT"</span>               <span class="ot">=</span> <span class="st">"#7570b3"</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Validation MSE by Model"</span>,</span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x     =</span> <span class="cn">NULL</span>,</span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">y     =</span> <span class="st">"Mean Squared Error"</span></span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-04-03-DeepCausalML-attension-transformer-r_files/figure-html/validation-mse-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="per-variable-prediction-error" class="level3">
+<h3 class="anchored" data-anchor-id="per-variable-prediction-error">Per-Variable Prediction Error</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>per_var_mse <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">variable =</span> VAR_NAMES,</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">TCDF     =</span> <span class="fu">colMeans</span>((pred_tcdf <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>),</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">CausalTransformer =</span> <span class="fu">colMeans</span>((pred_ctrf <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>),</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">TFT      =</span> <span class="fu">colMeans</span>((pred_tft  <span class="sc">-</span> Y_val)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Per-variable MSE:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Per-variable MSE:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">data.frame</span>(</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">variable =</span> per_var_mse<span class="sc">$</span>variable,</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(per_var_mse[, <span class="sc">-</span><span class="dv">1</span>], <span class="dv">5</span>)</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      variable    TCDF CausalTransformer     TFT
+1   Financials 0.82300           0.79124 0.85009
+2       Energy 0.73883           0.86958 0.78209
+3   Technology 1.01885           1.23502 1.10403
+4   Healthcare 0.85969           0.82246 0.82654
+5  Industrials 0.83421           0.88577 0.95766
+6 ConsumerDisc 0.99819           1.37302 1.22227
+7 ConsumerStap 0.80154           0.98360 0.91664
+8    Utilities 0.94149           1.30461 0.96382</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>pv_long <span class="ot">&lt;-</span> tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(per_var_mse, <span class="sc">-</span>variable,</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>                                <span class="at">names_to =</span> <span class="st">"model"</span>, <span class="at">values_to =</span> <span class="st">"mse"</span>)</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pv_long, <span class="fu">aes</span>(<span class="at">x =</span> variable, <span class="at">y =</span> mse, <span class="at">fill =</span> model)) <span class="sc">+</span></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"dodge"</span>, <span class="at">alpha =</span> <span class="fl">0.85</span>) <span class="sc">+</span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TCDF"</span>              <span class="ot">=</span> <span class="st">"#1b9e77"</span>,</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"CausalTransformer"</span> <span class="ot">=</span> <span class="st">"#d95f02"</span>,</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TFT"</span>               <span class="ot">=</span> <span class="st">"#7570b3"</span></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Per-Variable Validation MSE"</span>,</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">x     =</span> <span class="st">"Sector"</span>,</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">y     =</span> <span class="st">"MSE"</span>,</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill  =</span> <span class="st">"Model"</span></span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-04-03-DeepCausalML-attension-transformer-r_files/figure-html/per-variable-mse-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="notes-and-extensions" class="level2">
+<h2 class="anchored" data-anchor-id="notes-and-extensions">Notes and Extensions</h2>
+<ul>
+<li>This notebook is a <strong>pedagogical</strong> implementation of three complementary attention-based causal discovery approaches on real-world time-series data.</li>
+<li>The <strong>learned causal matrices</strong> are soft attention weights, not formal causal estimates — further validation and domain expertise are needed before drawing scientific or policy conclusions.</li>
+<li><strong>Hyperparameters</strong> (<code>LAG</code>, <code>hidden</code>, <code>d_model</code>, <code>n_heads</code>, <code>lam_sparse</code>, threshold) strongly affect the discovered structure; sensitivity analysis is essential.</li>
+<li>For stronger causal claims, combine with <strong>domain priors</strong>, <strong>interventional validation</strong>, and bootstrap uncertainty quantification.</li>
+<li>Possible extensions:
+<ul>
+<li><strong>Sparse attention regularization</strong>: increase <code>lam_sparse</code> to promote sparser, more interpretable graphs.</li>
+<li><strong>Multi-horizon forecasting</strong>: extend <code>AHEAD &gt; 1</code> for multi-step prediction.</li>
+<li><strong>Graph pruning</strong>: apply statistical significance tests or bootstrap confidence intervals on the attention weights.</li>
+<li><strong>Hybrid models</strong>: combine TCDF’s convolutional feature extraction with the Transformer’s global attention.</li>
+</ul></li>
+</ul>
+</section>
+<section id="summary-and-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusions">Summary and Conclusions</h2>
+<p>In this notebook, we explored three deep learning-based approaches to causal discovery via attention mechanisms on S&amp;P 500 sector ETF multivariate time-series:</p>
+<ul>
+<li><p><strong>TCDF</strong> uses stacked causal dilated convolutions to extract temporal features, then applies an attention projection head to score variable-to-variable influence. Its convolutional backbone provides stable, efficient training with linear time complexity in the sequence length.</p></li>
+<li><p><strong>CausalTransformer</strong> employs a standard Transformer encoder with autoregressive causal masking and a dedicated cross-variable attention head. The cross-variable attention matrix directly encodes inferred causal structure and is interpretable as a soft adjacency matrix.</p></li>
+<li><p><strong>TFT</strong> (Temporal Fusion Transformer) combines variable selection networks, LSTM sequential encoding, and interpretable multi-head temporal attention. The VSN selection weights provide an outer-product variable causal matrix that captures which input variables drive predictions.</p></li>
+</ul>
+<p><strong>Key takeaways:</strong></p>
+<ol type="1">
+<li>Attention-based models offer a flexible, differentiable means for data-driven discovery of temporal causal structure without requiring a pre-specified graph.</li>
+<li>The causal (attention) matrix from each model provides an interpretable estimate of variable-to-variable influence that can be thresholded and visualized as a directed graph.</li>
+<li>TCDF’s convolutional approach is computationally efficient; CausalTransformer’s global attention captures long-range dependencies; TFT’s VSN provides an explicit variable importance ranking.</li>
+<li>All three models are unified under {RCausalML}’s <code>attn_causal_model()</code> interface with minimal setup, enabling direct comparison on the same dataset.</li>
+<li>Attention weights are not formal causal estimates — they reflect learned predictive associations that are <em>consistent with</em> causal structure, but require experimental validation for causal claims.</li>
+</ol>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">Resources</h2>
+<section id="primary-references" class="level3">
+<h3 class="anchored" data-anchor-id="primary-references">Primary References</h3>
+<ul>
+<li><strong>TCDF (2019):</strong> <a href="https://www.mdpi.com/2504-4990/1/1/19">Causal Discovery with Attention-Based Convolutional Neural Networks</a> — Nauta et al.; the TCDF architecture combining dilated causal convolutions with attention for causal graph discovery.</li>
+<li><strong>TFT (2021):</strong> <a href="https://arxiv.org/abs/1912.09363">Temporal Fusion Transformers for Interpretable Multi-Horizon Time Series Forecasting</a> — Lim et al.; the TFT architecture with variable selection networks and interpretable attention.</li>
+<li><strong>Attention Is All You Need (2017):</strong> <a href="https://arxiv.org/abs/1706.03762">Vaswani et al.</a> — the original Transformer paper introducing scaled dot-product attention and multi-head attention.</li>
+</ul>
+</section>
+<section id="background-texts" class="level3">
+<h3 class="anchored" data-anchor-id="background-texts">Background Texts</h3>
+<ul>
+<li><strong>Causality (Judea Pearl):</strong> <a href="https://bayes.cs.ucla.edu/BOOK-2K/">Causality: Models, Reasoning and Inference</a> — definitive reference for structural causal models and Pearl’s Ladder of Causation.</li>
+<li><strong>Elements of Causal Inference (Peters, Janzing &amp; Schölkopf):</strong> <a href="https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/">MIT Press</a> — rigorous treatment of SCMs and identifiability.</li>
+<li><strong>The Book of Why (J. Pearl &amp; D. Mackenzie)</strong> — accessible introduction to causal reasoning.</li>
+</ul>
+</section>
+<section id="software-and-datasets" class="level3">
+<h3 class="anchored" data-anchor-id="software-and-datasets">Software and Datasets</h3>
+<ul>
+<li><strong>TCDF GitHub:</strong> <a href="https://github.com/M-Nauta/TCDF">github.com/M-Nauta/TCDF</a> — original Python TCDF implementation.</li>
+<li><strong>R torch:</strong> <a href="https://torch.mlverse.org/" class="uri">https://torch.mlverse.org/</a> — PyTorch bindings for R used by {RCausalML}.</li>
+<li><strong>tidyquant:</strong> <a href="https://business-science.github.io/tidyquant/" class="uri">https://business-science.github.io/tidyquant/</a> — tidy finance data retrieval.</li>
+<li><strong>awesome-causal-inference:</strong> <a href="https://github.com/imirzadeh/awesome-causal-inference">github.com/imirzadeh/awesome-causal-inference</a> — curated resource list.</li>
+</ul>
+</section>
+<section id="companion-notebooks-in-this-series" class="level3">
+<h3 class="anchored" data-anchor-id="companion-notebooks-in-this-series">Companion Notebooks in This Series</h3>
+<ul>
+<li><code>05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.qmd</code> — Neural Granger Causality (cMLP, cLSTM, SRU, NRI) on the same sector ETF universe.</li>
+<li><code>05-04-02-DeepCausalML-timeseries-structural-causal-model-SMC-r.qmd</code> — Deep Structural Causal Models: DeepSCM, DECI, DYNOTEARS on sector ETF data.</li>
+<li><code>05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.qmd</code> — CASTLE: simultaneous supervised prediction and causal graph discovery.</li>
+<li><code>05-03-04-DeepCausalML-DAGMA-NoCurl-r.qmd</code> — DAGMA and DAG-NoCurl: acyclicity via log-det and curl-free constraints.</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners">Scientific Terminology for Beginners</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Simple explanation</th>
+<th>Beginner example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Attention mechanism</td>
+<td>A learned weighting that tells the model which inputs to focus on most.</td>
+<td>Like highlighting important sentences in a textbook.</td>
+</tr>
+<tr class="even">
+<td>Causal masking</td>
+<td>Restricting attention so each time step only sees past information, not future.</td>
+<td>Predicting tomorrow’s price using only today’s and yesterday’s data.</td>
+</tr>
+<tr class="odd">
+<td>Dilated convolution</td>
+<td>A convolution that skips inputs by a factor (dilation), increasing the receptive field exponentially.</td>
+<td>Reading every 2nd, then every 4th word to understand context across longer sequences.</td>
+</tr>
+<tr class="even">
+<td>Positional encoding</td>
+<td>A vector added to each time step’s embedding encoding its position in the sequence.</td>
+<td>Adding a timestamp to each data point so the model knows temporal order.</td>
+</tr>
+<tr class="odd">
+<td>Variable Selection Network (VSN)</td>
+<td>A learned soft gate that scores how important each input variable is.</td>
+<td>Automatically highlighting which financial indicators drive a forecast.</td>
+</tr>
+<tr class="even">
+<td>Gated Residual Network (GRN)</td>
+<td>A feedforward block with a sigmoid gate and skip connection, stabilizing gradient flow.</td>
+<td>A weighted shortcut that decides how much of the transformation to apply.</td>
+</tr>
+<tr class="odd">
+<td>Causal (attention) matrix</td>
+<td>A <span class="math inline">\(d \times d\)</span> matrix whose <span class="math inline">\((i,j)\)</span> entry reflects how much variable <span class="math inline">\(j\)</span> influences variable <span class="math inline">\(i\)</span> according to learned attention weights.</td>
+<td>A table showing “who talks to whom” in a network of variables.</td>
+</tr>
+<tr class="even">
+<td>Early stopping</td>
+<td>Halting training when validation loss stops improving, preventing overfitting.</td>
+<td>Stopping practice when further rehearsal no longer improves performance.</td>
+</tr>
+<tr class="odd">
+<td>AdamW</td>
+<td>Adam optimizer with decoupled weight decay regularization.</td>
+<td>Gradient descent that adapts learning rates per parameter and penalizes large weights.</td>
+</tr>
+<tr class="even">
+<td>Cosine annealing</td>
+<td>A learning-rate schedule that decays the LR following a cosine curve.</td>
+<td>Gradually slowing down training as you approach convergence.</td>
+</tr>
+<tr class="odd">
+<td>Lag / window</td>
+<td>Number of past time steps used as input to the model.</td>
+<td>Using the last 20 trading days to predict the next day’s return.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,642 @@
+# Uplift Trees — Regression (Abortion Data)
+
+In this notebook we apply **uplift regression** methods from **RCausalML** to the **abortion** dataset from `{causaldata}`: a **continuous** outcome (logged gonorrhea rate) and a **binary** treatment (early repeal of abortion prohibition). The workflow parallels [03-uplift-trees-regression-r.qmd](03-uplift-trees-regression-r.qmd), but replaces simulated multi-arm data with this observational use case.
+
+
+## Scientific Terminology for Beginners
+
+This notebook uses policy data, so causal terminology is especially important.
+
+- **Observational data**: Data where treatment is not randomly assigned by the analyst.
+- **Confounding**: When other variables affect both treatment and outcome, potentially biasing effect estimates.
+- **Identification assumptions**: Conditions needed to interpret estimates causally (for example, no unmeasured confounding).
+- **CATE**: Subgroup-specific expected treatment effect, conditional on covariates $X$.
+- **Policy effect heterogeneity**: Different policy impacts across demographic or socioeconomic groups.
+- **Interpretability**: Ability to explain why the model predicts stronger or weaker effects for certain profiles.
+
+### Simple example
+
+Suppose we compare regions with and without an early policy change.
+
+- Average logged outcome in treated-like subgroup is lower by 0.12 relative to comparable control subgroup.
+- The model estimates subgroup CATE near **-0.12** on the log scale.
+
+For a beginner, this means the policy is associated with a reduction in the outcome for that subgroup, under the modeling assumptions.
+
+## Overview
+
+Uplift modeling with **continuous outcomes** targets the **conditional average treatment effect (CATE)** $\tau(x) = \mathbb{E}[Y \mid T=1, X=x] - \mathbb{E}[Y \mid T=0, X=x]$. Here $Y$ is **lnr** (logged gonorrhea rate per 100,000 among 15–19 year olds) and $T$ is **repeal**. This is an observational panel-style dataset; we illustrate **heterogeneous effect estimation** and **ranking diagnostics** with the same tools as the synthetic regression notebook, without claiming causal identification beyond what your design assumptions allow.
+
+## Implementation in R
+
+For **continuous** outcomes, `uplift_rf_kl()` fits a **T-learner random forest** (`ranger`): separate outcome models under treatment and control, with $\hat{\tau}(x) = \hat{\mu}_1(x) - \hat{\mu}_0(x)$. The **abortion** data have only **one treated arm** vs control, so **`uplift_rf_multi()`** (multiple non-control arms) is not used here; see the synthetic regression notebook for that pattern.
+
+**Interaction trees** (`interaction_tree()`) and **causal inference trees** (`causal_inference_tree()`) give **explicit partition rules** for mean outcome contrasts between arms. We evaluate **cumulative gain** (`plot_gain()`) on the holdout set using predicted CATE as the model score, and use **kernel SHAP** (`kernelshap`, `shapviz`) to summarize drivers of predicted uplift.
+
+We also apply **filter-based feature selection** following [11-feature-selection-uplift.qmd](11-feature-selection-uplift.qmd) (Zhao et al. 2020): the **F-filter** (`get_importance()`, `method = "F"`) ranks covariates by F-tests for treatment–feature interaction in **linear models**, which is appropriate for continuous **lnr**. The **LR** and **KL** options in `get_importance()` are implemented for **binary** outcomes in this package; they are omitted here for that reason (see `?get_importance`).
+
+### Setup
+
+### Load and check required libraries
+
+```{r setup-packages}
+packages <- c(
+  "tidyverse",
+  "RCausalML",
+  "causaldata",
+  "rpart.plot",
+  "shapviz",
+  "kernelshap"
+)
+```
+
+### Install missing packages (if needed)
+
+```{r install-missing-packages}
+#| warning: false
+#| error: false
+# new_packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+# if (length(new_packages)) install.packages(new_packages)
+```
+
+### Load required libraries
+
+```{r load-required-libraries}
+if (file.exists("DESCRIPTION") && requireNamespace("devtools", quietly = TRUE)) {
+  try(devtools::load_all(".", quiet = TRUE), silent = TRUE)
+}
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Data
+
+R package `{causaldata}` provides a collection of datasets for causal inference. We integrate {causaldata} with {RCausalML} to easily load datasets. In this tutorial, we use the **abortion** dataset, which contains state-year observations on gonorrhea rates among 15–19 year olds, with a binary indicator for early repeal of abortion prohibition. This dataset is commonly used to study the effects of abortion legalization on risky sexual behavior among teenagers, proxied by gonorrhea rates.
+
+This dataset is commonly used to study the **causal effects of abortion legalization policies** (specifically, early repeal of abortion prohibitions in certain U.S. states) on **risky sexual behavior** among teenagers. Risky behavior is proxied by the **incidence of gonorrhea** (a sexually transmitted infection) among 15–19 year olds. The idea is that access to abortion might influence sexual decision-making or risk-taking behavior in this age group.
+
+Here are the most important columns (based on the package documentation):
+
+- **fip** — State FIPS code (numeric identifier for each U.S. state)
+- **age** — Age in years (focused on 15–19 year olds)
+- **race** — Race: 1 = white, 2 = black (or similar coding)
+- **year** — Calendar year
+- **t** — A rescaled time variable (often centered around policy change for DiD)
+- **sex** — Sex: 1 = male, 2 = female
+- **totpop** — Total population (state-level)
+- **ir** — Incarcerated males per 100,000 (proxy for criminal justice environment)
+- **crack** — Crack cocaine index (proxy for drug epidemic intensity)
+- **alcohol** — Alcohol consumption per capita
+- **income** — Real income per capita
+- **ur** — State unemployment rate
+- **poverty** — Poverty rate
+- **repeal** — Treatment indicator: 1 = state had an **early repeal** of abortion prohibition (treatment group), 0 = otherwise (control group). This is the main policy/treatment variable.
+- **pi** — Parental involvement law in effect (another policy control)
+- **bf15** — Indicator: Is a black female in the 15–19 age group (useful for subgroup analysis)
+
+```{r list-causaldata-datasets}
+# causaldata integration
+list_causaldata_datasets()
+```
+
+### Load Data
+
+The **outcome variable** is typically **lnr** (logged gonorrhea rate per 100,000 population among 15–19 year olds), which measures the logged incidence of gonorrhea as a proxy for risky sexual behavior.
+
+```{r load-abortion-data}
+# Load abortion dataset (use $data for the raw dataframe; load_causaldata returns list with X, w, y, data, citation)
+abortion <- load_causaldata("abortion")$data
+# Quick look
+head(abortion)
+str(abortion)
+summary(abortion$repeal)      # Treatment balance
+table(abortion$repeal, abortion$race)  # Example crosstab
+```
+
+### Data Processing
+
+```{r abortion-data-processing}
+# Select relevant subset (focus on 15-19 year olds, complete cases)
+abortion_clean <- abortion %>%
+  dplyr::filter(age >= 15 & age <= 19) %>%
+  na.omit()
+
+# Define covariates (X), outcome (Y), treatment (W)
+X <- abortion_clean[, c("age", "race", "sex", "totpop", "ir", "crack",
+                        "alcohol", "income", "ur", "poverty")]
+
+Y <- abortion_clean$lnr          # Logged gonorrhea rate per 100,000 (continuous)
+W <- abortion_clean$repeal       # 1 = early repeal (treatment), 0 = otherwise
+
+# Convert X to numeric matrix
+X <- as.matrix(X)
+colnames(X) <- c("age", "race", "sex", "totpop", "ir", "crack",
+                 "alcohol", "income", "ur", "poverty")
+
+# Remove near-zero variance columns (if any)
+X <- X[, apply(X, 2, stats::var) > 1e-10, drop = FALSE]
+cat("Covariates used:", colnames(X), "\n")
+```
+
+### Split Data into Training and Test Sets
+
+We split the data into 80% training and 20% test sets using random sampling (fixed seed for reproducibility).
+
+```{r train-test-split-abortion}
+set.seed(111)
+train_prop <- 0.8
+n <- nrow(abortion_clean)
+train_idx <- sample(seq_len(n), size = round(train_prop * n))
+X_train <- X[train_idx, , drop = FALSE]
+Y_train <- Y[train_idx]
+W_train <- W[train_idx]
+X_test <- X[-train_idx, , drop = FALSE]
+Y_test <- Y[-train_idx]
+W_test <- W[-train_idx]
+cat("Training set size:", nrow(X_train), "\n")
+cat("Test set size:", nrow(X_test), "\n")
+cat("Column names of X_train:", colnames(X_train), "\n")
+```
+
+```{r abortion-x-names}
+x_names <- colnames(X_train)
+```
+
+### Feature selection (F-filter; Zhao et al. 2020)
+
+This mirrors the workflow in [11-feature-selection-uplift.qmd](11-feature-selection-uplift.qmd), adapted for **continuous** `lnr`. Rankings use **`get_importance(..., method = "F")`** on the **training set only** (no test leakage). Treatment is encoded as `control` / `treated` from `repeal`.
+
+```{r abortion-fs-dataframe}
+df_fs_train <- as.data.frame(X_train, stringsAsFactors = FALSE)
+names(df_fs_train) <- x_names
+df_fs_train$lnr <- Y_train
+df_fs_train$treatment_group_key <- ifelse(W_train == 1, "treated", "control")
+```
+
+#### method = F (interaction F-tests; orders 1–3)
+
+```{r abortion-filter-F}
+f_imp_1 <- get_importance(
+  df_fs_train,
+  features = x_names,
+  y_name = "lnr",
+  method = "F",
+  experiment_group_column = "treatment_group_key",
+  control_group = "control",
+  treatment_group = "treated",
+  order = 1
+)
+head(f_imp_1)
+
+f_imp_2 <- get_importance(
+  df_fs_train,
+  features = x_names,
+  y_name = "lnr",
+  method = "F",
+  experiment_group_column = "treatment_group_key",
+  control_group = "control",
+  treatment_group = "treated",
+  order = 2
+)
+head(f_imp_2)
+
+f_imp_3 <- get_importance(
+  df_fs_train,
+  features = x_names,
+  y_name = "lnr",
+  method = "F",
+  experiment_group_column = "treatment_group_key",
+  control_group = "control",
+  treatment_group = "treated",
+  order = 3
+)
+head(f_imp_3)
+```
+
+#### Subsets for evaluation (top 3, top 6, all; capped by $p$)
+
+```{r abortion-top-feature-sets}
+ranked_f <- f_imp_1$feature
+n_f <- length(ranked_f)
+top_3_features <- ranked_f[seq_len(min(3L, n_f))]
+top_6_features <- ranked_f[seq_len(min(6L, n_f))]
+cat("Top 3 (F1):", paste(top_3_features, collapse = ", "), "\n")
+cat("Top 6 (F1):", paste(top_6_features, collapse = ", "), "\n")
+```
+
+```{r abortion-plot-f-scores}
+#| fig.width: 7
+#| fig.height: 5
+par(mar = c(4, 8, 2, 1))
+n_bar <- min(20L, nrow(f_imp_1))
+barplot(
+  rev(head(f_imp_1$score, n_bar)),
+  names.arg = rev(head(f_imp_1$feature, n_bar)),
+  horiz = TRUE,
+  las = 1,
+  main = "F1 filter: top features (abortion, train)",
+  col = "steelblue",
+  border = NA
+)
+```
+
+#### Performance vs feature subset: T-Learner, R-Learner, S-Learner
+
+We compare **cumulative gain** and **AUUC** (mean of normalized cumulative gain) on the **test** set, following [11-feature-selection-uplift.qmd](11-feature-selection-uplift.qmd). Outcome column is **`lnr`**; `is_treated` is `W_test`.
+
+```{r abortion-fs-test-idx}
+is_treated <- as.integer(W_test)
+y_test <- Y_test
+n_test <- nrow(X_test)
+```
+
+```{r abortion-uplift-tlearner-fs}
+tl <- TLearner(learner = "ranger", control_name = 0)
+tl <- fit(tl, X_train, W_train, Y_train)
+pred_all <- predict(tl, X_test)
+if (is.matrix(pred_all)) pred_all <- pred_all[, 1]
+
+tl_t3 <- TLearner(learner = "ranger", control_name = 0)
+tl_t3 <- fit(tl_t3, X_train[, top_3_features, drop = FALSE], W_train, Y_train)
+pred_t3 <- predict(tl_t3, X_test[, top_3_features, drop = FALSE])
+if (is.matrix(pred_t3)) pred_t3 <- pred_t3[, 1]
+
+tl_t6 <- TLearner(learner = "ranger", control_name = 0)
+tl_t6 <- fit(tl_t6, X_train[, top_6_features, drop = FALSE], W_train, Y_train)
+pred_t6 <- predict(tl_t6, X_test[, top_6_features, drop = FALSE])
+if (is.matrix(pred_t6)) pred_t6 <- pred_t6[, 1]
+```
+
+```{r abortion-df-preds-uplift-fs}
+model_cols_uplift <- c("All", "Top_3", "Top_6", "Random")
+set.seed(42)
+df_preds_uplift <- data.frame(
+  All = pred_all,
+  Top_3 = pred_t3,
+  Top_6 = pred_t6,
+  Random = stats::runif(n_test),
+  is_treated = is_treated,
+  lnr = y_test
+)
+```
+
+```{r abortion-plot-gain-uplift-fs}
+#| fig.width: 7
+#| fig.height: 5
+plot_gain(
+  df_preds_uplift,
+  outcome_col = "lnr",
+  treatment_col = "is_treated",
+  model_cols = model_cols_uplift,
+  main = "T-Learner (ranger): cumulative gain — abortion test"
+)
+```
+
+```{r abortion-auuc-uplift-fs}
+gain_uplift <- get_cumgain(
+  df_preds_uplift,
+  outcome_col = "lnr",
+  treatment_col = "is_treated",
+  normalize = TRUE
+)
+auuc_uplift <- colMeans(gain_uplift[, model_cols_uplift, drop = FALSE])
+print(auuc_uplift)
+```
+
+```{r abortion-rlearner-fs}
+rl <- RLearner(learner = "ranger", control_name = 0, n_fold = 3)
+rl <- fit(rl, X_train, W_train, Y_train)
+pred_r_all <- predict(rl, X_test)
+if (is.matrix(pred_r_all)) pred_r_all <- pred_r_all[, 1]
+
+rl_t3 <- RLearner(learner = "ranger", control_name = 0, n_fold = 3)
+rl_t3 <- fit(rl_t3, X_train[, top_3_features, drop = FALSE], W_train, Y_train)
+pred_r_t3 <- predict(rl_t3, X_test[, top_3_features, drop = FALSE])
+if (is.matrix(pred_r_t3)) pred_r_t3 <- pred_r_t3[, 1]
+
+rl_t6 <- RLearner(learner = "ranger", control_name = 0, n_fold = 3)
+rl_t6 <- fit(rl_t6, X_train[, top_6_features, drop = FALSE], W_train, Y_train)
+pred_r_t6 <- predict(rl_t6, X_test[, top_6_features, drop = FALSE])
+if (is.matrix(pred_r_t6)) pred_r_t6 <- pred_r_t6[, 1]
+```
+
+```{r abortion-rlearner-gain-auuc-fs}
+set.seed(42)
+df_preds_r <- data.frame(
+  All = pred_r_all,
+  Top_3 = pred_r_t3,
+  Top_6 = pred_r_t6,
+  Random = stats::runif(n_test),
+  is_treated = is_treated,
+  lnr = y_test
+)
+plot_gain(
+  df_preds_r,
+  outcome_col = "lnr",
+  treatment_col = "is_treated",
+  model_cols = model_cols_uplift,
+  main = "R-Learner: cumulative gain — abortion test"
+)
+gain_r <- get_cumgain(
+  df_preds_r,
+  outcome_col = "lnr",
+  treatment_col = "is_treated",
+  normalize = TRUE
+)
+auuc_r <- colMeans(gain_r[, model_cols_uplift, drop = FALSE])
+print(auuc_r)
+```
+
+```{r abortion-slearner-fs}
+sl <- SLearner(learner = "ranger", control_name = 0)
+sl <- fit(sl, X_train, W_train, Y_train)
+pred_s_all <- predict(sl, X_test)
+if (is.matrix(pred_s_all)) pred_s_all <- pred_s_all[, 1]
+
+sl_t3 <- SLearner(learner = "ranger", control_name = 0)
+sl_t3 <- fit(sl_t3, X_train[, top_3_features, drop = FALSE], W_train, Y_train)
+pred_s_t3 <- predict(sl_t3, X_test[, top_3_features, drop = FALSE])
+if (is.matrix(pred_s_t3)) pred_s_t3 <- pred_s_t3[, 1]
+
+sl_t6 <- SLearner(learner = "ranger", control_name = 0)
+sl_t6 <- fit(sl_t6, X_train[, top_6_features, drop = FALSE], W_train, Y_train)
+pred_s_t6 <- predict(sl_t6, X_test[, top_6_features, drop = FALSE])
+if (is.matrix(pred_s_t6)) pred_s_t6 <- pred_s_t6[, 1]
+```
+
+```{r abortion-slearner-gain-auuc-fs}
+set.seed(42)
+df_preds_s <- data.frame(
+  All = pred_s_all,
+  Top_3 = pred_s_t3,
+  Top_6 = pred_s_t6,
+  Random = stats::runif(n_test),
+  is_treated = is_treated,
+  lnr = y_test
+)
+plot_gain(
+  df_preds_s,
+  outcome_col = "lnr",
+  treatment_col = "is_treated",
+  model_cols = model_cols_uplift,
+  main = "S-Learner: cumulative gain — abortion test"
+)
+gain_s <- get_cumgain(
+  df_preds_s,
+  outcome_col = "lnr",
+  treatment_col = "is_treated",
+  normalize = TRUE
+)
+auuc_s <- colMeans(gain_s[, model_cols_uplift, drop = FALSE])
+print(auuc_s)
+```
+
+```{r abortion-auuc-summary-fs}
+tab <- rbind(
+  data.frame(Learner = "T-Learner", model = names(auuc_uplift), AUUC = as.numeric(auuc_uplift)),
+  data.frame(Learner = "R-Learner", model = names(auuc_r), AUUC = as.numeric(auuc_r)),
+  data.frame(Learner = "S-Learner", model = names(auuc_s), AUUC = as.numeric(auuc_s))
+)
+knitr::kable(tab, digits = 4)
+```
+
+As in the classification feature-selection notebook, smaller feature sets can match or beat “all features” on AUUC depending on noise and hyperparameters.
+
+Mean outcome and sample size by treatment arm:
+
+```{r abortion-outcome-by-arm}
+agg <- aggregate(
+  lnr ~ repeal,
+  data = data.frame(lnr = Y, repeal = W),
+  FUN = function(z) c(mean = mean(z), sd = stats::sd(z), size = length(z))
+)
+agg <- do.call(data.frame, agg)
+names(agg) <- c("repeal", "mean", "sd", "size")
+agg <- rbind(
+  agg,
+  data.frame(
+    repeal = NA,
+    mean = mean(Y),
+    sd = stats::sd(Y),
+    size = length(Y)
+  )
+)
+agg$repeal[is.na(agg$repeal)] <- "All"
+print(agg)
+```
+
+### Binary treatment: T-learner random forest (`uplift_rf_kl`)
+
+With a continuous outcome, `uplift_rf_kl()` fits **two** `ranger` models (treated vs control). We fit on the training set and evaluate uplift ranking on the test set.
+
+```{r uplift-rf-binary-abortion}
+uplift_bin_rf <- uplift_rf_kl(
+  X_train, W_train, Y_train,
+  n_trees = 100,
+  min_node_size = 80,
+  max_depth = 8
+)
+pred_tr <- predict(uplift_bin_rf, X_train)
+pred_te <- predict(uplift_bin_rf, X_test)
+cat(
+  "Mean predicted CATE — train:", round(mean(pred_tr), 4),
+  " test:", round(mean(pred_te), 4), "\n"
+)
+```
+
+### Uplift (gain) curve on the test set
+
+We pass the test-set **outcome**, **treatment**, and **predicted CATE** (as the model score column) to `plot_gain()`.
+
+```{r abortion-auuc-metrics}
+auuc_metrics <- data.frame(
+  is_treated = W_test,
+  outcome = Y_test,
+  uplift_model = pred_te
+)
+head(auuc_metrics)
+```
+
+```{r abortion-plot-gain}
+#| fig.width: 6
+#| fig.height: 5
+plot_gain(auuc_metrics, outcome_col = "outcome", treatment_col = "is_treated")
+```
+
+### Interaction tree
+
+```{r abortion-it-tree}
+it_fit <- interaction_tree(
+  X_train, W_train, Y_train,
+  min_node_size = 200,
+  max_depth = 4
+)
+cat(uplift_tree_string(it_fit$tree, it_fit$X_names))
+```
+
+Leaf labels summarize **$\tau \approx \mathbb{E}[Y \mid T{=}1] - \mathbb{E}[Y \mid T{=}0]$** within each region.
+
+```{r abortion-it-tree-plot}
+#| fig.width: 8
+#| fig.height: 8
+uplift_tree_plot(
+  it_fit,
+  main = "Interaction tree — lnr vs repeal (abortion data, train)"
+)
+```
+
+### Optional: causal inference tree (CIT)
+
+```{r abortion-cit-tree}
+#| fig.width: 8
+#| fig.height: 8
+cit_fit <- causal_inference_tree(
+  X_train, W_train, Y_train,
+  min_node_size = 200,
+  max_depth = 4
+)
+uplift_tree_plot(
+  cit_fit,
+  main = "Causal inference tree (CIT) — abortion data (train)"
+)
+```
+
+### Ranger variable importance (T-learner arms)
+
+There is **no** `forest$trees` list for this object, so `uplift_forest_plot()` does not apply. **Variable importance** from `ranger` is a useful global summary.
+
+```{r abortion-ranger-importance}
+imp0 <- uplift_bin_rf$fit_0$variable.importance
+imp1 <- uplift_bin_rf$fit_1$variable.importance
+imp <- sort((imp0 + imp1) / 2, decreasing = TRUE)
+print(round(head(imp, 8), 4))
+```
+
+### Distribution of predicted CATE (full sample)
+
+```{r abortion-hist-cate}
+uf_full <- uplift_rf_kl(
+  X, W, Y,
+  n_trees = 80,
+  min_node_size = 40,
+  max_depth = 8
+)
+pred_cate <- predict(uf_full, X)
+```
+
+```{r abortion-plot-cate-hist}
+#| fig.width: 8
+#| fig.height: 6
+hist(
+  pred_cate,
+  breaks = 30,
+  main = "T-learner forest: predicted CATE — abortion (full sample)",
+  xlab = "Predicted treatment effect (lnr scale)",
+  col = "steelblue",
+  border = NA
+)
+abline(v = mean(pred_cate), lty = 2, col = "red")
+legend(
+  "topright",
+  legend = sprintf("Mean = %.3f", mean(pred_cate)),
+  lty = 2,
+  col = "red",
+  bty = "n"
+)
+```
+
+### Kernel SHAP for predicted uplift (CATE)
+
+We explain $\hat{\tau}(X)$ from **`uplift_bin_rf`** on a subset of the training data (full training rows can be slow).
+
+```{r compute-shap-uplift-abortion}
+set.seed(2026)
+
+n_explain <- min(100L, nrow(X_train))
+bg_size <- min(100L, nrow(X_train))
+X_explain <- X_train[seq_len(n_explain), , drop = FALSE]
+bg_idx <- sample.int(nrow(X_train), bg_size)
+bg_X <- X_train[bg_idx, , drop = FALSE]
+
+pred_fun <- function(object, newdata) {
+  as.vector(predict(object, newdata))
+}
+
+library(future)
+plan(multisession, workers = max(1L, parallel::detectCores() - 1L))
+
+shap_ksh <- kernelshap(
+  object = uplift_bin_rf,
+  X = X_explain,
+  bg_X = bg_X,
+  pred_fun = pred_fun,
+  bg_w = NULL,
+  verbose = FALSE
+)
+plan(sequential)
+
+shp_uplift <- shapviz(shap_ksh, X = X_explain)
+```
+
+```{r shap-importance-beeswarm-uplift-abortion}
+#| fig.width: 7
+#| fig.height: 5.5
+sv_importance(shp_uplift, kind = "beeswarm")
+sv_importance(shp_uplift, show_numbers = TRUE)
+```
+
+```{r shap-dependence-uplift-abortion}
+#| fig.width: 8
+#| fig.height: 6
+important_vars <- x_names[seq_len(min(4L, length(x_names)))]
+sv_dependence(shp_uplift, v = important_vars, share_y = TRUE)
+```
+
+```{r shap-dependence-single-uplift-abortion}
+if (length(x_names) >= 2) {
+  sv_dependence(shp_uplift, v = x_names[[2]], color_var = x_names[[1]])
+}
+```
+
+```{r shap-waterfall-single-uplift-abortion}
+#| fig.width: 7
+#| fig.height: 4.5
+preds_explain <- pred_fun(uplift_bin_rf, X_explain)
+row_id_max <- which.max(preds_explain)
+
+sv_waterfall(shp_uplift, row_id = row_id_max) +
+  ggplot2::ggtitle("SHAP waterfall — highest estimated CATE in explain set")
+
+sv_force(shp_uplift, row_id = row_id_max)
+```
+
+```{r shap-test-set-uplift-abortion}
+n_te <- min(10L, nrow(X_test))
+shap_test <- kernelshap(
+  uplift_bin_rf,
+  X = X_test[seq_len(n_te), , drop = FALSE],
+  bg_X = bg_X,
+  pred_fun = pred_fun,
+  verbose = FALSE
+)
+shp_test <- shapviz(shap_test, X = X_test[seq_len(n_te), , drop = FALSE])
+sv_importance(shp_test, kind = "beeswarm")
+```
+
+### Interpretation notes
+
+- **Positive SHAP** pushes the predicted **CATE** up; **negative SHAP** pushes it down.
+- Explanations target **heterogeneity in** $\hat{\tau}(X)$, not the raw outcome margin $\mathbb{E}[Y \mid X]$.
+- **Kernel SHAP** is model-agnostic and uses T-learner predictions; standard errors and causal interpretation of $\tau(x)$ in this dataset depend on **identification** (e.g. confounding, panel structure), not on the ML estimator alone.
+
+## Summary
+
+On the **abortion** data, **continuous-outcome** uplift tools in RCausalML reduce to a **binary** T-learner forest (`uplift_rf_kl`), plus **interaction / CIT** trees for interpretable partitions and **gain / SHAP** for evaluation and explanation. **Feature selection** uses the **F-filter** from `get_importance()` (training data only), then compares T-, R-, and S-learners with top-3 / top-6 subsets vs all covariates on test **AUUC**, as in [11-feature-selection-uplift.qmd](11-feature-selection-uplift.qmd). For **multiple non-control arms**, follow [03-uplift-trees-regression-r.qmd](03-uplift-trees-regression-r.qmd).
+
+## References
+
+- [Uplift Trees Example with Synthetic Data (Python CausalML)](https://causalml.readthedocs.io/en/latest/examples/uplift_trees_with_synthetic_data.html)
+- [Feature Selection for Uplift Trees (Python CausalML)](https://causalml.readthedocs.io/en/latest/examples/feature_selection.html)
+- Zhao et al. (2020), [Feature Selection Methods for Uplift Modeling](https://arxiv.org/abs/2005.03447)
+- Gutierrez and Gérardy (2017), [Causal inference and uplift modelling: A review of the literature](http://proceedings.mlr.press/v67/gutierrez17a/gutierrez17a.pdf)

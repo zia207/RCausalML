@@ -1,0 +1,108 @@
+#!/usr/bin/env sh
+# configure.win — Windows-specific setup for RCausalML
+# Executed by R CMD INSTALL on Windows via the Rtools POSIX shell.
+# Mirrors the Unix configure script; handles missing/outdated R package
+# dependencies, with Windows-aware guidance.
+
+set -eu
+
+if ! command -v Rscript >/dev/null 2>&1; then
+  echo "Rscript not found; skipping RCausalML Windows dependency setup."
+  exit 0
+fi
+
+Rscript -e '
+desc_path <- "DESCRIPTION"
+if (!file.exists(desc_path)) {
+  message("DESCRIPTION not found; skipping dependency setup.")
+  quit(save = "no", status = 0L)
+}
+
+desc <- read.dcf(desc_path, all = TRUE)
+fields <- intersect(c("Imports", "Suggests"), colnames(desc))
+if (length(fields) == 0L) {
+  message("No dependency fields found; nothing to install.")
+  quit(save = "no", status = 0L)
+}
+
+parse_pkgs <- function(x) {
+  if (is.null(x) || is.na(x) || !nzchar(x)) return(character(0))
+  parts <- trimws(unlist(strsplit(x, ",")))
+  parts <- gsub("\\(.*?\\)", "", parts)
+  parts <- trimws(parts)
+  parts[nzchar(parts)]
+}
+
+pkgs <- unique(unlist(lapply(fields, function(f) parse_pkgs(desc[1, f]))))
+pkgs <- setdiff(pkgs, c("R"))
+if (length(pkgs) == 0L) {
+  message("No R package dependencies to install.")
+  quit(save = "no", status = 0L)
+}
+
+installed <- rownames(utils::installed.packages())
+missing_pkgs <- setdiff(pkgs, installed)
+
+old_pkgs <- tryCatch(rownames(utils::old.packages()), error = function(e) character(0))
+if (is.null(old_pkgs)) old_pkgs <- character(0)
+updatable_pkgs <- intersect(pkgs, old_pkgs)
+targets <- unique(c(missing_pkgs, updatable_pkgs))
+
+if (length(targets) == 0L) {
+  message("All RCausalML dependencies are already installed and up to date.")
+  quit(save = "no", status = 0L)
+}
+
+# On Windows, prefer binary packages (type = "binary" or the default for
+# the CRAN Windows mirror).  Pre-built binaries avoid the need for a C/C++
+# compiler for packages with native code.
+win_repos <- getOption("repos")
+if (is.null(win_repos) || identical(win_repos, c(CRAN = "@CRAN@"))) {
+  win_repos <- c(CRAN = "https://cloud.r-project.org")
+}
+
+if (!interactive()) {
+  message(
+    "[Windows] Skipping automatic dependency installation (non-interactive install). ",
+    "Install/update manually in R with:\n",
+    "  install.packages(c(",
+    paste(shQuote(targets), collapse = ", "),
+    "), type = \"binary\")"
+  )
+  quit(save = "no", status = 0L)
+}
+
+message("RCausalML Windows dependencies requiring install/update:")
+message(" - ", paste(targets, collapse = ", "))
+message("Tip: binary packages are preferred on Windows to avoid Rtools compilation.")
+ans <- readline(prompt = "Install/update these packages now? [y/N]: ")
+if (!tolower(trimws(ans)) %in% c("y", "yes")) {
+  message("Dependency install skipped by user.")
+  quit(save = "no", status = 0L)
+}
+
+utils::install.packages(targets, repos = win_repos,
+                        type = "binary", dependencies = TRUE)
+
+# Special guidance for torch on Windows
+if ("torch" %in% targets) {
+  message(
+    "\n[Windows / torch] After installing the torch R package, run:\n",
+    "  torch::install_torch()\n",
+    "to download the LibTorch backend.  CPU-only by default; GPU (CUDA)\n",
+    "requires matching CUDA toolkit -- see https://torch.mlverse.org/docs/\n"
+  )
+}
+
+# Special guidance for reticulate on Windows
+if ("reticulate" %in% targets) {
+  message(
+    "\n[Windows / reticulate] After installing the reticulate R package, run:\n",
+    "  reticulate::install_miniconda()   # one-time setup\n",
+    "  reticulate::conda_create(\"r-rcausalml\", python_version = \"3.10\")\n",
+    "  reticulate::use_condaenv(\"r-rcausalml\")\n"
+  )
+}
+
+message("Windows dependency setup complete.")
+'

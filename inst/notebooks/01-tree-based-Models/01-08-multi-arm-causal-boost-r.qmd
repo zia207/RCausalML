@@ -1,0 +1,553 @@
+# 9. Boosted Multi-Arm Causal Model {.unnumbered}
+
+A **Boosted Multi-Arm Causal Model** estimates heterogeneous treatment effects (HTE) when there are **multiple treatment arms** (e.g., `placebo`, `A`, `B`) using a practical, model-based approach:
+
+- **Outcome models (T-learner style)**: fit one boosted model per treatment arm to learn $\mu_k(x) = \mathbb{E}[Y \mid X = x, W = k]$.
+- **Treatment contrasts**: compute $\tau_{k-b}(x) = \mu_k(x) - \mu_b(x)$ relative to a chosen **baseline** arm $b$.
+- **Propensity scores (optional, for diagnostics/weights)**: estimate $\Pr(W = k \mid X)$ with a multiclass probability forest.
+
+In `RCausalML`, this is implemented by the R6 class `MultiArmCausalBoost` in `R/multi_arm_causal_boost.R`.
+
+## Overview
+
+This tutorial shows how to:
+
+- Prepare a multi-arm dataset (simulated treatments) with **two outcomes** (`log_time`, `health_status`)
+- **Train** `MultiArmCausalBoost` on both outcomes jointly (one booster per arm and per outcome)
+- **Predict** multi-arm contrasts on the test set (`tau_hat_log_time`, `tau_hat_health_status`)
+- Estimate **doubly robust (AIPW-style) average treatment effects** on the training sample (`ate_log_time`, `ate_health_status`)
+- Plot **variable importance** for each outcome (XGBoost gain)
+- Compute **kernel SHAP** for predicted CATE with `{kernelshap}` and visualize with `{shapviz}`
+- (Optional) save/load a fitted model
+
+## Scientific Terminology for Beginners
+
+This glossary introduces key scientific terms used in this notebook with simple examples.
+
+### 1) Multi-Arm Treatment
+
+- **Explanation**: A study with more than two treatment options.
+- **Example**: `placebo`, `A`, and `B` are three arms.
+
+### 2) Baseline Arm
+
+- **Explanation**: Reference treatment used for effect comparisons.
+- **Example**: Compare each active arm against `placebo`.
+
+### 3) Outcome Model
+
+- **Explanation**: A model that predicts expected outcome within each treatment arm.
+- **Example**: One boosted model estimates outcomes for arm `A`.
+
+### 4) Treatment Contrast
+
+- **Explanation**: Difference in predicted outcomes between two arms.
+- **Example**: `tau_A-control(x) = mu_A(x) - mu_control(x)`.
+
+### 5) Propensity Score
+
+- **Explanation**: Probability of receiving each treatment arm given covariates.
+- **Example**: A subject has probabilities (0.3, 0.5, 0.2) across three arms.
+
+### 6) AIPW
+
+- **Explanation**: A doubly robust estimator that combines outcome and propensity models.
+- **Example**: ATE remains consistent if either model is correctly specified.
+
+### 7) SHAP Values
+
+- **Explanation**: Feature attributions explaining how variables affect predictions.
+- **Example**: Age contributes +0.4 to the predicted treatment contrast.
+
+### 8) Heterogeneous Treatment Effects
+
+- **Explanation**: Effects vary across subgroups with different covariates.
+- **Example**: Arm B helps severe cases more than mild cases.
+
+### Load and Check Required Libraries
+
+```{r load-packages}
+packages <- c(
+  "tidyverse",
+  "survival",
+  "RCausalML",
+  "xgboost",
+  "ranger",
+  "ggplot2",
+  "kernelshap",
+  "shapviz",
+  "patchwork"
+)
+```
+
+### Install Missing Packages
+
+```{r install-missing-packages}
+#| warning: false
+#| error: false
+#new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+#if(length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r verify-installation}
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+## Load Required Libraries
+
+```{r load-libraries}
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+```{r load-multi-arm-causal-boost-impl}
+#| warning: false
+#| error: false
+if (!exists("MultiArmCausalBoost")) {
+  wd <- getwd()
+  impl_path <- NULL
+
+  for (i in 0:8) {
+    candidate <- file.path(wd, "R", "multi_arm_causal_boost.R")
+    if (file.exists(candidate)) {
+      impl_path <- candidate
+      break
+    }
+    parent <- dirname(wd)
+    if (identical(parent, wd)) break
+    wd <- parent
+  }
+
+  if (is.null(impl_path)) {
+    stop("MultiArmCausalBoost not found, and could not locate 'R/multi_arm_causal_boost.R' by walking up from getwd().")
+  }
+
+  source(impl_path)
+}
+```
+
+### Data: Lung dataset with simulated multi-arm treatment
+
+We use `lung` from `{survival}` and simulate a 3-arm treatment:
+
+- `placebo` (baseline)
+- `A`
+- `B`
+
+We also create two outcomes:
+
+- `log_time`: log survival time
+- `health_status`: a simulated binary secondary outcome with treatment-dependent probabilities
+
+```{r load-data}
+#| warning: false
+#| error: false
+
+data(lung, package = "survival")
+
+set.seed(123)
+lung_data <- lung %>%
+  dplyr::filter(!is.na(age), !is.na(sex), !is.na(ph.ecog), !is.na(time)) %>%
+  dplyr::mutate(
+    treatment = as.factor(sample(
+      c("placebo", "A", "B"),
+      n(),
+      replace = TRUE,
+      prob = c(0.4, 0.3, 0.3)
+    )),
+    health_status = rbinom(
+      n(),
+      1,
+      prob = 0.3 + 0.10 * (treatment == "A") + 0.15 * (treatment == "B")
+    ),
+    log_time = log(time)
+  )
+
+# For a fast, reproducible tutorial render, keep a moderate sample size.
+set.seed(123)
+n_keep <- min(250, nrow(lung_data))
+lung_data <- lung_data %>% dplyr::slice_sample(n = n_keep)
+
+# Covariates, treatment, outcomes
+X <- lung_data %>% dplyr::select(age, sex, ph.ecog) %>% as.matrix()
+W <- relevel(lung_data$treatment, ref = "placebo")
+Y <- lung_data %>% dplyr::select(log_time, health_status) %>% as.matrix()
+colnames(Y) <- c("log_time", "health_status")
+
+# Train/test split
+set.seed(123)
+n <- nrow(lung_data)
+train_idx <- sample(seq_len(n), size = floor(0.8 * n))
+test_idx  <- setdiff(seq_len(n), train_idx)
+
+X_train <- X[train_idx, , drop = FALSE]
+W_train <- W[train_idx]
+Y_train <- Y[train_idx, , drop = FALSE]
+
+X_test <- X[test_idx, , drop = FALSE]
+W_test <- W[test_idx]
+Y_test <- Y[test_idx, , drop = FALSE]
+```
+
+### Train `MultiArmCausalBoost` on `log_time` and `health_status`
+
+`MultiArmCausalBoost` fits:
+
+- one XGBoost model per treatment arm **and** per outcome (here: `log_time` and `health_status`)
+- one multiclass propensity model $\Pr(W \mid X)$ via `ranger` (probability forest)
+
+Key choices you control:
+
+- **baseline**: the reference arm for contrasts (we use `placebo`)
+- **xgboost parameters**: passed as `parameters = list(...)` (same objective for both outcomes here; binary `health_status` uses squared error for a smooth tutorial)
+- **nrounds**: boosting rounds (kept moderate for tutorial runtime)
+
+```{r fit-model}
+#| warning: false
+#| error: false
+
+model <- MultiArmCausalBoost$new(
+  parameters = list(
+    eta = 0.10,
+    max_depth = 3L,
+    subsample = 0.8,
+    colsample_bytree = 0.8,
+    tree_method = "hist",
+    objective = "reg:squarederror"
+  ),
+  baseline = "placebo"
+)
+
+model$fit(
+  X = X_train,
+  Y = Y_train,
+  W = W_train,
+  nrounds = 10L,
+  verbose = 1L
+)
+
+model$summary()
+```
+
+## Predict contrasts on the test set (`tau_hat_*`)
+
+The `predict()` method returns a list:
+
+- `mu_hat`: potential outcomes array $[n, \text{arms}, \text{outcomes}]$
+- `tau_hat`: contrasts array $[n, (\text{arms} - 1), \text{outcomes}]$ relative to `baseline`
+- `propensity_score`: matrix $[n, \text{arms}]$
+
+Below we store contrasts for each outcome as $n \times (\text{number of contrasts})$ matrices.
+
+```{r predict-test}
+#| warning: false
+#| error: false
+
+pred <- model$predict(X_test, drop = FALSE)
+
+tau_hat_log_time <- pred$tau_hat[, , "log_time", drop = TRUE]
+tau_hat_health_status <- pred$tau_hat[, , "health_status", drop = TRUE]
+cn_tau <- dimnames(pred$tau_hat)[[2]]
+if (is.null(dim(tau_hat_log_time))) {
+  tau_hat_log_time <- matrix(tau_hat_log_time, ncol = 1L, dimnames = list(NULL, cn_tau))
+} else {
+  colnames(tau_hat_log_time) <- cn_tau
+}
+if (is.null(dim(tau_hat_health_status))) {
+  tau_hat_health_status <- matrix(
+    tau_hat_health_status,
+    ncol = 1L,
+    dimnames = list(NULL, cn_tau)
+  )
+} else {
+  colnames(tau_hat_health_status) <- cn_tau
+}
+
+str(pred$mu_hat)
+str(pred$tau_hat)
+head(tau_hat_log_time)
+head(tau_hat_health_status)
+head(pred$propensity_score)
+```
+
+## Doubly robust average treatment effects (AIPW plug-in)
+
+For each non-baseline arm $k$ and outcome $m$, we use the standard multi-arm doubly robust score (same spirit as AIPW), evaluated at the fitted outcome models $\hat\mu_a(X)$ and propensities $\hat e_a(X)$:
+
+$$
+\psi_i^{(k)} = \hat\mu_k(X_i) - \hat\mu_b(X_i)
++ \bigl(Y_{im} - \hat\mu_{W_i}(X_i)\bigr)\left(\frac{\mathbb{1}\{W_i=k\}}{\hat e_k(X_i)} - \frac{\mathbb{1}\{W_i=b\}}{\hat e_b(X_i)}\right),
+$$
+
+with baseline $b$ = `placebo`. We average $\psi_i^{(k)}$ over the **training** sample (where $Y$ is observed). This is a **plug-in** DR estimator (nuisances fit on the same data); for rigorous inference, sample splitting or cross-fitting is preferred.
+
+```{r aipw-ate}
+#| warning: false
+#| error: false
+
+multi_arm_dr_ate <- function(Y, W, mu_hat, ps, baseline) {
+  W_char <- as.character(droplevels(W))
+  arms <- dimnames(mu_hat)[[2]]
+  outcomes <- dimnames(mu_hat)[[3]]
+  n <- nrow(Y)
+  M <- dim(mu_hat)[3]
+  arm_idx <- match(W_char, arms)
+  contrast_arms <- setdiff(arms, baseline)
+  cn <- paste0(contrast_arms, " - ", baseline)
+  out <- matrix(
+    NA_real_,
+    nrow = length(contrast_arms),
+    ncol = M,
+    dimnames = list(cn, outcomes)
+  )
+  idx_row <- seq_len(n)
+  for (m in seq_len(M)) {
+    mu_w <- mu_hat[cbind(idx_row, arm_idx, m)]
+    for (j in seq_along(contrast_arms)) {
+      k <- contrast_arms[j]
+      mu_k <- mu_hat[, k, m]
+      mu_b <- mu_hat[, baseline, m]
+      e_k <- ps[, k]
+      e_b <- ps[, baseline]
+      I_k <- as.numeric(W_char == k)
+      I_b <- as.numeric(W_char == baseline)
+      psi <- (mu_k - mu_b) + (Y[, m] - mu_w) * (I_k / e_k - I_b / e_b)
+      out[j, m] <- mean(psi)
+    }
+  }
+  out
+}
+
+pred_train <- model$predict(X_train, drop = FALSE)
+ate_tab <- multi_arm_dr_ate(
+  Y_train,
+  W_train,
+  pred_train$mu_hat,
+  pred_train$propensity_score,
+  baseline = model$baseline
+)
+ate_log_time <- ate_tab[, "log_time"]
+ate_health_status <- ate_tab[, "health_status"]
+
+print(ate_tab)
+```
+
+### Summarize average (model-implied) contrasts on the test set
+
+These are **not** doubly-robust estimates; they’re simply averages of the model’s predicted individual contrasts (use `ate_log_time` / `ate_health_status` above for DR averages on the training sample).
+
+```{r avg-contrasts}
+#| warning: false
+#| error: false
+
+tau_test <- pred$tau_hat
+
+avg_tau <- apply(tau_test, c(2, 3), mean)
+avg_tau_df <- as.data.frame(as.table(avg_tau))
+colnames(avg_tau_df) <- c("contrast", "outcome", "avg_contrast")
+
+avg_tau_df <- tibble::as_tibble(avg_tau_df)
+avg_tau_df %>%
+  dplyr::arrange(outcome, contrast) %>%
+  print(n = Inf)
+```
+
+### Visualize heterogeneity in a contrast
+
+As a simple check, plot a contrast against a key covariate.
+
+```{r cate-vs-age}
+#| fig.width: 7
+#| fig.height: 4.5
+#| warning: false
+#| error: false
+
+contrast_names <- dimnames(pred$tau_hat)[[2]]
+outcome_names <- dimnames(pred$tau_hat)[[3]]
+
+# pick the first available contrast/outcome for a compact demo
+chosen_contrast <- contrast_names[1]
+chosen_outcome  <- outcome_names[1]
+
+tau_slice <- if (identical(chosen_outcome, "log_time")) {
+  tau_hat_log_time
+} else {
+  tau_hat_health_status
+}
+plot_df <- tibble::tibble(
+  age = X_test[, "age"],
+  tau = tau_slice[, chosen_contrast]
+)
+
+ggplot(plot_df, aes(x = age, y = tau)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "loess", se = TRUE, color = "#4E79A7") +
+  labs(
+    title = paste0("Estimated contrast vs age: ", chosen_contrast, " (", chosen_outcome, ")"),
+    x = "age",
+    y = "Estimated treatment contrast"
+  ) +
+  theme_minimal()
+```
+
+## Variable importance: `log_time` and `health_status`
+
+Because the model fits **one booster per (arm, outcome)**, gain-based importance is specific to an arm/outcome pair. Below: arm `A` with outcome index `1L` = `log_time`, then `2L` = `health_status` (`plot_importance()` takes a numeric outcome index).
+
+```{r importance-log-time}
+#| fig.width: 7
+#| fig.height: 4.5
+#| warning: false
+#| error: false
+
+model$plot_importance(arm = "A", outcome = 1L, top_n = 10L, metric = "Gain")
+```
+
+```{r importance-health-status}
+#| fig.width: 7
+#| fig.height: 4.5
+#| warning: false
+#| error: false
+
+model$plot_importance(arm = "A", outcome = 2L, top_n = 10L, metric = "Gain")
+```
+
+### Access the underlying XGBoost model directly
+
+If you need custom XGBoost tooling (e.g., advanced importance, SHAP from `xgboost`), you can retrieve a fitted booster:
+
+```{r extract-booster}
+#| warning: false
+#| error: false
+
+booster_A_log_time <- model$outcome_models[["A"]][["log_time"]]
+booster_A_log_time
+```
+
+### Kernel SHAP for predicted CATE (`shapviz` + `kernelshap`)
+
+We explain the **predicted contrast** $\hat\tau_k(X) = \hat\mu_k(X) - \hat\mu_{\text{placebo}}(X)$ as a function of $X$, separately for `log_time` and `health_status`. Use a small background set and a subsample of the test rows so kernel SHAP stays fast.
+
+```{r kernel-shap-cate}
+#| fig.width: 10
+#| fig.height: 10
+#| warning: false
+#| error: false
+
+library(kernelshap)
+library(shapviz)
+library(patchwork)
+
+pred_A_vs_placebo_log <- function(object, newdata) {
+  pr <- object$predict(as.matrix(newdata), drop = FALSE)
+  pr$tau_hat[, "A - placebo", "log_time"]
+}
+
+pred_B_vs_placebo_log <- function(object, newdata) {
+  pr <- object$predict(as.matrix(newdata), drop = FALSE)
+  pr$tau_hat[, "B - placebo", "log_time"]
+}
+
+pred_A_vs_placebo_health <- function(object, newdata) {
+  pr <- object$predict(as.matrix(newdata), drop = FALSE)
+  pr$tau_hat[, "A - placebo", "health_status"]
+}
+
+pred_B_vs_placebo_health <- function(object, newdata) {
+  pr <- object$predict(as.matrix(newdata), drop = FALSE)
+  pr$tau_hat[, "B - placebo", "health_status"]
+}
+
+set.seed(42)
+n_bg <- min(50L, nrow(X_train))
+bg_idx <- sample.int(nrow(X_train), n_bg)
+bg_small <- X_train[bg_idx, , drop = FALSE]
+
+n_explain <- min(40L, nrow(X_test))
+X_shap <- X_test[seq_len(n_explain), , drop = FALSE]
+
+shap_A_log <- kernelshap(
+  object = model,
+  X = X_shap,
+  bg_X = bg_small,
+  pred_fun = pred_A_vs_placebo_log,
+  verbose = FALSE
+)
+
+shap_B_log <- kernelshap(
+  object = model,
+  X = X_shap,
+  bg_X = bg_small,
+  pred_fun = pred_B_vs_placebo_log,
+  verbose = FALSE
+)
+
+shap_A_health <- kernelshap(
+  object = model,
+  X = X_shap,
+  bg_X = bg_small,
+  pred_fun = pred_A_vs_placebo_health,
+  verbose = FALSE
+)
+
+shap_B_health <- kernelshap(
+  object = model,
+  X = X_shap,
+  bg_X = bg_small,
+  pred_fun = pred_B_vs_placebo_health,
+  verbose = FALSE
+)
+
+shp_A_log <- shapviz(shap_A_log)
+shp_B_log <- shapviz(shap_B_log)
+shp_A_health <- shapviz(shap_A_health)
+shp_B_health <- shapviz(shap_B_health)
+
+plt1 <- sv_importance(shp_A_log, kind = "both") + ggplot2::ggtitle("CATE SHAP — log_time: A vs placebo")
+plt2 <- sv_importance(shp_B_log, kind = "both") + ggplot2::ggtitle("CATE SHAP — log_time: B vs placebo")
+plt3 <- sv_importance(shp_A_health, kind = "both") + ggplot2::ggtitle("CATE SHAP — health_status: A vs placebo")
+plt4 <- sv_importance(shp_B_health, kind = "both") + ggplot2::ggtitle("CATE SHAP — health_status: B vs placebo")
+
+(plt1 | plt2) / (plt3 | plt4)
+```
+
+## Save and load a fitted model
+
+`RCausalML` includes helpers to persist the fitted R6 object.
+
+```{r save-load}
+#| warning: false
+#| error: false
+
+tmp_path <- tempfile(fileext = ".rds")
+save_multi_arm_causal_boost(model, tmp_path)
+
+model2 <- load_multi_arm_causal_boost(tmp_path)
+model2$summary()
+```
+
+## Notes and limitations
+
+- Outcome models are **T-learner style** (separate boosters per arm); the **DR/AIPW averages** above reuse those fits plus the ranger propensities—they are not from a dedicated DR-learner objective.
+- DR estimates use **plug-in nuisances** on the training set; prefer **cross-fitting** for formal inference.
+- You need adequate sample size **per arm**, since each arm has its own outcome model(s).
+- For multi-outcome $Y$, the implementation fits one booster per outcome per arm (no explicit outcome correlation modeling).
+- Kernel SHAP explains **predicted** CATE $\hat\tau(X)$, not necessarily the structural causal effect unless identification holds.
+
+## Summary
+
+You now have a practical workflow for multi-arm causal effect modeling with boosting:
+
+- fit `MultiArmCausalBoost` once on multi-outcome $Y$ (`log_time`, `health_status`)
+- predict contrasts on the test set (`tau_hat_log_time`, `tau_hat_health_status`)
+- summarize **doubly robust** average contrasts on the training sample (`ate_log_time`, `ate_health_status`)
+- interpret drivers with per-outcome gain importance and kernel SHAP for CATE
+
+## Resources
+
+1.  Künzel, S. R., Sekhon, J. S., Bickel, P. J., & Yu, B. (2019). Metalearners for estimating heterogeneous treatment effects using machine learning. PNAS.
+2.  `{xgboost}` documentation for boosted trees and model interpretation.
