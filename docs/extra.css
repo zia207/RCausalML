@@ -1,0 +1,92 @@
+/* ---------------------------------------------------------------
+   RCausalML pkgdown custom styles
+   --------------------------------------------------------------- */
+
+/* Hero banner on the home page */
+.jumbotron {
+  background: linear-gradient(135deg, #2C6FAC 0%, #1a4a75 100%);
+  color: #ffffff;
+  border-radius: 0.5rem;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Logo sizing */
+.navbar-brand img {
+  max-height: 36px;
+  margin-right: 8px;
+}
+
+/* Reference index section headers */
+.reference-index h2 {
+  color: #2C6FAC;
+  border-bottom: 2px solid #2C6FAC;
+  padding-bottom: 0.3rem;
+  margin-top: 2rem;
+}
+
+/* Function name badges in the reference index */
+.ref-index td:first-child {
+  font-weight: 600;
+  color: #1a4a75;
+}
+
+/* Code blocks */
+pre.sourceCode {
+  border-left: 4px solid #2C6FAC;
+  background-color: #f8f9fa;
+}
+
+/* Inline code */
+code {
+  color: #c0392b;
+  background-color: #f8f9fa;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+/* Navbar */
+.navbar {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+
+/* Footer */
+.pkgdown-footer {
+  border-top: 2px solid #2C6FAC;
+  padding-top: 1rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* News page */
+.news-version {
+  color: #2C6FAC;
+  font-weight: 700;
+}
+
+/* Article TOC */
+#toc .nav-link.active {
+  color: #2C6FAC;
+  font-weight: 600;
+}
+
+/* Alert boxes inside vignettes */
+.alert-info {
+  border-left: 4px solid #2C6FAC;
+}
+
+/* Table striping */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  background-color: rgba(44, 111, 172, 0.05);
+}
+
+/* Responsive image in README / home */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Category pills on reference index */
+.badge-primary {
+  background-color: #2C6FAC;
+}

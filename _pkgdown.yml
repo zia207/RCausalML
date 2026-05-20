@@ -1,0 +1,443 @@
+url: https://zia207.github.io/RCausalML
+
+template:
+  bootstrap: 5
+  bootswatch: cosmo
+  bslib:
+    primary: "#2C6FAC"
+    headings-font-size: "1.8rem"
+
+home:
+  title: "RCausalML — Uplift Modeling and Causal Inference with ML"
+  description: >
+    An R package for uplift modeling and causal inference using machine learning.
+    Estimates CATE from experimental or observational data with meta-learners,
+    double machine learning, neural causal models, causal structure learning, and more.
+  links:
+    - text: GitHub Repository
+      href: https://github.com/zia207/RCausalML
+    - text: Python CausalML
+      href: https://causalml.readthedocs.io/en/latest/
+    - text: EconML Reference
+      href: https://econml.azurewebsites.net/
+
+navbar:
+  bg: primary
+  type: dark
+  left:
+    - text: "Get Started"
+      href: articles/RCausalML-intro.html
+    - text: "Reference"
+      href: reference/index.html
+    - text: "Tutorials"
+      menu:
+        - text: "--- Tree-Based Models ---"
+        - text: "Causal Tree Introduction"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd"
+        - text: "Causal Tree"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd"
+        - text: "Causal Forest"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd"
+        - text: "Causal Survival Forest"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd"
+        - text: "Instrumental Causal Forest"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd"
+        - text: "Multi-Arm Causal Forest"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd"
+        - text: "Causal XGBoost"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd"
+        - text: "--- Meta-Learners ---"
+        - text: "Meta-Learners Overview"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/02-meta-learners/"
+        - text: "--- Uplift Trees & Forests ---"
+        - text: "Uplift Trees & Forests"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/03-uplift-trees-forests/"
+        - text: "--- Double / Debiased Learners ---"
+        - text: "DML Notebooks"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/04-double-debiased-learners/"
+        - text: "--- Deep Causal Learners ---"
+        - text: "Deep Causal Notebooks"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/05-deep-causal-learners/"
+        - text: "--- Automated ML ---"
+        - text: "Automated ML"
+          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/06-automated-ml/"
+    - text: "News"
+      href: news/index.html
+  right:
+    - icon: fa-github fa-lg
+      href: https://github.com/zia207/RCausalML
+    - icon: fa-book fa-lg
+      href: https://causalml.readthedocs.io/en/latest/
+
+reference:
+  - title: "Package Overview"
+    desc: >
+      Main package documentation and exported datasets/objects.
+    contents:
+      - RCausalML-package
+      - rcausalml-datasets
+      - rcausalml-extra-objects
+
+  - title: "Meta-Learners"
+    desc: >
+      S-, T-, X-, R-, DR-, TMLE- and Domain-Adaptation learners for
+      estimating the Conditional Average Treatment Effect (CATE).
+    contents:
+      - SLearner
+      - TLearner
+      - XLearner
+      - RLearner
+      - DRLearner
+      - ForestDRLearner
+      - LinearDRLearner
+      - SparseLinearDRLearner
+      - TMLELearner
+      - DomainAdaptationLearner
+      - XGBDRLearner
+      - XGBDRRegressor
+      - XGBRRegressor
+      - XGBSRegressor
+      - XGBTRegressor
+      - XGBXRegressor
+
+  - title: "Double Machine Learning (DML)"
+    desc: >
+      EconML-aligned DML learners for partially-linear and non-parametric
+      causal effect estimation.
+    contents:
+      - DMLearner
+      - LinearDML
+      - SparseLinearDML
+      - KernelDML
+      - NonParamDML
+      - CausalForestDML
+      - DynamicDMLearner
+      - r_learner_continuous
+
+  - title: "Instrumental Variable (IV) Learners"
+    desc: >
+      IV and 2SLS methods including OrthoIV, DMLIV, NonParamDMLIV,
+      DRIV, Boosted IV forest, and panel IV.
+    contents:
+      - OrthoIVLearner
+      - DMLIVLearner
+      - NonParamDMLIVLearner
+      - driv_learner
+      - iv_2sls
+      - late_iv
+      - BoostedIVForest
+      - boosted_iv_forest
+      - load_boosted_iv
+      - save_boosted_iv
+      - register_boosted_iv_parsnip
+
+  - title: "DoubleML Bridges"
+    desc: >
+      Bridges to the DoubleML R package: partially linear regression,
+      partially linear IV, DiD-style DML, and data helpers.
+    contents:
+      - doubleml_plr
+      - doubleml_plr_fit_data
+      - doubleml_plr_tune_data
+      - doubleml_pliv
+      - doubleml_did_linear
+      - doubleml_did_eval_preds
+      - doubleml_data_from_data_frame
+      - doubleml_data_from_matrix
+      - doubleml_fetch_401k
+      - doubleml_fetch_bonus
+      - doubleml_make_plr_CCDDHNR2018
+      - doubleml_make_pliv_CHS2015
+
+  - title: "Uplift Trees & Forests"
+    desc: >
+      Tree and forest-based uplift models using KL divergence, Euclidean
+      distance, chi-squared, and continuous splitting criteria.
+    contents:
+      - uplift_rf_kl
+      - uplift_rf_ed
+      - uplift_rf_chi
+      - uplift_rf_cts
+      - uplift_rf_multi
+      - uplift_tree_ddp
+      - uplift_tree_iddp
+      - causal_tree
+      - causal_inference_tree
+      - interaction_tree
+
+  - title: "Causal Forests (GRF)"
+    desc: >
+      Wrappers and extensions around the grf package for causal,
+      survival, and multi-arm forests with IV support.
+    contents:
+      - causal_forest
+      - grf_causal_forest
+      - causal_survival_forest
+      - multi_arm_causal_forest
+      - instrumental_forest
+      - causal_forest_confounder
+      - grf_average_treatment_effect
+      - grf_variable_importance
+      - get_forest_weights
+      - get_leaf_node
+      - get_tree
+      - merge_forests
+      - split_frequencies
+      - test_calibration
+
+  - title: "Policy Learning"
+    desc: >
+      DR-based policy trees and forests, and log-risk-based policy
+      learners for treatment assignment.
+    contents:
+      - policy_learner
+      - DRPolicyTree
+      - DRPolicyForest
+      - LRSRegressor
+
+  - title: "CATE Interpretation"
+    desc: >
+      Single-tree CATE and policy interpreters plus SHAP-based explanation.
+    contents:
+      - SingleTreeCateInterpreter
+      - SingleTreePolicyInterpreter
+      - explain_cate
+
+  - title: "Propensity Score & Matching"
+    desc: >
+      Propensity score estimation (GLM, glmnet, GBM) and nearest-neighbour
+      and group matching with covariate balance diagnostics.
+    contents:
+      - compute_propensity_score
+      - propensity_model
+      - propensity_glm
+      - propensity_glmnet
+      - propensity_model_logistic_regression
+      - propensity_model_elastic_net
+      - propensity_model_gradient_boosted
+      - nearest_neighbor_match
+      - match_optimizer
+      - match_by_group
+      - smd
+      - create_table_one
+      - one_sided
+      - one_sided_att
+      - alignment
+      - alignment_att
+
+  - title: "Causal XGBoost"
+    desc: >
+      DragonNet-style two-head causal XGBoost (CXGBoost R6 class) and
+      its multi-arm extension.
+    contents:
+      - CXGBoost
+      - run_cxgboost_example
+      - save_cxgboost
+      - load_cxgboost
+      - load_cxgboost_extensions
+      - load_multi_arm_causal_boost
+      - run_multi_arm_causal_boost_example
+      - save_multi_arm_causal_boost
+
+  - title: "Deep Causal Neural Networks"
+    desc: >
+      PyTorch/torch-based neural causal models including DragonNet, TARNet,
+      CFRNet, CEVAE, DCEVAE, GANITE, CausalGAN, CausalEGM, iVAE, and
+      Causal Discrepancy VAE.
+    contents:
+      - dragonnet
+      - tarnet
+      - cfrnet
+      - cevae
+      - ganite
+      - causal_vae
+      - CausalVAE
+      - causalGAN
+      - causal_egm
+      - CausalEGM
+      - causal_discrepancy_vae
+      - CausalDiscrepancyVAE
+      - ivae
+      - interventional_elbo_loss
+
+  - title: "Structural Causal Models (SCMs)"
+    desc: >
+      Deep SCMs with variational noise encoders (DeepSCM), DECI (joint
+      graph + equation learning), and DAGMA-based continuous DAG estimation.
+    contents:
+      - dscm
+      - dagma
+      - dagmaLinear
+      - DagmaMLP
+      - demo_linear
+      - demo_nonlinear_mlp
+      - demo_nonlinear_sobolev
+
+  - title: "Causal Structure Learning"
+    desc: >
+      NOTEARS, DAGMA, CASTLE, and the unified causalStructureML interface
+      for DAG discovery from observational data.
+    contents:
+      - causalStructureML
+      - causal_structure_ml_model_descriptions
+      - notears_linear
+      - notears_nonlinear
+      - NOTEARS
+      - castle
+      - is_dag
+      - simulate_dag
+      - evaluate_graph_recovery
+      - count_accuracy
+
+  - title: "Temporal & GNN Causal Models"
+    desc: >
+      Neural Granger-causality (cMLP, cLSTM, EconomySRU, NRI), Temporal Causal
+      VAE, and TCDF (attention-based dilated-convolution causal discovery).
+    contents:
+      - neural_granger_ml
+      - neuralGrangerML
+      - TemporalCausalVAE
+      - temporal_causal_loss
+      - TCDF_find_causes
+
+  - title: "Automated Machine Learning"
+    desc: >
+      AutoML wrappers for nuisance and treatment-effect models with
+      EconML-aligned configuration.
+    contents:
+      - AutomatedMLModel
+      - add_automated_ml
+      - set_automated_ml_workspace
+      - EconAutoMLConfig
+      - tune_hyperparameters
+
+  - title: "Counterfactual & Value Estimation"
+    desc: >
+      Counterfactual unit selection, value estimation, and causal sensitivity
+      analysis utilities.
+    contents:
+      - counterfactual_unit_selection
+      - counterfactual_value_estimator
+      - sensitivity_analysis
+      - sensitivity
+      - causalsens_selection_bias
+      - partial_rsqs_confounding
+      - loss_function
+
+  - title: "Evaluation Metrics"
+    desc: >
+      PEHE, ATE error, gain and Qini curves, classification and regression
+      metrics for benchmarking causal models.
+    contents:
+      - ATE
+      - ATE_error
+      - PEHE
+      - gain_curve
+      - get_cumgain
+      - get_cumlift
+      - qini_curve
+      - qini_score
+      - qini_score_vec
+      - classification_metrics
+      - regression_metrics
+      - rank_average_treatment_effect
+      - average_treatment_effect
+      - best_linear_projection
+      - variable_importance
+      - feature_importances
+      - get_importance
+
+  - title: "Synthetic Data & Simulation"
+    desc: >
+      Simulation functions for benchmarking — randomized trials, hidden
+      confounders, linear/nonlinear SEMs, and uplift classification/regression.
+    contents:
+      - generate_data
+      - synthetic_data
+      - make_uplift_classification
+      - make_uplift_regression
+      - simulate_randomized_trial
+      - simulate_hidden_confounder
+      - simulate_linear_sem
+      - simulate_nonlinear_sem
+      - simulate_easy_propensity_difficult_baseline
+      - simulate_nuisance_and_easy_treatment
+      - simulate_unrelated_treatment_control
+      - simulate_parameter
+
+  - title: "Datasets"
+    desc: >
+      Built-in datasets and access helpers for the causaldata package.
+    contents:
+      - rcausalml-datasets
+      - list_causaldata_datasets
+      - load_causaldata
+
+  - title: "Visualization"
+    desc: >
+      Plotting functions for uplift curves, gain curves, Qini curves,
+      causal trees, forests, DAG networks, and sensitivity analyses.
+    contents:
+      - plot_gain
+      - plot_qini
+      - plot_sensitivity
+      - uplift_forest_plot
+      - uplift_tree_plot
+      - uplift_tree_string
+      - uplift_tree_to_rpart
+      - draw_network
+      - draw_networkx_edges
+      - draw_networkx_labels
+      - draw_networkx_nodes
+
+  - title: "Graph Layout Utilities"
+    desc: >
+      Network layout helpers (wrappers for igraph/ggraph layout algorithms).
+    contents:
+      - bfs_layout
+      - bipartite_layout
+      - circular_layout
+      - fruchterman_reingold_layout
+      - kamada_kawai_layout
+      - multipartite_layout
+      - random_layout
+      - rescale_layout
+      - rescale_layout_dict
+      - shell_layout
+      - spectral_layout
+      - spiral_layout
+      - spring_layout
+
+  - title: "Utilities"
+    desc: >
+      Miscellaneous helper functions, seed setting, filters, and
+      example runners.
+    contents:
+      - set_random_seed
+      - run_example
+      - print_optimization_summary
+      - filter_D
+      - filter_F
+      - filter_LR
+      - treat
+      - effect
+      - intercept
+      - fit
+      - fit_predict
+      - predict_proba
+      - predict_value
+      - interpret
+      - causal_vae_opt
+      - train_causalvae
+      - CausalVAE_ATE
+      - estimate_ate_causalvae_ate
+      - estimate_ate
+
+authors:
+  sidebar:
+    roles: [aut, cre, ctb]
+
+news:
+  releases:
+    - text: "Version 0.3.0"
+      href: news/index.html

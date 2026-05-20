@@ -82,10 +82,11 @@ Description: R port of the Python RCausalML package. Provides uplift modeling an
     See https://causalml.readthedocs.io/ and https://github.com/uber/causalml for
     the Python reference.
 License: Apache License 2.0
-URL: https://github.com/uber/causalml
-BugReports: https://github.com/uber/causalml/issues
+URL: https://zia207.github.io/RCausalML/, https://github.com/zia207/RCausalML
+BugReports: https://github.com/zia207/RCausalML/issues
 Depends: R (>= 4.0.0)
 Imports: stats, utils, Matrix, parallel, MASS, glmnet (>= 4.0), ranger (>= 0.12), rpart (>= 4.1), R6, expm, igraph, progress, htetree, rlang, future, future.apply, ggplot2, ggraph, parsnip, coro
 Suggests: xgboost (>= 1.5), grf, DoubleML, mlr3, mlr3learners, mlr3tuning, paradox, mlr3measures, MatchIt, testthat, knitr, rmarkdown, nnet, rpart.plot, torch (>= 0.10), shapr, reticulate, kernelshap, shapviz, causaldata, devtools, reshape2
 Encoding: UTF-8
+VignetteBuilder: knitr
 RoxygenNote: 7.3.3
