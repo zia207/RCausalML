@@ -1,0 +1,12 @@
+citHeader("To cite RCausalML in publications use:")
+
+citEntry(
+  entry = "Manual",
+  title = "RCausalML: Uplift Modeling and Causal Inference with Machine Learning",
+  author = personList(as.person("RCausalML Authors")),
+  year = "2025",
+  url = "https://github.com/uber/causalml",
+  textVersion = "RCausalML Authors (2025). RCausalML: Uplift Modeling and Causal Inference with Machine Learning. https://github.com/uber/causalml"
+)
+
+citFooter("When using datasets loaded via load_causaldata(), please also cite the causaldata package and the original data source (see the citation component of the returned list). In R: citation(\"causaldata\"). Textbook references: Huntington-Klein (2021) The Effect; Cunningham (2021) Causal Inference: The Mixtape; Hernan & Robins (2020) Causal Inference: What If.")

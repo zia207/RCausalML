@@ -1,4 +1,4 @@
-# Test DAG-GNN (R/dag_gnn.r)
+# Test DAG-GNN (R/causalDeepNet.R)
 # Run from package root: Rscript tests/test-dag_gnn.R
 
 pkg_root <- if (file.exists("R/causalDeepNet.R")) "." else
@@ -16,7 +16,7 @@ lib_paths <- c(file.path(pkg_root, ".Rlibrary"), .libPaths())
 .libPaths(lib_paths)
 suppressPackageStartupMessages(library(RCausalML))
 
-message("========== DAG-GNN tests (R/dag_gnn.r) ==========")
+message("========== DAG-GNN tests (R/causalDeepNet.R) ==========")
 message("")
 
 # --- 1. get_daggnn_device ---

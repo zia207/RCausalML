@@ -1,0 +1,9 @@
+Started: 2026-05-24T02:35:05-04:00
+FAIL: 01-03-causal-survival-forest-r.qmd
+OK: 00-scientific-terminology-glossary.qmd
+OK: 01-00-casual-tree-introduction-r.qmd
+FAIL: 01-04-instrumental-causal-forest-r.qmd
+OK: 01-01-causal-tree-r.qmd
+FAIL: 01-05-multi-arm-causal-forest-r.qmd
+FAIL: 01-06-causal-xgboost-r.qmd
+FAIL: 01-07-instrumental-causal-xgboost-r.qmd

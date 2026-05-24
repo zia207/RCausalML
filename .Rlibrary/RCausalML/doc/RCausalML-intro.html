@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Getting Started with RCausalML</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Getting Started with RCausalML</h1>
+
+
+
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p><strong>RCausalML</strong> is an R port of the Python <a href="https://causalml.readthedocs.io/en/latest/about.html">CausalML</a> and <a href="https://www.microsoft.com/en-us/research/project/econml/">EconML</a> packages. It provides a unified interface for estimating the <strong>Conditional Average Treatment Effect (CATE)</strong> from experimental or observational data, covering:</p>
+<table>
+<colgroup>
+<col width="50%"></col>
+<col width="50%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th>Module</th>
+<th>Algorithms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Meta-Learners</strong></td>
+<td>S, T, X, R, DR, TMLE, Domain Adaptation</td>
+</tr>
+<tr class="even">
+<td><strong>Double ML</strong></td>
+<td>LinearDML, SparseLinearDML, KernelDML, NonParamDML, CausalForestDML</td>
+</tr>
+<tr class="odd">
+<td><strong>IV Learners</strong></td>
+<td>OrthoIV, DMLIV, NonParamDMLIV, DRIV, 2SLS</td>
+</tr>
+<tr class="even">
+<td><strong>DoubleML Bridges</strong></td>
+<td>PLR, PLIV, DiD-DML, 401k/Bonus datasets</td>
+</tr>
+<tr class="odd">
+<td><strong>Uplift Trees/RF</strong></td>
+<td>KL, ED, Chi, CTS splits; multi-arm</td>
+</tr>
+<tr class="even">
+<td><strong>GRF wrappers</strong></td>
+<td>Causal, Survival, Multi-arm, Instrumental</td>
+</tr>
+<tr class="odd">
+<td><strong>Deep Causal Nets</strong></td>
+<td>DragonNet, TARNet, CFRNet, CEVAE, GANITE, CausalGAN, …</td>
+</tr>
+<tr class="even">
+<td><strong>Causal Structure</strong></td>
+<td>NOTEARS, DAGMA, CASTLE, DAG-GNN, GraN-DAG</td>
+</tr>
+<tr class="odd">
+<td><strong>Policy Learning</strong></td>
+<td>DRPolicyTree, DRPolicyForest, LRSRegressor</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co"># From GitHub (recommended)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="co"># install.packages(&quot;devtools&quot;)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;zia207/RCausalML&quot;</span>)</span></code></pre></div>
+<p>Core R dependencies are installed automatically. Neural models additionally require the <code>torch</code> package:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">install.packages</span>(<span class="st">&quot;torch&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>torch<span class="op">::</span><span class="kw">install_torch</span>()</span></code></pre></div>
+<hr />
+</div>
+<div id="quick-example-t-learner" class="section level2">
+<h2>Quick Example: T-Learner</h2>
+<p>The T-Learner fits separate outcome models for treated and control units and estimates CATE as the difference.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">library</span>(RCausalML)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="co"># Simulate a simple randomised trial</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>n   &lt;-<span class="st"> </span><span class="dv">500</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>X   &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(n <span class="op">*</span><span class="st"> </span><span class="dv">5</span>), n, <span class="dv">5</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>W   &lt;-<span class="st"> </span><span class="kw">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.5</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>tau &lt;-<span class="st"> </span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>X[, <span class="dv">1</span>]            <span class="co"># heterogeneous treatment effect</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>Y   &lt;-<span class="st"> </span>tau <span class="op">*</span><span class="st"> </span>W <span class="op">+</span><span class="st"> </span><span class="kw">rnorm</span>(n)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a><span class="co"># Fit the T-Learner</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true"></a>tl  &lt;-<span class="st"> </span>TLearner<span class="op">$</span><span class="kw">new</span>(<span class="dt">learner =</span> <span class="st">&quot;ranger&quot;</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true"></a>tl<span class="op">$</span><span class="kw">fit</span>(X, W, Y)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true"></a><span class="co"># Predict CATE on new data</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true"></a>X_test &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(<span class="dv">100</span> <span class="op">*</span><span class="st"> </span><span class="dv">5</span>), <span class="dv">100</span>, <span class="dv">5</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true"></a>cate   &lt;-<span class="st"> </span>tl<span class="op">$</span><span class="kw">predict</span>(X_test)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true"></a><span class="kw">head</span>(cate)</span></code></pre></div>
+<hr />
+</div>
+<div id="quick-example-linear-dml" class="section level2">
+<h2>Quick Example: Linear DML</h2>
+<p>Double Machine Learning (DML) removes the confounding bias of nuisance models via cross-fitting before estimating the treatment effect.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">library</span>(RCausalML)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>n    &lt;-<span class="st"> </span><span class="dv">1000</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>X    &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(n <span class="op">*</span><span class="st"> </span><span class="dv">10</span>), n, <span class="dv">10</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>W    &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(X[, <span class="dv">1</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">+</span><span class="st"> </span><span class="kw">rnorm</span>(n, <span class="dt">sd =</span> <span class="fl">0.1</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>Y    &lt;-<span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>W <span class="op">+</span><span class="st"> </span>X[, <span class="dv">1</span>] <span class="op">+</span><span class="st"> </span><span class="kw">rnorm</span>(n)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>dml  &lt;-<span class="st"> </span>LinearDML<span class="op">$</span><span class="kw">new</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>  <span class="dt">model_y      =</span> <span class="st">&quot;ranger&quot;</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>  <span class="dt">model_t      =</span> <span class="st">&quot;ranger&quot;</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>  <span class="dt">n_folds      =</span> <span class="dv">5</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>dml<span class="op">$</span><span class="kw">fit</span>(X, W, Y)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>ate  &lt;-<span class="st"> </span>dml<span class="op">$</span><span class="kw">effect</span>()</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a><span class="kw">cat</span>(<span class="st">&quot;Estimated ATE:&quot;</span>, <span class="kw">round</span>(ate, <span class="dv">3</span>), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span></code></pre></div>
+<hr />
+</div>
+<div id="quick-example-uplift-random-forest" class="section level2">
+<h2>Quick Example: Uplift Random Forest</h2>
+<p>Uplift forests directly optimise the difference in outcomes between treated and control units at each split.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">library</span>(RCausalML)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="co"># Simulate uplift dataset</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>df &lt;-<span class="st"> </span><span class="kw">make_uplift_classification</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>  <span class="dt">n_samples  =</span> <span class="dv">2000</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>  <span class="dt">treatment_name =</span> <span class="st">&quot;treatment&quot;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="co"># KL-based uplift random forest</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>uf &lt;-<span class="st"> </span><span class="kw">uplift_rf_kl</span>(</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>  <span class="dt">formula   =</span> <span class="op">~</span><span class="st"> </span>. <span class="op">-</span><span class="st"> </span>treatment <span class="op">-</span><span class="st"> </span>outcome,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>  <span class="dt">data      =</span> df,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>  <span class="dt">treatment =</span> df<span class="op">$</span>treatment,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>  <span class="dt">outcome   =</span> df<span class="op">$</span>outcome</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a><span class="co"># Gain and Qini curves</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>gain_df &lt;-<span class="st"> </span><span class="kw">gain_curve</span>(uf, df<span class="op">$</span>treatment, df<span class="op">$</span>outcome)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a><span class="kw">plot_gain</span>(gain_df)</span></code></pre></div>
+<hr />
+</div>
+<div id="quick-example-causal-forest-grf" class="section level2">
+<h2>Quick Example: Causal Forest (GRF)</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">library</span>(RCausalML)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>n  &lt;-<span class="st"> </span><span class="dv">800</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>X  &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(n <span class="op">*</span><span class="st"> </span><span class="dv">10</span>), n, <span class="dv">10</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>W  &lt;-<span class="st"> </span><span class="kw">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.4</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>Y  &lt;-<span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>X[, <span class="dv">1</span>]) <span class="op">*</span><span class="st"> </span>W <span class="op">+</span><span class="st"> </span><span class="kw">rnorm</span>(n)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>cf  &lt;-<span class="st"> </span><span class="kw">grf_causal_forest</span>(X, Y, W)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a><span class="co"># Average treatment effect</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a><span class="kw">grf_average_treatment_effect</span>(cf)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a><span class="co"># Variable importance</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a><span class="kw">grf_variable_importance</span>(cf)</span></code></pre></div>
+<hr />
+</div>
+<div id="quick-example-dragonnet-deep" class="section level2">
+<h2>Quick Example: DragonNet (Deep)</h2>
+<p>DragonNet jointly estimates the propensity score and the potential outcomes using a shared representation and a targeted regularisation term.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">library</span>(RCausalML)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>n   &lt;-<span class="st"> </span><span class="dv">600</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>X   &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(n <span class="op">*</span><span class="st"> </span><span class="dv">8</span>), n, <span class="dv">8</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>W   &lt;-<span class="st"> </span><span class="kw">rbinom</span>(n, <span class="dv">1</span>, <span class="kw">plogis</span>(X[, <span class="dv">1</span>]))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>Y   &lt;-<span class="st"> </span>(<span class="fl">0.5</span> <span class="op">+</span><span class="st"> </span>X[, <span class="dv">2</span>]) <span class="op">*</span><span class="st"> </span>W <span class="op">+</span><span class="st"> </span><span class="kw">rnorm</span>(n)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>net &lt;-<span class="st"> </span><span class="kw">dragonnet</span>(X, W, Y,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a>  <span class="dt">hidden_size =</span> <span class="dv">64</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a>  <span class="dt">epochs      =</span> <span class="dv">100</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true"></a>  <span class="dt">batch_size  =</span> <span class="dv">64</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true"></a>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true"></a>preds &lt;-<span class="st"> </span><span class="kw">predict</span>(net, X)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true"></a><span class="kw">head</span>(preds)</span></code></pre></div>
+<hr />
+</div>
+<div id="package-architecture" class="section level2">
+<h2>Package Architecture</h2>
+<pre><code>RCausalML/
+├── R/
+│   ├── meta_learners.R          # S/T/X/R/DR/TMLE learners
+│   ├── DMLearner.R              # DML + DoubleML bridges
+│   ├── iv.R                     # IV learners
+│   ├── causalForest.R           # GRF wrappers + GNN causal models
+│   ├── causalTree.R             # Tree-based causal methods
+│   ├── causalDeepNet.R          # Neural causal models (DragonNet, …)
+│   ├── causalXGBoost.R          # CXGBoost R6 class
+│   ├── uplift_trees.R           # Uplift tree utilities
+│   ├── uplift_tree_core.R       # Core uplift splitting logic
+│   ├── policy_learner.R         # Policy learning
+│   ├── cate_interpreter.R       # CATE / policy interpretation
+│   ├── propensity.R             # Propensity score estimation
+│   ├── match.R                  # Matching methods
+│   ├── notears.R                # NOTEARS DAG learning
+│   ├── automated_ml.R           # AutoML nuisance models
+│   ├── synthetic_data.R         # Data generators
+│   └── utils.R                  # Shared utilities
+└── inst/notebooks/              # 59 Quarto tutorial notebooks</code></pre>
+<hr />
+</div>
+<div id="further-reading" class="section level2">
+<h2>Further Reading</h2>
+<ul>
+<li><a href="https://zia207.github.io/RCausalML/reference/index.html">Reference documentation</a></li>
+<li><a href="https://github.com/zia207/RCausalML/tree/main/inst/notebooks">Tutorial notebooks</a></li>
+<li><a href="https://causalml.readthedocs.io/en/latest/">Python CausalML</a></li>
+<li><a href="https://econml.azurewebsites.net/">Microsoft EconML</a></li>
+<li><a href="https://docs.doubleml.org/stable/guide/r.html">DoubleML R package</a></li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+![](Images/03_uplift-Learners.png)
+
+# 3. Uplift Learners
+
+Uplift modeling — also called *incremental modeling* or *true lift modeling* — estimates the **causal effect of a treatment on an individual**, rather than the likelihood of an outcome in isolation. Where a standard predictive model asks "will this customer buy?", an uplift model asks the causally sharper question: "will this customer buy *because* of the intervention?" The Uplift Tree is a tree-based method built from the ground up to answer this question directly, by embedding causal reasoning into the splitting criterion rather than applying it post hoc to a predictive model.
+
+### Motivation
+
+To make the distinction concrete, consider a randomized experiment in which 100 customers receive an email coupon (treatment) and 100 similar customers do not (control). If 30 treated customers purchase and 20 control customers purchase, the average causal uplift is 10 percentage points. A standard propensity model trained on this data would identify *high-converters* — customers likely to purchase regardless of treatment — and conflate them with *persuadables*, customers whose purchase behavior is genuinely caused by the coupon. Targeting high-converters wastes treatment budget on individuals who would have converted anyway. Uplift modeling resolves this by estimating, for each individual, the **incremental effect** of treatment rather than the baseline probability of the outcome.
+
+------------------------------------------------------------------------
+
+### The Estimand
+
+The individual-level estimand is the **Conditional Average Treatment Effect**:
+
+$$\tau(x) = P(Y = 1 \mid T = 1, X = x) - P(Y = 1 \mid T = 0, X = x)$$
+
+where $T = 1$ denotes treatment receipt, $T = 0$ denotes control, $Y$ is a binary outcome, and $x$ is the individual's covariate vector. The goal is to estimate $\tau(x)$ accurately across the covariate space so that treatment can be allocated to individuals where its causal effect is largest.
+
+------------------------------------------------------------------------
+
+### The Four Uplift Segments
+
+A foundational insight of uplift modeling is that individuals can be partitioned into four behavioral segments based on their potential outcomes under treatment and control:
+
+|   | **Would buy if treated** | **Would not buy if treated** |
+|----|----|----|
+| **Would buy if untreated** | Sure Things | Lost Causes |
+| **Would not buy if untreated** | Persuadables | Do-Not-Disturbs |
+
+-   **Persuadables** ($\tau(x) > 0$): buy because of the treatment. The primary targeting objective.
+-   **Sure Things** ($\tau(x) \approx 0$, high baseline): buy regardless. Treatment is wasted.
+-   **Lost Causes** ($\tau(x) \approx 0$, low baseline): will not buy regardless.
+-   **Do-Not-Disturbs** ($\tau(x) < 0$): treatment actively suppresses conversion.
+
+Standard predictive models conflate Sure Things and Persuadables, since both have high $P(Y = 1 \mid T = 1, X = x)$. Uplift trees separate them by targeting $\tau(x)$ directly.
+
+------------------------------------------------------------------------
+
+### The Uplift Tree Algorithm
+
+An uplift tree is a decision tree whose splitting criterion is designed to maximize the **heterogeneity of treatment effects** across child nodes, rather than the homogeneity of outcomes. At each node, the algorithm searches for the feature and threshold that produce child nodes with the most divergent treatment-versus-control outcome distributions — regions where $\tau(x)$ is as large in magnitude as possible and as homogeneous as possible within each child.
+
+#### General Gain Formula
+
+All divergence-based splitting criteria share a common gain structure. Let $p = P(Y \mid T = 1)$ and $q = P(Y \mid T = 0)$ denote the outcome distributions for treated and control units in the current node, and let superscripts $\ell$ and $r$ denote the left and right child nodes after a candidate split. The gain is:
+
+$$\text{gain} = \frac{n_\ell}{n}\, D(p^\ell, q^\ell) + \frac{n_r}{n}\, D(p^r, q^r) - D(p, q)$$
+
+where $n_\ell$ and $n_r$ are child sample sizes with $n = n_\ell + n_r$, and $D(\cdot, \cdot)$ is a divergence measure between the treated and control outcome distributions. The gain is the **weighted average divergence in the children minus the divergence in the parent**: a split is good if it creates child nodes that are more internally treatment-effect-homogeneous than the parent, where "homogeneous" means the treatment-control divergence within each child is high and consistent.
+
+------------------------------------------------------------------------
+
+### Splitting Criteria
+
+#### Kullback-Leibler Divergence
+
+$$D_{\text{KL}}(p \parallel q) = \sum_y p(y) \log \frac{p(y)}{q(y)}$$
+
+KL divergence is **asymmetric**: $D_{\text{KL}}(p \parallel q) \neq D_{\text{KL}}(q \parallel p)$. It is sensitive to large shifts in probability mass and penalizes heavily when $p(y) > 0$ but $q(y) \approx 0$. In practice it is the most commonly used criterion for binary outcomes with a single treatment arm.
+
+#### Euclidean Distance
+
+$$D_{\text{ED}}(p, q) = \sum_y \left(p(y) - q(y)\right)^2$$
+
+Euclidean distance is **symmetric** and geometrically intuitive. It treats deviations uniformly regardless of the baseline probability level, making it less sensitive than KL to extreme probability ratios. It is a natural choice when a simple, interpretable divergence measure is preferred.
+
+#### Chi-Square Divergence
+
+$$D_{\chi^2}(p, q) = \sum_y \frac{\left(p(y) - q(y)\right)^2}{q(y)}$$
+
+The chi-square criterion normalizes squared deviations by the control probability $q(y)$, penalizing deviations more heavily in regions where the control outcome probability is small. This is conceptually analogous to the classical $\chi^2$ test of independence between treatment assignment and outcome, and it emphasizes treatment effects in low-baseline subgroups.
+
+#### Contextual Treatment Selection (CTS)
+
+For **multi-arm settings** with $K \geq 2$ active treatments plus a control, the distributional divergence criteria do not generalize naturally. Contextual Treatment Selection (Zhao et al., 2017) takes a different approach: rather than maximizing treatment-control divergence, it scores a split by the increase in **expected outcome under optimal treatment assignment** achieved by the split:
+
+$$\hat{\Delta}_\mu(s) = \hat{p}(\phi_\ell \mid \phi)\, \max_{t \in \{0,\dots,K\}} \hat{\mu}_t(\phi_\ell) + \hat{p}(\phi_r \mid \phi)\, \max_{t \in \{0,\dots,K\}} \hat{\mu}_t(\phi_r) - \max_{t \in \{0,\dots,K\}} \hat{\mu}_t(\phi)$$
+
+where $\phi$ is the current node, $\phi_\ell$ and $\phi_r$ are children, $\hat{p}(\phi_j \mid \phi) = n^{\phi_j}/n^\phi$ is the fraction of the node falling into child $j$, and $\hat{\mu}_t(\phi_j)$ is the sample mean outcome under arm $t$ in child $j$. CTS asks: if we could assign each individual their best treatment, how much does this split increase the average best-arm outcome? It is less focused on distributional divergence and more directly oriented toward **policy optimization** in multi-arm experiments.
+
+------------------------------------------------------------------------
+
+### Normalization and Regularization
+
+Raw gain values are adjusted in three successive steps to improve split stability and reduce systematic biases.
+
+**Gain normalization** divides the raw gain by the entropy of the treatment distribution within the node:
+
+$$\text{gain}_{\text{norm}} = \frac{\text{gain}}{H(T \mid \phi)}$$
+
+This corrects for the tendency to favor splits in nodes where treatment and control counts are highly unequal, since such imbalance artificially inflates divergence measures.
+
+**Sample-size penalty** ($n_\text{reg}$) weights the normalized gain by a factor that peaks for balanced splits and shrinks for lopsided ones:
+
+$$\text{gain}_{\text{pen}} = \frac{n_\ell\, n_r}{(n_\ell + n_r)^2}\, \text{gain}_{\text{norm}}$$
+
+The multiplier achieves its maximum of $1/4$ when $n_\ell = n_r$ and approaches zero as the split becomes increasingly one-sided. This discourages unstable splits that place very few observations in one child, where treatment effect estimates are unreliable.
+
+**Treatment-imbalance penalty** ($\alpha$) subtracts a regularization term proportional to how much the local treatment assignment mix deviates from the global experimental design:
+
+$$\text{gain}_{\text{final}} = \text{gain}_{\text{pen}} - \alpha \sum_{t \in \mathcal{T}} \left| \hat{\pi}_\phi(t) - \hat{\pi}(t) \right|$$
+
+where $\hat{\pi}(t)$ is the global fraction assigned treatment $t$ and $\hat{\pi}_\phi(t)$ is the corresponding fraction within the current node. This prevents the tree from finding spurious splits driven by local treatment imbalance rather than genuine effect heterogeneity — a concern in observational data where treatment assignment is confounded.
+
+------------------------------------------------------------------------
+
+### Splitting Criterion Summary
+
+| Criterion | Treatment Setting | Key Property |
+|-------------------|------------------------------|------------------------|
+| KL Divergence | Binary outcome, single arm | Asymmetric; sensitive to large distributional shifts |
+| Euclidean Distance | Binary outcome, single arm | Symmetric; uniform sensitivity across probability levels |
+| Chi-Square | Binary outcome, single arm | Upweights deviations where control baseline is low |
+| CTS | Multiple treatment arms | Directly maximizes best-arm expected outcome per branch |
+
+------------------------------------------------------------------------
+
+### Uplift Trees vs. Standard Decision Trees
+
+| Aspect | Standard Tree (CART, XGBoost) | Uplift Tree |
+|----------------|----------------------------------------|----------------|
+| **Target** | Outcome probability $P(Y=1)$ | Treatment effect $\tau(x)$ |
+| **Requires treatment/control** | No | Yes |
+| **Split criterion** | Gini impurity, entropy, MSE | Treatment-control divergence or CTS gain |
+| **Leaf value** | Predicted class probability or regression output | Estimated uplift $\hat{\tau}(x)$ |
+| **Causal reasoning** | None | Explicit |
+| **Primary question** | "Who will buy?" | "Who will buy *because of the campaign*?" |
+
+------------------------------------------------------------------------
+
+### Extensions and Related Methods
+
+The base uplift tree is typically deployed as a component within a larger ensemble or meta-learning framework:
+
+-   **Uplift Random Forests**: Ensembles of uplift trees built on bootstrapped subsamples, reducing the high variance that individual trees exhibit in effect estimation. The leaf-level uplift estimates are averaged across trees, analogously to standard random forests for prediction.
+-   **Meta-learners** (S-, T-, X-, R-, DR-Learners): Use standard ML models as modular building blocks for CATE estimation, as described in earlier sections. Meta-learners and uplift trees are complementary: uplift trees provide an interpretable, single-model approach, while meta-learners offer greater flexibility in the choice of base learner and stronger theoretical guarantees.
+
+------------------------------------------------------------------------
+
+### When to Use Uplift Trees
+
+Uplift trees are well suited to settings with **randomized experiments or clean quasi-experiments** where the primary objective is **personalized treatment assignment** — targeting individuals where the causal effect of an intervention is positive and large. They are particularly valuable in direct marketing, clinical trial subgroup analysis, and public policy evaluation, where treatment resources are limited and the cost of targeting the wrong individuals (Sure Things, Do-Not-Disturbs) is material.
+
+When interpretability of individual splits is important, or when a single self-contained model is preferred over a multi-stage meta-learner pipeline, uplift trees offer a natural and well-studied solution. For settings where predictive accuracy on the CATE function is paramount, ensemble extensions (uplift forests) or meta-learner approaches with more flexible base learners will generally outperform a single tree.
+
+## Summary and Conclusion
+
+Uplift trees are a powerful tool for estimating individual treatment effects, going beyond traditional predictive modeling to directly target causal impact. By using specialized splitting criteria that focus on maximizing the difference in outcomes between treated and control groups, uplift trees can identify who will respond positively to an intervention — not just who is likely to convert. This makes them invaluable for personalized marketing, clinical decision-making, and any scenario where understanding the causal effect of an action is crucial.
+
+## Resources
+
+1.  CausalML implements the Uplift Tree approach based on the following paper: Sołtys, M., Jaroszewicz, S., & Rzepakowski, P. (2015). Ensemble methods for uplift modeling. Data Mining and Knowledge Discovery, 29(6), 1531–1559. https://doi.org/10.1007/s10618-015-0424-8
+
+2.  Piotr Rzepakowski and Szymon Jaroszewicz. Decision trees for uplift modeling with single and multiple treatments. Knowl. Inf. Syst., 32(2):303–327, August 2012.
+
+3.  Pierre Gutierrez and Jean-Yves Gerardy. Causal inference and uplift modeling a review of the literature. JMLR: Workshop and Conference Proceedings 67, 2016.
+
+4.  Chen, Huigang, Totte Harinen, Jeong-Yoon Lee, Mike Yung, and Zhenyu Zhao. "Causalml: Python package for causal machine learning." arXiv preprint arXiv:2002.11631 (2020).

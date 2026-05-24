@@ -2804,6 +2804,143 @@ causal_structure_ml_model_descriptions <- function() {
   )
 }
 
+# ---------------------------------------------------------------------------
+# DAG-GNN (Yu et al., ICML 2019) — VAE-style structure learning with torch.
+# v2: tanh(A)*0.5 effective adjacency; matrix-power acyclicity h(A).
+# ---------------------------------------------------------------------------
+
+#' Default torch device for DAG-GNN
+#' @return A \code{torch_device}.
+#' @export
+get_daggnn_device <- function() {
+  if (!requireNamespace("torch", quietly = TRUE))
+    stop("get_daggnn_device() requires package 'torch'.", call. = FALSE)
+  torch::torch_device(if (torch::cuda_is_available()) "cuda" else "cpu")
+}
+
+#' Preprocess adjacency as \eqn{I - A^\top}
+#' @param A Square \code{torch_tensor} adjacency.
+#' @return Processed adjacency tensor.
+#' @export
+preprocess_adj <- function(A) {
+  d <- A$size(1L)
+  I <- torch::torch_eye(d, device = A$device, dtype = A$dtype)
+  I - A$t()
+}
+
+#' Matrix polynomial \eqn{(I + A/d)^d} for DAG acyclicity
+#' @param A Square \code{torch_tensor}.
+#' @param d Integer matrix dimension.
+#' @return Tensor of shape \code{(d, d)}.
+#' @export
+matrix_poly <- function(A, d) {
+  d <- as.integer(d)
+  I <- torch::torch_eye(A$size(1L), device = A$device, dtype = A$dtype)
+  M <- I + A / d
+  torch::torch_matrix_power(M, d)
+}
+
+.daggnn_module <- function(n_nodes, hidden_dim, dtype) {
+  n_nodes <- as.integer(n_nodes)
+  hidden_dim <- as.integer(hidden_dim)
+
+  torch::nn_module(
+    "DAGGNN",
+    initialize = function() {
+      self$n_nodes <- n_nodes
+      self$hidden_dim <- hidden_dim
+      self$A <- torch::nn_parameter(
+        torch::torch_zeros(c(n_nodes, n_nodes), dtype = dtype)
+      )
+      torch::nn_init_uniform_(self$A, a = -0.01, b = 0.01)
+      self$enc_fc1 <- torch::nn_linear(n_nodes, hidden_dim)
+      self$enc_fc2 <- torch::nn_linear(hidden_dim, n_nodes)
+      self$dec_fc1 <- torch::nn_linear(n_nodes, hidden_dim)
+      self$dec_fc2 <- torch::nn_linear(hidden_dim, n_nodes)
+    },
+    .effective_adj = function() {
+      torch::torch_tanh(self$A) * 0.5
+    },
+    forward = function(x) {
+      A_eff <- self$.effective_adj()
+      padj <- preprocess_adj(A_eff)
+      enc_in <- torch::torch_matmul(x, padj$t())
+      H1 <- torch::nnf_relu(self$enc_fc1(enc_in))
+      MZ <- self$enc_fc2(H1)
+
+      d <- self$n_nodes
+      I <- torch::torch_eye(d, device = x$device, dtype = x$dtype)
+      M <- I - A_eff$t()
+      dec_in <- tryCatch(
+        {
+          inv_M <- torch::torch_linalg_solve(M, I)
+          torch::torch_matmul(MZ, inv_M$t())
+        },
+        error = function(e) torch::torch_matmul(MZ, padj$t())
+      )
+      H2 <- torch::nnf_relu(self$dec_fc1(dec_in))
+      MX <- self$dec_fc2(H2)
+
+      list(MX = MX, MZ = MZ, A_eff = A_eff)
+    },
+    elbo_loss = function(x, MX, MZ) {
+      n <- x$size(1L)
+      nll <- 0.5 * torch::torch_sum((x - MX)^2) / n
+      kl <- 0.5 * torch::torch_sum(MZ^2) / n
+      nll + kl
+    },
+    h_func = function() {
+      A_eff <- self$.effective_adj()
+      mp <- matrix_poly(A_eff * A_eff, self$n_nodes)
+      torch::torch_trace(mp) - self$n_nodes
+    }
+  )
+}
+
+#' Instantiate a DAG-GNN torch module
+#'
+#' @param n_nodes Number of graph nodes / variables.
+#' @param hidden_dim Hidden MLP width (default 64).
+#' @param device \code{torch_device} or device string; NULL selects automatically.
+#' @return A \code{torch nn_module} with methods \code{forward}, \code{elbo_loss},
+#'   \code{h_func}, and \code{.effective_adj}.
+#' @export
+DAGGNN <- function(n_nodes, hidden_dim = 64L, device = NULL) {
+  if (!requireNamespace("torch", quietly = TRUE))
+    stop("DAGGNN() requires package 'torch'.", call. = FALSE)
+  if (is.null(device)) device <- get_daggnn_device()
+  if (is.character(device)) device <- torch::torch_device(device)
+  model <- .daggnn_module(
+    n_nodes = as.integer(n_nodes),
+    hidden_dim = as.integer(hidden_dim),
+    dtype = torch::torch_float32()
+  )()
+  model$to(device = device)
+}
+
+#' Convenience constructor for DAG-GNN (alias of \code{\link{DAGGNN}})
+#' @inheritParams DAGGNN
+#' @return A trained-ready DAG-GNN module.
+#' @export
+make_daggnn <- function(n_nodes, hidden_dim = 64L, device = NULL) {
+  DAGGNN(n_nodes = n_nodes, hidden_dim = hidden_dim, device = device)
+}
+
+#' Threshold learned effective adjacency to a sparse matrix
+#'
+#' @param model A \code{DAGGNN} module from \code{\link{make_daggnn}}.
+#' @param threshold Absolute edge-weight cutoff (default 0.10 for tanh*0.5 scale).
+#' @return Numeric adjacency matrix with sub-threshold entries zeroed; diagonal zeroed.
+#' @export
+daggnn_adj <- function(model, threshold = 0.10) {
+  A_mat <- torch::with_no_grad({
+    as.matrix(model$.effective_adj()$detach()$cpu())
+  })
+  A_mat[abs(A_mat) < threshold] <- 0
+  diag(A_mat) <- 0
+  A_mat
+}
+
 #' @keywords internal
 .dag_gnn_fit <- function(X, n_epochs = 400L, lr = 1e-3, hidden_dim = 64L,
                          adj_threshold = 0.10, verbose = FALSE, seed = NULL,
@@ -2896,6 +3033,796 @@ causal_structure_ml_model_descriptions <- function() {
 
   A_hat <- daggnn_adj(model, threshold = adj_threshold)
   list(model = model, adjacency = A_hat, final_loss = final_loss)
+}
+
+# ---------------------------------------------------------------------------
+# GraN-DAG (Lachapelle et al., 2019) — gradient-based neural DAG learner.
+# R port of gCastle GraNDAG.
+# ---------------------------------------------------------------------------
+
+.gran_dag_require_torch <- function(fn = "GraN-DAG") {
+  if (!requireNamespace("torch", quietly = TRUE))
+    stop(fn, " requires package 'torch'.", call. = FALSE)
+  if (!requireNamespace("R6", quietly = TRUE))
+    stop(fn, " requires package 'R6'.", call. = FALSE)
+}
+
+.gran_dag_device <- function(device_type = "cpu") {
+  dt <- tolower(as.character(device_type)[1L])
+  if (dt %in% c("cuda", "gpu")) {
+    if (!torch::cuda_is_available())
+      stop("CUDA requested but not available; set device_type = 'cpu'.", call. = FALSE)
+    torch::torch_device("cuda")
+  } else {
+    torch::torch_device("cpu")
+  }
+}
+
+.gran_dag_activation <- function(x, nonlinear = "leaky-relu") {
+  if (nonlinear == "leaky-relu") torch::nnf_leaky_relu(x) else torch::nnf_sigmoid(x)
+}
+
+#' Check whether an adjacency matrix is acyclic
+#' @param adjacency Square \code{torch_tensor} adjacency matrix.
+#' @param device Optional device string or \code{torch_device}.
+#' @return Logical scalar.
+#' @export
+is_acyclic <- function(adjacency, device = NULL) {
+  .gran_dag_require_torch("is_acyclic()")
+  d <- adjacency$size(1L)
+  prod <- torch::torch_eye(d, device = adjacency$device, dtype = adjacency$dtype)
+  for (i in seq_len(d)) {
+    prod <- torch::torch_matmul(adjacency, prod)
+    if (as.numeric(torch::torch_trace(prod)) != 0) return(FALSE)
+  }
+  TRUE
+}
+
+#' Compute weighted adjacency from neural network weights
+#' @param model GraN-DAG torch model module.
+#' @param norm Normalization mode: \code{"paths"} or \code{"none"}.
+#' @param square If \code{TRUE}, square absolute weights before multiplying.
+#' @return Weighted adjacency \code{torch_tensor}.
+#' @export
+compute_A_phi <- function(model, norm = "paths", square = FALSE) {
+  weights <- model$get_parameters(mode = "w")[[1L]]
+  d <- model$input_dim
+  prod <- torch::torch_eye(d, device = weights[[1L]]$device, dtype = weights[[1L]]$dtype)
+  prod_norm <- if (norm != "none") prod$clone() else NULL
+  adj <- model$adjacency$unsqueeze(1L)
+
+  for (i in seq_along(weights)) {
+    w <- if (isTRUE(square)) weights[[i]]^2 else torch::torch_abs(weights[[i]])
+    if (i == 1L) {
+      prod <- torch::torch_einsum("tij,ljt,jk->tik", list(w, adj, prod))
+      if (norm != "none") {
+        tmp <- 1 - torch::torch_eye(d, device = w$device, dtype = w$dtype)$unsqueeze(1L)
+        prod_norm <- torch::torch_einsum(
+          "tij,ljt,jk->tik",
+          list(torch::torch_ones_like(w)$detach(), tmp, prod_norm)
+        )
+      }
+    } else {
+      prod <- torch::torch_einsum("tij,tjk->tik", list(w, prod))
+      if (norm != "none") {
+        prod_norm <- torch::torch_einsum(
+          "tij,tjk->tik",
+          list(torch::torch_ones_like(w)$detach(), prod_norm)
+        )
+      }
+    }
+  }
+
+  prod <- prod$sum(dim = 1L)
+  if (norm == "paths") {
+    prod_norm <- prod_norm$sum(dim = 1L)
+    denom <- prod_norm + torch::torch_eye(d, device = prod$device, dtype = prod$dtype)
+    return((prod / denom)$t())
+  }
+  if (norm == "none") return(prod$t())
+  stop("Unsupported norm: ", norm, call. = FALSE)
+}
+
+#' Compute DAG acyclicity constraint h(A)
+#' @param model GraN-DAG torch model module.
+#' @param w_adj Weighted adjacency tensor (\code{>= 0}).
+#' @return Scalar \code{torch_tensor}.
+#' @export
+compute_constraint <- function(model, w_adj) {
+  torch::torch_trace(torch::torch_matrix_exp(w_adj)) - model$input_dim
+}
+
+#' @keywords internal
+compute_jacobian_avg <- function(model, data_manager, batch_size) {
+  d <- model$input_dim
+  jac_avg <- torch::torch_zeros(c(d, d), device = model$adjacency$device)
+  samp <- data_manager$sample(batch_size)
+  x <- samp[[1L]]
+  x$requires_grad_(TRUE)
+
+  params <- model$get_parameters(mode = "wbx")
+  log_probs <- model$compute_log_likelihood(
+    x, params[[1L]], params[[2L]], params[[3L]], detach = TRUE
+  )
+  batch <- x$size(1L)
+  ones <- torch::torch_ones(c(batch), device = x$device)
+
+  for (i in seq_len(d)) {
+    grad <- torch::autograd_grad(
+      log_probs[, i],
+      x,
+      grad_outputs = ones,
+      retain_graph = TRUE,
+      create_graph = FALSE
+    )[[1L]]
+    jac_avg[i, ] <- torch::torch_abs(grad)$mean(dim = 1L)
+  }
+  jac_avg
+}
+
+.gran_dag_collect_layer_params <- function(self, prefix, n) {
+  lapply(seq_len(n), function(k) self[[paste0(prefix, k)]])
+}
+
+.gran_dag_model_module <- function(input_dim,
+                                    hidden_num,
+                                    hidden_dim,
+                                    output_dim,
+                                    nonlinear = "leaky-relu",
+                                    norm_prod = "paths",
+                                    square_prod = FALSE,
+                                    model_type = c("anm", "gauss")) {
+  model_type <- match.arg(model_type)
+  input_dim <- as.integer(input_dim)
+  hidden_num <- as.integer(hidden_num)
+  hidden_dim <- as.integer(hidden_dim)
+  output_dim <- as.integer(output_dim)
+
+  layer_dims <- c(input_dim, rep(hidden_dim, hidden_num), output_dim)
+  n_layers <- length(layer_dims) - 1L
+
+  torch::nn_module(
+    classname = if (model_type == "anm") "NonlinearGaussANM" else "NonlinearGauss",
+    initialize = function() {
+      self$input_dim <- input_dim
+      self$hidden_num <- hidden_num
+      self$hidden_dim <- hidden_dim
+      self$output_dim <- output_dim
+      self$nonlinear <- nonlinear
+      self$norm_prod <- norm_prod
+      self$square_prod <- square_prod
+      self$model_type <- model_type
+      self$n_layers <- n_layers
+
+      for (k in seq_len(n_layers)) {
+        in_d <- layer_dims[k]
+        out_d <- layer_dims[k + 1L]
+        self[[paste0("weight_", k)]] <- torch::nn_parameter(
+          torch::torch_zeros(c(input_dim, out_d, in_d))
+        )
+        self[[paste0("bias_", k)]] <- torch::nn_parameter(
+          torch::torch_zeros(c(input_dim, out_d))
+        )
+      }
+
+      self$register_buffer(
+        "adjacency",
+        torch::torch_ones(c(input_dim, input_dim)) -
+          torch::torch_eye(input_dim)
+      )
+
+      if (model_type == "anm") {
+        ep_vals <- sample(c(1, 2), input_dim, replace = TRUE)
+        for (i in seq_len(input_dim)) {
+          self[[paste0("extra_", i)]] <- torch::nn_parameter(
+            torch::torch_tensor(log(ep_vals[i]))
+          )
+        }
+      }
+
+      self$reset_params()
+    },
+    reset_params = function() {
+      torch::with_no_grad({
+        for (k in seq_len(self$n_layers)) {
+          w <- self[[paste0("weight_", k)]]
+          for (t in seq_len(self$input_dim)) {
+            torch::nn_init_xavier_uniform_(
+              w[t, , ],
+              gain = torch::nn_init_calculate_gain("leaky_relu")
+            )
+          }
+          self[[paste0("bias_", k)]]$zero_()
+        }
+      })
+    },
+    get_parameters = function(mode = "wbx") {
+      out <- list()
+      if (grepl("w", mode, fixed = TRUE)) {
+        out <- c(out, list(.gran_dag_collect_layer_params(self, "weight_", self$n_layers)))
+      }
+      if (grepl("b", mode, fixed = TRUE)) {
+        out <- c(out, list(.gran_dag_collect_layer_params(self, "bias_", self$n_layers)))
+      }
+      if (grepl("x", mode, fixed = TRUE) && self$model_type == "anm") {
+        out <- c(out, list(.gran_dag_collect_layer_params(self, "extra_", self$input_dim)))
+      } else if (grepl("x", mode, fixed = TRUE)) {
+        out <- c(out, list(list()))
+      }
+      out
+    },
+    get_grad_norm = function(mode = "wbx") {
+      grad_norm <- torch::torch_tensor(0.0, device = self$adjacency$device)
+      add_grad <- function(p) {
+        if (!is.null(p$grad)) grad_norm <<- grad_norm + (p$grad^2)$sum()
+      }
+      if (grepl("w", mode, fixed = TRUE)) {
+        for (p in .gran_dag_collect_layer_params(self, "weight_", self$n_layers)) add_grad(p)
+      }
+      if (grepl("b", mode, fixed = TRUE)) {
+        for (p in .gran_dag_collect_layer_params(self, "bias_", self$n_layers)) add_grad(p)
+      }
+      if (grepl("x", mode, fixed = TRUE) && self$model_type == "anm") {
+        for (p in .gran_dag_collect_layer_params(self, "extra_", self$input_dim)) add_grad(p)
+      }
+      torch::torch_sqrt(grad_norm)
+    },
+    forward_given_params = function(x, weights, biases) {
+      for (k in seq_len(self$n_layers)) {
+        w <- weights[[k]]
+        b <- biases[[k]]
+        if (k == 1L) {
+          adj <- self$adjacency$unsqueeze(1L)
+          x <- torch::torch_einsum("tij,ljt,bj->bti", list(w, adj, x)) + b
+        } else {
+          x <- torch::torch_einsum("tij,btj->bti", list(w, x)) + b
+        }
+        if (k < self$n_layers) x <- .gran_dag_activation(x, self$nonlinear)
+      }
+      x$split(1, dim = 2L)
+    },
+    transform_extra_params = function(extra_params) {
+      lapply(extra_params, torch::torch_exp)
+    },
+    get_distribution = function(density_param, i) {
+      if (self$model_type == "anm") {
+        loc <- density_param[[1L]]
+        scale <- density_param[[2L]]
+        torch::distr_normal(loc, scale)
+      } else {
+        torch::distr_normal(density_param[[1L]], torch::torch_exp(density_param[[2L]]))
+      }
+    },
+    compute_log_likelihood = function(x, weights, biases, extra_params, detach = FALSE) {
+      density_params <- self$forward_given_params(x, weights, biases)
+      extra <- if (length(extra_params) > 0L) self$transform_extra_params(extra_params) else list()
+
+      log_probs <- vector("list", self$input_dim)
+      for (i in seq_len(self$input_dim)) {
+        dp <- density_params[[i]]
+        if (self$model_type == "anm") {
+          dp <- list(dp$squeeze(2L)$squeeze(2L))
+          if (length(extra) > 0L) dp <- c(dp, list(extra[[i]]$squeeze()))
+        } else if (length(extra) > 0L) {
+          dp <- c(as.list(dp$split(1L, dim = 2L)), list(extra[[i]]))
+        } else {
+          dp <- as.list(dp$split(1L, dim = 2L))
+        }
+        dist <- self$get_distribution(dp, i)
+        x_d <- if (detach) x[, i]$detach() else x[, i]
+        x_d <- x_d$squeeze()
+        log_probs[[i]] <- dist$log_prob(x_d)$unsqueeze(2L)
+      }
+      torch::torch_cat(log_probs, dim = 2L)
+    },
+    get_w_adj = function() {
+      compute_A_phi(self, norm = self$norm_prod, square = self$square_prod)
+    }
+  )
+}
+
+#' Nonlinear Gaussian noise model (GraN-DAG)
+#' @param input_dim Number of variables.
+#' @param hidden_num Number of hidden layers.
+#' @param hidden_dim Hidden layer width.
+#' @param output_dim Output dimension (default 2: mean and log-variance).
+#' @param nonlinear Activation: \code{"leaky-relu"} or \code{"sigmoid"}.
+#' @param norm_prod Path normalization: \code{"paths"} or \code{"none"}.
+#' @param square_prod Square weights before path product.
+#' @return Initialized \code{torch} module.
+#' @export
+NonlinearGauss <- function(input_dim,
+                           hidden_num = 2L,
+                           hidden_dim = 10L,
+                           output_dim = 2L,
+                           nonlinear = "leaky-relu",
+                           norm_prod = "paths",
+                           square_prod = FALSE) {
+  .gran_dag_require_torch("NonlinearGauss()")
+  Mod <- .gran_dag_model_module(
+    input_dim = input_dim,
+    hidden_num = hidden_num,
+    hidden_dim = hidden_dim,
+    output_dim = output_dim,
+    nonlinear = nonlinear,
+    norm_prod = norm_prod,
+    square_prod = square_prod,
+    model_type = "gauss"
+  )
+  Mod()
+}
+
+#' Nonlinear Gaussian additive noise model (GraN-DAG)
+#' @inheritParams NonlinearGauss
+#' @param output_dim Output dimension (default 1: conditional mean).
+#' @return Initialized \code{torch} module.
+#' @export
+NonlinearGaussANM <- function(input_dim,
+                              hidden_num = 2L,
+                              hidden_dim = 10L,
+                              output_dim = 1L,
+                              nonlinear = "leaky-relu",
+                              norm_prod = "paths",
+                              square_prod = FALSE) {
+  .gran_dag_require_torch("NonlinearGaussANM()")
+  Mod <- .gran_dag_model_module(
+    input_dim = input_dim,
+    hidden_num = hidden_num,
+    hidden_dim = hidden_dim,
+    output_dim = output_dim,
+    nonlinear = nonlinear,
+    norm_prod = norm_prod,
+    square_prod = square_prod,
+    model_type = "anm"
+  )
+  Mod()
+}
+
+#' Data normalization and batch sampling for GraN-DAG
+#' @export
+NormalizationData <- R6::R6Class(
+  "NormalizationData",
+  public = list(
+    data_set = NULL,
+    mean = NULL,
+    std = NULL,
+    n_samples = NULL,
+    initialize = function(data,
+                          normalize = FALSE,
+                          mean = NULL,
+                          std = NULL,
+                          shuffle = FALSE,
+                          train_size = 0.8,
+                          train = TRUE,
+                          random_seed = 42L) {
+      .gran_dag_require_torch("NormalizationData")
+      if (isTRUE(shuffle)) {
+        set.seed(random_seed)
+        idx <- sample(nrow(data))
+      } else {
+        idx <- seq_len(nrow(data))
+      }
+      train_n <- as.integer(nrow(data) * train_size)
+      if (isTRUE(train)) {
+        data <- data[idx[seq_len(train_n)], , drop = FALSE]
+      } else {
+        data <- data[idx[seq(from = train_n + 1L, to = nrow(data))], , drop = FALSE]
+      }
+      self$data_set <- torch::torch_tensor(as.matrix(data), dtype = torch::torch_float32())
+      self$mean <- mean
+      self$std <- std
+      if (isTRUE(normalize)) {
+        if (is.null(self$mean) || is.null(self$std)) {
+          self$mean <- self$data_set$mean(dim = 1L, keepdim = TRUE)
+          self$std <- self$data_set$std(dim = 1L, keepdim = TRUE)
+        } else {
+          self$mean <- torch::torch_tensor(as.matrix(self$mean), dtype = torch::torch_float32())
+          self$std <- torch::torch_tensor(as.matrix(self$std), dtype = torch::torch_float32())
+        }
+        self$data_set <- (self$data_set - self$mean) / self$std
+      }
+      self$n_samples <- as.integer(self$data_set$size(1L))
+    },
+    sample = function(batch_size) {
+      set.seed(NULL)
+      idx <- sample.int(self$n_samples, batch_size, replace = FALSE)
+      samples <- self$data_set[idx, , drop = FALSE]
+      list(samples, torch::torch_ones_like(samples))
+    }
+  )
+)
+
+.gran_dag_pns <- function(model_adj, all_samples, num_neighbors, thresh) {
+  if (!requireNamespace("ranger", quietly = TRUE))
+    stop("PNS requires package 'ranger'.", call. = FALSE)
+  num_nodes <- ncol(all_samples)
+  for (node in seq_len(num_nodes)) {
+    x_other <- all_samples
+    x_other[, node] <- 0
+    fit <- ranger::ranger(
+      x = as.data.frame(x_other),
+      y = all_samples[, node],
+      num.trees = 500,
+      importance = "impurity"
+    )
+    imp <- fit$variable.importance
+    cutoff <- thresh * mean(imp)
+    mask <- imp >= cutoff
+    if (sum(mask) > num_neighbors) {
+      top <- order(imp, decreasing = TRUE)[seq_len(num_neighbors)]
+      mask <- rep(FALSE, num_nodes)
+      mask[top] <- TRUE
+    }
+    model_adj[, node] <- model_adj[, node] * as.numeric(mask)
+  }
+  model_adj
+}
+
+#' Preliminary neighborhood selection for GraN-DAG
+#' @param model GraN-DAG torch model.
+#' @param all_samples Numeric matrix of all samples.
+#' @param num_neighbors Maximum neighbors per node.
+#' @param thresh Feature-importance threshold multiplier.
+#' @return Updated model (invisibly).
+#' @export
+neighbors_selection <- function(model, all_samples, num_neighbors, thresh) {
+  adj <- as.matrix(model$adjacency$detach()$cpu())
+  adj <- .gran_dag_pns(adj, as.matrix(all_samples), num_neighbors, thresh)
+  torch::with_no_grad({
+    model$adjacency$copy_(torch::torch_tensor(adj, dtype = model$adjacency$dtype))
+  })
+  invisible(model)
+}
+
+#' GraN-DAG learner (R6)
+#' @export
+GraNDAG <- R6::R6Class(
+  "GraNDAG",
+  public = list(
+    input_dim = NULL,
+    hidden_num = NULL,
+    hidden_dim = NULL,
+    batch_size = NULL,
+    lr = NULL,
+    iterations = NULL,
+    model_name = NULL,
+    nonlinear = NULL,
+    optimizer = NULL,
+    h_threshold = NULL,
+    device_type = NULL,
+    use_pns = NULL,
+    pns_thresh = NULL,
+    num_neighbors = NULL,
+    normalize = NULL,
+    random_seed = NULL,
+    jac_thresh = NULL,
+    lambda_init = NULL,
+    mu_init = NULL,
+    omega_lambda = NULL,
+    omega_mu = NULL,
+    stop_crit_win = NULL,
+    edge_clamp_range = NULL,
+    norm_prod = NULL,
+    square_prod = NULL,
+    model = NULL,
+    device = NULL,
+    causal_matrix = NULL,
+    initialize = function(input_dim,
+                          hidden_num = 2L,
+                          hidden_dim = 10L,
+                          batch_size = 64L,
+                          lr = 0.001,
+                          iterations = 10000L,
+                          model_name = "NonLinGaussANM",
+                          nonlinear = "leaky-relu",
+                          optimizer = "rmsprop",
+                          h_threshold = 1e-8,
+                          device_type = "cpu",
+                          use_pns = FALSE,
+                          pns_thresh = 0.75,
+                          num_neighbors = NULL,
+                          normalize = FALSE,
+                          random_seed = 42L,
+                          jac_thresh = TRUE,
+                          lambda_init = 0.0,
+                          mu_init = 0.001,
+                          omega_lambda = 0.0001,
+                          omega_mu = 0.9,
+                          stop_crit_win = 100L,
+                          edge_clamp_range = 0.0001,
+                          norm_prod = "paths",
+                          square_prod = FALSE) {
+      self$input_dim <- as.integer(input_dim)
+      self$hidden_num <- as.integer(hidden_num)
+      self$hidden_dim <- as.integer(hidden_dim)
+      self$batch_size <- as.integer(batch_size)
+      self$lr <- lr
+      self$iterations <- as.integer(iterations)
+      self$model_name <- model_name
+      self$nonlinear <- nonlinear
+      self$optimizer <- optimizer
+      self$h_threshold <- h_threshold
+      self$device_type <- device_type
+      self$use_pns <- isTRUE(use_pns)
+      self$pns_thresh <- pns_thresh
+      self$num_neighbors <- num_neighbors
+      self$normalize <- isTRUE(normalize)
+      self$random_seed <- as.integer(random_seed)
+      self$jac_thresh <- isTRUE(jac_thresh)
+      self$lambda_init <- lambda_init
+      self$mu_init <- mu_init
+      self$omega_lambda <- omega_lambda
+      self$omega_mu <- omega_mu
+      self$stop_crit_win <- as.integer(stop_crit_win)
+      self$edge_clamp_range <- edge_clamp_range
+      self$norm_prod <- norm_prod
+      self$square_prod <- isTRUE(square_prod)
+    },
+    learn = function(data, columns = NULL) {
+      .gran_dag_require_torch("GraNDAG$learn()")
+      torch::torch_manual_seed(self$random_seed)
+      set.seed(self$random_seed)
+
+      self$device <- .gran_dag_device(self$device_type)
+      data <- as.matrix(data)
+      if (!is.null(columns)) colnames(data) <- columns
+      if (ncol(data) != self$input_dim) {
+        stop("Number of columns (", ncol(data), ") must match input_dim (",
+             self$input_dim, ").", call. = FALSE)
+      }
+
+      if (self$model_name == "NonLinGauss") {
+        self$model <- NonlinearGauss(
+          input_dim = self$input_dim,
+          hidden_num = self$hidden_num,
+          hidden_dim = self$hidden_dim,
+          output_dim = 2L,
+          nonlinear = self$nonlinear,
+          norm_prod = self$norm_prod,
+          square_prod = self$square_prod
+        )
+      } else if (self$model_name == "NonLinGaussANM") {
+        self$model <- NonlinearGaussANM(
+          input_dim = self$input_dim,
+          hidden_num = self$hidden_num,
+          hidden_dim = self$hidden_dim,
+          output_dim = 1L,
+          nonlinear = self$nonlinear,
+          norm_prod = self$norm_prod,
+          square_prod = self$square_prod
+        )
+      } else {
+        stop("model_name must be 'NonLinGauss' or 'NonLinGaussANM'.", call. = FALSE)
+      }
+      self$model$to(device = self$device)
+
+      train_data <- NormalizationData$new(
+        data, train = TRUE, normalize = self$normalize, random_seed = self$random_seed
+      )
+      test_data <- NormalizationData$new(
+        data,
+        train = FALSE,
+        normalize = self$normalize,
+        mean = train_data$mean,
+        std = train_data$std,
+        random_seed = self$random_seed
+      )
+      train_data$data_set <- train_data$data_set$to(device = self$device)
+      test_data$data_set <- test_data$data_set$to(device = self$device)
+      if (!is.null(train_data$mean) && inherits(train_data$mean, "torch_tensor")) {
+        train_data$mean <- train_data$mean$to(device = self$device)
+        train_data$std <- train_data$std$to(device = self$device)
+        test_data$mean <- train_data$mean
+        test_data$std <- train_data$std
+      }
+
+      if (isTRUE(self$use_pns)) {
+        n_nb <- if (is.null(self$num_neighbors)) self$input_dim else self$num_neighbors
+        neighbors_selection(self$model, data, n_nb, self$pns_thresh)
+      }
+
+      private$.train(train_data, test_data)
+      private$.to_dag(train_data)
+      self$causal_matrix <- self$get_causal_matrix()
+      invisible(self)
+    },
+    get_causal_matrix = function() {
+      if (is.null(self$model)) {
+        return(matrix(0, self$input_dim, self$input_dim))
+      }
+      as.matrix(self$model$adjacency$detach()$cpu())
+    }
+  ),
+  private = list(
+    .train = function(train_data, test_data) {
+      mu <- self$mu_init
+      lamb <- self$lambda_init
+      hs <- numeric()
+      not_nlls <- numeric()
+      aug_lagrangians_val <- list()
+
+      if (self$optimizer == "sgd") {
+        opt <- torch::optim_sgd(self$model$parameters, lr = self$lr)
+      } else if (self$optimizer == "rmsprop") {
+        opt <- torch::optim_rmsprop(self$model$parameters, lr = self$lr)
+      } else {
+        stop("Unsupported optimizer: ", self$optimizer, call. = FALSE)
+      }
+
+      pb <- if (requireNamespace("progress", quietly = TRUE)) {
+        progress::progress_bar$new(
+          format = "  GraN-DAG [:bar] :percent eta: :eta",
+          total = self$iterations,
+          clear = FALSE,
+          width = 60
+        )
+      } else NULL
+
+      for (iter in seq_len(self$iterations)) {
+        if (!is.null(pb)) pb$tick()
+        self$model$train(TRUE)
+        x <- train_data$sample(self$batch_size)[[1L]]
+        params <- self$model$get_parameters(mode = "wbx")
+        loss <- -(self$model$compute_log_likelihood(
+          x, params[[1L]], params[[2L]], params[[3L]]
+        ))$mean()
+        self$model$eval()
+
+        w_adj <- self$model$get_w_adj()
+        h <- compute_constraint(self$model, w_adj)
+        aug_lagrangian <- loss + 0.5 * mu * h^2 + lamb * h
+
+        opt$zero_grad()
+        aug_lagrangian$backward()
+        opt$step()
+
+        if (self$edge_clamp_range != 0) {
+          torch::with_no_grad({
+            to_keep <- (w_adj > self$edge_clamp_range) * 1
+            to_keep <- to_keep$to(device = self$model$adjacency$device)
+            self$model$adjacency$mul_(to_keep)
+          })
+        }
+
+        not_nll <- as.numeric(0.5 * mu * h^2 + lamb * h)
+        not_nlls <- c(not_nlls, not_nll)
+
+        if ((iter - 1L) %% self$stop_crit_win == 0L) {
+          torch::with_no_grad({
+            xv <- test_data$sample(test_data$n_samples)[[1L]]
+            loss_val <- -(self$model$compute_log_likelihood(
+              xv, params[[1L]], params[[2L]], params[[3L]]
+            ))$mean()
+            aug_lagrangians_val[[length(aug_lagrangians_val) + 1L]] <-
+              c(iter - 1L, as.numeric(loss_val) + not_nll)
+          })
+        }
+
+        delta_lambda <- -Inf
+        if (iter >= 2L * self$stop_crit_win &&
+            (iter %% (2L * self$stop_crit_win) == 0L) &&
+            length(aug_lagrangians_val) >= 3L) {
+          n <- length(aug_lagrangians_val)
+          t0 <- aug_lagrangians_val[[n - 2L]][2L]
+          t_half <- aug_lagrangians_val[[n - 1L]][2L]
+          t1 <- aug_lagrangians_val[[n]][2L]
+          if (min(t0, t1) < t_half && t_half < max(t0, t1)) {
+            delta_lambda <- (t1 - t0) / self$stop_crit_win
+          }
+        }
+
+        if (as.numeric(h) > self$h_threshold) {
+          if (abs(delta_lambda) < self$omega_lambda || delta_lambda > 0) {
+            lamb <- lamb + mu * as.numeric(h)
+            hs <- c(hs, as.numeric(h))
+            if (length(hs) >= 2L && hs[length(hs)] > hs[length(hs) - 1L] * self$omega_mu) {
+              mu <- mu * 10
+            }
+            if (self$optimizer == "rmsprop") {
+              opt <- torch::optim_rmsprop(self$model$parameters, lr = self$lr)
+            } else {
+              opt <- torch::optim_sgd(self$model$parameters, lr = self$lr)
+            }
+          }
+        } else {
+          torch::with_no_grad({
+            to_keep <- (w_adj > 0) * 1
+            to_keep <- to_keep$to(device = self$model$adjacency$device)
+            self$model$adjacency$mul_(to_keep)
+          })
+          break
+        }
+      }
+      invisible(self$model)
+    },
+    .to_dag = function(train_data) {
+      self$model$eval()
+      if (isTRUE(self$jac_thresh)) {
+        A <- compute_jacobian_avg(self$model, train_data, train_data$n_samples)$t()
+      } else {
+        A <- self$model$get_w_adj()
+      }
+      A_np <- as.matrix(A$detach()$cpu())
+      thresholds <- sort(unique(as.vector(A_np)))
+      epsilon <- 1e-8
+      torch::with_no_grad({
+        for (t in thresholds) {
+          to_keep <- torch::torch_tensor(
+            A_np > t + epsilon,
+            dtype = self$model$adjacency$dtype,
+            device = self$model$adjacency$device
+          )
+          new_adj <- self$model$adjacency * to_keep
+          if (is_acyclic(new_adj, device = self$device)) {
+            self$model$adjacency$copy_(new_adj)
+            break
+          }
+        }
+      })
+      invisible(self$model)
+    }
+  )
+)
+
+#' Plot estimated (and optional true) DAG adjacency matrices
+#' @param est_dag Estimated adjacency matrix.
+#' @param true_dag Optional true adjacency matrix.
+#' @param show Display plot interactively.
+#' @param save_name Optional path to save PNG.
+#' @return List with \code{est_dag} and optional \code{true_dag}.
+#' @export
+GraphDAG <- function(est_dag, true_dag = NULL, show = TRUE, save_name = NULL) {
+  if (!is.matrix(est_dag)) stop("Input est_dag is not a matrix!", call. = FALSE)
+  if (!is.null(true_dag) && !is.matrix(true_dag)) {
+    stop("Input true_dag is not a matrix!", call. = FALSE)
+  }
+  if (!show && is.null(save_name)) {
+    stop("Neither display nor save the picture! Set show = TRUE or save_name.", call. = FALSE)
+  }
+
+  est_dag <- est_dag + 0
+  diag(est_dag) <- 0
+  if (!is.null(true_dag)) {
+    true_dag <- true_dag + 0
+    diag(true_dag) <- 0
+  }
+
+  plot_one <- function(m, main) {
+    graphics::image(
+      t(m[nrow(m):1, , drop = FALSE]),
+      axes = FALSE,
+      col = grDevices::gray.colors(20),
+      main = main
+    )
+  }
+
+  if (!is.null(save_name)) {
+    if (!is.null(true_dag)) {
+      grDevices::png(save_name, width = 800, height = 400)
+      graphics::par(mfrow = c(1, 2), mar = c(2, 2, 3, 2))
+      plot_one(est_dag, "est_graph")
+      plot_one(true_dag, "true_graph")
+      grDevices::dev.off()
+    } else {
+      grDevices::png(save_name, width = 400, height = 400)
+      plot_one(est_dag, "est_graph")
+      grDevices::dev.off()
+    }
+  }
+
+  if (isTRUE(show)) {
+    if (!is.null(true_dag)) {
+      graphics::par(mfrow = c(1, 2), mar = c(2, 2, 3, 2))
+      plot_one(est_dag, "est_graph")
+      plot_one(true_dag, "true_graph")
+    } else {
+      plot_one(est_dag, "est_graph")
+    }
+  }
+
+  out <- list(est_dag = est_dag)
+  if (!is.null(true_dag)) out$true_dag <- true_dag
+  invisible(out)
 }
 
 #' Causal structure learning (unified API)
@@ -2992,7 +3919,7 @@ causalStructureML <- function(
       )
       if (is.null(Mod))
         stop(
-          "NotearsMLP not available (is torch installed and notears.R loaded?).",
+          "NotearsMLP not available (is torch installed?).",
           call. = FALSE
         )
       model <- Mod(d = ncol(X), hidden = as.integer(nh))
@@ -3113,7 +4040,8 @@ causalStructureML <- function(
       self$dropout <- torch::nn_dropout(p = dropout)
     },
     .onehot = function(u, dev) {
-      torch::nnf_one_hot(u$to(dtype = torch::torch_long()), num_classes = self$n_aux)$to(
+      # u is 0-indexed; R torch one_hot expects 1-based class indices
+      torch::nnf_one_hot(u$to(dtype = torch::torch_long()) + 1L, num_classes = self$n_aux)$to(
         dtype = torch::torch_float32(),
         device = dev
       )
@@ -3130,7 +4058,7 @@ causalStructureML <- function(
       h <- self$dropout(torch::nnf_relu(self$dec_fc2(h)))
       list(mu = self$dec_mu(h), logvar = self$dec_logvar(h)$clamp(min = -10, max = 10))
     },
-    prior = function(u, dev) {
+    prior = function(u, dev = u$device) {
       u_onehot <- self$.onehot(u, dev)
       mu <- self$prior_fc(u_onehot)
       list(mu = mu, logvar = torch::torch_zeros_like(mu))
@@ -3155,6 +4083,54 @@ causalStructureML <- function(
   )
   kl <- kl_elem$sum(dim = 2L)$mean()
   -(recon - kl)
+}
+
+#' iVAE torch module constructor
+#'
+#' Builds an \code{nn_module} for identifiable VAE with auxiliary variable \code{u}.
+#'
+#' @param input_dim Number of input features.
+#' @param latent_dim Latent dimension.
+#' @param hidden_dim Hidden layer width.
+#' @param n_aux Number of auxiliary classes.
+#' @param dropout Dropout probability (default 0.15).
+#' @return An \code{nn_module} with \code{encode()}, \code{decode()}, \code{prior()}, and \code{forward()}.
+#' @export
+iVAE <- function(input_dim, latent_dim, hidden_dim, n_aux, dropout = 0.15) {
+  if (!requireNamespace("torch", quietly = TRUE))
+    stop("iVAE() requires package 'torch'.")
+  Module <- .deepnet_ivae_module(
+    as.integer(input_dim),
+    as.integer(latent_dim),
+    as.integer(hidden_dim),
+    as.integer(n_aux),
+    dropout
+  )
+  Module()
+}
+
+#' Negative ELBO loss for iVAE
+#'
+#' @param x Input batch tensor.
+#' @param dec_mu,dec_logvar Decoder Gaussian parameters.
+#' @param enc_mu,enc_logvar Encoder Gaussian parameters.
+#' @param prior_mu,prior_logvar Conditional prior Gaussian parameters.
+#' @return Scalar torch tensor (negative ELBO).
+#' @export
+elbo_loss <- function(x, dec_mu, dec_logvar, enc_mu, enc_logvar, prior_mu, prior_logvar) {
+  if (!requireNamespace("torch", quietly = TRUE))
+    stop("elbo_loss() requires package 'torch'.")
+  .deepnet_ivae_loss(
+    x,
+    list(
+      dec_mu = dec_mu,
+      dec_logvar = dec_logvar,
+      enc_mu = enc_mu,
+      enc_logvar = enc_logvar,
+      prior_mu = prior_mu,
+      prior_logvar = prior_logvar
+    )
+  )
 }
 
 #' iVAE (Identifiable Variational Autoencoder)
@@ -6541,9 +7517,36 @@ dynoTEARS <- function(x_seq, ...) dynotears(x_seq, ...)
 
 # --- Shared helpers ----------------------------------------------------------
 
+.deepnet_cuda_usable <- function(min_free_mb = 512L) {
+  if (!requireNamespace("torch", quietly = TRUE) || !torch::cuda_is_available())
+    return(FALSE)
+
+  smi_out <- tryCatch(
+    suppressWarnings(system2(
+      "nvidia-smi",
+      args = c("--query-gpu=memory.free", "--format=csv,noheader,nounits"),
+      stdout = TRUE,
+      stderr = FALSE
+    )),
+    error = function(e) character(0)
+  )
+  if (length(smi_out) >= 1L) {
+    free_mb <- suppressWarnings(as.numeric(trimws(smi_out[1L])))
+    if (!is.na(free_mb)) return(free_mb >= min_free_mb)
+  }
+
+  tryCatch({
+    x <- torch::torch_randn(c(32L, 20L, 128L), device = "cuda")
+    torch::nnf_gelu(x)
+    rm(x)
+    torch::cuda_empty_cache()
+    TRUE
+  }, error = function(e) FALSE)
+}
+
 .deepnet_attn_select_device <- function(device) {
-  if (!is.null(device)) return(device)
-  if (torch::cuda_is_available()) "cuda" else "cpu"
+  if (!is.null(device)) return(as.character(device))
+  if (.deepnet_cuda_usable(min_free_mb = 512L)) "cuda" else "cpu"
 }
 
 .deepnet_attn_build_dataset <- function(data_mat, lag, ahead = 1L) {
@@ -7080,6 +8083,11 @@ attn_causal_model <- function(
     histories[[m]]       <- hist
     val_mse_list[[m]]    <- vmse
     causal_matrices[[m]] <- cmat
+
+    rm(x_val_t, y_val_t)
+    if (identical(dev, "cuda") && exists("cuda_empty_cache", where = asNamespace("torch")))
+      torch::cuda_empty_cache()
+    gc()
   }
 
   structure(
@@ -8645,6 +9653,11 @@ gnn_causal_model <- function(
     histories[[m]]       <- hist
     val_mse_list[[m]]    <- vmse
     causal_matrices[[m]] <- cmat
+
+    rm(x_val_t, y_val_t)
+    if (identical(dev, "cuda") && exists("cuda_empty_cache", where = asNamespace("torch")))
+      torch::cuda_empty_cache()
+    gc()
   }
 
   structure(
@@ -9475,6 +10488,10 @@ counterfactual_model <- function(
     val_mse_list[[m]] <- vmse
     ate_list[[m]]     <- mean(ites)
     ite_val_list[[m]] <- ites
+
+    if (identical(dev, "cuda") && exists("cuda_empty_cache", where = asNamespace("torch")))
+      torch::cuda_empty_cache()
+    gc()
   }
 
   val_mse <- unlist(val_mse_list)
@@ -9652,3 +10669,580 @@ CRNModel <- function(data, treatment, outcome, ...)
 #' @export
 GNetModel <- function(data, treatment, outcome, ...)
   gnet_model(data, treatment, outcome, ...)
+
+
+# ==============================================================================
+# NOTEARS — continuous DAG structure learning (formerly R/notears.R)
+# ==============================================================================
+
+# Dependencies: expm, igraph, torch (for nonlinear only).
+# Nonlinear NOTEARS: h_func() uses R expm (no autograd through acyclicity);
+# loss + L1/L2 on weights are still optimized.
+
+#' Internal imports for NOTEARS utilities
+#' @name notears-imports
+#' @keywords internal
+#' @importFrom expm expm
+#' @importFrom igraph graph_from_adjacency_matrix is_dag topo_sort neighbors
+#' @importFrom igraph sample_gnm sample_pa as_adj as_adjacency_matrix sample_bipartite
+NULL
+
+###############################################################
+# UTILITIES
+###############################################################
+
+#' Set random seed for reproducibility (R and torch)
+#' @param seed Integer seed.
+#' @return
+#' Object returned by \code{set_random_seed}.
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # set_random_seed(...)
+#' }
+#' @export
+set_random_seed <- function(seed) {
+  set.seed(seed)
+  if (requireNamespace("torch", quietly = TRUE)) torch::torch_manual_seed(seed)
+}
+
+#' Check if weighted adjacency matrix W defines a DAG
+#' @param W Square numeric matrix (weighted adjacency).
+#' @return Logical.
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # is_dag(...)
+#' }
+#' @export
+is_dag <- function(W) {
+  g <- igraph::graph_from_adjacency_matrix(
+    (W != 0) * 1L, mode = "directed", diag = FALSE)
+  igraph::is_dag(g)
+}
+
+#' Simulate random DAG with expected number of edges
+#' @param d Number of nodes.
+#' @param s0 Expected number of edges.
+#' @param graph_type "ER" (Erdos-Renyi), "SF" (scale-free).
+#' @return Binary adjacency matrix (d x d).
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # simulate_dag(...)
+#' }
+#' @export
+simulate_dag <- function(d, s0, graph_type = "ER") {
+  if (graph_type == "ER") {
+    prob <- s0 / (d * (d - 1) / 2)
+    B_low <- matrix(0L, d, d)
+    for (i in 2:d)
+      for (j in 1:(i - 1))
+        if (runif(1) < prob) B_low[i, j] <- 1L
+    perm <- sample(d)
+    B_perm <- B_low[perm, ][, perm]
+    return(B_perm)
+  } else if (graph_type == "SF") {
+    g <- igraph::sample_pa(d, directed = TRUE)
+    B <- as.matrix(igraph::as_adjacency_matrix(g))
+    perm <- sample(d)
+    B_perm <- B[perm, ][, perm]
+    B_perm <- B_perm * upper.tri(B_perm)
+    return(B_perm)
+  } else {
+    stop("Unknown graph_type: ", graph_type)
+  }
+}
+
+#' Simulate SEM edge weights for a DAG
+#' @param B Binary adjacency matrix (d x d).
+#' @param w_ranges List of (low, high) ranges for weights.
+#' @return Weighted adjacency matrix (d x d).
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # simulate_parameter(...)
+#' }
+#' @export
+simulate_parameter <- function(B, w_ranges = list(c(-2.0, -0.5), c(0.5, 2.0))) {
+  d  <- nrow(B)
+  nr <- length(w_ranges)
+  W  <- matrix(0, d, d)
+  S  <- matrix(sample(0L:(nr - 1L), d * d, replace = TRUE), d, d)
+  for (i in seq_along(w_ranges)) {
+    U <- matrix(runif(d * d, w_ranges[[i]][1], w_ranges[[i]][2]), d, d)
+    W <- W + B * (S == (i - 1L)) * U
+  }
+  W
+}
+
+#' Simulate samples from linear SEM
+#' @param W Weighted adjacency matrix (d x d) of a DAG.
+#' @param n Number of samples.
+#' @param sem_type "gauss", "exp", "uniform".
+#' @param noise_scale Scalar or length-d vector; default 1.
+#' @return Sample matrix (n x d).
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # simulate_linear_sem(...)
+#' }
+#' @export
+simulate_linear_sem <- function(W, n, sem_type = "gauss", noise_scale = NULL) {
+  d <- nrow(W)
+  if (is.null(noise_scale)) noise_scale <- rep(1.0, d)
+  else if (length(noise_scale) == 1L) noise_scale <- rep(noise_scale, d)
+  if (!is_dag(W)) stop("W must represent a DAG")
+  g     <- igraph::graph_from_adjacency_matrix((W != 0)*1L, mode = "directed", diag = FALSE)
+  order <- as.integer(igraph::topo_sort(g))
+  X     <- matrix(0.0, n, d)
+  for (j in order) {
+    parents <- which(W[j, ] != 0)
+    pa_val  <- if (length(parents) == 0) rep(0, n) else
+                 as.vector(X[, parents, drop = FALSE] %*% W[j, parents])
+    X[, j] <- pa_val + switch(sem_type,
+      gauss   = rnorm(n,   sd  = noise_scale[j]),
+      exp     = rexp(n,    rate = 1 / noise_scale[j]),
+      uniform = runif(n, -noise_scale[j], noise_scale[j]),
+      stop("Unknown sem_type: ", sem_type)
+    )
+  }
+  X
+}
+
+#' Simulate samples from nonlinear SEM (mlp, mim; no GP)
+#' @param B Binary adjacency matrix (d x d).
+#' @param n Number of samples.
+#' @param sem_type "mlp" or "mim".
+#' @param noise_scale Per-variable scale; default ones.
+#' @return Sample matrix (n x d).
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # simulate_nonlinear_sem(...)
+#' }
+#' @export
+simulate_nonlinear_sem <- function(B, n, sem_type = "mlp", noise_scale = NULL) {
+  if (!is_dag(B)) stop("B must be a DAG")
+  d <- nrow(B)
+  if (is.null(noise_scale)) noise_scale <- rep(1, d)
+  g <- igraph::graph_from_adjacency_matrix(B != 0, mode = "directed")
+  order <- as.integer(igraph::topo_sort(g)$name)
+  X <- matrix(0, n, d)
+  sigmoid <- function(z) 1 / (1 + exp(-z))
+  for (j in order) {
+    parents <- as.integer(igraph::neighbors(g, j, mode = "in"))
+    pa_val <- if (length(parents) == 0) rep(0, n) else X[, parents, drop = FALSE]
+    scale_j <- noise_scale[j]
+    z <- rnorm(n, sd = scale_j)
+    if (length(parents) == 0) {
+      X[, j] <- z
+      next
+    }
+    pa_size <- length(parents)
+    if (sem_type == "mlp") {
+      hidden <- 100
+      W1 <- matrix(runif(pa_size * hidden, 0.5, 2), pa_size, hidden)
+      W1[sample(pa_size * hidden, floor(pa_size * hidden / 2))] <- -W1[sample(pa_size * hidden, floor(pa_size * hidden / 2))]
+      W2 <- runif(hidden, 0.5, 2)
+      W2[sample(hidden, floor(hidden / 2))] <- -W2[sample(hidden, floor(hidden / 2))]
+      X[, j] <- (sigmoid(pa_val %*% W1) %*% W2) + z
+    } else if (sem_type == "mim") {
+      w1 <- runif(pa_size, 0.5, 2)
+      w1[sample(pa_size, floor(pa_size / 2))] <- -w1[sample(pa_size, floor(pa_size / 2))]
+      w2 <- runif(pa_size, 0.5, 2)
+      w2[sample(pa_size, floor(pa_size / 2))] <- -w2[sample(pa_size, floor(pa_size / 2))]
+      w3 <- runif(pa_size, 0.5, 2)
+      w3[sample(pa_size, floor(pa_size / 2))] <- -w3[sample(pa_size, floor(pa_size / 2))]
+      X[, j] <- tanh(pa_val %*% w1) + cos(pa_val %*% w2) + sin(pa_val %*% w3) + z
+    } else {
+      stop("Only sem_type 'mlp' and 'mim' supported (no GP)")
+    }
+  }
+  X
+}
+
+#' Accuracy metrics: estimated graph vs ground truth
+#' @param B_true Ground truth binary adjacency (d x d).
+#' @param B_est Estimated binary adjacency (d x d).
+#' @return List with fdr, tpr, fpr, shd, nnz.
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # count_accuracy(...)
+#' }
+#' @export
+count_accuracy <- function(B_true, B_est) {
+  B_true     <- (B_true != 0) * 1L
+  B_est      <- (B_est != 0) * 1L
+  d          <- nrow(B_true)
+  pred_edges <- which(B_est   == 1)
+  cond       <- which(B_true  == 1)
+  cond_rev   <- which(t(B_true) == 1)
+  cond_skel  <- union(cond, cond_rev)
+  tp         <- intersect(pred_edges, cond)
+  fp         <- setdiff(pred_edges, cond_skel)
+  rev_       <- intersect(setdiff(pred_edges, cond), cond_rev)
+  pred_size  <- length(pred_edges)
+  cond_neg   <- 0.5 * d * (d - 1) - length(cond)
+  fdr <- (length(fp) + length(rev_)) / max(pred_size, 1)
+  tpr <- length(tp) / max(length(cond), 1)
+  fpr <- (length(fp) + length(rev_)) / max(cond_neg,  1)
+  pred_lower <- which(lower.tri(B_est  + t(B_est))  & (B_est  + t(B_est))  > 0)
+  cond_lower <- which(lower.tri(B_true + t(B_true)) & (B_true + t(B_true)) > 0)
+  shd <- length(setdiff(pred_lower, cond_lower)) +
+         length(setdiff(cond_lower, pred_lower)) + length(rev_)
+  list(fdr = fdr, tpr = tpr, fpr = fpr, shd = shd, nnz = pred_size)
+}
+
+###############################################################
+# LINEAR NOTEARS (PURE R) — Augmented Lagrangian with L-BFGS-B
+###############################################################
+
+#' Linear NOTEARS: min L(W;X) + lambda1||W||_1 s.t. h(W)=0
+#' @param X Data matrix (n x d).
+#' @param lambda1 L1 penalty.
+#' @param loss_type "l2", "logistic", "poisson".
+#' @param max_iter Max dual ascent steps.
+#' @param h_tol Stop if |h(W)| <= h_tol.
+#' @param rho_max Stop if rho >= rho_max.
+#' @param w_threshold Zero edges with |weight| < threshold.
+#' @return Estimated weighted adjacency (d x d).
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # notears_linear(...)
+#' }
+#' @export
+notears_linear <- function(X, lambda1 = 0.1, loss_type = "l2",
+                           max_iter = 100L, h_tol = 1e-8,
+                           rho_max = 1e16, w_threshold = 0.3) {
+  n <- nrow(X); d <- ncol(X)
+  if (loss_type == "l2") X <- sweep(X, 2, colMeans(X))
+  sigmoid <- function(z) 1 / (1 + exp(-z))
+  loss_fn <- function(W) {
+    M <- X %*% W
+    switch(loss_type,
+      l2 = {
+        R <- X - M
+        list(loss = 0.5 / n * sum(R^2),
+             grad = -(1/n) * t(X) %*% R)
+      },
+      logistic = list(
+        loss = (1/n) * sum(log1p(exp(M)) - X * M),
+        grad = (1/n) * t(X) %*% (sigmoid(M) - X)
+      ),
+      poisson = {
+        S <- exp(M)
+        list(loss = (1/n) * sum(S - X * M),
+             grad = (1/n) * t(X) %*% (S - X))
+      },
+      stop("Unknown loss_type: ", loss_type)
+    )
+  }
+  h_fn <- function(W) {
+    E <- expm::expm(W * W)
+    list(h = sum(diag(E)) - d, grad = t(E) * W * 2)
+  }
+  toW  <- function(w) matrix(w[1:(d*d)] - w[(d*d+1):(2*d*d)], d, d)
+  fn_g <- function(wv) {
+    W  <- toW(wv)
+    L  <- loss_fn(W); H <- h_fn(W)
+    obj <- L$loss + 0.5 * rho * H$h^2 + alpha * H$h + lambda1 * sum(wv)
+    Gs  <- L$grad + (rho * H$h + alpha) * H$grad
+    list(obj = obj, grad = c(as.vector(Gs) + lambda1, -as.vector(Gs) + lambda1))
+  }
+  w  <- rep(0, 2 * d * d)
+  lb <- rep(0, 2 * d * d); ub <- rep(Inf, 2 * d * d)
+  for (i in seq_len(d)) {
+    dg <- (i - 1) * d + i
+    lb[dg] <- ub[dg] <- lb[d*d + dg] <- ub[d*d + dg] <- 0
+  }
+  rho <- 1.0; alpha <- 0.0; h_old <- Inf
+  for (iter in seq_len(max_iter)) {
+    repeat {
+      sol <- optim(w,
+                   fn = function(wv) fn_g(wv)$obj,
+                   gr = function(wv) fn_g(wv)$grad,
+                   method = "L-BFGS-B", lower = lb, upper = ub,
+                   control = list(maxit = 1000L, factr = 1e7))
+      w_new <- sol$par
+      h_new <- h_fn(toW(w_new))$h
+      if (h_new > 0.25 * h_old && rho < rho_max) rho <- rho * 10
+      else break
+    }
+    w <- w_new; h_old <- h_new
+    alpha <- alpha + rho * h_old
+    if (abs(h_old) <= h_tol || rho >= rho_max) break
+  }
+  W_est <- toW(w)
+  W_est[abs(W_est) < w_threshold] <- 0
+  W_est
+}
+
+###############################################################
+# NONLINEAR NOTEARS (R‑TORCH) — MLP and Sobolev, custom autograd for trace(expm)
+###############################################################
+
+if (requireNamespace("torch", quietly = TRUE)) {
+
+  # Custom differentiable trace(expm(A)) via autograd
+  trace_expm_fn <- torch::autograd_function(
+    forward = function(ctx, A) {
+      A_r <- as.matrix(A$detach()$cpu())
+      E_r <- expm::expm(A_r)
+      f   <- sum(diag(E_r))
+      E_t <- torch::torch_tensor(E_r, dtype = A$dtype, device = A$device)
+      ctx$save_for_backward(E_t)
+      torch::torch_tensor(f, dtype = A$dtype, device = A$device)
+    },
+    backward = function(ctx, grad_output) {
+      E <- ctx$saved_variables[[1]]
+      list(grad_output$reshape(c(1L, 1L)) * E$t())
+    }
+  )
+
+  # --- LocallyConnected layer (per-node linear map) ---
+  LocallyConnected <- torch::nn_module(
+    "LocallyConnected",
+    initialize = function(num_linear, in_features, out_features, bias = TRUE) {
+      self$num_linear  <- num_linear
+      self$in_features <- in_features
+      self$weight <- torch::nn_parameter(
+        torch::torch_randn(num_linear, in_features, out_features))
+      if (bias) {
+        self$bias <- torch::nn_parameter(torch::torch_zeros(num_linear, out_features))
+      } else {
+        self$bias <- NULL
+      }
+    },
+    forward = function(x) {
+      out <- torch::torch_matmul(x$unsqueeze(3L), self$weight$unsqueeze(1L))$squeeze(3L)
+      if (!is.null(self$bias)) out <- out + self$bias
+      out
+    }
+  )
+
+  # --- NotearsMLP ---
+  NotearsMLP <- torch::nn_module(
+    "NotearsMLP",
+    initialize = function(d, hidden, bias = TRUE) {
+      self$d      <- d
+      self$hidden <- hidden
+      self$fc1_pos <- torch::nn_linear(d, d * hidden, bias = bias)
+      self$fc1_neg <- torch::nn_linear(d, d * hidden, bias = bias)
+      self$lc1     <- LocallyConnected(d, hidden, 1L, bias = bias)
+    },
+    forward = function(x) {
+      n <- x$size(1L)
+      z <- self$fc1_pos(x) - self$fc1_neg(x)
+      z <- z$view(c(n, self$d, self$hidden))
+      z <- torch::nnf_sigmoid(z)
+      z <- self$lc1(z)
+      z$squeeze(3L)
+    },
+    h_func = function() {
+      w <- (self$fc1_pos$weight - self$fc1_neg$weight)$view(c(self$d, self$hidden, self$d))
+      A <- torch::torch_sum(w * w, dim = 2L)$t()
+      trace_expm_fn(A) - self$d
+    },
+    fc1_l1_reg = function() {
+      torch::torch_sum(self$fc1_pos$weight + self$fc1_neg$weight)
+    },
+    l2_reg = function() {
+      w_diff <- self$fc1_pos$weight - self$fc1_neg$weight
+      reg <- torch::torch_sum(w_diff^2)
+      reg <- reg + torch::torch_sum(self$lc1$weight^2)
+      reg
+    },
+    fc1_to_adj = function() {
+      w <- (self$fc1_pos$weight - self$fc1_neg$weight)$view(c(self$d, self$hidden, self$d))
+      A <- torch::torch_sum(w * w, dim = 2L)$t()
+      as.matrix(torch::torch_sqrt(A)$detach()$cpu())
+    }
+  )
+
+  # --- NotearsSobolev ---
+  NotearsSobolev <- torch::nn_module(
+    "NotearsSobolev",
+    initialize = function(d, k = 5L, bias = FALSE) {
+      self$d <- d; self$k <- k
+      self$fc1_pos <- torch::nn_linear(d * k, d, bias = bias)
+      self$fc1_neg <- torch::nn_linear(d * k, d, bias = bias)
+      torch::nn_init_zeros_(self$fc1_pos$weight)
+      torch::nn_init_zeros_(self$fc1_neg$weight)
+    },
+    sobolev_basis = function(x) {
+      seq_list <- vector("list", self$k)
+      for (kk in seq_len(self$k)) {
+        mu  <- 2 / ((2 * (kk - 1) + 1) * pi)
+        psi <- mu * torch::torch_sin(x / mu)
+        seq_list[[kk]] <- psi
+      }
+      torch::torch_stack(seq_list, dim = 3L)$view(c(x$size(1L), self$d * self$k))
+    },
+    forward = function(x) {
+      bases <- self$sobolev_basis(x)
+      self$fc1_pos(bases) - self$fc1_neg(bases)
+    },
+    h_func = function() {
+      w <- (self$fc1_pos$weight - self$fc1_neg$weight)$view(c(self$d, self$d, self$k))
+      A <- torch::torch_sum(w * w, dim = 3L)$t()
+      trace_expm_fn(A) - self$d
+    },
+    fc1_l1_reg = function() {
+      torch::torch_sum(self$fc1_pos$weight + self$fc1_neg$weight)
+    },
+    l2_reg = function() {
+      torch::torch_sum((self$fc1_pos$weight - self$fc1_neg$weight)^2)
+    },
+    fc1_to_adj = function() {
+      w <- (self$fc1_pos$weight - self$fc1_neg$weight)$view(c(self$d, self$d, self$k))
+      A <- torch::torch_sum(w * w, dim = 3L)$t()
+      as.matrix(torch::torch_sqrt(A)$detach()$cpu())
+    }
+  )
+
+  # --- Nonlinear NOTEARS training (Adam + LBFGS) ---
+  #' Nonlinear NOTEARS via Adam then L-BFGS (MLP or Sobolev)
+  #' @name notears_nonlinear
+  #' @param model NotearsMLP or NotearsSobolev (torch nn_module).
+  #' @param X Data matrix (n x d).
+  #' @param lambda1 L1 on fc1 weights.
+  #' @param lambda2 L2 on weights.
+  #' @param max_iter Max Adam iterations.
+  #' @param lbfgs_iter L-BFGS fine-tuning steps.
+  #' @param w_threshold Zero edges below threshold.
+  #' @param lr Learning rate for Adam.
+  #' @param verbose Print progress every 50 iterations.
+  #' @return Estimated weighted adjacency (d x d), with attr "train_losses" if from Adam phase.
+  #' @export
+  notears_nonlinear <- function(model, X, lambda1 = 0.005, lambda2 = 0.01,
+                                max_iter = 300L, lbfgs_iter = 10L,
+                                w_threshold = 0.3, lr = 1e-2, verbose = TRUE) {
+    n      <- nrow(X)
+    X_t    <- torch::torch_tensor(X, dtype = torch::torch_double())
+    model  <- model$to(dtype = torch::torch_double())
+    opt    <- torch::optim_adam(model$parameters, lr = lr)
+    train_losses <- numeric(max_iter)
+    for (it in seq_len(max_iter)) {
+      model$train(TRUE)
+      opt$zero_grad()
+      X_hat <- model(X_t)
+      loss  <- 0.5 / n * torch::torch_sum((X_t - X_hat)^2)
+      reg   <- lambda1 * model$fc1_l1_reg() + lambda2 * model$l2_reg()
+      h     <- model$h_func()
+      total <- loss + reg + 100.0 * h * h
+      total$backward()
+      opt$step()
+      train_losses[it] <- as.numeric(loss)
+      if (verbose && it %% 50L == 0L)
+        message("  Iter ", it, " | loss: ", round(as.numeric(loss), 5),
+                " | h: ", round(as.numeric(h), 6))
+    }
+    opt_lbfgs <- torch::optim_lbfgs(model$parameters, lr = 1.0, max_iter = 20L)
+    closure <- function() {
+      opt_lbfgs$zero_grad()
+      X_hat <- model(X_t)
+      loss  <- 0.5 / n * torch::torch_sum((X_t - X_hat)^2)
+      reg   <- lambda1 * model$fc1_l1_reg() + lambda2 * model$l2_reg()
+      h     <- model$h_func()
+      total <- loss + reg + 100.0 * h * h
+      total$backward()
+      total
+    }
+    for (i in seq_len(lbfgs_iter)) opt_lbfgs$step(closure)
+    W_est        <- model$fc1_to_adj()
+    W_est[abs(W_est) < w_threshold] <- 0.0
+    attr(W_est, "train_losses") <- train_losses
+    W_est
+  }
+}
+
+###############################################################
+# DEMOS
+###############################################################
+
+#' Demo: linear NOTEARS on synthetic data
+#' @return
+#' Object returned by \code{demo_linear}.
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # demo_linear(...)
+#' }
+#' @export
+demo_linear <- function() {
+  set_random_seed(1)
+  n <- 100
+  d <- 20
+  s0 <- 20
+  B <- simulate_dag(d, s0)
+  W <- simulate_parameter(B)
+  X <- simulate_linear_sem(W, n)
+  W_est <- notears_linear(X, 0.1, "l2")
+  # B is row=child,col=parent; notears_linear returns row=parent,col=child → use t()
+  print(count_accuracy(B, (t(W_est) != 0) + 0))
+}
+
+#' Demo: nonlinear NOTEARS (MLP) on synthetic data
+#' @return
+#' Object returned by \code{demo_nonlinear_mlp}.
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # demo_nonlinear_mlp(...)
+#' }
+#' @export
+demo_nonlinear_mlp <- function() {
+  set_random_seed(123)
+  n <- 200
+  d <- 5
+  s0 <- 9
+  B <- simulate_dag(d, s0)
+  X <- simulate_nonlinear_sem(B, n, sem_type = "mim")
+  model <- NotearsMLP(d = d, hidden = 10)
+  W_est <- notears_nonlinear(model, X, lambda1 = 0.01, lambda2 = 0.01)
+  print(count_accuracy(B, (W_est != 0) + 0))
+}
+
+#' Demo: nonlinear NOTEARS (Sobolev) on random data
+#' @return
+#' Object returned by \code{demo_nonlinear_sobolev}.
+#' @seealso
+#' \code{\link{RCausalML-package}}
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' # demo_nonlinear_sobolev(...)
+#' }
+#' @export
+demo_nonlinear_sobolev <- function() {
+  set_random_seed(1)
+  n <- 200
+  d <- 5
+  X <- matrix(rnorm(n * d), n, d)
+  model <- NotearsSobolev(d = d, k = 5)
+  W_est <- notears_nonlinear(model, X)
+  print(W_est)
+}

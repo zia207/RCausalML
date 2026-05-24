@@ -11,10 +11,155 @@
   margin-bottom: 2rem;
 }
 
+/* Blue navbar with white text */
+nav.navbar.bg-primary,
+nav.navbar.bg-light {
+  background-color: #2C6FAC !important;
+  border-bottom: 1px solid #1a4a75;
+  box-shadow: none;
+}
+
+nav.navbar.bg-primary .navbar-brand,
+nav.navbar.bg-primary .nav-link,
+nav.navbar.bg-light .navbar-brand,
+nav.navbar.bg-light .nav-link {
+  color: #ffffff !important;
+}
+
+nav.navbar.bg-primary .navbar-brand .version,
+nav.navbar.bg-light .navbar-brand .version,
+nav.navbar.bg-primary .nav-text,
+nav.navbar.bg-light .nav-text {
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+nav.navbar.bg-primary .nav-link:hover,
+nav.navbar.bg-primary .nav-link:focus,
+nav.navbar.bg-light .nav-link:hover,
+nav.navbar.bg-light .nav-link:focus {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+nav.navbar.bg-primary .navbar-toggler,
+nav.navbar.bg-light .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+nav.navbar.bg-primary .navbar-toggler-icon,
+nav.navbar.bg-light .navbar-toggler-icon {
+  filter: invert(1);
+}
+
+/* Tutorial pages: offset fixed pkgdown navbar */
+body.rcausalml-tutorial {
+  padding-top: 3.5rem;
+}
+
+/* Quarto left sidebar TOC on tutorial pages */
+body.rcausalml-tutorial #quarto-content.page-layout-article {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+}
+
+body.rcausalml-tutorial #quarto-margin-sidebar,
+body.rcausalml-tutorial #quarto-sidebar-toc-left {
+  position: sticky;
+  top: 4rem;
+  align-self: flex-start;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  padding-right: 1rem;
+  border-right: 1px solid #dee2e6;
+}
+
+body.rcausalml-tutorial #toc-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6c757d;
+  margin-bottom: 0.75rem;
+}
+
+body.rcausalml-tutorial #TOC .nav-link {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #495057;
+  padding: 0.15rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 0.5rem;
+}
+
+body.rcausalml-tutorial #TOC .nav-link:hover,
+body.rcausalml-tutorial #TOC .nav-link.active {
+  color: #2C6FAC;
+  font-weight: 600;
+  border-left-color: #2C6FAC;
+}
+
+body.rcausalml-tutorial #TOC ul {
+  padding-left: 0.85rem;
+}
+
+body.rcausalml-tutorial main.content {
+  max-width: none;
+}
+
+@media (max-width: 991.98px) {
+  body.rcausalml-tutorial #quarto-content.page-layout-article {
+    padding: 1rem 1.25rem 2rem;
+  }
+
+  body.rcausalml-tutorial #quarto-margin-sidebar,
+  body.rcausalml-tutorial #quarto-sidebar-toc-left {
+    position: static;
+    max-height: 220px;
+    border-right: none;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+/* dplyr-style home header: hex logo left of title */
+.page-header-dplyr {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  border-bottom: none;
+  min-height: auto;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0;
+}
+
+.page-header-dplyr .pkg-hex-logo {
+  float: none;
+  width: 120px;
+  max-width: none;
+  height: auto;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.page-header-dplyr h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: #373a3c;
+}
+
 /* Logo sizing */
 .navbar-brand img {
   max-height: 36px;
   margin-right: 8px;
+}
+
+/* Navbar */
+.navbar {
+  box-shadow: none;
 }
 
 /* Reference index section headers */
@@ -43,11 +188,6 @@ code {
   background-color: #f8f9fa;
   padding: 0.1em 0.3em;
   border-radius: 3px;
-}
-
-/* Navbar */
-.navbar {
-  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
 }
 
 /* Footer */

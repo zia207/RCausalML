@@ -1,0 +1,12 @@
+/* RCausalML tutorial website extras */
+
+code {
+  color: #c0392b;
+  background-color: #f8f9fa;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  background-color: rgba(44, 111, 172, 0.05);
+}

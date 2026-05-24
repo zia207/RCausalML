@@ -1,0 +1,859 @@
+# 2. Causal Tree: Single Causal Tree for Heterogeneous Treatment Effects {.unnumbered}
+
+Causal trees are a powerful tool for uncovering **heterogeneous treatment effects** in observational data. In this tutorial, we'll build a **single causal tree** using the `{RCausalML}` package in R, which implements the honest estimation approach proposed by Athey and Imbens (2016) [[7]]. We use  a synthetic  and a real-world dataset with known treatment effect heterogeneity to illustrate the method. By the end of this tutorial, you'll understand how to fit a causal tree, interpret its structure, and validate the estimated treatment effects.
+
+## Overview
+
+A **single causal tree** is a decision tree that partitions data to identify **subgroups with different treatment effects**.
+
+| Standard Decision Tree | Causal Tree |
+|----------------------|-------------|
+| Predicts outcome $Y$ | Estimates treatment effect $\tau$ |
+| Splits to minimize MSE of $Y$ | Splits to maximize difference in $\tau$ between children |
+| Output: Predicted $Y$ | Output: Estimated CATE (Conditional Average Treatment Effect) |
+
+**Key Innovation**: *Honest Estimation*
+- Data is split into two subsamples:
+  - **Training sample**: Determines where to split the tree
+  - **Estimation sample**: Calculates treatment effects in each leaf
+- This prevents overfitting and yields unbiased causal estimates
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains common scientific and causal-inference terms used in this notebook.
+
+### 1) Causal Effect
+
+- **Explanation**: The change in outcome caused by a treatment (not just correlated with it).
+- **Example**: If a policy increases the average test score by 5 points, the causal effect is +5.
+
+### 2) Treatment
+
+- **Explanation**: The intervention, policy, or exposure whose effect we want to estimate.
+- **Example**: In this notebook, `repeal = 1` means a state received the policy treatment.
+
+### 3) Outcome
+
+- **Explanation**: The measured result affected by treatment.
+- **Example**: `lnr` (logged gonorrhea rate) is the outcome variable.
+
+### 4) Covariate
+
+- **Explanation**: A background variable that may influence treatment assignment and/or outcome.
+- **Example**: Income, poverty, and age are covariates in the abortion dataset.
+
+### 5) Heterogeneous Treatment Effect
+
+- **Explanation**: The treatment effect is not the same for everyone; it varies by subgroup.
+- **Example**: A policy may have a stronger effect for younger people than older people.
+
+### 6) CATE (Conditional Average Treatment Effect)
+
+- **Explanation**: The average treatment effect for a specific subgroup defined by covariates.
+- **Example**: CATE for teens with low income might be +0.12, while high income might be +0.03.
+
+### 7) Confounding
+
+- **Explanation**: A third variable affects both treatment and outcome, creating biased estimates.
+- **Example**: If poorer states are more likely to adopt a policy and also have higher disease rates, poverty can confound the estimate.
+
+### 8) Overfitting
+
+- **Explanation**: A model learns noise in training data and performs poorly on new data.
+- **Example**: A very deep tree with tiny leaves fits training data well but gives unstable causal effects on test data.
+
+### 9) Honest Estimation
+
+- **Explanation**: Use one part of data to choose splits and another part to estimate leaf effects.
+- **Example**: Train structure on 50% of data, then estimate treatment effects on the other 50%.
+
+### 10) Pruning
+
+- **Explanation**: Removing weak branches to simplify the tree and improve generalization.
+- **Example**: After cross-validation, branches that do not reduce error are cut off.
+
+### 11) Common Support (Overlap)
+
+- **Explanation**: Treated and control units should both exist across covariate ranges.
+- **Example**: If all high-income states are treated and none are control, causal comparison is weak there.
+
+### 12) Permutation Test
+
+- **Explanation**: A nonparametric test that shuffles treatment labels to build a null distribution.
+- **Example**: If observed CATE variance is much larger than shuffled-data variance, heterogeneity is likely real.
+
+## How Causal Trees Split
+
+### Standard CART Splitting Criterion
+
+Minimize within-node variance of outcome $Y$:
+
+$$\text{Criterion} = \sum_{i \in \text{left}} (Y_i - \bar{Y}_\text{left})^2 + \sum_{i \in \text{right}} (Y_i - \bar{Y}_\text{right})^2$$
+
+### Causal Tree Splitting Criterion
+
+Maximize **difference in treatment effects** between child nodes:
+
+$$\text{Criterion} = \frac{n_\text{left} \cdot n_\text{right}}{n_\text{parent}} \cdot (\hat{\tau}_\text{left} - \hat{\tau}_\text{right})^2$$
+
+Where:
+
+- $\hat{\tau}_\text{left} = \bar{Y}_\text{treated,left} - \bar{Y}_\text{control,left}$
+- $\hat{\tau}_\text{right} = \bar{Y}_\text{treated,right} - \bar{Y}_\text{control,right}$
+
+### Honest Estimation Algorithm
+
+1. Randomly split data into:
+   - Training subsample (e.g., 50%): For determining splits
+   - Estimation subsample (e.g., 50%): For estimating treatment effects
+
+2. Grow tree using training subsample:
+   - At each node, evaluate all possible splits
+   - Choose split that maximizes treatment effect heterogeneity
+   - Stop when min.node.size reached or no improvement
+
+3. Estimate treatment effects using estimation subsample:
+   - For each leaf, compute: τ̂ = mean(Y|treated) - mean(Y|control)
+   - Compute standard errors for confidence intervals
+
+4. Prune tree using cross-validation on estimation subsample
+
+### When NOT to Use a Single Causal Tree
+
+ **Small samples** (< 200 observations per subgroup): Estimates will be unstable  
+ **High-dimensional covariates** (p > n): Use causal forests or regularization first  
+ **Primary goal is prediction accuracy**: Forests outperform single trees  
+ **Weak overlap / poor common support**: If propensity of repeal is near 0 or 1 in some states, consider matching first  
+ 
+### Limitations of Single Causal Trees
+ 
+ - `High variance`: Estimates can be noisy, especially with small samples or many covariates
+ - `Instability`: Small changes in data can lead to different splits
+ - `Bias-variance tradeoff`: Honest estimation reduces bias but can increase variance
+ - `Interpretability `can be challenging if tree is large or has many splits
+ - `Pruning` is crucial to avoid overfitting, but optimal pruning can be difficult to determine
+ - `Does not leverage` information across similar subgroups (unlike forests), so may miss subtle patterns
+ - `Requires careful` tuning of parameters (minsize, cp, maxdepth) to balance fit and generalization
+ 
+## Causal Tree in R
+
+This tutorial uses the `RCausalML`` package for honest causal trees. We'll cover: 
+
+- Getting started Causal Tree with simulated data
+- Use case with the `abortion` dataset from `{causaldata}`
+
+Each section includes:
+
+- Data preparation 
+- Model fitting with `causal_tree()`
+- Visualization of the tree and treatment effects
+- Interpretation of results
+- Validation checks for balance and heterogeneity
+
+## Setup
+
+### Load and Check Required Libraries
+
+```{r}
+#| label: setup-packages
+packages <- c('tidyverse', 
+              'RCausalML', 
+              'rpart.plot', 
+              'shapviz',
+              'kernelshap')
+```
+
+
+### Install Missing Packages (if needed)
+
+```{r}
+#| label: install-missing-packages
+#| warning: false
+#| error: false
+# new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+# if(length(new_packages)) install.packages(new_packages)
+# In an R session
+# install.packages(
+#   "/home/zia207/WebSites/R_Website/Causal_Inference_R/Cursor_R/RCausalML",
+#   repos = NULL,
+#   type = "source"
+# )
+```
+
+### Load Required Libraries
+
+```{r}
+#| label: load-required-libraries
+# When rendering from package root, use local RCausalML (so causal_tree fixes are used)
+if (file.exists("DESCRIPTION") && requireNamespace("devtools", quietly = TRUE)) {
+  try(devtools::load_all(".", quiet = TRUE), silent = TRUE)
+}
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+## Getting started with simulated data
+
+We use **simulated data** from `synthetic_data()` (see `R/synthetic_data.R`) to illustrate fitting a causal tree, estimating treatment effects on a test set, and visualizing results. The data has a known heterogeneous treatment effect structure, which is useful for validation.
+
+### Data generation
+
+Generate data with `synthetic_data()` from **RCausalML**: nonlinear baseline, heterogeneous treatment effects, and propensity that depends on covariates.
+
+```{r}
+#| label: sim-data-generation
+set.seed(42)
+dat <- synthetic_data(mode = 2, n = 2000, p = 12, sigma = 2)
+# Extract components
+y_sim   <- dat$y
+X_sim   <- dat$X
+w_sim   <- dat$w
+tau_sim <- dat$tau   # true CATE (for evaluation)
+```
+
+Create a data frame with outcome and treatment for the causal tree (use a subset of columns as covariates for clarity):
+
+```{r}
+#| label: sim-data-frame
+feature_names <- paste0("X", seq_len(ncol(X_sim)))
+df_sim <- as.data.frame(X_sim)
+colnames(df_sim) <- feature_names
+df_sim$outcome   <- y_sim
+df_sim$treatment <- w_sim
+df_sim$tau_true  <- tau_sim
+cat("Simulated data:", nrow(df_sim), "rows,", ncol(X_sim), "covariates\n")
+summary(df_sim$tau_true)
+table(df_sim$treatment)
+```
+
+### Train-test split
+
+Split into training (80%) and test (20%) for honest evaluation of CATE estimates.
+
+```{r}
+#| label: sim-train-test-split
+train_prop <- 0.8
+n_sim <- nrow(df_sim)
+train_idx_sim <- sample(1:n_sim, size = round(train_prop * n_sim))
+df_train <- df_sim[train_idx_sim, ]
+df_test  <- df_sim[-train_idx_sim, ]
+cat("Train:", nrow(df_train), "| Test:", nrow(df_test), "\n")
+```
+
+### Fitting a causal tree on training data
+
+Fit an honest causal tree using `causal_tree()` from **RCausalML** (see `R/causalTree.R`). Use the training sample only for structure and estimation splits.
+
+```{r}
+#| label: fit-causal-tree-sim
+if (!exists("na.causalTree")) na.causalTree <- function(object, ...) object
+
+covar_names_sim <- setdiff(colnames(df_train), c("outcome", "treatment", "tau_true"))
+formula_sim <- as.formula(paste("outcome ~", paste(covar_names_sim, collapse = " + ")))
+
+# Honest split: half for tree structure, half for leaf estimation
+n_obs <- nrow(df_train)
+n_tree <- max(1L, floor(n_obs / 2))
+tree_idx <- sample(seq_len(n_obs), size = n_tree, replace = FALSE)
+est_idx_sim <- setdiff(seq_len(n_obs), tree_idx)
+
+ct_sim <- causal_tree(
+  formula   = formula_sim,
+  data      = df_train,
+  treatment = as.vector(df_train$treatment),
+  honest    = TRUE,
+  est_idx   = est_idx_sim,
+  split.Rule   = "CT",
+  cv.option    = "CT",
+  split.Bucket = FALSE,
+  minsize   = 20L,
+  cp        = 0,
+  xval      = 10L,
+  maxdepth  = 5
+)
+
+# Prune by minimum CV error
+cpt_sim <- ct_sim$cptable
+opcp_sim <- if (nrow(cpt_sim) > 1) cpt_sim[, 1][which.min(cpt_sim[, 4])] else 0.01
+ct_sim <- prune(ct_sim, cp = max(opcp_sim, 0.005))
+summary(ct_sim)
+```
+
+### Estimating treatment effects on test data
+
+Predict CATE for the test set and compare to the true (simulated) treatment effect.
+
+```{r}
+#| label: sim-test-cate-estimation
+#| warning: false
+# Predict CATE on test set (same covariate columns as training)
+df_test$cate_pred <- predict(ct_sim, newdata = df_test, type = "vector")
+# True CATE is in tau_true
+df_test$tau_true <- df_sim$tau_true[-train_idx_sim]
+
+# Summary of predictions vs truth
+cat("Test set CATE summary:\n")
+cat("  Predicted CATE: mean =", round(mean(df_test$cate_pred, na.rm = TRUE), 4),
+    ", sd =", round(sd(df_test$cate_pred, na.rm = TRUE), 4), "\n")
+cat("  True CATE:      mean =", round(mean(df_test$tau_true, na.rm = TRUE), 4),
+    ", sd =", round(sd(df_test$tau_true, na.rm = TRUE), 4), "\n")
+# Correlation (on complete cases)
+valid <- complete.cases(df_test$cate_pred, df_test$tau_true)
+if (sum(valid) > 1) {
+  cat("  Correlation (pred vs true):", round(cor(df_test$cate_pred[valid], df_test$tau_true[valid]), 4), "\n")
+}
+```
+
+
+## Use Case
+
+We use the **abortion** dataset from the `{causaldata}` package, which examines the effect of abortion legalization (early repeal) on gonorrhea incidence among 15–19 year olds as a proxy for risky sexual behavior. By the end of this tutorial, you'll understand how to use causal trees to identify subgroups where the policy had stronger (or weaker) effects, and how to validate your findings.
+
+### Data
+
+R package `{causaldata}` provides a collection of datasets for causal inference. We integrate {causaldata} with {RCuasalML} to easily load datasets. In this tutorial, we use will use  **abortion** dataset, which contains state-year observations on gonorrhea rates among 15–19 year olds, with a binary indicator for early repeal of abortion prohibition. This dataset is commonly used to study the effects of abortion legalization on risky sexual behavior among teenagers, proxied by gonorrhea rates.
+
+
+This dataset is commonly used to study the **causal effects of abortion legalization policies** (specifically, early repeal of abortion prohibitions in certain U.S. states) on **risky sexual behavior** among teenagers. Risky behavior is proxied by the **incidence of gonorrhea** (a sexually transmitted infection) among 15–19 year olds. The idea is that access to abortion might influence sexual decision-making or risk-taking behavior in this age group.
+
+Here are the most important columns (based on the package documentation):
+
+- **fip** — State FIPS code (numeric identifier for each U.S. state)
+- **age** — Age in years (focused on 15–19 year olds)
+- **race** — Race: 1 = white, 2 = black (or similar coding)
+- **year** — Calendar year
+- **t** — A rescaled time variable (often centered around policy change for DiD)
+- **sex** — Sex: 1 = male, 2 = female
+- **totpop** — Total population (state-level)
+- **ir** — Incarcerated males per 100,000 (proxy for criminal justice environment)
+- **crack** — Crack cocaine index (proxy for drug epidemic intensity)
+- **alcohol** — Alcohol consumption per capita
+- **income** — Real income per capita
+- **ur** — State unemployment rate
+- **poverty** — Poverty rate
+- **repeal** — Treatment indicator: 1 = state had an **early repeal** of abortion prohibition (treatment group), 0 = otherwise (control group). This is the main policy/treatment variable.
+- **pi** — Parental involvement law in effect (another policy control)
+- **bf15** — Indicator: Is a black female in the 15–19 age group (useful for subgroup analysis)
+
+
+```{r}
+#| label: list-causaldata-datasets
+# causaldata integration
+list_causaldata_datasets()
+```
+
+### Load Data
+
+The **outcome variable** is typically **lnr** (logged gonorrhea rate per 100,000 population among 15–19 year olds), which measures the logged incidence of gonorrhea as a proxy for risky sexual behavior.
+
+
+```{r}
+#| label: load-abortion-data
+# Load abortion dataset (use $data for the raw dataframe; load_causaldata returns list with X, w, y, data, citation)
+abortion <- load_causaldata("abortion")$data
+# Quick look
+head(abortion)
+str(abortion)
+summary(abortion$repeal)      # Treatment balance
+table(abortion$repeal, abortion$race)  # Example crosstab
+```
+
+### Data Visualization
+
+```{r}
+#| label: abortion-data-visualization
+#| fig.width: 12
+#| fig.height: 12
+
+# Visualize treatment assignment, outcome, and covariate distributions in a panel layout
+
+library(gridExtra)
+library(ggplot2)
+
+# Treatment assignment barplot (as ggplot)
+df_tab <- data.frame(group = factor(c("Control", "Treated"), levels = c("Control", "Treated")),
+                     n = as.numeric(table(abortion$repeal)))
+plt_treat <- ggplot(df_tab, aes(x = group, y = n, fill = group)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  scale_fill_manual(values = c("skyblue", "tomato")) +
+  labs(title = "Treatment Group Sizes", x = "", y = "Number of Observations") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Outcome by treatment boxplot (as ggplot)
+plt_outcome <- ggplot(abortion, aes(x = factor(repeal, labels = c("Control", "Treated")), y = lnr, fill = factor(repeal))) +
+  geom_boxplot(alpha = 0.8) +
+  scale_fill_manual(values = c("skyblue", "tomato")) +
+  labs(title = "Logged Gonorrhea Rate by Treatment Group", x = "", y = "lnr (log gonorrhea rate)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Covariate boxplots
+abortion$group <- factor(abortion$repeal, levels = c(0, 1), labels = c("Control", "Treated"))
+feature_vars <- c("totpop", "income", "alcohol", "ir", "crack", "poverty")
+covar_plots <- lapply(feature_vars, function(var) {
+  ggplot(abortion, aes_string(x = "group", y = var, fill = "group")) +
+    geom_boxplot(alpha = 0.8) +
+    theme_minimal() +
+    xlab("") +
+    ggtitle(paste("Distribution of", var, "by Treatment Group")) +
+    scale_fill_manual(values = c("skyblue", "tomato")) +
+    theme(legend.position = "none")
+})
+
+# Arrange plots in panels. We'll create a two-row panel: first row = assignment + outcome, next rows = covariates.
+grid.arrange(
+  plt_treat, plt_outcome,
+  covar_plots[[1]], covar_plots[[2]], covar_plots[[3]],
+  covar_plots[[4]], covar_plots[[5]], covar_plots[[6]],
+  ncol = 2,
+  top = "Treatment, Outcome and Covariate Distributions by Group"
+)
+
+```
+
+### Data Processing for Causal Tree
+
+```{r}
+#| label: abortion-data-processing
+# Select relevant subset (focus on 15-19 year olds, complete cases)
+abortion_clean <- abortion %>%
+  dplyr::filter(age >= 15 & age <= 19) %>%
+  na.omit()
+
+# Define covariates (X), outcome (Y), treatment (W)
+X <- abortion_clean[, c("age", "race", "sex", "totpop", "ir", "crack", 
+                        "alcohol", "income", "ur", "poverty")]
+
+Y <- abortion_clean$lnr          # Logged gonorrhea rate per 100,000 (continuous)
+W <- abortion_clean$repeal       # 1 = early repeal (treatment), 0 = otherwise
+
+# Convert X to numeric matrix
+X <- as.matrix(X)
+colnames(X) <- c("age", "race", "sex", "totpop", "ir", "crack", 
+                 "alcohol", "income", "ur", "poverty")
+
+# Remove near-zero variance columns (if any)
+X <- X[, apply(X, 2, stats::var) > 1e-10, drop = FALSE]
+cat("Covariates used:", colnames(X), "\n")
+```
+
+### Split Data into Training and Test Sets
+
+80% training, 20% test.
+
+```{r}
+#| label: abortion-train-test-split
+set.seed(42)
+train_prop <- 0.8
+n <- nrow(abortion_clean)
+train_idx <- sample(1:n, size = round(train_prop * n))
+
+X_train <- X[train_idx, , drop = FALSE]
+Y_train <- Y[train_idx]
+W_train <- W[train_idx]
+
+X_test <- X[-train_idx, , drop = FALSE]
+Y_test <- Y[-train_idx]
+W_test <- W[-train_idx]
+
+cat("Training set size:", nrow(X_train), "\n")
+cat("Test set size:", nrow(X_test), "\n")
+```
+
+### Build Training Data Frame for Causal Tree
+
+```{r}
+#| label: abortion-train-data-frame
+df <- as.data.frame(X_train)
+df$outcome <- Y_train
+df$treatment <- W_train
+
+# Check treatment balance
+table(df$treatment)
+prop.table(table(df$treatment))
+```
+
+### Fitting a Causal Tree 
+
+
+```{r}
+#| label: fit-causal-tree-abortion
+
+set.seed(2024)
+
+# Honest splitting: Use half for structure, half for estimation (manual split for reproducibility)
+n_obs <- nrow(df)
+n_train <- max(1L, floor(n_obs / 2))
+tree_idx <- sample(seq_len(n_obs), size = n_train, replace = FALSE)
+est_idx  <- setdiff(seq_len(n_obs), tree_idx)
+
+cat("Honest mode:", length(tree_idx), "obs for tree structure,",
+    length(est_idx), "for estimation\n")
+
+covar_names <- setdiff(colnames(df), c("outcome", "treatment"))
+formula_ct <- as.formula(paste("outcome ~", paste(covar_names, collapse = " + ")))
+
+# Ensure the 'na.causalTree' function is available in the environment.
+# This is required by recent hte/cbhrt/causalTree forks. Provide an identity function if missing.
+if (!exists("na.causalTree")) {
+  na.causalTree <- function(object, ...) object
+}
+
+ct_model <- causal_tree(
+  formula      = formula_ct,
+  data         = df,
+  treatment    = as.vector(df$treatment),
+
+  honest       = TRUE,            # Honest mode enabled
+  est_idx      = est_idx,         # Use indices for estimation sample
+
+  split.Rule   = "CT",
+  cv.option    = "CT",
+  split.Bucket = FALSE,
+
+  minsize      = 30L,
+  cp           = 0,
+  xval         = 10L,
+  maxdepth     = 5
+)
+
+# Prune using minimum cross-validated error
+cpt <- ct_model$cptable
+opcp <- if (nrow(cpt) > 1) cpt[,1][which.min(cpt[,4])] else 0.01
+ct_model <- prune(ct_model, cp = max(opcp, 0.005))
+
+summary(ct_model)
+```
+
+### Key Parameters Explained
+
+| Parameter       | Purpose                              | Recommended Value          |
+|-----------------|--------------------------------------|----------------------------|
+| `honest = TRUE` | Enables honest estimation (default) | **Always TRUE**            |
+| `minsize`       | Min treated + control per leaf       | 30–100                     |
+| `cp`            | Complexity for pruning               | Start with 0, prune later  |
+| `maxdepth`      | Max tree depth                       | 3–6                        |
+| `xval`          | CV folds                             | 5–10                       |
+
+## Visualization & Interpretation
+
+### Enhanced Plot with `rpart.plot`
+
+```{r}
+#| label: plot-causal-tree
+# Visualize the causal tree model structure using rpart.plot
+if (nrow(ct_model$frame) > 1) {
+  rpart.plot::rpart.plot(
+    ct_model,
+    type = 3, # "type = 3" shows splits and leaf values more clearly in causal/ml settings
+    extra = 101, # display yval (treatment effect) and number of observations
+    under = TRUE, # put split labels under nodes for readability
+    box.palette = "RdBu",
+    fallen.leaves = TRUE,
+    roundint = FALSE,
+    main = "Causal Tree: Estimated Heterogeneous Treatment Effects",
+    cex = 0.9
+  )
+} else {
+  plot.new()
+  text(0.5, 0.5, "Tree pruned to root only.", cex = 1.2)
+}
+```
+
+
+## Extracting Subgroup Rules
+
+### Extract All Leaf Rules
+
+```{r}
+#| label: extract-leaf-rules
+# Function to extract decision rules for each leaf
+extract_leaf_rules <- function(tree_model, data) {
+  # Get terminal node assignments for each observation (rpart/htetree use 'where')
+  node_assignments <- tree_model$where
+  
+  # Get unique terminal nodes
+  terminal_nodes <- unique(node_assignments)
+  
+  rules_list <- list()
+  
+  for (node in terminal_nodes) {
+    # Get observations in this leaf
+    leaf_data <- data[node_assignments == node, ]
+    
+    # Extract rule conditions by traversing tree
+    # (Simplified: in practice, use tree_model$rules or similar)
+    n_obs <- nrow(leaf_data)
+    cate_est <- mean(leaf_data$outcome[leaf_data$treatment == 1]) - 
+                mean(leaf_data$outcome[leaf_data$treatment == 0])
+    
+    rules_list[[as.character(node)]] <- list(
+      node = node,
+      n = n_obs,
+      cate = cate_est,
+      treated_n = sum(leaf_data$treatment == 1),
+      control_n = sum(leaf_data$treatment == 0),
+      # Add rule conditions here (requires tree traversal logic)
+      conditions = "See tree plot for conditions"
+    )
+  }
+  
+  return(rules_list)
+}
+
+# Apply extraction
+leaf_rules <- extract_leaf_rules(ct_model, df)
+
+# Show all leaves (useful when tree is root-only or has few splits)
+cat("All leaf rules (CATE = mean outcome | treated - mean outcome | control):\n")
+print(leaf_rules)
+
+# Leaves with notable effects (e.g., |CATE| > 50 days); may be empty if tree is root-only
+significant_leaves <- leaf_rules[sapply(leaf_rules, function(x) abs(x$cate) > 50)]
+if (length(significant_leaves) > 0) {
+  cat("\nLeaves with |CATE| > 50 days:\n")
+  lapply(significant_leaves, print)
+} else {
+  cat("\nNo leaf with |CATE| > 50 days (tree may be pruned to root only).\n")
+}
+```
+
+### Find Subgroups with Positive Treatment Effects
+
+```{r}
+#| label: positive-cate-subgroups
+# Predict CATE for each observation (vector = fitted CATE per leaf)
+# Use newdata = df so we get one prediction per row (honest tree stores only structure sample internally)
+df$cate_est <- predict(ct_model, newdata = df, type = "vector")
+
+# Assign each row to its leaf (same CATE => same leaf; used for permutation test)
+df$leaf_id <- as.integer(factor(round(df$cate_est, 10)))
+
+# Handle case with all-NA predictions
+if (all(is.na(df$cate_est))) {
+  cat("No CATE estimates available (all NA predicted values).\n")
+  # Provide backup summary with just the available data
+  overall <- df %>%
+    dplyr::summarise(
+      n = dplyr::n(),
+      avg_cate = NA_real_,
+      treated_prop = mean(treatment),
+      across(any_of(covar_names), mean, na.rm = TRUE)
+    )
+  cat("Overall training set summary:\n")
+  print(overall)
+} else {
+  # Identify observations with positive predicted effects (exclude NAs)
+  positive_sub <- df %>% filter(!is.na(cate_est) & cate_est > 0)
+  if (nrow(positive_sub) > 0) {
+    positive_effect_group <- positive_sub %>%
+      dplyr::summarise(
+        n = dplyr::n(),
+        avg_cate = mean(cate_est, na.rm = TRUE),
+        treated_prop = mean(treatment),
+        across(any_of(covar_names), mean, na.rm = TRUE)
+      )
+    print(positive_effect_group)
+  } else {
+    cat("No observations with positive predicted CATE (tree may be root-only or overall effect is negative).\n")
+    # Show overall summary so output is never all NaN
+    overall <- df %>%
+      dplyr::summarise(
+        n = dplyr::n(),
+        avg_cate = mean(cate_est, na.rm = TRUE),
+        treated_prop = mean(treatment),
+        across(any_of(covar_names), mean, na.rm = TRUE)
+      )
+    cat("Overall training set summary:\n")
+    print(overall)
+  }
+}
+```
+
+#### Cross-Validation Error Plot
+
+```{r}
+#| label: cv-error-plot
+#| warning: false
+# Extract CV errors from model (handles cases with a single row too)
+cpt <- ct_model$cptable
+if (!is.null(cpt) && nrow(as.matrix(cpt)) >= 1) {
+  # Safely extract as data frame regardless of single-row or multi-row `cptable`
+  cpt_mat <- as.data.frame(as.matrix(cpt)[, c("CP", "xerror", "xstd"), drop = FALSE])
+  names(cpt_mat) <- c("cp", "xerror", "xstd")
+  cv_df <- cpt_mat
+
+  p_cv <- ggplot(cv_df, aes(x = cp, y = xerror)) +
+    geom_line(color = "steelblue", linewidth = 1) +
+    geom_ribbon(aes(ymin = xerror - xstd, ymax = xerror + xstd),
+                alpha = 0.2, fill = "steelblue") +
+    labs(title = "Cross-Validation Error vs. Complexity Parameter",
+         x = "Complexity Parameter (CP)",
+         y = "Cross-Validated Error (Treatment Effect MSE)") +
+    theme_minimal()
+
+  if (!is.null(ct_model$cp)) {
+    p_cv <- p_cv + 
+      geom_vline(xintercept = ct_model$cp, linetype = "dashed", color = "red") +
+      annotate("text", x = ct_model$cp, y = max(cv_df$xerror, na.rm = TRUE),
+               label = paste0("cp = ", signif(ct_model$cp,3)),
+               vjust = -0.7, hjust = -0.1, color = "red", size = 3)
+  }
+  print(p_cv)
+} else {
+  message("No cptable available for CV plot.")
+}
+```
+#### Test for Heterogeneity
+
+Is there evidence that treatment effects truly vary across subgroups?
+
+```{r}
+#| label: hete-test-permutation
+# Test for Heterogeneity of Treatment Effects using Permutation method
+cate_values <- df$cate_est[!is.na(df$cate_est)]
+
+# Calculate observed variance of CATEs
+obs_var_cate <- var(cate_values, na.rm = TRUE)
+cat("Observed variance of CATE estimates:", round(obs_var_cate, 4), "\n")
+
+# Permutation test: shuffle treatment to get null distribution of CATE variance
+set.seed(2024)
+n_perm <- 100
+perm_vars <- numeric(n_perm)
+
+for (i in seq_len(n_perm)) {
+  # Permute treatment assignment
+  df_perm <- df
+  df_perm$treatment <- sample(df_perm$treatment)
+  # Estimate CATE in each leaf using permuted assignment
+  leaf_means <- df_perm %>%
+    group_by(leaf = leaf_id) %>%
+    summarise(
+      cate_est = mean(outcome[treatment == 1], na.rm = TRUE) -
+                 mean(outcome[treatment == 0], na.rm = TRUE)
+    )
+  perm_vars[i] <- var(leaf_means$cate_est, na.rm = TRUE)
+}
+
+# p-value: proportion of permuted variances as large or larger than observed
+p_value <- mean(perm_vars >= obs_var_cate)
+cat("Permutation p-value for CATE heterogeneity:", round(p_value, 3), "\n")
+# Interpret: p < 0.05 = significant evidence of effect heterogeneity
+```
+
+
+### Custom ggplot of Leaf Treatment Effects
+
+```{r}
+#| label: leaf-treatment-effects-plot
+# Extract only terminal (leaf) nodes to display leaf-specific CATEs
+leaf_rows <- which(ct_model$frame$var == "<leaf>")
+leaf_data <- data.frame(
+  node = as.numeric(rownames(ct_model$frame)[leaf_rows]),
+  n = ct_model$frame$n[leaf_rows],
+  treatment_effect = ct_model$frame$yval[leaf_rows]
+)
+
+if (nrow(leaf_data) > 0) {
+  ggplot(leaf_data, aes(x = factor(node), y = treatment_effect)) +
+    geom_col(aes(fill = treatment_effect), show.legend = FALSE) +
+    geom_text(aes(label = round(treatment_effect, 3)), vjust = -0.5, size = 3.5) +
+    scale_fill_gradient2(low = "steelblue", mid = "white", high = "darkred",
+                         midpoint = 0, name = "Effect (log points)") +
+    labs(title = "Estimated Treatment Effect by Leaf",
+         x = "Leaf Node ID", y = "CATE: Change in log(Gonorrhea Rate)") +
+    theme_minimal()
+}
+```
+
+### How to Interpret the Tree
+
+**Example leaf interpretation**:
+```
+Node 5: age ≤ 17 AND crack < 0.5
+├─ n ≈ 1200 observations
+├─ Treatment effect: +0.18 log points (~20% higher gonorrhea rate)
+├─ Interpretation: In younger teens with low crack index, early repeal is associated 
+   with higher risky behavior (proxied by gonorrhea incidence).
+```
+
+## Compact SHAP analysis
+
+```{r}
+#| label: shap-interpret-causal-tree
+#| fig-cap: "SHAP analysis of the causal tree: global importance (left) and dependence on the most important feature (right)."
+#| fig-width: 12
+#| fig-height: 5
+
+if (requireNamespace("kernelshap", quietly = TRUE) &&
+    requireNamespace("shapviz", quietly = TRUE) &&
+    nrow(ct_model$frame) > 1) {
+
+  # Prepare feature matrix (only covariates, no outcome/treatment)
+  X_shap <- as.data.frame(X_train)[, covar_names, drop = FALSE]
+
+  # Subsample for speed (kernelshap can be slow on large data)
+  set.seed(2024)
+  n_avail <- nrow(X_shap)
+  n_explain <- min(80, n_avail)            # number of observations to explain
+  n_bg      <- min(40, n_avail - n_explain)  # background data size
+
+  idx_explain <- sample(seq_len(n_avail), n_explain)
+  X_explain   <- X_shap[idx_explain, , drop = FALSE]
+
+  bg_idx <- setdiff(seq_len(n_avail), idx_explain)
+  bg_X   <- if (length(bg_idx) >= n_bg) X_shap[sample(bg_idx, n_bg), ] else NULL
+
+  # Prediction wrapper: extract numeric CATE (τ̂(x))
+  pred_fun <- function(model, new_x) {
+    as.numeric(predict(model, newdata = as.data.frame(new_x), type = "vector"))
+  }
+
+  # Compute permutation SHAP (model-agnostic, works with rpart/causalTree)
+  ks <- kernelshap::permshap(
+    object   = ct_model,
+    X        = X_explain,
+    pred_fun = pred_fun,
+    bg_X     = bg_X,
+    verbose  = FALSE
+  )
+
+  # Create shapviz object
+  shp <- shapviz::shapviz(ks)
+
+  # 1. Global importance plot (beeswarm or bar)
+  p_imp <- shapviz::sv_importance(shp, kind = "beeswarm") +
+    labs(title = "SHAP Feature Importance",
+         subtitle = "How much each covariate drives variation in predicted CATE") +
+    theme_minimal(base_size = 12)
+
+  # 2. Dependence plot for the most important feature
+  top_var <- names(shp$X)[which.max(shp$importance$Importance)]
+  p_dep <- shapviz::sv_dependence(shp, v = top_var, color_var = "auto") +
+    labs(title = paste("SHAP Dependence on", top_var),
+         subtitle = "How changes in this variable affect predicted treatment effect",
+         y = "SHAP value (contribution to CATE)",
+         x = top_var) +
+    theme_minimal(base_size = 12)
+
+  # Show both plots side by side
+  print(patchwork::wrap_plots(p_imp, p_dep, ncol = 2))
+
+} else {
+  message("SHAP skipped: install kernelshap & shapviz, and ensure tree has splits.")
+}
+```
+
+## Summary and Conclusion
+
+Causal trees are a powerful tool for uncovering treatment effect heterogeneity in observational data. By recursively partitioning the data based on covariates, they identify subgroups where the effect of a treatment (like abortion legalization) on an outcome (like gonorrhea rates) differs. The honest estimation approach ensures that subgroup-specific treatment effect estimates are unbiased and credible. This allows researchers to understand which populations are most affected by the policy and to generate hypotheses about underlying mechanisms. This tutorial demonstrated how to fit a causal tree using the `RCausalML` package, interpret the resulting tree structure, and validate findings with permutation tests for heterogeneity. While single trees are interpretable, they can be unstable in small samples or with many covariates. For more robust detection of heterogeneity, consider using causal forests or other ensemble methods. Always validate balance within leaves and interpret findings cautiously, especially in observational policy data where unmeasured confounding may be present. 
+
+## Resources
+
+- Athey & Imbens (2016). *Recursive Partitioning for Heterogeneous Causal Effects*. PNAS.
+- `htetree` CRAN: https://cran.r-project.org/package=htetree
+- `causaldata` package: https://github.com/NickCH-K/causaldata
+- The Effect (Huntington-Klein): https://theeffectbook.net

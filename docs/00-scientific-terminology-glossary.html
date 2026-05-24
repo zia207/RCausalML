@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>scientific-terminology-glossary</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="00-scientific-terminology-glossary_files/libs/clipboard/clipboard.min.js"></script>
+<script src="00-scientific-terminology-glossary_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="00-scientific-terminology-glossary_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="00-scientific-terminology-glossary_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="00-scientific-terminology-glossary_files/libs/quarto-html/popper.min.js"></script>
+<script src="00-scientific-terminology-glossary_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="00-scientific-terminology-glossary_files/libs/quarto-html/anchor.min.js"></script>
+<link href="00-scientific-terminology-glossary_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="00-scientific-terminology-glossary_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="00-scientific-terminology-glossary_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="00-scientific-terminology-glossary_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="00-scientific-terminology-glossary_files/libs/bootstrap/bootstrap-e29a585edb4b49c5cab0427671728cec.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<p><img src="Images/banner_causalML.png" class="img-fluid"></p>
+<section id="a-complete-az-reference-for-causal-inference-and-machine-learning" class="level1">
+<h1>A complete A–Z reference for causal inference and machine learning</h1>
+<blockquote class="blockquote">
+<p><strong>How to use this glossary:</strong> Each entry gives a plain-language explanation followed by a concrete example. Technical acronyms are shown in parentheses. Terms are organized alphabetically for quick look-up.</p>
+</blockquote>
+<hr>
+<section id="a" class="level2">
+<h2 class="anchored" data-anchor-id="a">A</h2>
+<section id="abduction" class="level3">
+<h3 class="anchored" data-anchor-id="abduction">Abduction</h3>
+<p>The first step in counterfactual reasoning: infer the hidden (latent) noise variables that are consistent with what was actually observed for a specific individual.</p>
+<p><em>Example:</em> Estimate the hidden biological factors that explain one patient’s observed lab results before asking “what would happen if we changed their treatment?”</p>
+<hr>
+</section>
+<section id="acyclicity" class="level3">
+<h3 class="anchored" data-anchor-id="acyclicity">Acyclicity</h3>
+<p>A constraint on causal graphs that prevents any variable from being its own cause (directly or indirectly — no feedback loops allowed).</p>
+<p><em>Example:</em> A model would reject the structure A → B → C → A because following the arrows brings you back to where you started.</p>
+<hr>
+</section>
+<section id="adjacency-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="adjacency-matrix">Adjacency Matrix</h3>
+<p>A grid (matrix) where each cell encodes whether — and how strongly — one variable causally influences another.</p>
+<p><em>Example:</em> If cell [i, j] is non-zero, variable i is a direct cause of variable j. Many zeros = a sparse, interpretable graph.</p>
+<hr>
+</section>
+<section id="adversarial-balancing" class="level3">
+<h3 class="anchored" data-anchor-id="adversarial-balancing">Adversarial Balancing</h3>
+<p>Training a model so that the learned representation of covariates makes it impossible to tell whether a unit was treated or not, removing selection bias.</p>
+<p><em>Example:</em> Learning a study-habit representation that reveals nothing about whether a student actually studied.</p>
+<hr>
+</section>
+<section id="adversarial-training" class="level3">
+<h3 class="anchored" data-anchor-id="adversarial-training">Adversarial Training</h3>
+<p>A training strategy where two networks compete: a <em>generator</em> tries to produce realistic outputs, while a <em>discriminator</em> tries to detect fakes. Both improve through competition.</p>
+<p><em>Example:</em> The generator improves by fooling the discriminator over many training rounds.</p>
+<hr>
+</section>
+<section id="aipw-augmented-inverse-probability-weighting" class="level3">
+<h3 class="anchored" data-anchor-id="aipw-augmented-inverse-probability-weighting">AIPW (Augmented Inverse Probability Weighting)</h3>
+<p>A doubly robust estimator that combines an outcome regression model and a propensity weighting model. It gives valid causal estimates if <em>either</em> model is correctly specified.</p>
+<p><em>Example:</em> Even if the propensity model is imperfect, a good outcome model can still yield valid effect estimates — and vice versa.</p>
+<hr>
+</section>
+<section id="anm-additive-noise-model" class="level3">
+<h3 class="anchored" data-anchor-id="anm-additive-noise-model">ANM (Additive Noise Model)</h3>
+<p>An assumption that each variable equals some function of its causes plus an independent noise term. This helps recover causal directions from data.</p>
+<p><em>Example:</em> <code>X₃ = f(X₁, X₂) + ε₃</code>, where ε₃ is random noise independent of X₁ and X₂.</p>
+<hr>
+</section>
+<section id="ate-average-treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="ate-average-treatment-effect">ATE (Average Treatment Effect)</h3>
+<p>The average difference in outcomes between receiving treatment and not receiving treatment, calculated across the entire population.</p>
+<p><em>Example:</em> Across all patients in a trial, a drug improves recovery by +1.2 days on average. That +1.2 is the ATE.</p>
+<hr>
+</section>
+<section id="atte-average-treatment-effect-on-the-treated" class="level3">
+<h3 class="anchored" data-anchor-id="atte-average-treatment-effect-on-the-treated">ATTE (Average Treatment Effect on the Treated)</h3>
+<p>Like the ATE, but calculated only for the people who actually received the treatment.</p>
+<p><em>Example:</em> Among patients who took the drug, the average improvement was +1.8 days — larger than the population ATE of +1.2.</p>
+<hr>
+</section>
+<section id="attention-mechanism" class="level3">
+<h3 class="anchored" data-anchor-id="attention-mechanism">Attention Mechanism</h3>
+<p>A learned weighting inside a neural network that tells the model which parts of the input to focus on most when making a prediction.</p>
+<p><em>Example:</em> Like highlighting important sentences in a textbook — the model learns which sentences matter most.</p>
+<hr>
+</section>
+<section id="auuc-area-under-the-uplift-curve" class="level3">
+<h3 class="anchored" data-anchor-id="auuc-area-under-the-uplift-curve">AUUC (Area Under the Uplift Curve)</h3>
+<p>A summary metric for uplift models: it measures how well a model ranks individuals by their true incremental benefit from treatment. Higher = better targeting.</p>
+<p><em>Example:</em> A higher AUUC means that when you target the top-ranked people, you capture more of the total treatment benefit.</p>
+<hr>
+</section>
+<section id="auxiliary-variable" class="level3">
+<h3 class="anchored" data-anchor-id="auxiliary-variable">Auxiliary Variable</h3>
+<p>An extra observed variable added to a model to help identify latent (hidden) factors that would otherwise be impossible to disentangle.</p>
+<p><em>Example:</em> Including a “domain” or “environment” label as an extra input so the model can separate true hidden causes from noise.</p>
+<hr>
+</section>
+</section>
+<section id="b" class="level2">
+<h2 class="anchored" data-anchor-id="b">B</h2>
+<section id="baseline-arm" class="level3">
+<h3 class="anchored" data-anchor-id="baseline-arm">Baseline Arm</h3>
+<p>The reference treatment category used for all comparisons in a multi-arm study.</p>
+<p><em>Example:</em> In a drug trial with placebo, Drug A, and Drug B, the placebo is the baseline arm. Effects of A and B are measured relative to it.</p>
+<hr>
+</section>
+<section id="bias-variance-tradeoff" class="level3">
+<h3 class="anchored" data-anchor-id="bias-variance-tradeoff">Bias-Variance Tradeoff</h3>
+<p>The tension between two types of model error: <em>bias</em> (systematic mistakes from oversimplifying) and <em>variance</em> (sensitivity to noise in training data). Reducing one often increases the other.</p>
+<p><em>Example:</em> A very simple model underfits (high bias); a very complex model overfits (high variance). Good models balance both.</p>
+<hr>
+</section>
+<section id="boosting" class="level3">
+<h3 class="anchored" data-anchor-id="boosting">Boosting</h3>
+<p>An ensemble method that builds many simple models (weak learners) sequentially, where each new model focuses on correcting the errors of the previous ones.</p>
+<p><em>Example:</em> Tree 1 makes some mistakes; Tree 2 focuses on those mistakes; Tree 3 focuses on what Tree 2 still gets wrong — and so on.</p>
+<hr>
+</section>
+</section>
+<section id="c" class="level2">
+<h2 class="anchored" data-anchor-id="c">C</h2>
+<section id="calibration" class="level3">
+<h3 class="anchored" data-anchor-id="calibration">Calibration</h3>
+<p>Agreement between a model’s predicted probabilities and what actually happens in the data.</p>
+<p><em>Example:</em> Among all patients for whom the model predicts a 70% treatment probability, roughly 70% should actually have been treated.</p>
+<hr>
+</section>
+<section id="cart-classification-and-regression-trees" class="level3">
+<h3 class="anchored" data-anchor-id="cart-classification-and-regression-trees">CART (Classification and Regression Trees)</h3>
+<p>A classic algorithm that splits data into groups using a sequence of yes/no questions (decision rules) to predict an outcome.</p>
+<p><em>Example:</em> “Is age &gt; 40? → Yes → Is income &gt; $50k? → …” Each branch narrows the prediction.</p>
+<hr>
+</section>
+<section id="causal-discovery" class="level3">
+<h3 class="anchored" data-anchor-id="causal-discovery">Causal Discovery</h3>
+<p>The process of learning <em>which variables cause which</em> directly from observational data, without running an experiment.</p>
+<p><em>Example:</em> Given data on income, education, and health, a causal discovery algorithm tries to figure out whether education → income or income → education.</p>
+<hr>
+</section>
+<section id="causal-effect" class="level3">
+<h3 class="anchored" data-anchor-id="causal-effect">Causal Effect</h3>
+<p>The change in an outcome that is <em>caused by</em> a treatment — not merely associated with it.</p>
+<p><em>Example:</em> A tutoring program causes test scores to increase by 5 points. That’s the causal effect, not just a correlation.</p>
+<hr>
+</section>
+<section id="causal-graph-dag" class="level3">
+<h3 class="anchored" data-anchor-id="causal-graph-dag">Causal Graph (DAG)</h3>
+<p>A diagram with arrows showing which variables directly cause which others. Directed Acyclic Graph means arrows only go one way and there are no loops.</p>
+<p><em>Example:</em> <code>X → T → Y</code> means X influences treatment T, which influences outcome Y.</p>
+<hr>
+</section>
+<section id="causal-masking" class="level3">
+<h3 class="anchored" data-anchor-id="causal-masking">Causal Masking</h3>
+<p>Restricting a model so that each time step can only see <em>past</em> information, never future data, ensuring predictions are causally valid.</p>
+<p><em>Example:</em> Predicting tomorrow’s stock price using only today’s and earlier data — never using future prices.</p>
+<hr>
+</section>
+<section id="causal-regularization" class="level3">
+<h3 class="anchored" data-anchor-id="causal-regularization">Causal Regularization</h3>
+<p>Adding a penalty to a model’s loss function that encourages its learned parameters to be consistent with causal assumptions.</p>
+<p><em>Example:</em> Penalizing any learned relationships that would imply a cycle in the causal graph.</p>
+<hr>
+</section>
+<section id="castle-causal-structure-learning-via-regularization" class="level3">
+<h3 class="anchored" data-anchor-id="castle-causal-structure-learning-via-regularization">CASTLE (Causal Structure Learning via Regularization)</h3>
+<p>A method that trains a neural prediction model while simultaneously learning the causal graph structure through a regularization penalty.</p>
+<p><em>Example:</em> An outcome model is trained while a graph penalty gently guides it to respect causal structure.</p>
+<hr>
+</section>
+<section id="cate-conditional-average-treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect">CATE (Conditional Average Treatment Effect)</h3>
+<p>The average treatment effect for a specific subgroup of people who share similar characteristics (covariates).</p>
+<p><em>Example:</em> Among 60-year-old patients with high blood pressure, the average treatment benefit is +3.2 points — their CATE. It may differ from the overall ATE.</p>
+<hr>
+</section>
+<section id="causal-masking-causal-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="causal-masking-causal-matrix">Causal Masking / Causal Matrix</h3>
+<p>A matrix (or mask) that specifies which variables are allowed to influence which others, used to encode causal assumptions in a model.</p>
+<p><em>Example:</em> Row = target variable, Column = source. A zero in cell [i, j] means “variable j cannot influence variable i.”</p>
+<hr>
+</section>
+<section id="cevae-causal-effect-variational-autoencoder" class="level3">
+<h3 class="anchored" data-anchor-id="cevae-causal-effect-variational-autoencoder">CEVAE (Causal Effect Variational Autoencoder)</h3>
+<p>A deep generative model that infers hidden confounders from observed data and uses them to estimate causal effects.</p>
+<p><em>Example:</em> If true socioeconomic status isn’t measured, CEVAE learns a latent proxy for it from available variables, then adjusts for it when estimating treatment effects.</p>
+<hr>
+</section>
+<section id="cfrnet-counterfactual-regression-network" class="level3">
+<h3 class="anchored" data-anchor-id="cfrnet-counterfactual-regression-network">CFRNet (Counterfactual Regression Network)</h3>
+<p>A neural network designed to estimate potential outcomes under both treatment and control, trained with a penalty that makes the learned representation balanced across treatment groups.</p>
+<p><em>Example:</em> The network learns patient features in a way that treated and untreated patients look similar in the hidden layer, reducing bias from selection.</p>
+<hr>
+</section>
+<section id="cluster-robust-standard-errors" class="level3">
+<h3 class="anchored" data-anchor-id="cluster-robust-standard-errors">Cluster-Robust Standard Errors</h3>
+<p>Uncertainty estimates that account for the fact that observations within the same cluster (e.g., students in the same school) are not independent.</p>
+<p><em>Example:</em> If you ignore clustering, confidence intervals are too narrow — you underestimate how uncertain you are.</p>
+<hr>
+</section>
+<section id="clstm-cmlp" class="level3">
+<h3 class="anchored" data-anchor-id="clstm-cmlp">cLSTM / cMLP</h3>
+<p>Neural network architectures (LSTM or MLP) with one separate network per target variable, where input connections are sparsified to encode Granger-causal structure.</p>
+<p><em>Example:</em> Eight separate MLPs for eight sector ETFs, each reading other sectors’ lagged values — but sparse connections reflect only the causally relevant links.</p>
+<hr>
+</section>
+<section id="common-support-overlap" class="level3">
+<h3 class="anchored" data-anchor-id="common-support-overlap">Common Support (Overlap)</h3>
+<p>The requirement that both treated and untreated units exist across the full range of covariate values. Without overlap, causal comparisons are unreliable.</p>
+<p><em>Example:</em> If all high-income states receive a policy and no high-income states serve as controls, we can’t estimate the policy’s causal effect for high-income states.</p>
+<hr>
+</section>
+<section id="compliers" class="level3">
+<h3 class="anchored" data-anchor-id="compliers">Compliers</h3>
+<p>People whose treatment behavior changes <em>because of</em> an instrument. They take treatment when encouraged and don’t when not encouraged.</p>
+<p><em>Example:</em> People who attend a job training program only if they receive a voucher are compliers.</p>
+<hr>
+</section>
+<section id="confounding-confounder" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-confounder">Confounding / Confounder</h3>
+<p>A variable that affects both whether someone receives treatment <em>and</em> the outcome — creating a misleading association between treatment and outcome.</p>
+<p><em>Example:</em> Sicker patients are more likely to get intensive treatment <em>and</em> more likely to have worse outcomes. Ignoring this makes treatment look harmful even if it helps.</p>
+<hr>
+</section>
+<section id="consistency" class="level3">
+<h3 class="anchored" data-anchor-id="consistency">Consistency</h3>
+<p>The assumption that the potential outcome under the treatment a person actually received equals their observed outcome.</p>
+<p><em>Example:</em> If a student studied the extra hour and we define Y(1) as “score with extra study,” then their actual observed score equals Y(1).</p>
+<hr>
+</section>
+<section id="constraint-based-method-causal-discovery" class="level3">
+<h3 class="anchored" data-anchor-id="constraint-based-method-causal-discovery">Constraint-Based Method (Causal Discovery)</h3>
+<p>A causal discovery approach that uses statistical independence tests to decide which edges to include or remove from a causal graph.</p>
+<p><em>Example:</em> The PC algorithm removes an edge between X and Y if they become independent after conditioning on some set of other variables.</p>
+<hr>
+</section>
+<section id="contrast-treatment-contrast" class="level3">
+<h3 class="anchored" data-anchor-id="contrast-treatment-contrast">Contrast (Treatment Contrast)</h3>
+<p>The difference in predicted outcomes between two treatment arms.</p>
+<p><em>Example:</em> <code>τ(x) = μ_A(x) - μ_control(x)</code> is the contrast between Drug A and the control for a patient with features x.</p>
+<hr>
+</section>
+<section id="cosine-annealing" class="level3">
+<h3 class="anchored" data-anchor-id="cosine-annealing">Cosine Annealing</h3>
+<p>A learning rate schedule where the learning rate decreases gradually following a cosine curve, slowing training as the model converges.</p>
+<p><em>Example:</em> Like gradually applying the brakes as you approach a stop sign — don’t stop suddenly, slow down smoothly.</p>
+<hr>
+</section>
+<section id="counterfactual" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual">Counterfactual</h3>
+<p>The outcome that <em>would have happened</em> for a unit under the treatment they did <em>not</em> receive — it is never actually observed.</p>
+<p><em>Example:</em> A patient received Drug A and recovered in 5 days. What would have happened if they had received the placebo instead? That unobserved outcome is the counterfactual.</p>
+<hr>
+</section>
+<section id="covariate" class="level3">
+<h3 class="anchored" data-anchor-id="covariate">Covariate</h3>
+<p>A background variable (feature) that describes a unit and may influence treatment assignment and/or the outcome.</p>
+<p><em>Example:</em> Age, income, and prior health status are covariates in a medical study.</p>
+<hr>
+</section>
+<section id="covariate-balance" class="level3">
+<h3 class="anchored" data-anchor-id="covariate-balance">Covariate Balance</h3>
+<p>When the distribution of background characteristics looks similar across treated and control groups (after weighting or matching).</p>
+<p><em>Example:</em> Age and income look comparable between treated and untreated groups after applying inverse probability weights.</p>
+<hr>
+</section>
+<section id="covariate-profile" class="level3">
+<h3 class="anchored" data-anchor-id="covariate-profile">Covariate Profile</h3>
+<p>The full set of observed characteristics for one individual.</p>
+<p><em>Example:</em> “Female, age 45, high baseline risk score” is a covariate profile.</p>
+<hr>
+</section>
+<section id="cross-fitting" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting">Cross-Fitting</h3>
+<p>A sample-splitting strategy: one portion of the data trains the nuisance models (like propensity scores), and a <em>different</em> portion is used to estimate the treatment effect. This prevents overfitting.</p>
+<p><em>Example:</em> In 5-fold cross-fitting, each fold takes a turn being the “estimation” set while the other four train the nuisance models.</p>
+<hr>
+</section>
+</section>
+<section id="d" class="level2">
+<h2 class="anchored" data-anchor-id="d">D</h2>
+<section id="dagma" class="level3">
+<h3 class="anchored" data-anchor-id="dagma">DAGMA</h3>
+<p>A method for learning directed acyclic graphs (DAGs) that uses a log-determinant function to enforce the no-cycles constraint during continuous optimization.</p>
+<p><em>Example:</em> Like NOTEARS, but with a different mathematical trick for detecting and penalizing cycles.</p>
+<hr>
+</section>
+<section id="dilated-convolution" class="level3">
+<h3 class="anchored" data-anchor-id="dilated-convolution">Dilated Convolution</h3>
+<p>A convolution operation that skips inputs by a fixed factor (dilation rate), allowing the model to “see” longer time horizons without increasing model size proportionally.</p>
+<p><em>Example:</em> Reading every 2nd word, then every 4th word, to understand context across longer sequences efficiently.</p>
+<hr>
+</section>
+<section id="disentanglement-disentangled-latent-space" class="level3">
+<h3 class="anchored" data-anchor-id="disentanglement-disentangled-latent-space">Disentanglement / Disentangled Latent Space</h3>
+<p>Learning hidden (latent) variables where each dimension captures a distinct, interpretable factor — making the representation more interpretable and causally meaningful.</p>
+<p><em>Example:</em> One latent dimension captures disease severity; another captures lifestyle factors; they don’t mix.</p>
+<hr>
+</section>
+<section id="dml-double-machine-learning" class="level3">
+<h3 class="anchored" data-anchor-id="dml-double-machine-learning">DML (Double Machine Learning)</h3>
+<p>A framework for causal inference that uses machine learning to control for confounders (nuisance terms) while producing valid statistical inference for the target causal parameter.</p>
+<p><em>Example:</em> Use a random forest to predict Y from X and another to predict T from X. Then regress the residuals of Y on the residuals of T to get an unconfounded estimate.</p>
+<hr>
+</section>
+<section id="donor-pool" class="level3">
+<h3 class="anchored" data-anchor-id="donor-pool">Donor Pool</h3>
+<p>The set of control units available to construct a synthetic control counterfactual for a treated unit.</p>
+<p><em>Example:</em> All untreated classmates whose historical data can be combined to estimate what a treated student’s score would have been without the intervention.</p>
+<hr>
+</section>
+<section id="dose-response-curve" class="level3">
+<h3 class="anchored" data-anchor-id="dose-response-curve">Dose-Response Curve</h3>
+<p>The relationship between the <em>level</em> of a continuous treatment and the expected outcome — a generalization of ATE to non-binary treatments.</p>
+<p><em>Example:</em> How does average blood pressure change as drug dose increases from 0 to 10 mg?</p>
+<hr>
+</section>
+<section id="doubly-robust-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="doubly-robust-estimation">Doubly Robust Estimation</h3>
+<p>An estimator that is valid (consistent) if <em>either</em> the outcome model <em>or</em> the propensity model is correctly specified — not both need to be perfect.</p>
+<p><em>Example:</em> Even if your propensity model is slightly wrong, a good outcome model saves you — and vice versa.</p>
+<hr>
+</section>
+<section id="dragonnet" class="level3">
+<h3 class="anchored" data-anchor-id="dragonnet">DragonNet</h3>
+<p>A neural network architecture that jointly predicts outcomes and propensity scores, using the propensity head to improve outcome estimation via targeted regularization.</p>
+<p><em>Example:</em> One network head predicts Y(0) and Y(1); another predicts P(T=1|X). The propensity head guides the outcome heads to be more causally accurate.</p>
+<hr>
+</section>
+<section id="dynamic-treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="dynamic-treatment-effect">Dynamic Treatment Effect</h3>
+<p>A treatment effect that changes over time, rather than being constant.</p>
+<p><em>Example:</em> A job training program has small effects at 3 months but larger effects at 12 months as skills compound.</p>
+<hr>
+</section>
+</section>
+<section id="e" class="level2">
+<h2 class="anchored" data-anchor-id="e">E</h2>
+<section id="edge-pruning" class="level3">
+<h3 class="anchored" data-anchor-id="edge-pruning">Edge Pruning</h3>
+<p>Removing weak or near-zero edges from a learned causal graph to produce a cleaner, more interpretable structure.</p>
+<p><em>Example:</em> After training a NOTEARS model, delete all edges where the learned weight is below 0.3.</p>
+<hr>
+</section>
+<section id="elbo-evidence-lower-bound" class="level3">
+<h3 class="anchored" data-anchor-id="elbo-evidence-lower-bound">ELBO (Evidence Lower Bound)</h3>
+<p>The training objective for variational autoencoders (VAEs). It balances two goals: (1) reconstruct the data well, and (2) keep the latent distribution close to a simple prior.</p>
+<p><em>Example:</em> ELBO = reconstruction quality − KL penalty. Maximizing it trains the VAE without computing the intractable exact likelihood.</p>
+<hr>
+</section>
+<section id="encoder" class="level3">
+<h3 class="anchored" data-anchor-id="encoder">Encoder</h3>
+<p>A neural network that maps observed inputs into a compact latent (hidden) representation.</p>
+<p><em>Example:</em> A VAE encoder transforms a patient’s lab measurements into a 32-dimensional latent vector z.</p>
+<hr>
+</section>
+<section id="endogeneity" class="level3">
+<h3 class="anchored" data-anchor-id="endogeneity">Endogeneity</h3>
+<p>When the treatment variable is correlated with unobserved factors that also affect the outcome, making naive regression estimates biased.</p>
+<p><em>Example:</em> More motivated people are both more likely to choose treatment and more likely to succeed — motivation is an unobserved confounder.</p>
+<hr>
+</section>
+<section id="ensemble-learner" class="level3">
+<h3 class="anchored" data-anchor-id="ensemble-learner">Ensemble Learner</h3>
+<p>A model that combines predictions from multiple different models to produce more robust and accurate estimates.</p>
+<p><em>Example:</em> Average the predictions of a random forest and a gradient boosting model for a more stable estimate.</p>
+<hr>
+</section>
+<section id="exclusion-restriction" class="level3">
+<h3 class="anchored" data-anchor-id="exclusion-restriction">Exclusion Restriction</h3>
+<p>The assumption required for instrumental variables: the instrument affects the outcome <em>only</em> through its effect on treatment — not through any other pathway.</p>
+<p><em>Example:</em> A job-training voucher affects wages only by changing training participation — not by directly signaling ability to employers.</p>
+<hr>
+</section>
+<section id="exogeneity" class="level3">
+<h3 class="anchored" data-anchor-id="exogeneity">Exogeneity</h3>
+<p>The assumption that an instrument is independent of any unmeasured factors that affect the outcome.</p>
+<p><em>Example:</em> If vouchers are randomly assigned, they are exogenous — receiving a voucher is unrelated to unmeasured motivation or ability.</p>
+<hr>
+</section>
+</section>
+<section id="f" class="level2">
+<h2 class="anchored" data-anchor-id="f">F</h2>
+<section id="factual-outcome" class="level3">
+<h3 class="anchored" data-anchor-id="factual-outcome">Factual Outcome</h3>
+<p>The outcome actually observed in the real world — as opposed to the counterfactual outcome under the other treatment.</p>
+<p><em>Example:</em> A patient received treatment and recovered in 5 days. That 5-day recovery is the factual outcome.</p>
+<hr>
+</section>
+<section id="g" class="level3">
+<h3 class="anchored" data-anchor-id="g">G</h3>
+</section>
+<section id="g-computation" class="level3">
+<h3 class="anchored" data-anchor-id="g-computation">G-Computation</h3>
+<p>A sequential procedure for estimating what the distribution of outcomes would be under a hypothetical treatment strategy, by fitting outcome models and “plugging in” the intervention.</p>
+<p><em>Example:</em> Simulate future exam scores under a hypothetical “everyone studies every night” policy using a fitted model of how studying affects scores.</p>
+<hr>
+</section>
+<section id="gan-generative-adversarial-network" class="level3">
+<h3 class="anchored" data-anchor-id="gan-generative-adversarial-network">GAN (Generative Adversarial Network)</h3>
+<p>A generative modeling framework consisting of two neural networks — a <em>generator</em> that creates synthetic data and a <em>discriminator</em> that distinguishes real from fake — trained in competition.</p>
+<p><em>Example:</em> GANITE uses this framework to generate plausible counterfactual outcomes for each individual.</p>
+<hr>
+</section>
+<section id="ganite" class="level3">
+<h3 class="anchored" data-anchor-id="ganite">GANITE</h3>
+<p>A causal inference method that uses generative adversarial networks to impute missing counterfactual outcomes and estimate individual treatment effects.</p>
+<p><em>Example:</em> For a treated unit, GANITE generates what their control outcome would have looked like, enabling ITE estimation.</p>
+<hr>
+</section>
+<section id="granger-causality" class="level3">
+<h3 class="anchored" data-anchor-id="granger-causality">Granger Causality</h3>
+<p>A time-series concept: variable X “Granger-causes” variable Y if knowing X’s past history helps predict Y’s future beyond what Y’s own past tells us.</p>
+<p><em>Example:</em> If past Energy ETF returns help predict future Financials ETF returns (even after accounting for Financials’ own history), Energy Granger-causes Financials.</p>
+<hr>
+</section>
+<section id="grn-gated-residual-network" class="level3">
+<h3 class="anchored" data-anchor-id="grn-gated-residual-network">GRN (Gated Residual Network)</h3>
+<p>A neural network building block with a sigmoid gate and a skip connection, allowing the network to learn how much transformation to apply at each step.</p>
+<p><em>Example:</em> A shortcut that decides “apply 80% of this transformation, skip 20%” — stabilizing training and gradient flow.</p>
+<hr>
+</section>
+</section>
+<section id="h" class="level2">
+<h2 class="anchored" data-anchor-id="h">H</h2>
+<section id="hard-intervention" class="level3">
+<h3 class="anchored" data-anchor-id="hard-intervention">Hard Intervention</h3>
+<p>Setting a variable to a specific fixed value regardless of what its normal causes say — the <code>do()</code> operator in causal calculus.</p>
+<p><em>Example:</em> <code>do(T=1)</code> forces everyone to receive treatment, even those who would normally not qualify.</p>
+<hr>
+</section>
+<section id="heterogeneous-treatment-effect-hte" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneous-treatment-effect-hte">Heterogeneous Treatment Effect (HTE)</h3>
+<p>When the treatment effect is not the same for everyone — it varies across individuals or subgroups.</p>
+<p><em>Example:</em> A drug reduces blood pressure by 10 points in older patients but only 3 points in younger patients.</p>
+<hr>
+</section>
+<section id="hidden-confounding" class="level3">
+<h3 class="anchored" data-anchor-id="hidden-confounding">Hidden Confounding</h3>
+<p>Bias caused by an unobserved variable that affects both treatment assignment and the outcome.</p>
+<p><em>Example:</em> A patient’s underlying motivation, not recorded in clinical notes, influences both whether they seek therapy and whether they recover.</p>
+<hr>
+</section>
+<section id="honest-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="honest-estimation">Honest Estimation</h3>
+<p>A technique that uses <em>different</em> subsets of data for (1) learning the tree structure (splits) and (2) estimating the treatment effects in each leaf. This prevents overfitting of effect estimates.</p>
+<p><em>Example:</em> Train the tree structure on 50% of data, then estimate leaf-level treatment effects on the other 50%.</p>
+<hr>
+</section>
+<section id="hyperparameter-tuning" class="level3">
+<h3 class="anchored" data-anchor-id="hyperparameter-tuning">Hyperparameter Tuning</h3>
+<p>Searching for the model settings (like tree depth, learning rate) that produce the best out-of-sample performance, typically via cross-validation.</p>
+<p><em>Example:</em> Try learning rates of 0.01, 0.05, and 0.1 and pick whichever gives the lowest validation error.</p>
+<hr>
+</section>
+</section>
+<section id="i" class="level2">
+<h2 class="anchored" data-anchor-id="i">I</h2>
+<section id="identifiability" class="level3">
+<h3 class="anchored" data-anchor-id="identifiability">Identifiability</h3>
+<p>Whether the true causal quantities (e.g., CATE) can be uniquely recovered from data given the modeling assumptions. A model that is not identifiable has multiple solutions that fit the data equally well.</p>
+<p><em>Example:</em> Standard VAEs are not identifiable; iVAEs (with auxiliary variables) are.</p>
+<hr>
+</section>
+<section id="ignorability" class="level3">
+<h3 class="anchored" data-anchor-id="ignorability">Ignorability</h3>
+<p>Given the observed covariates, treatment assignment is essentially random — all confounding has been measured and controlled for.</p>
+<p><em>Example:</em> After adjusting for age and health status, the decision of who gets treatment is unrelated to any remaining outcome-relevant factors.</p>
+<hr>
+</section>
+<section id="imputation" class="level3">
+<h3 class="anchored" data-anchor-id="imputation">Imputation</h3>
+<p>Filling in missing values — in the causal context, filling in unobserved counterfactual outcomes.</p>
+<p><em>Example:</em> For treated units, GANITE imputes their unobserved control outcomes to enable individual treatment effect estimation.</p>
+<hr>
+</section>
+<section id="instrument-instrumental-variable-iv" class="level3">
+<h3 class="anchored" data-anchor-id="instrument-instrumental-variable-iv">Instrument / Instrumental Variable (IV)</h3>
+<p>A variable that (1) affects treatment assignment, (2) has no direct effect on the outcome (exclusion restriction), and (3) is independent of unmeasured confounders (exogeneity).</p>
+<p><em>Example:</em> Distance to a college affects years of education but doesn’t directly affect wages — making it a valid instrument for studying the return to education.</p>
+<hr>
+</section>
+<section id="intra-cluster-correlation-icc" class="level3">
+<h3 class="anchored" data-anchor-id="intra-cluster-correlation-icc">Intra-Cluster Correlation (ICC)</h3>
+<p>A measure of how similar observations within the same cluster are to each other. High ICC means clustering matters a lot for standard errors.</p>
+<p><em>Example:</em> Students in the same school tend to have similar outcomes — high ICC — so treating them as independent would underestimate uncertainty.</p>
+<hr>
+</section>
+<section id="inverse-probability-weighting-ipw" class="level3">
+<h3 class="anchored" data-anchor-id="inverse-probability-weighting-ipw">Inverse Probability Weighting (IPW)</h3>
+<p>Reweighting observations by the inverse of their probability of receiving the treatment they actually received, to make the weighted sample look like a randomized experiment.</p>
+<p><em>Example:</em> If a unit had only a 20% chance of being treated but was treated, it receives weight 1/0.2 = 5, making it represent the units like it that weren’t treated.</p>
+<hr>
+</section>
+<section id="ipcw-inverse-probability-of-censoring-weighting" class="level3">
+<h3 class="anchored" data-anchor-id="ipcw-inverse-probability-of-censoring-weighting">IPCW (Inverse Probability of Censoring Weighting)</h3>
+<p>A method for survival analysis that reweights observations to correct for the bias introduced by censoring (people leaving the study before the event occurs).</p>
+<p><em>Example:</em> Individuals who are likely to drop out early receive larger weights so they still represent the overall population.</p>
+<hr>
+</section>
+<section id="ite-individual-treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="ite-individual-treatment-effect">ITE (Individual Treatment Effect)</h3>
+<p>The causal effect of treatment for one specific person: their potential outcome under treatment minus their potential outcome under control.</p>
+<p><em>Example:</em> For patient A, <code>ITE = Y(1) - Y(0) = 8 - 5 = +3 days</code> of faster recovery.</p>
+<hr>
+</section>
+<section id="ivae-identifiable-variational-autoencoder" class="level3">
+<h3 class="anchored" data-anchor-id="ivae-identifiable-variational-autoencoder">iVAE (Identifiable Variational Autoencoder)</h3>
+<p>A VAE variant that uses auxiliary observed variables (like domain labels) to make the learned latent factors uniquely identifiable — solving a fundamental limitation of standard VAEs.</p>
+<p><em>Example:</em> Adding a time-period label as an auxiliary variable helps the model separate true causal latent factors from arbitrary rotations.</p>
+<hr>
+</section>
+</section>
+<section id="j" class="level2">
+<h2 class="anchored" data-anchor-id="j">J</h2>
+<section id="joint-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="joint-estimation">Joint Estimation</h3>
+<p>Estimating multiple related outcomes or treatment effects simultaneously, allowing models to share information and improve precision for each individual estimate.</p>
+<p><em>Example:</em> A model estimates the effects on both blood pressure and heart rate together, rather than fitting two separate models.</p>
+<hr>
+</section>
+</section>
+<section id="k" class="level2">
+<h2 class="anchored" data-anchor-id="k">K</h2>
+<section id="kl-divergence-kullback-leibler-divergence" class="level3">
+<h3 class="anchored" data-anchor-id="kl-divergence-kullback-leibler-divergence">KL Divergence (Kullback-Leibler Divergence)</h3>
+<p>A measure of how different one probability distribution is from another. Used in VAEs as a regularization penalty to keep the learned latent distribution close to a simple prior.</p>
+<p><em>Example:</em> High KL divergence means the encoder’s learned distribution is very different from a standard normal — the penalty discourages this.</p>
+<hr>
+</section>
+</section>
+<section id="l" class="level2">
+<h2 class="anchored" data-anchor-id="l">L</h2>
+<section id="lag-window" class="level3">
+<h3 class="anchored" data-anchor-id="lag-window">Lag / Window</h3>
+<p>The number of past time steps used as inputs to a model.</p>
+<p><em>Example:</em> A model with lag 5 uses the last 5 days of data to predict today’s outcome.</p>
+<hr>
+</section>
+<section id="latent-confounder" class="level3">
+<h3 class="anchored" data-anchor-id="latent-confounder">Latent Confounder</h3>
+<p>A hidden variable (not directly observed) that influences both treatment assignment and the outcome.</p>
+<p><em>Example:</em> A genetic predisposition that simultaneously affects medication choice and health outcome risk.</p>
+<hr>
+</section>
+<section id="latent-variable" class="level3">
+<h3 class="anchored" data-anchor-id="latent-variable">Latent Variable</h3>
+<p>A hidden factor that is not directly measured but is inferred from observable data.</p>
+<p><em>Example:</em> A latent health-risk score inferred from dozens of lab measurements and vital signs.</p>
+<hr>
+</section>
+<section id="late-local-average-treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="late-local-average-treatment-effect">LATE (Local Average Treatment Effect)</h3>
+<p>The average treatment effect for <em>compliers</em> — people whose treatment status changes because of the instrument.</p>
+<p><em>Example:</em> The average wage gain from job training, estimated only among people who attend training <em>because</em> they received a voucher.</p>
+<hr>
+</section>
+</section>
+<section id="m" class="level2">
+<h2 class="anchored" data-anchor-id="m">M</h2>
+<section id="masked-loss" class="level3">
+<h3 class="anchored" data-anchor-id="masked-loss">Masked Loss</h3>
+<p>A loss function that computes error only on the actually-observed treatment outcome for each unit — not on the counterfactual (unobserved) outcome.</p>
+<p><em>Example:</em> For a treated unit, only the treated-outcome prediction head is updated; the control head is not penalized on that unit.</p>
+<hr>
+</section>
+<section id="message-passing" class="level3">
+<h3 class="anchored" data-anchor-id="message-passing">Message Passing</h3>
+<p>In graph neural networks, each node gathers information from its neighboring nodes, aggregates it, and updates its own representation. This propagates information through the graph.</p>
+<p><em>Example:</em> In a causal network, each variable collects signals from its parent variables and updates its internal state.</p>
+<hr>
+</section>
+<section id="mmd-maximum-mean-discrepancy" class="level3">
+<h3 class="anchored" data-anchor-id="mmd-maximum-mean-discrepancy">MMD (Maximum Mean Discrepancy)</h3>
+<p>A kernel-based measure of distance between two probability distributions. Zero means the distributions are identical; larger values mean they are more different.</p>
+<p><em>Example:</em> If treated and control patients have very different distributions in the learned representation space, MMD is high — penalizing this encourages balanced representations.</p>
+<hr>
+</section>
+<section id="multi-arm-treatment" class="level3">
+<h3 class="anchored" data-anchor-id="multi-arm-treatment">Multi-Arm Treatment</h3>
+<p>A study design with more than two treatment options.</p>
+<p><em>Example:</em> A clinical trial with placebo, low-dose drug, and high-dose drug is a three-arm trial.</p>
+<hr>
+</section>
+<section id="multi-outcome-modeling" class="level3">
+<h3 class="anchored" data-anchor-id="multi-outcome-modeling">Multi-Outcome Modeling</h3>
+<p>Estimating the effects on more than one outcome variable at the same time.</p>
+<p><em>Example:</em> Simultaneously estimating treatment effects on blood pressure and heart rate, sharing information across both outcomes.</p>
+<hr>
+</section>
+</section>
+<section id="n" class="level2">
+<h2 class="anchored" data-anchor-id="n">N</h2>
+<section id="nocurl-penalty" class="level3">
+<h3 class="anchored" data-anchor-id="nocurl-penalty">NoCurl Penalty</h3>
+<p>A soft regularizer for DAG learning that penalizes local circular patterns in the learned graph (inspired by the mathematical concept of curl in vector fields).</p>
+<p><em>Example:</em> Penalize patterns like A → B → A, which imply a cycle even if no single edge closes the loop.</p>
+<hr>
+</section>
+<section id="notears" class="level3">
+<h3 class="anchored" data-anchor-id="notears">NOTEARS</h3>
+<p>A method for learning DAGs that converts the combinatorial graph search problem into a continuous optimization problem using a differentiable acyclicity function.</p>
+<p><em>Example:</em> Optimize a weighted adjacency matrix by gradient descent while a penalty term enforces the no-cycles constraint.</p>
+<hr>
+</section>
+<section id="nuisance-functions-nuisance-models" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-functions-nuisance-models">Nuisance Functions / Nuisance Models</h3>
+<p>Auxiliary models fitted to estimate quantities like E[Y|X] or P(T|X) that are needed before estimating the final causal parameter of interest.</p>
+<p><em>Example:</em> In double machine learning, nuisance models predict the outcome and the treatment from covariates. Their residuals are then used for causal estimation.</p>
+<hr>
+</section>
+</section>
+<section id="o" class="level2">
+<h2 class="anchored" data-anchor-id="o">O</h2>
+<section id="out-of-fold-prediction" class="level3">
+<h3 class="anchored" data-anchor-id="out-of-fold-prediction">Out-of-Fold Prediction</h3>
+<p>A prediction for each observation made by a model that was <em>not</em> trained on that observation — a cross-validation practice that prevents overfitting in stacked models.</p>
+<p><em>Example:</em> In 5-fold CV, row 1’s prediction comes from the fold that held row 1 out during training.</p>
+<hr>
+</section>
+<section id="outcome" class="level3">
+<h3 class="anchored" data-anchor-id="outcome">Outcome</h3>
+<p>The measured result (response variable) that we want to understand or improve through treatment.</p>
+<p><em>Example:</em> Test score, disease recovery time, or gonorrhea rate are all outcomes in different studies.</p>
+<hr>
+</section>
+<section id="overfitting" class="level3">
+<h3 class="anchored" data-anchor-id="overfitting">Overfitting</h3>
+<p>When a model learns the noise in training data and fails to generalize to new data.</p>
+<p><em>Example:</em> A very deep decision tree with tiny leaves fits the training data almost perfectly but gives wildly unstable predictions on new patients.</p>
+<hr>
+</section>
+<section id="overlap-positivity" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-positivity">Overlap (Positivity)</h3>
+<p>The requirement that every unit has a non-zero probability of receiving <em>either</em> treatment or control, across all covariate values.</p>
+<p><em>Example:</em> If some patient profiles always get Drug A and never the control, we can’t estimate the causal effect for those profiles.</p>
+<hr>
+</section>
+</section>
+<section id="p" class="level2">
+<h2 class="anchored" data-anchor-id="p">P</h2>
+<section id="panel-data" class="level3">
+<h3 class="anchored" data-anchor-id="panel-data">Panel Data</h3>
+<p>Repeated observations of the same units (people, firms, states) measured at multiple time points.</p>
+<p><em>Example:</em> Monthly income records for the same 500 households over 3 years.</p>
+<hr>
+</section>
+<section id="parent-set" class="level3">
+<h3 class="anchored" data-anchor-id="parent-set">Parent Set</h3>
+<p>The set of variables that <em>directly cause</em> a given variable in the causal graph.</p>
+<p><em>Example:</em> The parent set of outcome Y might include treatment T and two measured confounders.</p>
+<hr>
+</section>
+<section id="pehe-precision-in-estimation-of-heterogeneous-effects" class="level3">
+<h3 class="anchored" data-anchor-id="pehe-precision-in-estimation-of-heterogeneous-effects">PEHE (Precision in Estimation of Heterogeneous Effects)</h3>
+<p>The root mean squared error of individual treatment effect estimates compared to their true values. Lower = better ITE accuracy.</p>
+<p><em>Example:</em> If the model predicts ITE = +3 but the true ITE was +5, that’s a PEHE contribution of 2.</p>
+<hr>
+</section>
+<section id="permutation-test" class="level3">
+<h3 class="anchored" data-anchor-id="permutation-test">Permutation Test</h3>
+<p>A nonparametric significance test that shuffles treatment labels many times to build a null distribution, then compares the observed statistic to that distribution.</p>
+<p><em>Example:</em> If the true CATE variance is much larger than what we see across thousands of label-shuffled datasets, the heterogeneity is probably real.</p>
+<hr>
+</section>
+<section id="positional-encoding" class="level3">
+<h3 class="anchored" data-anchor-id="positional-encoding">Positional Encoding</h3>
+<p>A vector added to each time step’s representation in a transformer model to encode its position in the sequence (since attention has no inherent notion of order).</p>
+<p><em>Example:</em> Adding a “timestamp fingerprint” to each data point so the model knows temporal order.</p>
+<hr>
+</section>
+<section id="posterior" class="level3">
+<h3 class="anchored" data-anchor-id="posterior">Posterior</h3>
+<p>The updated probability distribution over hidden variables <em>after</em> observing data — combining prior belief with evidence.</p>
+<p><em>Example:</em> <code>q(z|x, t, y)</code> is the estimated distribution over likely latent confounders for one specific patient record.</p>
+<hr>
+</section>
+<section id="posterior-collapse" class="level3">
+<h3 class="anchored" data-anchor-id="posterior-collapse">Posterior Collapse</h3>
+<p>A failure mode of VAEs where the encoder ignores the input and the latent code carries no information, because the KL term overwhelms the reconstruction signal.</p>
+<p><em>Example:</em> The model learns to use the same latent code for all inputs — iVAE’s conditional prior helps prevent this.</p>
+<hr>
+</section>
+<section id="potential-outcomes" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes">Potential Outcomes</h3>
+<p>The two hypothetical outcomes for each individual — what would happen to them <em>under treatment</em> and <em>under control</em> — only one of which is ever observed.</p>
+<p><em>Example:</em> A patient has a potential recovery time of 5 days with Drug A and 8 days without it. We only observe one of these in reality.</p>
+<hr>
+</section>
+<section id="propensity-score" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score">Propensity Score</h3>
+<p>The probability of receiving treatment given a unit’s observed covariates: <code>P(T=1 | X)</code>.</p>
+<p><em>Example:</em> Two patients with similar age, health history, and baseline risk should have similar propensity scores. A score of 0.7 means a 70% predicted chance of treatment.</p>
+<hr>
+</section>
+<section id="proxy-confounder" class="level3">
+<h3 class="anchored" data-anchor-id="proxy-confounder">Proxy Confounder</h3>
+<p>An observed variable that imperfectly reflects an unobserved confounder, used as a stand-in when the true confounder isn’t measured.</p>
+<p><em>Example:</em> A noisy survey score used as a proxy for true socioeconomic status, which wasn’t directly measured.</p>
+<hr>
+</section>
+<section id="pruning-tree" class="level3">
+<h3 class="anchored" data-anchor-id="pruning-tree">Pruning (Tree)</h3>
+<p>Removing weak branches from a decision tree after training to simplify it and improve generalization to new data.</p>
+<p><em>Example:</em> After cross-validation, branches that do not meaningfully reduce prediction error are removed.</p>
+<hr>
+</section>
+</section>
+<section id="r" class="level2">
+<h2 class="anchored" data-anchor-id="r">R</h2>
+<section id="regime" class="level3">
+<h3 class="anchored" data-anchor-id="regime">Regime</h3>
+<p>A latent (unobserved) system state that governs the data-generating process at a given time.</p>
+<p><em>Example:</em> Financial markets have “bull” (rising) and “bear” (falling) regimes, each with different rules for how variables influence each other.</p>
+<hr>
+</section>
+<section id="representation-learning" class="level3">
+<h3 class="anchored" data-anchor-id="representation-learning">Representation Learning</h3>
+<p>Learning a compact, useful internal representation (embedding) of raw inputs — often a shared hidden layer used for multiple downstream tasks.</p>
+<p><em>Example:</em> TARNet learns a shared hidden representation of patient features before splitting into treatment-specific output heads.</p>
+<hr>
+</section>
+<section id="residualization" class="level3">
+<h3 class="anchored" data-anchor-id="residualization">Residualization</h3>
+<p>Subtracting the part of a variable that is predictable from covariates, leaving only the residual variation unexplained by controls.</p>
+<p><em>Example:</em> In double ML, compute <code>Ỹ = Y - E[Y|X]</code> and <code>T̃ = T - E[T|X]</code>, then regress <code>Ỹ</code> on <code>T̃</code> to estimate the causal effect.</p>
+<hr>
+</section>
+<section id="right-censoring" class="level3">
+<h3 class="anchored" data-anchor-id="right-censoring">Right-Censoring</h3>
+<p>In survival analysis, when the event of interest has not yet occurred for a unit by the end of the study period — we know they survived <em>at least</em> that long, but not what happened after.</p>
+<p><em>Example:</em> A patient leaves the clinical trial before experiencing the disease event. Their observation is censored at their last follow-up date.</p>
+<hr>
+</section>
+<section id="rmst-restricted-mean-survival-time" class="level3">
+<h3 class="anchored" data-anchor-id="rmst-restricted-mean-survival-time">RMST (Restricted Mean Survival Time)</h3>
+<p>The average time until an event (or time remaining event-free) up to a fixed time horizon. Used as a summary of survival that avoids the proportional hazards assumption.</p>
+<p><em>Example:</em> The average number of event-free months in the first 24 months after treatment.</p>
+<hr>
+</section>
+</section>
+<section id="s" class="level2">
+<h2 class="anchored" data-anchor-id="s">S</h2>
+<section id="sample-weight" class="level3">
+<h3 class="anchored" data-anchor-id="sample-weight">Sample Weight</h3>
+<p>A number assigned to each observation reflecting how much it should count in the analysis — used to make a non-representative sample representative.</p>
+<p><em>Example:</em> Underrepresented groups receive larger weights so they contribute appropriately to population-level estimates.</p>
+<hr>
+</section>
+<section id="scm-structural-causal-model" class="level3">
+<h3 class="anchored" data-anchor-id="scm-structural-causal-model">SCM (Structural Causal Model)</h3>
+<p>A system of equations — one per variable — that describes exactly how each variable is generated from its causes plus random noise. Enables intervention and counterfactual reasoning.</p>
+<p><em>Example:</em> <code>Y = f(T, X, U_Y)</code> where U_Y is unobserved noise. Changing T while holding U_Y fixed gives the causal effect.</p>
+<hr>
+</section>
+<section id="score-based-method-causal-discovery" class="level3">
+<h3 class="anchored" data-anchor-id="score-based-method-causal-discovery">Score-Based Method (Causal Discovery)</h3>
+<p>A causal discovery approach that selects the graph that maximizes some goodness-of-fit score (like log-likelihood) subject to the acyclicity constraint.</p>
+<p><em>Example:</em> NOTEARS optimizes reconstruction loss plus an acyclicity penalty to find the best-fitting DAG.</p>
+<hr>
+</section>
+<section id="selection-bias" class="level3">
+<h3 class="anchored" data-anchor-id="selection-bias">Selection Bias</h3>
+<p>Systematic differences between treated and control groups that are not due to the treatment itself, leading to biased causal estimates.</p>
+<p><em>Example:</em> Sicker patients are more likely to receive treatment, biasing naive before-after comparisons.</p>
+<hr>
+</section>
+<section id="sequential-ignorability" class="level3">
+<h3 class="anchored" data-anchor-id="sequential-ignorability">Sequential Ignorability</h3>
+<p>In a longitudinal setting, the assumption that at each time point, treatment assignment is essentially random after conditioning on all past covariates and outcomes.</p>
+<p><em>Example:</em> Given all past health records and treatments, today’s treatment assignment is unconfounded by unmeasured factors.</p>
+<hr>
+</section>
+<section id="shap-values" class="level3">
+<h3 class="anchored" data-anchor-id="shap-values">SHAP Values</h3>
+<p>A method for explaining model predictions by attributing each feature’s contribution to the prediction. Based on game-theoretic (Shapley) values.</p>
+<p><em>Example:</em> For a predicted treatment contrast of +0.8, SHAP says: age contributes +0.4, income +0.3, baseline risk +0.1.</p>
+<hr>
+</section>
+<section id="soft-intervention" class="level3">
+<h3 class="anchored" data-anchor-id="soft-intervention">Soft Intervention</h3>
+<p>An intervention that <em>changes</em> the parameters or mechanism of a structural equation rather than forcing a fixed value — a weaker form of intervention than <code>do()</code>.</p>
+<p><em>Example:</em> Increasing someone’s probability of seeking treatment rather than forcing them to receive it.</p>
+<hr>
+</section>
+<section id="sparsity-penalty" class="level3">
+<h3 class="anchored" data-anchor-id="sparsity-penalty">Sparsity Penalty</h3>
+<p>A regularization term that shrinks small edge weights toward zero, encouraging a simpler model with fewer active connections.</p>
+<p><em>Example:</em> L1 regularization on an adjacency matrix causes many edge weights to become exactly zero, yielding a sparse, interpretable causal graph.</p>
+<hr>
+</section>
+<section id="stacking-metalearner" class="level3">
+<h3 class="anchored" data-anchor-id="stacking-metalearner">Stacking (Metalearner)</h3>
+<p>A meta-learning method that learns the <em>optimal combination weights</em> for a set of base learners, rather than treating them all equally.</p>
+<p><em>Example:</em> A linear regression is trained on the predictions of random forest, XGBoost, and Lasso — learning that XGBoost deserves 60% weight, RF 30%, Lasso 10%.</p>
+<hr>
+</section>
+<section id="state-dependence" class="level3">
+<h3 class="anchored" data-anchor-id="state-dependence">State Dependence</h3>
+<p>When a unit’s current outcome depends on its own past outcomes, not just covariates and treatment.</p>
+<p><em>Example:</em> Whether someone is unemployed this quarter depends partly on whether they were unemployed last quarter, even after controlling for all other factors.</p>
+<hr>
+</section>
+<section id="structural-equation" class="level3">
+<h3 class="anchored" data-anchor-id="structural-equation">Structural Equation</h3>
+<p>A mathematical equation defining how one variable is generated from its parent causes and exogenous noise.</p>
+<p><em>Example:</em> <code>Y = f(T, X, ε_Y)</code> where ε_Y is random noise — changing T while holding ε_Y fixed gives the causal effect of T on Y.</p>
+<hr>
+</section>
+<section id="structural-learning" class="level3">
+<h3 class="anchored" data-anchor-id="structural-learning">Structural Learning</h3>
+<p>Estimating the edges and directions of causal relationships from data.</p>
+<p><em>Example:</em> Discovering from observational data whether income causes education, or education causes income.</p>
+<hr>
+</section>
+<section id="survival-outcome" class="level3">
+<h3 class="anchored" data-anchor-id="survival-outcome">Survival Outcome</h3>
+<p>An outcome measured as the <em>time until</em> a specific event occurs (death, relapse, purchase, etc.).</p>
+<p><em>Example:</em> Time from the start of treatment to cancer relapse.</p>
+<hr>
+</section>
+<section id="synthetic-control" class="level3">
+<h3 class="anchored" data-anchor-id="synthetic-control">Synthetic Control</h3>
+<p>A counterfactual for a treated unit constructed as a weighted average of control units that best matched the treated unit before the intervention.</p>
+<p><em>Example:</em> Using a weighted combination of untreated states to estimate what California’s crime rate would have been without a particular policy.</p>
+<hr>
+</section>
+</section>
+<section id="t" class="level2">
+<h2 class="anchored" data-anchor-id="t">T</h2>
+<section id="tarnet-treatment-agnostic-representation-network" class="level3">
+<h3 class="anchored" data-anchor-id="tarnet-treatment-agnostic-representation-network">TARNet (Treatment-Agnostic Representation Network)</h3>
+<p>A neural network that learns a shared representation of covariates for all patients, then branches into separate output heads for each treatment arm.</p>
+<p><em>Example:</em> Shared layers learn “patient features”; then one head predicts Y(0) and another predicts Y(1) for each patient.</p>
+<hr>
+</section>
+<section id="time-varying-confounder" class="level3">
+<h3 class="anchored" data-anchor-id="time-varying-confounder">Time-Varying Confounder</h3>
+<p>A confounder whose value changes over time and influences both treatment and outcome at multiple time points.</p>
+<p><em>Example:</em> A patient’s health status changes each year, affecting both which treatment they receive and their outcomes.</p>
+<hr>
+</section>
+<section id="tmle-targeted-maximum-likelihood-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="tmle-targeted-maximum-likelihood-estimation">TMLE (Targeted Maximum Likelihood Estimation)</h3>
+<p>A doubly robust estimation procedure that first fits an initial model and then “targets” it with a small update to reduce bias for the specific causal parameter of interest.</p>
+<p><em>Example:</em> Fit an initial outcome model, then apply a one-step correction that uses the propensity score to reduce bias in the ATE estimate.</p>
+<hr>
+</section>
+<section id="treatment" class="level3">
+<h3 class="anchored" data-anchor-id="treatment">Treatment</h3>
+<p>The intervention, policy, or exposure whose causal effect we want to estimate.</p>
+<p><em>Example:</em> In a study of a new drug, “treatment” means receiving the drug; “control” means receiving a placebo.</p>
+<hr>
+</section>
+<section id="treatment-arm" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-arm">Treatment Arm</h3>
+<p>One specific treatment option in a multi-arm study.</p>
+<p><em>Example:</em> In a three-arm trial with placebo, Drug A, and Drug B, each of these is one treatment arm.</p>
+<hr>
+</section>
+<section id="treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect">Treatment Effect</h3>
+<p>The difference in outcome between receiving treatment and not receiving it for a unit or group.</p>
+<p><em>Example:</em> If expected blood pressure decreases by 8 points with treatment and 3 points without it, the treatment effect is 5 points.</p>
+<hr>
+</section>
+<section id="treatment-history" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-history">Treatment History</h3>
+<p>The full sequence of treatment assignments a unit has received up to a given time point.</p>
+<p><em>Example:</em> A patient’s treatment history might be: “Day 1: no drug, Day 2: low dose, Day 3: high dose.”</p>
+<hr>
+</section>
+</section>
+<section id="u" class="level2">
+<h2 class="anchored" data-anchor-id="u">U</h2>
+<section id="uplift" class="level3">
+<h3 class="anchored" data-anchor-id="uplift">Uplift</h3>
+<p>The predicted <em>improvement</em> in outcome caused by treatment for a specific individual — used in marketing and personalization.</p>
+<p><em>Example:</em> A model predicts a customer’s purchase probability rises by 5 percentage points if they receive a promotional email. That +5pp is their uplift.</p>
+<hr>
+</section>
+</section>
+<section id="v" class="level2">
+<h2 class="anchored" data-anchor-id="v">V</h2>
+<section id="vae-variational-autoencoder" class="level3">
+<h3 class="anchored" data-anchor-id="vae-variational-autoencoder">VAE (Variational Autoencoder)</h3>
+<p>A deep generative model that learns a probabilistic latent representation of data, trained using the ELBO objective. It can generate new samples and infer hidden structure.</p>
+<p><em>Example:</em> A VAE trained on patient records learns a compact latent representation that captures the key dimensions of patient health.</p>
+<hr>
+</section>
+<section id="var-vector-autoregression" class="level3">
+<h3 class="anchored" data-anchor-id="var-vector-autoregression">VAR (Vector Autoregression)</h3>
+<p>A time-series model where each variable is predicted from the past values of <em>all</em> variables in the system — useful for studying dynamic causal relationships.</p>
+<p><em>Example:</em> GDP, inflation, and interest rates are modeled together, with each depending on lagged values of all three.</p>
+<hr>
+</section>
+<section id="variable-importance" class="level3">
+<h3 class="anchored" data-anchor-id="variable-importance">Variable Importance</h3>
+<p>A ranking of which features most strongly influence the estimated treatment effect variation across individuals.</p>
+<p><em>Example:</em> Income and age may appear as the top two drivers of CATE differences — meaning the treatment works much better for some income/age groups than others.</p>
+<hr>
+</section>
+<section id="variational-inference" class="level3">
+<h3 class="anchored" data-anchor-id="variational-inference">Variational Inference</h3>
+<p>An approximate Bayesian method that replaces intractable posterior computation with optimization over a tractable family of distributions.</p>
+<p><em>Example:</em> CEVAE uses variational inference to approximate the posterior distribution over latent confounders given observed data.</p>
+<hr>
+</section>
+<section id="vsn-variable-selection-network" class="level3">
+<h3 class="anchored" data-anchor-id="vsn-variable-selection-network">VSN (Variable Selection Network)</h3>
+<p>A learned soft gate in the Temporal Fusion Transformer that scores how important each input variable is at each time step.</p>
+<p><em>Example:</em> Automatically highlighting which financial indicators (interest rates, momentum, volume) are most relevant for a given forecast.</p>
+<hr>
+</section>
+</section>
+<section id="w" class="level2">
+<h2 class="anchored" data-anchor-id="w">W</h2>
+<section id="weak-instrument" class="level3">
+<h3 class="anchored" data-anchor-id="weak-instrument">Weak Instrument</h3>
+<p>An instrument that has only a weak correlation with the treatment variable, leading to imprecise and potentially biased IV estimates.</p>
+<p><em>Example:</em> If college proximity barely affects years of education (small first-stage F-statistic), it is a weak instrument for studying returns to education.</p>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

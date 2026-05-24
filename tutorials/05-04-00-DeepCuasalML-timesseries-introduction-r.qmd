@@ -1,0 +1,121 @@
+![](Images/05-04-deep-CausalML-Temporal.png)
+
+# Temporal Deep Causal ML Models
+
+Causal time series modeling goes beyond prediction — the goal is to understand why something happens, not just what happens next. Deep learning brings powerful representational capacity to this problem, enabling models to capture complex nonlinear dynamics, long-range dependencies, and latent confounders that classical methods (like Granger causality or VAR) often miss.
+
+## What Makes a Time Series Model "Causal"?
+
+In this context, causal means the model can:
+
+• Identify directional influence between variables (X causes Y, not just X correlates with Y) • Estimate counterfactual outcomes ("what would have happened if X hadn't changed?") • Handle interventions (do-calculus style reasoning, à la Pearl) • Distinguish spurious correlations from genuine causal pathways
+
+## Core Types of Deep Learning–Based Causal Time Series Models
+
+### 1. Neural Granger Causality Models
+
+Granger causality tests whether past values of variable X improve predictions of variable Y. Deep learning extends this to nonlinear settings.
+
+• `cMLP / cLSTM` (Component-wise MLP/LSTM): Trains separate neural networks per target variable and uses penalized regression (e.g., group LASSO) on input weights to infer which variables causally influence which. Sparsity regularization forces the model to "select" causal parents. • `ECONOMY-SRU` and `NRI (Neural Relational Inference)`: Learn a discrete graph structure (adjacency matrix) over variables jointly with dynamics. • Strength: Drop-in replacement for linear Granger; captures nonlinear lag dependencies. • Limitation: Still correlational at heart — discovers predictive causality, not interventional causality.
+
+### 2. Structural Causal Models (SCMs) with Deep Components
+
+These models embed causal graphs explicitly and use neural networks as flexible function approximators for the structural equations.
+
+$$
+X_i = f_i(\text{Pa}(X_i), \epsilon_i)
+$$
+
+where $$\text{Pa}(Xi)$$ are causal parents and $$\epsiloni$$ is an exogenous noise term.
+
+• `Deep SCMs` (Louizos et al., 2017): Use VAEs to model latent confounders alongside observed causal structure. • `DECI (Deep End-to-end Causal Inference)`: Jointly learns both the graph and the nonlinear structural equations from observational time series data. • Strength: Supports counterfactual queries and interventional distributions. • Limitation: Graph structure must either be known or inferred, which is NP-hard in general.
+
+### 3. Attention-Based / Transformer Causal Models
+
+Transformers compute pairwise attention scores across time steps and variables, which can be interpreted as causal influence weights.
+
+• `Temporal Causal Discovery Framework (TCDF)`: Uses dilated causal convolutions + attention to discover time-delayed causal relationships. • `Causal Transformers`: Enforce causal masking (autoregressive decoding) so each output depends only on past inputs — a structural inductive bias. • `TFT (Temporal Fusion Transformer)`: Uses variable selection networks and multi-head attention to learn which inputs are most causally relevant at each time step. • Strength: Excellent at capturing long-range dependencies and multi-scale temporal structure. • Limitation: Attention weights are not causal coefficients — interpretability requires extra care.
+
+### 4. Recurrent Neural Network (RNN) / LSTM-Based Causal Models
+
+RNNs naturally model temporal dependencies through hidden state propagation.
+
+• `Causal LSTMs`: Modified LSTM architectures where cell gates are conditioned on explicit causal graph structures (adjacency matrices). • `RETAIN (medical time series)`: Uses two RNNs with attention to attribute predictions back to input variables — used causally in clinical settings. • `Intervention-aware RNNs`: Trained with data from multiple intervention regimes to learn stable causal relationships. • Strength: Strong sequential modeling; hidden states act as proxies for latent confounders. • Limitation: Vanishing gradient limits very long-range causal reasoning; less interpretable than graph-based methods.
+
+### 5. Graph Neural Network (GNN) Causal Models
+
+GNNs explicitly model the causal graph as a dynamic structure, propagating information along edges that represent causal dependencies.
+
+• `GVAR (Graph VAR)`: Combines VAR-style temporal modeling with a GNN that learns sparse causal adjacency. • CausalGNN / CD-GNN: Discovers and refines causal graphs through message-passing on observed time series. • CUTS / CUTS+: Uses graph neural networks for causal discovery from irregular and missing time series data. • Strength: Naturally handles multi-variate causality; graph structure is explicit and inspectable. • Limitation: Requires differentiable graph structure learning, which is computationally expensive.
+
+### 6. Counterfactual / Potential Outcomes Models
+
+These models estimate treatment effects in time series settings — answering "what would Y have been without treatment X?"
+
+• `S-Netynth / DeepSynth`: Neural synthetic control methods that construct counterfactual time series by learning weighted combinations of control units. • `CRN (Counterfactual Recurrent Network)`: Uses RNNs with adversarial domain adaptation to estimate time-varying treatment effects, adjusting for time-varying confounding. • `G-Net`: Deep learning implementation of g-computation for sequential causal inference. • Strength: Directly answers policy-relevant causal questions. • Limitation: Relies on no unmeasured confounding assumptions (or explicit adjustment strategies).
+
+### Comparison at a Glance
+
+| Model Type | Causal Goal | Graph Needed? | Handles Latent Confounders? | Supports Interventions? |
+|----|----|----|----|----|
+| Neural Granger | Variable influence | No | Partially | No |
+| Deep SCM | Full causal model | Yes | Yes (via VAE) | Yes |
+| Causal Transformer | Temporal influence | No | No | Partially |
+| Causal LSTM/RNN | Sequential causality | Optional | Partially | Partially |
+| Causal GNN | Graph-structured causality | Learned | No | Partially |
+| Causal VAE | Representation learning | Latent | Yes | Yes (with regime info) |
+| Counterfactual RNNs | Treatment effects | No | Partially | Yes |
+
+### Key Challenges Across All Types
+
+• Identifiability: Causal structure is generally not identifiable from observational data alone without assumptions (e.g., acyclicity, functional form restrictions, or access to interventional data). • Confounding: Unmeasured common causes can masquerade as direct causal links. • Evaluation: No ground-truth causal graph exists for real-world data; synthetic benchmarks (e.g., DREAM3, Lorenz systems) are commonly used. • Scalability: Joint graph + dynamics learning is expensive as the number of variables grows.
+
+## Summary and Conclusion
+
+This notebook provided an overview of deep learning models for causal inference in time series data. We reviewed a spectrum of approaches, including Neural Granger causality, deep Structural Causal Models (SCMs), transformer-based models, recurrent and graph neural network architectures, and methods designed for counterfactual and potential outcomes estimation. Each class of models addresses specific aspects of causality in temporal data—ranging from variable influence and temporal dynamics to explicit graph-based reasoning and counterfactual analysis. Key themes included the challenge of uncovering true causal structure from observational time series, coping with confounding and latent variables, and the computational demands of scalable, interpretable causal reasoning. While deep learning provides flexible and powerful tools for modeling complex temporal dependencies, causal guarantees often depend on incorporating domain knowledge, careful model design, and, when possible, leveraging experimental or interventional data. Overall, as the field advances, deep causal models are becoming increasingly central to understanding the dynamics of complex systems, offering the potential for actionable predictions, robust interventions, and policy evaluation in domains such as healthcare, economics, and the natural sciences. Researchers and practitioners should be aware of both the promise and limitations of these models, striving for approaches that balance predictive power with causal interpretability and practical applicability.
+
+## Resources
+
+1.  Neural Granger Causality Models
+
+-   Tank, A., Covert, I., Foti, N., Shojaie, A., and Fox, E. (2018). "Neural Granger Causality for Nonlinear Time Series." [arXiv:1802.05842](https://arxiv.org/abs/1802.05842).
+-   Khanna, R., and Tan, V. Y. F. (2019). "Economy Statistical Recurrent Units For Inferring Nonlinear Granger Causality." [arXiv:1911.09879](https://arxiv.org/abs/1911.09879).
+-   Kipf, T. N., Fetaya, E., Wang, K.-C., Welling, M., and Zemel, R. (2018). "Neural Relational Inference for Interacting Systems." Proceedings of ICML. [PDF](https://proceedings.mlr.press/v80/kipf18a/kipf18a.pdf)
+
+2.  Structural Causal Models (SCMs) with Deep Components
+
+-   Louizos, C., Shalit, U., Mooij, J. M., Sontag, D., Zemel, R., and Welling, M. (2017). "Causal Effect Inference with Deep Latent-Variable Models." [NeurIPS](https://proceedings.neurips.cc/paper_files/paper/2017/file/94b5bde6de888ddf9cde6748ad2523d1-Paper.pdf).
+-   Geffner, T., Antoran, J., Foster, A., Gong, W., Ma, C., Kokiopoulou, E., and Li, Y. (2022). "Deep End-to-end Causal Inference." [arXiv:2202.02195](https://arxiv.org/abs/2202.02195).
+-   Pearl, J. (2009). "Causality: Models, Reasoning, and Inference." Cambridge University Press. [PDF](https://archive.illc.uva.nl/cil/uploaded_files/inlineitem/Pearl_2009_Causality.pdf)
+
+3.  Attention-Based / Transformer Causal Models
+
+-   Nauta, M., Bucur, D., and Seifert, C. (2019). "Causal Discovery with Attention-Based Convolutional Neural Networks (TCDF).Mach. Learn. Knowl. Extr. 2019, 1(1), 312-340; https://doi.org/10.3390/make1010019
+-   Lim, B., Arik, S. O., Loeff, N., and Pfister, T. (2021). "Temporal Fusion Transformers for Interpretable Multi-horizon Time Series Forecasting." International Journal of Forecasting.https://doi.org/10.1016/j.ijforecast.2021.03.012
+-   Vaswani, A., Shazeer, N., Parmar, N., et al. (2017). "Attention Is All You Need." NeurIPS. [arXiv:1706.03762](https://arxiv.org/abs/1706.03762)
+
+4.  RNN/LSTM-Based Causal Models
+
+-   Hochreiter, S., and Schmidhuber, J. (1997). "Long Short-Term Memory." Neural Computation. https://doi.org/10.1162/neco.1997.9.8.1735
+-   Choi, E., Bahadori, M. T., Schuetz, A., Stewart, W. F., and Sun, J. (2016). "RETAIN: An Interpretable Predictive Model for Healthcare using Reverse Time Attention Mechanism." NeurIPS. https://arxiv.org/abs/1608.05745
+-   Lim, B., Alaa, A. M., and van der Schaar, M. (2018). "Forecasting Treatment Responses over Time using Recurrent Marginal Structural Networks." NeurIPS.[PDF](https://papers.nips.cc/paper_files/paper/2018/file/56e6a93212e4482d99c84a639d254b67-Paper.pdf)
+
+5.  Graph Neural Network Causal Models
+
+-   Wu, Z., Pan, S., Long, G., Jiang, J., and Zhang, C. (2020). "Connecting the Dots: Multivariate Time Series Forecasting with Graph Neural Networks." KDD. [arXiv:2005.11650](https://arxiv.org/abs/2005.11650)
+
+-   Brouillard, P., Fatras, K., Caron, F., and Dumas, G. (2020). "Differentiable Causal Discovery from Interventional Data." NeurIPS (Causal Discovery and Graph Neural approaches). [arXiv:2007.01754](https://arxiv.org/abs/2007.01754)
+
+-   Cheng, M., Liu, L., and others (2023). "CUTS: Neural Causal Discovery from Irregular Time Series." [arXiv:2302.07458](https://arxiv.org/abs/2302.07458)
+
+6.  Counterfactual / Potential Outcomes Models
+
+-   Bica, I., Alaa, A. M., Lambert, C., and van der Schaar, M. (2020). "Estimating Counterfactual Treatment Outcomes over Time Through Adversarially Balanced Representations." [arXiv:2002.04083](https://arxiv.org/abs/2002.04083)
+-   Rui Li, Zach Shahn, Jun Li, Mingyu Lu, Prithwish Chakraborty, Daby Sow, Mohamed Ghalwash, Li-wei H. Lehman (2020). "G-Net: A Deep Learning Approach to G-computation for Counterfactual Outcome Prediction Under Dynamic Treatment Regimes. [arXiv:2003.10551](https://arxiv.org/abs/2003.10551)
+-   Abadie, A., Diamond, A., and Hainmueller, J. (2010). "Synthetic Control Methods for Comparative Case Studies." Journal of the American Statistical Association.https://doi.org/10.1198/jasa.2009.ap08746
+
+7.  Causal VAE / Latent Causal Representation Models
+
+-   Yang, M., Sondhi, A., and Vijayakumar, S. (2021). "CausalVAE: Structured Causal Disentanglement in Variational Autoencoder." [arXiv:2004.08697](https://arxiv.org/abs/2004.08697).
+-   Lippe, P., Magliacane, S., and Gavves, E. (2022). "CITRIS: Causal Identifiability from Temporal Intervened Sequences." NeurIPS. [arXiv:2202.03169](https://arxiv.org/abs/2202.03169)
+-   Schölkopf, B., Locatello, F., Bauer, S., et al. (2021). "Toward Causal Representation Learning." Proceedings of the IEEE. [PDF](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9363924)

@@ -1,0 +1,834 @@
+![](Images/05-04-deep-CausalML-Temporal.png)
+
+# 5.4.4  RNN/LSTM-Based Causal Models {.unnumbered}
+
+**Recurrent Neural Networks (RNNs)** and their gated variants process sequences step-by-step, maintaining a hidden state $h_t$ that accumulates temporal causal history:
+
+$$h_t = f(W_h h_{t-1} + W_x x_t + b)$$
+
+Three architectural extensions turn this sequential memory into explicit causal machinery:
+
+- **Causal masking in LSTMs** → which variables are allowed to influence which (learned sparse adjacency)
+- **Reverse-time attention** → which past timesteps and which variables mattered most (RETAIN)
+- **Regime-aware conditioning** → how system dynamics shift under external interventions
+
+## The Three Models
+
+### 1) Causal LSTM
+
+A standard LSTM augmented with a learnable causal adjacency mask $G \in [0,1]^{d \times d}$ that gates which variables are allowed to influence variable $i$:
+
+$$\tilde{x}_t^{(i)} = G_{i,:} \odot x_t$$
+
+The LSTM transitions for variable $i$ are then computed on $[h_{t-1}; \tilde{x}_t^{(i)}]$. The mask is soft (continuous relaxation via sigmoid) during training and can be hardened to $\{0,1\}$ at test time. An L1 sparsity penalty on off-diagonal entries encourages parsimonious graphs:
+
+$$\mathcal{L}_{\text{sparse}} = \lambda \sum_{i \neq j} G_{ij}$$
+
+### 2) RETAIN (Reverse Time Attention)
+
+RETAIN (Choi et al., 2016) processes input sequences in reverse order and learns two attention channels simultaneously:
+
+- **Temporal attention** $\alpha_t$ — which timestep contributes most
+- **Variable attention** $\beta_t$ — which variable matters at each timestep
+
+The context vector is:
+
+$$c = \sum_{t=1}^{T} \alpha_t \cdot (\beta_t \odot v_t)$$
+
+A practical attribution score combining both channels:
+
+$$\text{Contribution}(j, t) = \alpha_t \cdot |\beta_{t,j}| \cdot |w_j|$$
+
+RETAIN's dual-GRU architecture produces interpretable, attribution-based causal influence matrices that are especially useful when explaining model decisions to stakeholders.
+
+### 3) Intervention-Aware RNN
+
+To model changing data-generating regimes (policy changes, market shocks, clinical treatments), the input is augmented with learned regime embeddings and an explicit intervention indicator:
+
+$$h_t = \text{LSTM}(h_{t-1},\ [x_t;\ r_t;\ I_t])$$
+
+where $r_t$ is a learned regime embedding (from a GRU-based regime detector) and $I_t$ is an intervention indicator. A regime-conditioned causal weight matrix $\Psi_k \in \mathbb{R}^{d \times d}$ is maintained per regime $k$; the effective causal matrix is the regime-probability-weighted average.
+
+## Implementation in R
+
+We use `{RCausalML}`'s `rnn_causal_model()` function (and its convenience wrappers `causal_lstm_model()`, `retain_model()`, `intervention_rnn_model()`) to fit all three architectures on S&P 500 sector ETF daily log-return data (2018–2024).
+
+### Load and Check Required Libraries
+
+```{r}
+#| label: packages-list
+#| warning: false
+packages <- c(
+  'tidyverse',
+  'plyr',
+  'RCausalML',
+  'torch',
+  'tidyquant',
+  'reshape2',
+  'scales',
+  'patchwork',
+  'igraph',
+  'zoo'
+)
+```
+
+### Install Missing Packages
+
+```{r}
+#| label: install-missing-packages
+#| warning: false
+#| error: false
+# Install missing packages
+#new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+#if(length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r}
+#| label: verify-installation
+#| warning: false
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load Required Libraries
+
+```{r}
+#| label: load-required-libraries
+#| warning: false
+# When rendering from package root, use local RCausalML
+if (file.exists("DESCRIPTION") && requireNamespace("devtools", quietly = TRUE)) {
+  try(devtools::load_all(".", quiet = TRUE), silent = TRUE)
+}
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+```{r}
+#| label: setup
+#| include: true
+set.seed(42)
+device_use <- NULL
+if (requireNamespace("torch", quietly = TRUE)) {
+  device_use <- if (torch::cuda_is_available()) "cuda" else "cpu"
+  torch::torch_manual_seed(42)
+}
+cat(sprintf("Using device: %s\n", device_use))
+```
+
+## Data Loading and Preprocessing
+
+This section downloads S&P 500 sector ETF prices (the same universe used in the companion notebooks), converts them to standardized log-returns, builds lagged input/output arrays for training, and derives a volatility-spike intervention proxy (top-25% rolling-variance days).
+
+> **Note:** If online market data is unavailable, the notebook automatically falls back to synthetic demo data so all downstream cells remain runnable.
+
+```{r}
+#| label: data-download
+#| warning: false
+
+TICKERS <- c(
+  "XLF" = "Financials",
+  "XLE" = "Energy",
+  "XLK" = "Technology",
+  "XLV" = "Healthcare",
+  "XLI" = "Industrials",
+  "XLY" = "ConsumerDisc",
+  "XLP" = "ConsumerStap",
+  "XLU" = "Utilities"
+)
+
+fetch_close_prices <- function(tickers, start = "2018-01-01", end = "2024-01-01") {
+  tryCatch({
+    raw <- tidyquant::tq_get(names(tickers), get = "stock.prices",
+                              from = start, to = end, complete_cases = TRUE)
+    if (is.null(raw) || nrow(raw) == 0) return(NULL)
+    raw |>
+      dplyr::select(symbol, date, adjusted) |>
+      tidyr::pivot_wider(names_from = symbol, values_from = adjusted) |>
+      dplyr::arrange(date) |>
+      tidyr::drop_na()
+  }, error = function(e) NULL)
+}
+
+close_wide <- fetch_close_prices(TICKERS)
+
+if (is.null(close_wide) || nrow(close_wide) < 30) {
+  message("Warning: market data unavailable; using synthetic demo data.")
+  set.seed(42)
+  n_steps <- 1600L
+  d_syn   <- length(TICKERS)
+  A_syn   <- matrix(0, d_syn, d_syn)
+  for (i in seq_len(d_syn)) {
+    A_syn[i, i] <- 0.45
+    if (i > 1)                 A_syn[i, i - 1] <- 0.25
+    if (i > 2 && i %% 2 == 1) A_syn[i, i - 2] <- 0.15
+  }
+  x_syn <- matrix(0, n_steps, d_syn)
+  x_syn[1, ] <- rnorm(d_syn)
+  noise_syn  <- 0.15 * matrix(rnorm(n_steps * d_syn), n_steps, d_syn)
+  for (t in seq(2L, n_steps)) x_syn[t, ] <- x_syn[t - 1L, ] %*% t(A_syn) + noise_syn[t, ]
+  returns_df <- as.data.frame(x_syn)
+  colnames(returns_df) <- unname(TICKERS)
+  data_np <- scale(x_syn)
+} else {
+  price_mat <- as.matrix(close_wide[, names(TICKERS)])
+  log_ret   <- log(price_mat[-1L, ] / price_mat[-nrow(price_mat), ])
+  colnames(log_ret) <- unname(TICKERS[colnames(price_mat)])
+  returns_df <- as.data.frame(log_ret)
+  data_np    <- scale(log_ret)
+}
+
+VAR_NAMES <- colnames(data_np)
+d         <- ncol(data_np)
+Tt        <- nrow(data_np)
+
+cat(sprintf("d=%d variables, T=%d\n", d, Tt))
+cat("Variables:", paste(VAR_NAMES, collapse = ", "), "\n")
+```
+
+```{r}
+#| label: build-lag-dataset
+#| warning: false
+
+LAG   <- 20L
+AHEAD <- 1L
+
+build_lag_dataset <- function(data, lag, ahead = 1L) {
+  N     <- nrow(data) - lag - ahead + 1L
+  x_seq <- array(NA_real_, dim = c(N, lag, ncol(data)))
+  y_mat <- matrix(NA_real_, nrow = N, ncol = ncol(data))
+  for (t in seq_len(N)) {
+    x_seq[t, , ] <- data[t:(t + lag - 1L), , drop = FALSE]
+    y_mat[t,  ]  <- data[t + lag + ahead - 1L, ]
+  }
+  list(x_seq = x_seq, y_mat = y_mat)
+}
+
+lag_data <- build_lag_dataset(data_np, LAG, AHEAD)
+X_seq    <- lag_data$x_seq
+Y_mat    <- lag_data$y_mat
+
+split  <- floor(0.8 * nrow(X_seq))
+X_tr   <- X_seq[seq_len(split), , ]
+X_val  <- X_seq[(split + 1L):nrow(X_seq), , ]
+Y_tr   <- Y_mat[seq_len(split), ]
+Y_val  <- Y_mat[(split + 1L):nrow(Y_mat), ]
+
+cat(sprintf("Train: (%d, %d, %d)  Val: (%d, %d, %d)\n",
+            dim(X_tr)[1], dim(X_tr)[2], dim(X_tr)[3],
+            dim(X_val)[1], dim(X_val)[2], dim(X_val)[3]))
+```
+
+```{r}
+#| label: build-intervention-vector
+#| warning: false
+
+# Intervention proxy: top-25% rolling-variance days (volatility spikes)
+roll_sd <- zoo::rollapply(data_np, width = 10, FUN = sd, by.column = TRUE,
+                          fill = NA, align = "right")
+if (!requireNamespace("zoo", quietly = TRUE)) {
+  roll_sd <- matrix(NA_real_, nrow(data_np), d)
+  for (j in seq_len(d)) {
+    for (t in seq(10L, nrow(data_np)))
+      roll_sd[t, j] <- sd(data_np[(t - 9L):t, j])
+  }
+}
+global_sd  <- rowMeans(roll_sd, na.rm = TRUE)
+global_sd[is.na(global_sd)] <- 0
+threshold  <- quantile(global_sd, 0.75)
+I_raw      <- as.numeric(global_sd > threshold)
+
+cat(sprintf("Intervention rate: %.1f%%\n", 100 * mean(I_raw)))
+cat(sprintf("Intervention vector length: %d\n", length(I_raw)))
+```
+
+## Model Architectures Overview
+
+In this section, we describe the three RNN/LSTM-based causal neural network models implemented in `{RCausalML}` and fitted using `rnn_causal_model()`. Each architecture is designed for multivariate time-series causal inference.
+
+### CausalLSTM Architecture
+
+The R implementation of `CausalLSTM` in `{RCausalML}`:
+
+1. **LearnableCausalMask**: a $d \times d$ sigmoid-parameterized adjacency matrix with diagonal fixed to 1 (self-causality) and an L1 sparsity penalty on off-diagonal entries.
+2. **Per-variable LSTMs**: each of the $d$ variables has its own `nn_lstm` fed the masked input $G_{i,:} \odot x_t$.
+3. **Output heads**: two-layer MLP (hidden→hidden/2→1) per variable producing one-step-ahead forecasts.
+4. **Sparsity loss**: added to MSE during training, promoting parsimonious causal graphs.
+5. **Causal matrix**: the soft mask $G$ (or its hardened version) extracted at evaluation time.
+
+### RETAIN Architecture
+
+The R implementation of `RETAIN` in `{RCausalML}`:
+
+1. **Embedding layer**: linear projection of each timestep's features to `hidden_alpha` dimensions.
+2. **Reverse-time processing**: input embedded sequence is flipped in time before GRU processing.
+3. **Alpha GRU + head**: GRU over reversed embeddings → scalar softmax attention weights $\alpha_t$ (one per timestep).
+4. **Beta GRU + head**: second GRU → tanh-transformed feature weights $\beta_t \in \mathbb{R}^d$ (one vector per timestep).
+5. **Context aggregation**: $c = \sum_t \alpha_t \cdot (\beta_t \odot x_t)$ → output head.
+6. **Causal matrix**: aggregated $|W| \cdot |\beta|$ attribution averaged over validation batches.
+
+### Intervention-Aware RNN Architecture
+
+The R implementation of `InterventionAwareRNN` in `{RCausalML}`:
+
+1. **RegimeDetector**: GRU processes input sequence → softmax over $K$ regime logits.
+2. **Regime embedding**: linear projection of regime probabilities → dense `regime_dim`-vector, repeated along sequence length.
+3. **Intervention projection**: scalar intervention indicator $I_t$ → dense `regime_dim`-vector per timestep.
+4. **Augmented LSTM**: input is $[x_t; r_t; I_t] \in \mathbb{R}^{d + 2 \cdot \text{regime\_dim}}$ at each step.
+5. **Prediction head**: GELU-activated MLP from last LSTM state → $d$-vector forecast.
+6. **Causal matrix**: regime-probability-softmax-weighted average of learnable $\Psi_k$ matrices.
+
+```
+Input x_t (d variables)
+      │
+      ├──────────────────────────────────────────────────┐
+      │                                                  │
+      ▼                                                  ▼
+RegimeDetector (GRU)                        Intervention Indicator I_t
+      │                                                  │
+      ▼                                                  ▼
+regime_embed (Linear)                      interv_proj (Linear)
+      │                                                  │
+      └────────────────────┬─────────────────────────────┘
+                           │
+                           ▼
+              Concatenate [x_t; r_t; I_t]
+                           │
+                           ▼
+                    LSTM Encoder
+                           │
+                           ▼
+                  Prediction Head (GELU MLP)
+                           │
+                           ▼
+                 Forecast ŷ (d variables)
+```
+
+## Fit All Three Models
+
+`rnn_causal_model()` is the single entry point that fits CausalLSTM, RETAIN, and the Intervention-Aware RNN in sequence. Internally it:
+
+- Builds windowed `(lag, d)` input/output tensors and an `(lag,)` intervention window per sample.
+- Trains each model with AdamW + cosine LR schedule + early stopping.
+- Adds the sparsity loss $\mathcal{L}_{\text{sparse}}$ for CausalLSTM.
+- Extracts the $d \times d$ causal matrix from each trained model.
+
+```{r}
+#| label: fit-all-models
+#| warning: false
+
+cat("Fitting CausalLSTM, RETAIN, and Intervention-Aware RNN ...\n")
+
+rnn_fit <- rnn_causal_model(
+  data             = data_np,
+  lag              = LAG,
+  models           = c("causal_lstm", "retain", "intervention_rnn"),
+  intervention     = I_raw,
+  hidden           = 64L,
+  n_layers         = 2L,
+  n_regimes        = 3L,
+  regime_dim       = 8L,
+  hidden_alpha     = 32L,
+  hidden_beta      = 32L,
+  dropout          = 0.2,
+  lam_sparse       = 0.005,
+  epochs           = 60L,
+  lr               = 3e-4,
+  patience         = 15L,
+  batch_size       = 64L,
+  val_split        = 0.2,
+  device           = device_use,
+  verbose          = TRUE
+)
+
+cat("\nTraining complete.\n")
+cat("Validation MSE:\n")
+print(round(rnn_fit$val_mse, 6))
+```
+
+### Validation MSE Summary Table
+
+```{r}
+#| label: val-mse-table
+#| warning: false
+
+val_mse_df <- data.frame(
+  Model   = c("CausalLSTM", "RETAIN", "InterventionRNN"),
+  Val_MSE = unname(rnn_fit$val_mse)
+) |> dplyr::arrange(Val_MSE)
+
+print(val_mse_df)
+```
+
+## Training Loss Curves
+
+```{r}
+#| label: plot-training-loss
+#| warning: false
+
+hist_list <- rnn_fit$histories
+
+make_loss_df <- function(nm) {
+  h <- hist_list[[nm]]
+  if (is.null(h)) return(NULL)
+  n_ep <- sum(h$val != 0)
+  data.frame(
+    epoch = seq_len(n_ep),
+    val   = h$val[seq_len(n_ep)],
+    train = h$train[seq_len(n_ep)],
+    model = nm
+  )
+}
+
+loss_df <- dplyr::bind_rows(lapply(names(hist_list), make_loss_df))
+loss_df$model <- factor(loss_df$model,
+                         levels = c("causal_lstm", "retain", "intervention_rnn"),
+                         labels = c("CausalLSTM", "RETAIN", "InterventionRNN"))
+
+ggplot(loss_df, aes(x = epoch, y = val, colour = model)) +
+  geom_line(linewidth = 0.9) +
+  scale_colour_manual(values = c(
+    "CausalLSTM"     = "#1b9e77",
+    "RETAIN"         = "#d95f02",
+    "InterventionRNN"= "#7570b3"
+  )) +
+  labs(
+    title  = "Validation Loss Curves — RNN/LSTM Causal Models",
+    x      = "Epoch",
+    y      = "MSE",
+    colour = NULL
+  ) +
+  theme_minimal()
+```
+
+### Training vs. Validation Loss per Model
+
+```{r}
+#| label: plot-train-val-loss
+#| warning: false
+#| fig-width: 12
+#| fig-height: 4
+
+plot_model_loss <- function(nm, label, colour) {
+  h <- hist_list[[nm]]
+  if (is.null(h)) return(NULL)
+  n_ep <- sum(h$val != 0)
+  df <- data.frame(
+    epoch = seq_len(n_ep),
+    Train = h$train[seq_len(n_ep)],
+    Val   = h$val[seq_len(n_ep)]
+  ) |> tidyr::pivot_longer(-epoch, names_to = "split", values_to = "loss")
+  ggplot(df, aes(x = epoch, y = loss, colour = split)) +
+    geom_line(linewidth = 0.85) +
+    scale_colour_manual(values = c("Train" = colour, "Val" = "grey40")) +
+    labs(title = label, x = "Epoch", y = "MSE", colour = NULL) +
+    theme_minimal(base_size = 9)
+}
+
+p1 <- plot_model_loss("causal_lstm",       "CausalLSTM",      "#1b9e77")
+p2 <- plot_model_loss("retain",            "RETAIN",          "#d95f02")
+p3 <- plot_model_loss("intervention_rnn",  "InterventionRNN", "#7570b3")
+
+patchwork::wrap_plots(p1, p2, p3, ncol = 3)
+```
+
+## Causal Matrix Visualization
+
+For each model, the learned causal matrix $C \in \mathbb{R}^{d \times d}$ encodes variable-to-variable influence:
+
+- **CausalLSTM**: the soft sigmoid mask $G$, where $G_{ij}$ encodes the learned strength of the causal link from variable $j$ to variable $i$.
+- **RETAIN**: aggregated output-weight-scaled beta attribution $|W| \cdot |\bar\beta|$, averaged over validation batches.
+- **InterventionRNN**: softmax-normalized average of learnable regime-conditioned causal weight matrices $\Psi_k$.
+
+```{r}
+#| label: extract-causal-matrices
+#| warning: false
+
+C_lstm   <- causal_matrix_rnn(rnn_fit, model = "causal_lstm")
+C_retain <- causal_matrix_rnn(rnn_fit, model = "retain")
+C_interv <- causal_matrix_rnn(rnn_fit, model = "intervention_rnn")
+
+cat("CausalLSTM causal matrix (first 3 rows):\n")
+print(round(C_lstm[1:3, ], 4))
+cat("\nDiagonal (all 1 — guaranteed by mask design):", round(diag(C_lstm), 3), "\n")
+```
+
+### Heatmap Comparison
+
+```{r}
+#| label: heatmap-comparison
+#| warning: false
+#| fig-width: 15
+#| fig-height: 5
+
+plot_causal_heatmap <- function(C, title, var_names) {
+  A <- as.matrix(C)
+  diag(A) <- NA_real_
+  rownames(A) <- var_names
+  colnames(A) <- var_names
+  df <- reshape2::melt(A, na.rm = TRUE)
+  colnames(df) <- c("Target", "Source", "Weight")
+  df$Target <- factor(df$Target, levels = rev(var_names))
+  df$Source <- factor(df$Source, levels = var_names)
+  ggplot(df, aes(x = Source, y = Target, fill = Weight)) +
+    geom_tile(colour = "white") +
+    geom_text(aes(label = round(Weight, 2)), size = 2.5, colour = "black") +
+    scale_fill_gradient(low = "white", high = "#2C7BB6",
+                        na.value = "grey90", name = "Weight") +
+    labs(title = title, x = "Source (cause)", y = "Target (effect)") +
+    theme_minimal(base_size = 9) +
+    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+}
+
+p_lstm   <- plot_causal_heatmap(C_lstm,   "CausalLSTM — Learned Mask",          VAR_NAMES)
+p_retain <- plot_causal_heatmap(C_retain, "RETAIN — Beta Attribution",           VAR_NAMES)
+p_interv <- plot_causal_heatmap(C_interv, "InterventionRNN — Regime-Avg Matrix", VAR_NAMES)
+
+patchwork::wrap_plots(p_lstm, p_retain, p_interv, ncol = 3)
+```
+
+### Causal Graph Network Diagrams
+
+```{r}
+#| label: network-diagram-comparison
+#| warning: false
+
+draw_rnn_igraph <- function(C, title, var_names, threshold = 0.12,
+                             node_colour = "steelblue") {
+  M     <- as.matrix(C)
+  M[is.na(M)] <- 0.0
+  A_bin <- (M > threshold) * 1L
+  diag(A_bin) <- 0L
+  g <- igraph::graph_from_adjacency_matrix(
+    A_bin, mode = "directed", weighted = NULL, diag = FALSE
+  )
+  igraph::V(g)$name        <- var_names
+  igraph::V(g)$color       <- node_colour
+  igraph::V(g)$label       <- var_names
+  igraph::V(g)$size        <- 28
+  igraph::V(g)$label.color <- "white"
+  igraph::V(g)$label.cex   <- 0.8
+  igraph::E(g)$color       <- "grey50"
+  igraph::E(g)$arrow.size  <- 0.6
+
+  old_par <- par(mar = c(0, 0, 2, 0))
+  plot(g,
+       layout = igraph::layout_in_circle(g),
+       main   = title,
+       vertex.frame.color = "white")
+  par(old_par)
+}
+
+par(mfrow = c(1, 3))
+draw_rnn_igraph(C_lstm,   "CausalLSTM (threshold > 0.12)",     VAR_NAMES, 0.12, "steelblue")
+draw_rnn_igraph(C_retain, "RETAIN (threshold > 0.12)",         VAR_NAMES, 0.12, "darkorange")
+draw_rnn_igraph(C_interv, "InterventionRNN (threshold > 0.12)",VAR_NAMES, 0.12, "mediumpurple")
+par(mfrow = c(1, 1))
+```
+
+## Graph Statistics
+
+```{r}
+#| label: graph-statistics
+#| warning: false
+
+graph_stats_rnn <- function(C, threshold = 0.12, name = "") {
+  M     <- as.matrix(C)
+  M[is.na(M)] <- 0.0
+  A_bin <- (M > threshold) * 1L
+  diag(A_bin) <- 0L
+  g    <- igraph::graph_from_adjacency_matrix(
+    A_bin, mode = "directed", weighted = NULL, diag = FALSE
+  )
+  d_n  <- igraph::gorder(g)
+  e_n  <- igraph::gsize(g)
+  dens <- if (d_n > 1) e_n / (d_n * (d_n - 1)) else 0.0
+  data.frame(
+    model          = name,
+    nodes          = d_n,
+    edges          = e_n,
+    density        = round(dens, 4),
+    is_dag         = igraph::is_dag(g),
+    max_in_degree  = if (d_n > 0) max(igraph::degree(g, mode = "in"))  else 0L,
+    max_out_degree = if (d_n > 0) max(igraph::degree(g, mode = "out")) else 0L
+  )
+}
+
+stats_all <- do.call(rbind, list(
+  graph_stats_rnn(C_lstm,   0.12, "CausalLSTM"),
+  graph_stats_rnn(C_retain, 0.12, "RETAIN"),
+  graph_stats_rnn(C_interv, 0.12, "InterventionRNN")
+))
+rownames(stats_all) <- NULL
+
+cat("Graph statistics (threshold = 0.12):\n")
+print(stats_all)
+```
+
+## Model Validation: Prediction Error on Held-Out Data
+
+```{r}
+#| label: validation-mse
+#| warning: false
+
+pred_lstm   <- predict(rnn_fit, model = "causal_lstm",      newdata = X_val)
+pred_retain <- predict(rnn_fit, model = "retain",           newdata = X_val)
+pred_interv <- predict(rnn_fit, model = "intervention_rnn", newdata = X_val,
+                        intervention = matrix(0.0, nrow(X_val), LAG))  # zero-intervention baseline
+
+mse_lstm   <- mean((pred_lstm   - Y_val)^2)
+mse_retain <- mean((pred_retain - Y_val)^2)
+mse_interv <- mean((pred_interv - Y_val)^2)
+
+val_df <- data.frame(
+  model   = c("CausalLSTM", "RETAIN", "InterventionRNN"),
+  val_mse = c(mse_lstm, mse_retain, mse_interv)
+)
+
+cat("Validation MSE (next-step reconstruction):\n")
+print(val_df)
+
+ggplot(val_df, aes(x = reorder(model, val_mse), y = val_mse, fill = model)) +
+  geom_col(show.legend = FALSE, alpha = 0.85) +
+  scale_fill_manual(values = c(
+    "CausalLSTM"      = "#1b9e77",
+    "RETAIN"          = "#d95f02",
+    "InterventionRNN" = "#7570b3"
+  )) +
+  coord_flip() +
+  labs(
+    title = "Validation MSE by Model",
+    x     = NULL,
+    y     = "Mean Squared Error"
+  ) +
+  theme_minimal()
+```
+
+### Per-Variable Prediction Error
+
+```{r}
+#| label: per-variable-mse
+#| warning: false
+
+per_var_mse <- data.frame(
+  variable         = VAR_NAMES,
+  CausalLSTM       = colMeans((pred_lstm   - Y_val)^2),
+  RETAIN           = colMeans((pred_retain - Y_val)^2),
+  InterventionRNN  = colMeans((pred_interv - Y_val)^2)
+)
+
+cat("Per-variable MSE:\n")
+print(data.frame(
+  variable = per_var_mse$variable,
+  round(per_var_mse[, -1], 5)
+))
+
+pv_long <- tidyr::pivot_longer(per_var_mse, -variable,
+                                names_to = "model", values_to = "mse")
+
+ggplot(pv_long, aes(x = variable, y = mse, fill = model)) +
+  geom_col(position = "dodge", alpha = 0.85) +
+  scale_fill_manual(values = c(
+    "CausalLSTM"     = "#1b9e77",
+    "RETAIN"         = "#d95f02",
+    "InterventionRNN"= "#7570b3"
+  )) +
+  labs(
+    title = "Per-Variable Validation MSE",
+    x     = "Sector",
+    y     = "MSE",
+    fill  = "Model"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+## RETAIN Attribution Analysis
+
+RETAIN's dual-channel attention produces interpretable attribution scores. We extract `alpha` (temporal importance) and `beta` (variable importance) from the validation set and visualise them.
+
+```{r}
+#| label: retain-attribution
+#| warning: false
+#| fig-width: 12
+#| fig-height: 5
+
+retain_mod <- rnn_fit$models[["retain"]]
+retain_mod$eval()
+
+dev_use <- if (is.null(device_use)) "cpu" else device_use
+n_plot  <- min(200L, nrow(X_val))
+x_sub   <- torch::torch_tensor(X_val[seq_len(n_plot), , ],
+                                dtype  = torch::torch_float32(),
+                                device = dev_use)
+
+retain_out <- torch::with_no_grad({ retain_mod$forward(x_sub) })
+
+# Alpha: temporal attention (n_plot x LAG)
+alpha_mat <- as.matrix(retain_out$alpha$cpu())
+alpha_mean <- colMeans(alpha_mat)
+
+# Beta: variable attention averaged over time (n_plot x d)
+beta_3d  <- retain_out$beta$abs()$cpu()
+beta_mat <- as.matrix(beta_3d$mean(dim = 2L))  # (n_plot, d)
+beta_mean <- colMeans(beta_mat)
+
+# --- Plot 1: Mean temporal attention across validation set ---
+alpha_df <- data.frame(
+  lag    = seq_len(LAG),
+  weight = alpha_mean
+)
+
+p_alpha <- ggplot(alpha_df, aes(x = lag, y = weight)) +
+  geom_col(fill = "#d95f02", alpha = 0.8) +
+  labs(
+    title = "RETAIN: Mean Temporal Attention (α)",
+    x     = "Lag (steps back from t)",
+    y     = "Mean α weight"
+  ) +
+  theme_minimal()
+
+# --- Plot 2: Mean variable attention ---
+beta_df <- data.frame(
+  variable = VAR_NAMES,
+  weight   = beta_mean
+)
+
+p_beta <- ggplot(beta_df, aes(x = reorder(variable, -weight), y = weight, fill = variable)) +
+  geom_col(show.legend = FALSE, alpha = 0.85) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "RETAIN: Mean Variable Attention (|β|)",
+    x     = "Variable",
+    y     = "Mean |β| weight"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+patchwork::wrap_plots(p_alpha, p_beta, ncol = 2)
+```
+
+## Intervention Effect Analysis
+
+For the Intervention-Aware RNN we compare predictions under zero-intervention vs. the observed intervention signal on the validation set.
+
+```{r}
+#| label: intervention-effect
+#| warning: false
+#| fig-width: 10
+#| fig-height: 4
+
+interv_mod <- rnn_fit$models[["intervention_rnn"]]
+interv_mod$eval()
+
+dev_use <- if (is.null(device_use)) "cpu" else device_use
+n_plot  <- min(200L, nrow(X_val))
+x_sub_t <- torch::torch_tensor(X_val[seq_len(n_plot), , ],
+                                dtype   = torch::torch_float32(),
+                                device  = dev_use)
+
+# Reconstruct the intervention window for validation samples using X_val rows
+n_full <- nrow(X_val)
+# X_val rows come from positions (split+1):(N) of X_seq, which map to time
+# indices (split+1):(N) in the lagged dataset, i.e. original rows (split+1+LAG-1)...
+I_val_win <- matrix(0.0, n_full, LAG)
+offset <- split  # first validation sample starts at row split+1 in X_seq
+for (t in seq_len(n_full)) {
+  ts   <- offset + t            # position in X_seq (1-indexed)
+  i_st <- ts                    # original series index for the lag window start
+  i_en <- ts + LAG - 1L
+  if (i_en <= length(I_raw))
+    I_val_win[t, ] <- I_raw[i_st:i_en]
+}
+I_val_win <- pmin(pmax(I_val_win, 0), 1)
+
+i_obs_t  <- torch::torch_tensor(I_val_win[seq_len(n_plot), ],
+                                 dtype  = torch::torch_float32(),
+                                 device = dev_use)
+i_zero_t <- torch::torch_zeros_like(i_obs_t)
+
+out_obs  <- torch::with_no_grad({ interv_mod$forward(x_sub_t, interv = i_obs_t)  })
+out_zero <- torch::with_no_grad({ interv_mod$forward(x_sub_t, interv = i_zero_t) })
+
+pred_obs  <- as.matrix(out_obs$pred$cpu())
+pred_zero <- as.matrix(out_zero$pred$cpu())
+
+# Average absolute prediction difference per variable
+diff_df <- data.frame(
+  variable = VAR_NAMES,
+  avg_diff = colMeans(abs(pred_obs - pred_zero))
+)
+
+ggplot(diff_df, aes(x = reorder(variable, -avg_diff), y = avg_diff, fill = variable)) +
+  geom_col(show.legend = FALSE, alpha = 0.85) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(
+    title = "Intervention Effect: Mean |Prediction Change| under Observed vs. Zero Intervention",
+    x     = "Sector variable",
+    y     = "Mean |Δ prediction|"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+## Interpretation Notes
+
+- **CausalLSTM** yields an explicit, sparse, directed adjacency matrix through a learnable structural mask — the closest to a formal causal graph among the three.
+- **RETAIN** gives time- and variable-level attribution, making it the most interpretable architecture for explaining decisions to domain experts.
+- **Intervention-Aware RNN** can adapt dynamics when volatility/shock regimes change and explicitly quantifies how an intervention changes predictions.
+
+In practice, combining these models is often powerful:
+
+1. Use **RETAIN** for attribution-based explanation.
+2. Use **CausalLSTM** for enforcing structural sparsity in the causal graph.
+3. Use **Intervention-Aware RNN** when regime shifts or external shocks are known to occur.
+
+## Summary and Conclusions
+
+In this notebook, we explored causal modelling approaches using temporal deep learning models on multivariate S&P 500 sector ETF data. We compared three architectures — **CausalLSTM**, **RETAIN**, and **Intervention-Aware RNN** — on predictive accuracy and causal interpretability.
+
+**Key Findings:**
+
+- All three models achieved comparable validation MSE, demonstrating that causal structural constraints need not hurt predictive performance.
+- **CausalLSTM** provided a sparse, interpretable adjacency matrix that can reveal directed causal relationships between variables through the learned mask.
+- **RETAIN** generated meaningful dual-channel attribution scores ($\alpha$ temporal, $\beta$ variable), making it well-suited for interpretation-first workflows.
+- The **Intervention-Aware RNN** effectively captured regime changes, with distinct prediction responses under observed vs. zero intervention, especially useful in datasets with known exogenous shocks.
+
+**Conclusions and Recommendations:**
+
+- Causality-aware neural architectures (like CausalLSTM) enhance both transparency and scientific value in longitudinal modelling tasks.
+- Attribution-based models (like RETAIN) are recommended when explaining predictions to stakeholders is a priority.
+- Intervention-Aware RNNs are most useful when domain knowledge provides a binary or continuous treatment/shock signal.
+- In practice, deploying all three in combination leverages their complementary strengths.
+- Further work could include benchmarking on richer synthetic or real-world datasets, bootstrap uncertainty on causal matrices, and integration with formal causal discovery pipelines.
+
+## Resources
+
+### Primary References
+
+- **CausalLSTM (2025):** [Causality-Aware Recurrent Neural Networks for Time Series Analysis](https://pmc.ncbi.nlm.nih.gov/articles/PMC11876796/) — structural mask on LSTM inputs for sparse causal discovery.
+- **RETAIN (2016):** [An Interpretable Predictive Model for Healthcare Using Reverse Time Attention Mechanism](https://arxiv.org/abs/1608.05745) — Choi et al.; dual GRU-based attention for interpretable sequential modelling.
+- **Intervention-Aware RNNs:** [Detecting and Adapting to Regime Change](https://arxiv.org/abs/2010.08918) — regime-conditioned recurrent networks for non-stationary sequences.
+
+### Background Texts
+
+- **Causality (Judea Pearl):** [Causality: Models, Reasoning and Inference](https://bayes.cs.ucla.edu/BOOK-2K/) — definitive reference for structural causal models and Pearl's Ladder of Causation.
+- **Elements of Causal Inference (Peters, Janzing & Schölkopf):** [MIT Press](https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/) — rigorous treatment of SCMs and identifiability.
+- **The Book of Why (J. Pearl & D. Mackenzie)** — accessible introduction to causal reasoning.
+
+### Software and Datasets
+
+- **R torch:** <https://torch.mlverse.org/> — PyTorch bindings for R used by `{RCausalML}`.
+- **tidyquant:** <https://business-science.github.io/tidyquant/> — tidy finance data retrieval.
+- **{RCausalML}:** `rnn_causal_model()`, `causal_matrix_rnn()`, `predict.rnn_causal_model()` — main API for this notebook.
+
+### Companion Notebooks in This Series
+
+- `05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.qmd` — Neural Granger Causality (cMLP, cLSTM, SRU, NRI) on the same sector ETF universe.
+- `05-04-02-DeepCausalML-timeseries-structural-causal-model-SMC-r.qmd` — Deep Structural Causal Models: DeepSCM, DECI, DynoTEARS on sector ETF data.
+- `05-04-03-DeepCausalML-attension-transformer-r.qmd` — Attention-Based/Transformer Causal Models: TCDF, CausalTransformer, TFT on sector ETF data.
+- `05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.qmd` — CASTLE: simultaneous supervised prediction and causal graph discovery.
+
+

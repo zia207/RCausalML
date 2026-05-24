@@ -1,4 +1,4 @@
-# Test GraN-DAG (R/GraN_DAG.R)
+# Test GraN-DAG (R/causalDeepNet.R)
 # Run from package root: Rscript tests/test-GraN_DAG.R
 # Quick run (minimal iterations): QUICK=1 Rscript tests/test-GraN_DAG.R
 
@@ -19,11 +19,15 @@ suppressPackageStartupMessages({
   library(expm)
 })
 
-source(file.path(pkg_root, "R/GraN_DAG.R"))
+if (requireNamespace("devtools", quietly = TRUE)) {
+  devtools::load_all(pkg_root, quiet = TRUE)
+} else {
+  source(file.path(pkg_root, "R/causalDeepNet.R"))
+}
 
 quick <- nzchar(Sys.getenv("QUICK", ""))
 
-message("========== GraN-DAG tests (R/GraN_DAG.R) ==========")
+message("========== GraN-DAG tests (R/causalDeepNet.R) ==========")
 message("")
 
 # --- 1. is_acyclic ----

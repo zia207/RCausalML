@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>causal-survival-forest-r – RCausalML Tutorials</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./01-04-instrumental-causal-forest-r.html" rel="next">
+<link href="./01-02-causal-forest-r.html" rel="prev">
+<link href="./../pkgdown/favicon/favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-18b75cba24d26cf7305a21ba5b02d9c1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-a87dae114faf5bb458284f46209a41b6.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-18b75cba24d26cf7305a21ba5b02d9c1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light"><script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script><style>html{ scroll-behavior: smooth; }</style>
+<!-- RCausalML pkgdown tutorial head -->
+<link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<link href="../extra.css" rel="stylesheet">
+</head>
+<body class="nav-sidebar docked nav-fixed quarto-light rcausalml-tutorial"><script id="quarto-html-before-body" type="application/javascript">
+<!-- RCausalML pkgdown tutorial navbar -->
+<a href="#quarto-document-content" class="visually-hidden-focusable">Skip to contents</a>
+<nav class="navbar navbar-expand-lg fixed-top bg-light" aria-label="Site navigation"><div class="container">
+    <a class="navbar-brand me-2" href="../index.html">RCausalML</a>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rcausalml-navbar" aria-controls="rcausalml-navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div id="rcausalml-navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="../articles/RCausalML-intro.html">Get Started</a></li>
+        <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+        <li class="active nav-item"><a class="nav-link" href="index.html">Tutorials</a></li>
+        <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
+        <li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/" aria-label="Python CausalML docs"><span class="fa fa-book fa-lg"></span></a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="rcausalml-navbar-spacer" aria-hidden="true"></div>
+
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top"><nav class="navbar navbar-expand-lg " data-bs-theme="dark"><div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">RCausalML Tutorials</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+<li class="nav-item">
+    <a class="nav-link active" href="./00-scientific-terminology-glossary.html" aria-current="page"> 
+<span class="menu-text">Glossary</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tree-based" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Tree-Based</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-tree-based">
+<li>
+    <a class="dropdown-item" href="./01-00-casual-tree-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-01-causal-tree-r.html">
+ <span class="dropdown-text">Causal Tree</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-02-causal-forest-r.html">
+ <span class="dropdown-text">Causal Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-03-causal-survival-forest-r.html">
+ <span class="dropdown-text">Causal Survival Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-04-instrumental-causal-forest-r.html">
+ <span class="dropdown-text">Instrumental Causal Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-05-multi-arm-causal-forest-r.html">
+ <span class="dropdown-text">Multi-Arm Causal Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-06-causal-xgboost-r.html">
+ <span class="dropdown-text">Causal XGBoost</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-07-instrumental-causal-xgboost-r.html">
+ <span class="dropdown-text">Instrumental Causal XGBoost</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-08-multi-arm-causal-boost-r.html">
+ <span class="dropdown-text">Multi-Arm Causal Boost</span></a>
+  </li>  
+    </ul>
+</li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-meta-learners" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Meta-Learners</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-meta-learners">
+<li>
+    <a class="dropdown-item" href="./02-00-meta-learners-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-01-meta-learners-binary-treatments-r.html">
+ <span class="dropdown-text">Binary Treatments</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-02-meta-learners-multiple-discrete-treatment-r.html">
+ <span class="dropdown-text">Multiple Discrete Treatments</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-03-meta-learners-continuous-treatment-r.html">
+ <span class="dropdown-text">Continuous Treatments</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-04-tmle-model-r.html">
+ <span class="dropdown-text">TMLE</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-05-meta-learners-domain-adaptation-learner-r.html">
+ <span class="dropdown-text">Domain Adaptation Learner</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-06--meta-learners-doubly-robust-learners-r.html">
+ <span class="dropdown-text">Doubly Robust Learners</span></a>
+  </li>  
+    </ul>
+</li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-uplift" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Uplift</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-uplift">
+<li>
+    <a class="dropdown-item" href="./03-00-uplift-trees-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./03-01-uplift-trees-classification-r.html">
+ <span class="dropdown-text">Classification</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./03-02-uplift-trees-regression-r.html">
+ <span class="dropdown-text">Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./03-03-uplift-randomForest-r.html">
+ <span class="dropdown-text">Random Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./03-04-uplift-xgboost.html">
+ <span class="dropdown-text">XGBoost</span></a>
+  </li>  
+    </ul>
+</li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-double-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Double ML</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-double-ml">
+<li>
+    <a class="dropdown-item" href="./04-00-double-ml-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-01-double-ml-from-basics-to-application-r.html">
+ <span class="dropdown-text">Basics to Application</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-02-double-ml- single-multiple-treatment-r.html">
+ <span class="dropdown-text">Single/Multiple Treatment</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-03-double-ml-did-r.html">
+ <span class="dropdown-text">Difference-in-Differences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-04-double-ml-iv-r.html">
+ <span class="dropdown-text">Instrumental Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-05-double-ml-dynamic-ml.html">
+ <span class="dropdown-text">Dynamic Double ML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-06-double-ml-weighted-double-ml.html">
+ <span class="dropdown-text">Weighted Double ML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-07-double-ml-cluster-robust-r.html">
+ <span class="dropdown-text">Cluster Robust</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-08-double-ml-ensemble-learners-r.html">
+ <span class="dropdown-text">Ensemble Learners</span></a>
+  </li>  
+    </ul>
+</li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-causal-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Causal ML</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-causal-ml">
+<li>
+    <a class="dropdown-item" href="./05-00-DeepCausalML-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html">
+ <span class="dropdown-text">Treatment Effect Estimators</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html">
+ <span class="dropdown-text">Generative Latent-Variable Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">
+ <span class="dropdown-text">Causal Structural Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./05-04-00-DeepCuasalML-timesseries-introduction-r.html">
+ <span class="dropdown-text">Causal Time Series</span></a>
+  </li>  
+    </ul>
+</li>
+</ul>
+<ul class="navbar-nav navbar-nav-scroll ms-auto">
+<li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Package</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../reference/index.html"> 
+<span class="menu-text">Reference</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/zia207/RCausalML"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+</div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav><nav class="quarto-secondary-nav"><div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./01-00-casual-tree-introduction-r.html">Tree-Based Models</a></li><li class="breadcrumb-item"><a href="./01-03-causal-survival-forest-r.html">Causal Survival Forest</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav></header><!-- content --><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto"><div class="pt-lg-2 mt-2 text-center sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="./../logo_RCausalML.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none"><img src="./../logo_RCausalML.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none"></a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./00-scientific-terminology-glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Tree-Based Models</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-00-casual-tree-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-01-causal-tree-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal Tree</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-02-causal-forest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-03-causal-survival-forest-r.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Causal Survival Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-04-instrumental-causal-forest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Instrumental Causal Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-05-multi-arm-causal-forest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multi-Arm Causal Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-06-causal-xgboost-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal XGBoost</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-07-instrumental-causal-xgboost-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Instrumental Causal XGBoost</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-08-multi-arm-causal-boost-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multi-Arm Causal Boost</span></a>
+  </div>
+</li>
+      </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Meta-Learners</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-00-meta-learners-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-01-meta-learners-binary-treatments-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Binary Treatments</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-02-meta-learners-multiple-discrete-treatment-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multiple Discrete Treatments</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-03-meta-learners-continuous-treatment-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Continuous Treatments</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-04-tmle-model-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TMLE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-05-meta-learners-domain-adaptation-learner-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain Adaptation Learner</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-06--meta-learners-doubly-robust-learners-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Doubly Robust Learners</span></a>
+  </div>
+</li>
+      </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Uplift Trees &amp; Forests</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-00-uplift-trees-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-01-uplift-trees-classification-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classification</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-02-uplift-trees-regression-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Regression</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-03-uplift-randomForest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Random Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-04-uplift-xgboost.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">XGBoost</span></a>
+  </div>
+</li>
+      </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Double / Debiased ML</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-00-double-ml-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-01-double-ml-from-basics-to-application-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basics to Application</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-02-double-ml- single-multiple-treatment-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Single/Multiple Treatment</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-03-double-ml-did-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Difference-in-Differences</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-04-double-ml-iv-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Instrumental Variables</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-05-double-ml-dynamic-ml.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dynamic Double ML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-06-double-ml-weighted-double-ml.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Weighted Double ML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-07-double-ml-cluster-robust-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cluster Robust</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-08-double-ml-ensemble-learners-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ensemble Learners</span></a>
+  </div>
+</li>
+      </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">Deep Causal Learning</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-00-DeepCausalML-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Treatment Effect Estimators</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth2 ">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-01-DeepCausalML-TARNET-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TARNet</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-02-DeepCausalML-CFRTNet-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CFRNet</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-03-DeepCausalML-DragonNet-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DragonNet</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-04-DeepCausalML-GANITE-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GANITE</span></a>
+  </div>
+</li>
+      </ul>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">Generative Latent-Variable Models</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth2 ">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CEVAE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-02-DeepCausalML-variational-autoencoder-causalVAE.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CausalVAE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-03-DeepCausalML-identifiable-variational-autoencoders-CausaliVAEs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CausaliVAEs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-04-DeepCausalML-causaldiscrepancyVAE-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CausalDiscrepancyVAE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-05-DeepCausalML-causalGAN-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CausalGAN</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep Structural Causal Models</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-07-DeepCausalML-causal-encoding-generative-EGN-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal Encoding (EGN)</span></a>
+  </div>
+</li>
+      </ul>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false">
+ <span class="menu-text">Causal Structural Learning</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth2 ">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NOTEARS</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-02-DeepCausalML-dag-structure-learning-graph-neural-networks-DagGNN-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DAG-GNN</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-03-DeepCausalML-gradient-based-neural-learning-GranDag-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GraN-DAG</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-04-DeepCausalML-DAGMA-NoCurl-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DAGMA / DAG-NoCurl</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CASTLE</span></a>
+  </div>
+</li>
+      </ul>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false">
+ <span class="menu-text">Causal Time Series</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-9" class="collapse list-unstyled sidebar-section depth2 ">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-00-DeepCuasalML-timesseries-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Neural Granger Causality</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-02-DeepCausalML-timeseries-structural-causal-model-SMC-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Structural Causal Models</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-03-DeepCausalML-attension-transformer-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Attention / Transformer</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-04-DeepCausalML-timeseries-RNN-LSTM-causaML-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">RNN / LSTM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-05-DeepCausalML-timeseries-graph-nn-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Graph Neural Networks</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-06-DeepCausalML-timeseries-counterfactual-potential-causalML-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Counterfactual / Potential Outcomes</span></a>
+  </div>
+</li>
+      </ul>
+</li>
+      </ul>
+</li>
+    </ul>
+</div>
+</nav><div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active"><h2 id="toc-title">On This Page</h2>
+   
+  <ul>
+<li>
+<a href="#causal-survival-forest-csf" id="toc-causal-survival-forest-csf" class="nav-link active" data-scroll-target="#causal-survival-forest-csf">1.3 Causal Survival Forest (CSF)</a>
+  <ul class="collapse">
+<li>
+<a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">Overview</a>
+  <ul class="collapse">
+<li><a href="#key-concepts" id="toc-key-concepts" class="nav-link" data-scroll-target="#key-concepts">Key Concepts</a></li>
+  <li><a href="#how-csfs-work" id="toc-how-csfs-work" class="nav-link" data-scroll-target="#how-csfs-work">How CSFs Work</a></li>
+  <li><a href="#how-does-it-differ-from-causal-forest-and-survival-forest" id="toc-how-does-it-differ-from-causal-forest-and-survival-forest" class="nav-link" data-scroll-target="#how-does-it-differ-from-causal-forest-and-survival-forest">How does it differ from Causal Forest and Survival Forest?</a></li>
+  <li><a href="#practical-notes" id="toc-practical-notes" class="nav-link" data-scroll-target="#practical-notes">Practical Notes</a></li>
+  </ul>
+</li>
+  <li><a href="#causal-survival-forest-csf-in-r" id="toc-causal-survival-forest-csf-in-r" class="nav-link" data-scroll-target="#causal-survival-forest-csf-in-r">Causal Survival Forest (CSF) in R</a></li>
+  <li>
+<a href="#set-up" id="toc-set-up" class="nav-link" data-scroll-target="#set-up">Set Up</a>
+  <ul class="collapse">
+<li><a href="#check-and-install-required-r-packages" id="toc-check-and-install-required-r-packages" class="nav-link" data-scroll-target="#check-and-install-required-r-packages">Check and Install Required R Packages</a></li>
+  <li><a href="#install-missing-packages" id="toc-install-missing-packages" class="nav-link" data-scroll-target="#install-missing-packages">Install Missing Packages</a></li>
+  <li><a href="#verify-installation" id="toc-verify-installation" class="nav-link" data-scroll-target="#verify-installation">Verify Installation</a></li>
+  <li><a href="#load-r-packages" id="toc-load-r-packages" class="nav-link" data-scroll-target="#load-r-packages">Load R Packages</a></li>
+  <li><a href="#check-loaded-packages" id="toc-check-loaded-packages" class="nav-link" data-scroll-target="#check-loaded-packages">Check Loaded Packages</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#use-case-with-the-actg175-dataset-from-bart-package" id="toc-use-case-with-the-actg175-dataset-from-bart-package" class="nav-link" data-scroll-target="#use-case-with-the-actg175-dataset-from-bart-package">Use case with the <code>ACTG175</code> dataset from <code>{BART}</code> package</a>
+  <ul class="collapse">
+<li><a href="#data-and-data-preparation" id="toc-data-and-data-preparation" class="nav-link" data-scroll-target="#data-and-data-preparation">Data and Data Preparation</a></li>
+  <li><a href="#fit-csf" id="toc-fit-csf" class="nav-link" data-scroll-target="#fit-csf">Fit CSF</a></li>
+  <li><a href="#predicting-evaluating-on-simulated-data" id="toc-predicting-evaluating-on-simulated-data" class="nav-link" data-scroll-target="#predicting-evaluating-on-simulated-data">Predicting &amp; Evaluating on Simulated Data</a></li>
+  <li><a href="#compute-kernel-shap-values-for-cate" id="toc-compute-kernel-shap-values-for-cate" class="nav-link" data-scroll-target="#compute-kernel-shap-values-for-cate">Compute Kernel SHAP values for CATE</a></li>
+  <li><a href="#interpretation-notes" id="toc-interpretation-notes" class="nav-link" data-scroll-target="#interpretation-notes">Interpretation Notes</a></li>
+  </ul>
+</li>
+  <li><a href="#summary-and-conclusion" id="toc-summary-and-conclusion" class="nav-link" data-scroll-target="#summary-and-conclusion">Summary and Conclusion</a></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">Resources</a></li>
+  </ul>
+</li>
+  </ul><div class="toc-actions"><ul><li><a href="https://github.com/zia207/RCausalML/edit/main/01-03-causal-survival-forest-r.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/zia207/RCausalML/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./01-00-casual-tree-introduction-r.html">Tree-Based Models</a></li><li class="breadcrumb-item"><a href="./01-03-causal-survival-forest-r.html">Causal Survival Forest</a></li></ol></nav><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div><p><img src="Images/01_banner_tree_based.png" class="img-fluid"></p>
+<section id="causal-survival-forest-csf" class="level1 unnumbered"><h1 class="unnumbered">1.3 Causal Survival Forest (CSF)</h1>
+<p>This section demonstrates how to use the <strong>Causal Survival Forest (CSF)</strong> from the <a href="https://zia207.github.io/RCausalML/">RCausalML</a> package in R to estimate heterogeneous treatment effects on survival data, particularly when outcomes are right-censored. The example uses the <strong>ACTG175</strong> dataset from the <code>{BART}</code> package, a randomized trial comparing antiretroviral regimens in HIV-infected adults (Cui et al., 2023; <a href="https://academic.oup.com/jrsssb/article/85/2/179/7058918">JRSS Series B</a>).</p>
+<section id="overview" class="level2"><h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>A <strong>Causal Survival Forest</strong> extends causal forests to handle time-to-event data — situations where the outcome is not just <em>what happened</em>, but <em>when</em> it happened, and where many subjects are right-censored (their event time was never observed). Like its parent method, a CSF estimates the <strong>Conditional Average Treatment Effect (CATE)</strong>, <span class="math inline">\(\tau(X)\)</span>, but it does so on a survival timescale rather than a simple continuous outcome.</p>
+<p>CSFs are particularly valuable in medicine (does this drug extend survival, and for whom?), economics (when does job training lead to re-employment?), and any setting where dropout, loss to follow-up, or end-of-study cutoffs create incomplete outcome data.</p>
+<section id="key-concepts" class="level3"><h3 class="anchored" data-anchor-id="key-concepts">Key Concepts</h3>
+<p><strong>Defining the treatment effect</strong> on survival data requires choosing a summary measure:</p>
+<p><em>Restricted Mean Survival Time (RMST):</em></p>
+<p><span class="math display">\[\tau(X) = E[\min(T(1), h) - \min(T(0), h) \mid X = x]\]</span> This compares average survival time up to a fixed horizon <span class="math inline">\(h\)</span> between treated and control groups.</p>
+<p><em>Survival probability difference:</em></p>
+<p><span class="math display">\[\tau(X) = P[T(1) &gt; h \mid X = x] - P[T(0) &gt; h \mid X = x]\]</span> This compares the probability of surviving past time <span class="math inline">\(h\)</span> under treatment versus control.</p>
+<p><strong>Right-censoring</strong> means we observe <span class="math inline">\(Y = \min(T, C)\)</span> and an event indicator <span class="math inline">\(D = \mathbf{1}(T \leq C)\)</span>, where <span class="math inline">\(C\)</span> is the censoring time. CSFs correct for this using <strong>Inverse Probability of Censoring Weighting (IPCW)</strong>, which upweights observed events to account for those that were censored.</p>
+<p><strong>AIPW scores</strong> (Augmented Inverse Probability Weighting, from Cui et al., 2023) provide doubly-robust pseudo-outcomes for each subject, combining a direct outcome model with a propensity model. These pseudo-outcomes are what the forest actually splits on, enabling unbiased CATE estimation even with censoring.</p>
+<p><strong>Honest estimation</strong> — the same safeguard as in standard causal forests — partitions data so that the subsample used to find splits is strictly separate from the subsample used to estimate effects within leaves.</p>
+</section><section id="how-csfs-work" class="level3"><h3 class="anchored" data-anchor-id="how-csfs-work">How CSFs Work</h3>
+<p><strong>1. Inputs</strong> — Covariates <span class="math inline">\(X\)</span>, observed time <span class="math inline">\(Y\)</span>, treatment <span class="math inline">\(W\)</span>, event indicator <span class="math inline">\(D\)</span>, and time horizon <span class="math inline">\(h\)</span>.</p>
+<p><strong>2. Censoring correction</strong> — Estimate censoring probabilities <span class="math inline">\(\hat{P}(C &gt; t \mid X)\)</span> via a survival forest, then compute IPCW-corrected or AIPW pseudo-outcomes <span class="math inline">\(\tilde{Y}_i\)</span> for each individual.</p>
+<p><strong>3. Tree construction</strong> — Grow <span class="math inline">\(B\)</span> trees on random data/feature subsets. Each split maximizes the heterogeneity of pseudo-outcomes between child nodes, isolating subgroups with meaningfully different treatment effects.</p>
+<p><strong>4. Honest leaf estimation</strong> — A held-out subsample (<span class="math inline">\(S_2\)</span>) estimates <span class="math inline">\(\tau(x)\)</span> within each leaf, preventing overfitting to the split-finding subsample (<span class="math inline">\(S_1\)</span>).</p>
+<p><strong>5. Aggregation and output</strong> — Average <span class="math inline">\(\tau(x)\)</span> estimates across all <span class="math inline">\(B\)</span> trees. Final outputs: per-individual CATE <span class="math inline">\(\hat{\tau}(x)\)</span>, population ATE, confidence intervals, and covariate importance.</p>
+<p><img src="Images/cuasal_survival_forest.png" class="img-fluid" width="576"></p>
+<p>The key addition relative to a standard causal forest is <strong>steps 2 and 3</strong> — the censoring correction and pseudo-outcome construction. These are what make CSF handle survival data correctly. Without IPCW, censored subjects would introduce bias; without AIPW pseudo-outcomes, the forest would have nothing meaningful to split on.</p>
+<p>The <strong>choice of</strong> <span class="math inline">\(\tau(X)\)</span> definition (RMST vs.&nbsp;survival probability) should be made based on the scientific question: RMST gives a time-scale interpretation (“this drug adds X months of survival for patients like you”), while the survival probability difference is more directly interpretable clinically (“this increases your chance of surviving 5 years by X%”).</p>
+<p>The <strong>honest estimation</strong> in step 4 mirrors what standard causal forests do but applied to the pseudo-outcomes from step 3 — it ensures the same data isn’t used to both carve the covariate space and measure effects within it.</p>
+</section><section id="how-does-it-differ-from-causal-forest-and-survival-forest" class="level3"><h3 class="anchored" data-anchor-id="how-does-it-differ-from-causal-forest-and-survival-forest">How does it differ from Causal Forest and Survival Forest?</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 26%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead><tr class="header">
+<th><strong>Aspect</strong></th>
+<th><strong>Survival Forest</strong></th>
+<th><strong>Causal Forest</strong></th>
+<th><strong>Causal Survival Forest</strong></th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>Objective</code></td>
+<td>Predict survival probability or hazard over time</td>
+<td>Estimate heterogeneous treatment effects</td>
+<td>Estimate treatment effects on survival outcomes</td>
+</tr>
+<tr class="even">
+<td><code>Outcome Type</code></td>
+<td>Time-to-event (censored)</td>
+<td>Continuous or binary</td>
+<td>Time-to-event (censored)</td>
+</tr>
+<tr class="odd">
+<td><code>Treatment Variable</code></td>
+<td>None</td>
+<td>Required (W: 0/1)</td>
+<td>Required (W: 0/1)</td>
+</tr>
+<tr class="even">
+<td><code>Inputs</code></td>
+<td>X, Y, D</td>
+<td>X, Y, W</td>
+<td>X, Y, D, W</td>
+</tr>
+<tr class="odd">
+<td><code>Output</code></td>
+<td>Survival curves or hazard functions</td>
+<td>Treatment effect estimates <span class="math inline">\(\tau(X)\)</span>
+</td>
+<td>Treatment effect on survival <span class="math inline">\(\tau(X)\)</span>
+</td>
+</tr>
+<tr class="even">
+<td><code>Use Case</code></td>
+<td>Survival prediction (e.g., patient prognosis)</td>
+<td>Treatment effect heterogeneity (e.g., drug impact)</td>
+<td>Treatment effect on survival (e.g., therapy impact)</td>
+</tr>
+<tr class="odd">
+<td><code>Assumptions</code></td>
+<td>Handles censoring</td>
+<td>Unconfoundedness, overlap</td>
+<td>Unconfoundedness, overlap, censoring handled</td>
+</tr>
+<tr class="even">
+<td><code>{grf} Function</code></td>
+<td><code>survival_forest()</code></td>
+<td><code>causal_forest()</code></td>
+<td><code>causal_survival_forest()</code></td>
+</tr>
+</tbody>
+</table></section><section id="practical-notes" class="level3"><h3 class="anchored" data-anchor-id="practical-notes">Practical Notes</h3>
+<ul>
+<li><p><code>Survival Forest</code>: Used when the goal is purely predictive (e.g., forecasting patient survival based on covariates). It does not involve a treatment variable.</p></li>
+<li><p><code>Causal Forest</code>: Used for non-survival outcomes (e.g., blood pressure, test scores) to understand how treatment effects vary across individuals.</p></li>
+<li><p><code>Causal Survival Forest</code>: Used when both treatment effects and survival outcomes are of interest, combining the strengths of the other two models.</p></li>
+</ul></section></section><section id="causal-survival-forest-csf-in-r" class="level2"><h2 class="anchored" data-anchor-id="causal-survival-forest-csf-in-r">Causal Survival Forest (CSF) in R</h2>
+<p>This tutorial uses the <a href="https://zia207.github.io/RCausalML/">RCausalML</a> integrated with <a href="https://github.com/grf-labs/grf">grf</a> package for robust implementation of Causal Survival Forests. The <code>grf</code> package allows users to estimate Conditional Average Treatment Effects (CATE) and visualize treatment effect heterogeneity effectively.</p>
+<p>We’ll cover:</p>
+<ul>
+<li>Getting started Causal Survival Forest with simulated data</li>
+<li>Use case with the <code>ACTG175</code> dataset from <code>{BART}</code> package</li>
+</ul></section><section id="set-up" class="level2"><h2 class="anchored" data-anchor-id="set-up">Set Up</h2>
+<section id="check-and-install-required-r-packages" class="level3"><h3 class="anchored" data-anchor-id="check-and-install-required-r-packages">Check and Install Required R Packages</h3>
+<p>Following R packages are required to run this notebook. If any of these packages are not installed, you can install them using the code below:</p>
+<p><code>tidyverse</code>, <code>plyr</code>, <code>RCausalML</code>, <code>causaldata</code>, <code>mlbench</code>, <code>survival</code>, <code>BART</code>, <code>grf</code>, <code>kernelshap</code>, <code>shapviz</code></p>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-lst-cap="Required R package names used throughout the notebook."><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">packages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"tidyverse"</span>,</span>
+<span>  <span class="st">"plyr"</span>,</span>
+<span>  <span class="st">"RCausalML"</span>,</span>
+<span>  <span class="st">"causaldata"</span>,</span>
+<span>  <span class="st">"mlbench"</span>,</span>
+<span>  <span class="st">"survival"</span>,</span>
+<span>  <span class="st">"BART"</span>,</span>
+<span>  <span class="st">"grf"</span>,</span>
+<span>  <span class="st">"kernelshap"</span>,</span>
+<span>  <span class="st">"shapviz"</span></span>
+<span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section><section id="install-missing-packages" class="level3"><h3 class="anchored" data-anchor-id="install-missing-packages">Install Missing Packages</h3>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-lst-cap="Optional commands to install missing CRAN/GitHub dependencies (commented by default)."><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Install missing packages</span></span>
+<span><span class="co"># new_packages &lt;- packages[!(packages %in% installed.packages()[, "Package"])]</span></span>
+<span><span class="co"># if (length(new_packages)) install.packages(new_packages)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section><section id="verify-installation" class="level3"><h3 class="anchored" data-anchor-id="verify-installation">Verify Installation</h3>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-lst-cap="Check that each required package namespace is available."><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Verify installation</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Installed packages:\n"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output cell-output-stdout">
+<pre><code>Installed packages:</code></pre>
+</div>
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-lst-cap="Check that each required package namespace is available."><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html">sapply</a></span><span class="op">(</span><span class="va">packages</span>, <span class="va">requireNamespace</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output cell-output-stdout">
+<pre><code> tidyverse       plyr  RCausalML causaldata    mlbench   survival       BART 
+      TRUE       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE 
+       grf kernelshap    shapviz 
+      TRUE       TRUE       TRUE </code></pre>
+</div>
+</div>
+</section><section id="load-r-packages" class="level3"><h3 class="anchored" data-anchor-id="load-r-packages">Load R Packages</h3>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Load packages with suppressed messages</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">packages</span>, <span class="kw">function</span><span class="op">(</span><span class="va">pkg</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">pkg</span>, character.only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section><section id="check-loaded-packages" class="level3"><h3 class="anchored" data-anchor-id="check-loaded-packages">Check Loaded Packages</h3>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-lst-cap="Confirm which package environments are attached on the search path."><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Check loaded packages</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Successfully loaded packages:\n"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output cell-output-stdout">
+<pre><code>Successfully loaded packages:</code></pre>
+</div>
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-lst-cap="Confirm which package environments are attached on the search path."><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html">grepl</a></span><span class="op">(</span><span class="st">"package:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output cell-output-stdout">
+<pre><code> [1] "package:shapviz"    "package:kernelshap" "package:grf"       
+ [4] "package:BART"       "package:nlme"       "package:survival"  
+ [7] "package:mlbench"    "package:causaldata" "package:RCausalML" 
+[10] "package:plyr"       "package:lubridate"  "package:forcats"   
+[13] "package:stringr"    "package:dplyr"      "package:purrr"     
+[16] "package:readr"      "package:tidyr"      "package:tibble"    
+[19] "package:ggplot2"    "package:tidyverse"  "package:stats"     
+[22] "package:graphics"   "package:grDevices"  "package:utils"     
+[25] "package:datasets"   "package:methods"    "package:base"      </code></pre>
+</div>
+</div>
+</section></section><section id="use-case-with-the-actg175-dataset-from-bart-package" class="level2"><h2 class="anchored" data-anchor-id="use-case-with-the-actg175-dataset-from-bart-package">Use case with the <code>ACTG175</code> dataset from <code>{BART}</code> package</h2>
+<p>This section demonstrates how to use a causal survival forest (from the <code>grf</code> package) to estimate Conditional Average Treatment Effects (CATE) on Restricted Mean Survival Time (RMST) using simulated data.<br>
+Below, we simulate data, train the forest, and show predictions.</p>
+<section id="data-and-data-preparation" class="level3"><h3 class="anchored" data-anchor-id="data-and-data-preparation">Data and Data Preparation</h3>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Simulate n = 3000 observations with p = 8 features</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">3000</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">8</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, max <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span>   <span class="co"># Covariates</span></span>
+<span><span class="va">W</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="fl">0.4</span><span class="op">)</span>                               <span class="co"># Binary treatment: 40% treatment group</span></span>
+<span><span class="va">horizon</span> <span class="op">&lt;-</span> <span class="fl">2</span>                                         <span class="co"># Time horizon for RMST</span></span>
+<span></span>
+<span><span class="co"># Generate failure and censoring times</span></span>
+<span><span class="va">failure.time</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">pmin</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span> <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="va">W</span> <span class="op">+</span> <span class="fl">0.25</span> <span class="op">*</span> <span class="va">X</span><span class="op">[</span>, <span class="fl">3</span><span class="op">]</span><span class="op">)</span>, <span class="va">horizon</span><span class="op">)</span></span>
+<span><span class="va">censor.time</span> <span class="op">&lt;-</span> <span class="fl">1.5</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
+<span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">pmin</a></span><span class="op">(</span><span class="va">failure.time</span>, <span class="va">censor.time</span><span class="op">)</span>                 <span class="co"># Observed event/censoring time</span></span>
+<span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span><span class="op">(</span><span class="va">failure.time</span> <span class="op">&lt;=</span> <span class="va">censor.time</span><span class="op">)</span>         <span class="co"># Event indicator</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span>                      <span class="co"># Named columns for SHAP/plots</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section><section id="fit-csf" class="level3"><h3 class="anchored" data-anchor-id="fit-csf">Fit CSF</h3>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Fit causal survival forest (event times discretized for efficiency)</span></span>
+<span><span class="va">cs.forest</span> <span class="op">&lt;-</span> <span class="fu">causal_survival_forest</span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span><span class="op">(</span><span class="va">Y</span>, <span class="fl">2</span><span class="op">)</span>, <span class="va">W</span>, <span class="va">D</span>, horizon <span class="op">=</span> <span class="va">horizon</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section><section id="predicting-evaluating-on-simulated-data" class="level3"><h3 class="anchored" data-anchor-id="predicting-evaluating-on-simulated-data">Predicting &amp; Evaluating on Simulated Data</h3>
+<section id="predict-on-new-test-data" class="level4"><h4 class="anchored" data-anchor-id="predict-on-new-test-data">Predict on New Test Data</h4>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Predict on new test data</span></span>
+<span><span class="va">X.test</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">10</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="va">X.test</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">X.test</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
+<span><span class="va">cs.pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span><span class="op">(</span><span class="va">cs.forest</span>, <span class="va">X.test</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section><section id="obtain-out-of-bag-predictions" class="level4"><h4 class="anchored" data-anchor-id="obtain-out-of-bag-predictions">Obtain Out-of-Bag Predictions</h4>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Obtain out-of-bag predictions on training data</span></span>
+<span><span class="va">cs.oob</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span><span class="op">(</span><span class="va">cs.forest</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section><section id="predict-with-confidence-intervals" class="level4"><h4 class="anchored" data-anchor-id="predict-with-confidence-intervals">Predict with Confidence Intervals</h4>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Predict with confidence intervals</span></span>
+<span><span class="va">cs.ci</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span><span class="op">(</span><span class="va">cs.forest</span>, <span class="va">X.test</span>, estimate.variance <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section><section id="estimate-average-treatment-effect-ate" class="level4"><h4 class="anchored" data-anchor-id="estimate-average-treatment-effect-ate">Estimate Average Treatment Effect (ATE)</h4>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Estimate average treatment effect (ATE) with standard error</span></span>
+<span><span class="fu">average_treatment_effect</span><span class="op">(</span><span class="va">cs.forest</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output cell-output-stdout">
+<pre><code>  estimate    std.err 
+0.25145273 0.07363718 </code></pre>
+</div>
+</div>
+</section><section id="best-linear-projection-of-cate" class="level4"><h4 class="anchored" data-anchor-id="best-linear-projection-of-cate">Best Linear Projection of CATE</h4>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Best linear projection of CATE along first covariate</span></span>
+<span><span class="fu">grf</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/grf/man/best_linear_projection.html">best_linear_projection</a></span><span class="op">(</span><span class="va">cs.forest</span>, <span class="va">X</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output cell-output-stdout">
+<pre><code>
+Best linear projection of the conditional average treatment effect.
+Confidence intervals are cluster- and heteroskedasticity-robust (HC3):
+
+            Estimate Std. Error t value  Pr(&gt;|t|)    
+(Intercept) 0.251334   0.073950  3.3987 0.0006859 ***
+A1          0.015007   0.064944  0.2311 0.8172687    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+</section><section id="assess-treatment-effect-heterogeneity" class="level4"><h4 class="anchored" data-anchor-id="assess-treatment-effect-heterogeneity">Assess Treatment Effect Heterogeneity</h4>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Assess heterogeneity using train/evaluation split</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">train</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, <span class="va">n</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">eval</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html">setdiff</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, <span class="va">train</span><span class="op">)</span></span>
+<span><span class="va">train.forest</span> <span class="op">&lt;-</span> <span class="fu">causal_survival_forest</span><span class="op">(</span><span class="va">X</span><span class="op">[</span><span class="va">train</span>, <span class="op">]</span>, <span class="va">Y</span><span class="op">[</span><span class="va">train</span><span class="op">]</span>, <span class="va">W</span><span class="op">[</span><span class="va">train</span><span class="op">]</span>, <span class="va">D</span><span class="op">[</span><span class="va">train</span><span class="op">]</span>, horizon <span class="op">=</span> <span class="va">horizon</span><span class="op">)</span></span>
+<span><span class="va">eval.forest</span>  <span class="op">&lt;-</span> <span class="fu">causal_survival_forest</span><span class="op">(</span><span class="va">X</span><span class="op">[</span><span class="va">eval</span>, <span class="op">]</span>,  <span class="va">Y</span><span class="op">[</span><span class="va">eval</span><span class="op">]</span>,  <span class="va">W</span><span class="op">[</span><span class="va">eval</span><span class="op">]</span>,  <span class="va">D</span><span class="op">[</span><span class="va">eval</span><span class="op">]</span>,  horizon <span class="op">=</span> <span class="va">horizon</span><span class="op">)</span></span>
+<span><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu">rank_average_treatment_effect</span><span class="op">(</span><span class="va">eval.forest</span>, <span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span><span class="op">(</span><span class="va">train.forest</span>, <span class="va">X</span><span class="op">[</span><span class="va">eval</span>, <span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">predictions</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output-display">
+<div>
+<figure class="figure"><p><img src="01-03-causal-survival-forest-r_files/figure-html/assess-heterogeneity-sim-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section></section><section id="compute-kernel-shap-values-for-cate" class="level3"><h3 class="anchored" data-anchor-id="compute-kernel-shap-values-for-cate">Compute Kernel SHAP values for CATE</h3>
+<p>We explain the predicted treatment effects <span class="math inline">\(\hat{\tau}(X)\)</span> on a reasonably sized subset (e.g., 200–500 rows) of the training or test data — full data can be slow.</p>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://future.futureverse.org">future</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Parallel backend </span></span>
+<span><span class="va">n_cores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html">detectCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1L</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html">plan</a></span><span class="op">(</span><span class="va">multisession</span>, workers <span class="op">=</span> <span class="va">n_cores</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Scale sample sizes to data available</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
+<span><span class="va">n_total</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">n_total</span> <span class="op">&gt;</span> <span class="fl">5000L</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">n_explain</span> <span class="op">&lt;-</span> <span class="fl">300L</span></span>
+<span>  <span class="va">n_bg</span>      <span class="op">&lt;-</span> <span class="fl">100L</span>   <span class="co"># smaller background = biggest speed lever</span></span>
+<span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="va">n_total</span> <span class="op">&gt;</span> <span class="fl">1000L</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">n_explain</span> <span class="op">&lt;-</span> <span class="fl">200L</span></span>
+<span>  <span class="va">n_bg</span>      <span class="op">&lt;-</span> <span class="fl">75L</span></span>
+<span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="va">n_explain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">min</a></span><span class="op">(</span><span class="fl">100L</span>, <span class="va">n_total</span><span class="op">)</span></span>
+<span>  <span class="va">n_bg</span>      <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">min</a></span><span class="op">(</span><span class="fl">50L</span>,  <span class="va">n_total</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Non-overlapping explain / background indices </span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">n_total</span> <span class="op">&gt;=</span> <span class="va">n_explain</span> <span class="op">+</span> <span class="va">n_bg</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">all_idx</span>     <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="va">n_total</span><span class="op">)</span></span>
+<span>  <span class="va">explain_idx</span> <span class="op">&lt;-</span> <span class="va">all_idx</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq_len</a></span><span class="op">(</span><span class="va">n_explain</span><span class="op">)</span><span class="op">]</span></span>
+<span>  <span class="va">bg_idx</span>      <span class="op">&lt;-</span> <span class="va">all_idx</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="va">n_explain</span> <span class="op">+</span> <span class="fl">1L</span>, <span class="va">n_explain</span> <span class="op">+</span> <span class="va">n_bg</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="co"># Small dataset — allow overlap rather than error</span></span>
+<span>  <span class="va">explain_idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="va">n_total</span>, <span class="va">n_explain</span>, replace <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="va">bg_idx</span>      <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="va">n_total</span>, <span class="va">n_bg</span>,      replace <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">X_explain</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">[</span><span class="va">explain_idx</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span><span class="va">bg_X</span>      <span class="op">&lt;-</span> <span class="va">X</span><span class="op">[</span><span class="va">bg_idx</span>,      , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Prediction wrapper </span></span>
+<span><span class="va">pred_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span>, <span class="va">newdata</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span><span class="op">(</span><span class="va">object</span>, newdata <span class="op">=</span> <span class="va">newdata</span><span class="op">)</span><span class="op">$</span><span class="va">predictions</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co">#: Switch to permshap — same quality, much faster than kernelshap</span></span>
+<span><span class="va">shap_ksh</span> <span class="op">&lt;-</span> <span class="fu">permshap</span><span class="op">(</span></span>
+<span>  object   <span class="op">=</span> <span class="va">cs.forest</span>,</span>
+<span>  X        <span class="op">=</span> <span class="va">X_explain</span>,</span>
+<span>  bg_X     <span class="op">=</span> <span class="va">bg_X</span>,</span>
+<span>  pred_fun <span class="op">=</span> <span class="va">pred_fun</span>,</span>
+<span>  verbose  <span class="op">=</span> <span class="cn">FALSE</span>       <span class="co"># set TRUE to watch progress</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Reset workers ──────────────────────────────────────────────────</span></span>
+<span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html">plan</a></span><span class="op">(</span><span class="va">sequential</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># ── Step 7: Wrap for plotting ─────────────────────────────────────────────</span></span>
+<span><span class="va">shp_csf</span> <span class="op">&lt;-</span> <span class="fu">shapviz</span><span class="op">(</span><span class="va">shap_ksh</span>, X <span class="op">=</span> <span class="va">X_explain</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="shap-summary-plot-beeswarm-importance" class="level4"><h4 class="anchored" data-anchor-id="shap-summary-plot-beeswarm-importance">SHAP Summary Plot (Beeswarm + Importance)</h4>
+<p>This shows which covariates drive heterogeneity in treatment effects the most, and in which direction.</p>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Classic beeswarm (direction + magnitude)</span></span>
+<span><span class="fu">sv_importance</span><span class="op">(</span><span class="va">shp_csf</span>, kind <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output-display">
+<div>
+<figure class="figure"><p><img src="01-03-causal-survival-forest-r_files/figure-html/shap-importance-beeswarm-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Bar version with mean absolute SHAP</span></span>
+<span><span class="fu">sv_importance</span><span class="op">(</span><span class="va">shp_csf</span>, show_numbers <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output-display">
+<div>
+<figure class="figure"><p><img src="01-03-causal-survival-forest-r_files/figure-html/shap-importance-beeswarm-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section id="shap-dependence-plots-main-effects" class="level4"><h4 class="anchored" data-anchor-id="shap-dependence-plots-main-effects">SHAP Dependence Plots (main effects)</h4>
+<p>Explore how individual covariates modify the estimated treatment effect.</p>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># One plot per important variable (simulated data: X1–X8)</span></span>
+<span><span class="va">important_vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span>, <span class="st">"X3"</span>, <span class="st">"X4"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">sv_dependence</span><span class="op">(</span><span class="va">shp_csf</span>, v <span class="op">=</span> <span class="va">important_vars</span>, share_y <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output-display">
+<div>
+<figure class="figure"><p><img src="01-03-causal-survival-forest-r_files/figure-html/shap-dependence-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Or single detailed dependence + color interaction:</p>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">sv_dependence</span><span class="op">(</span><span class="va">shp_csf</span>, v <span class="op">=</span> <span class="st">"X2"</span>, color_var <span class="op">=</span> <span class="st">"X1"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output-display">
+<div>
+<figure class="figure"><p><img src="01-03-causal-survival-forest-r_files/figure-html/shap-dependence-single-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section id="waterfall-force-plot-for-a-single-observation" class="level4"><h4 class="anchored" data-anchor-id="waterfall-force-plot-for-a-single-observation">Waterfall / Force plot for a single observation</h4>
+<p>Understand why a specific patient profile has a high/low estimated treatment benefit.</p>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Same rows as shapviz/permshap (X_explain); row_id must be in 1:nrow(X_explain)</span></span>
+<span><span class="va">preds_explain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span><span class="op">(</span><span class="va">cs.forest</span>, <span class="va">X_explain</span><span class="op">)</span><span class="op">$</span><span class="va">predictions</span></span>
+<span><span class="va">row_id_max</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.min.html">which.max</a></span><span class="op">(</span><span class="va">preds_explain</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">sv_waterfall</span><span class="op">(</span><span class="va">shp_csf</span>, row_id <span class="op">=</span> <span class="va">row_id_max</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"SHAP Waterfall - Patient with highest estimated RMST benefit"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output-display">
+<div>
+<figure class="figure"><p><img src="01-03-causal-survival-forest-r_files/figure-html/shap-waterfall-single-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Alternative: force plot style</span></span>
+<span><span class="fu">sv_force</span><span class="op">(</span><span class="va">shp_csf</span>, row_id <span class="op">=</span> <span class="va">row_id_max</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output-display">
+<div>
+<figure class="figure"><p><img src="01-03-causal-survival-forest-r_files/figure-html/shap-waterfall-single-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section id="optional-explain-a-few-test-set-observations" class="level4"><h4 class="anchored" data-anchor-id="optional-explain-a-few-test-set-observations">Optional: Explain a few test set observations</h4>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">shap_test</span> <span class="op">&lt;-</span> <span class="fu">kernelshap</span><span class="op">(</span></span>
+<span>  <span class="va">cs.forest</span>,</span>
+<span>  X         <span class="op">=</span> <span class="va">X.test</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">]</span>,            <span class="co"># X.test has 10 rows</span></span>
+<span>  bg_X      <span class="op">=</span> <span class="va">bg_X</span>,</span>
+<span>  pred_fun  <span class="op">=</span> <span class="va">pred_fun</span></span>
+<span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output cell-output-stdout">
+<pre><code>
+  |                                                                            
+  |                                                                      |   0%
+  |                                                                            
+  |=======                                                               |  10%
+  |                                                                            
+  |==============                                                        |  20%
+  |                                                                            
+  |=====================                                                 |  30%
+  |                                                                            
+  |============================                                          |  40%
+  |                                                                            
+  |===================================                                   |  50%
+  |                                                                            
+  |==========================================                            |  60%
+  |                                                                            
+  |=================================================                     |  70%
+  |                                                                            
+  |========================================================              |  80%
+  |                                                                            
+  |===============================================================       |  90%
+  |                                                                            
+  |======================================================================| 100%</code></pre>
+</div>
+<details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">shp_test</span> <span class="op">&lt;-</span> <span class="fu">shapviz</span><span class="op">(</span><span class="va">shap_test</span>, X <span class="op">=</span> <span class="va">X.test</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">]</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">sv_importance</span><span class="op">(</span><span class="va">shp_test</span>, kind <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details><div class="cell-output-display">
+<div>
+<figure class="figure"><p><img src="01-03-causal-survival-forest-r_files/figure-html/shap-test-set-example-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section></section><section id="interpretation-notes" class="level3"><h3 class="anchored" data-anchor-id="interpretation-notes">Interpretation Notes</h3>
+<ul>
+<li>
+<strong>Positive SHAP</strong> → the feature value pushes the predicted treatment effect (RMST gain) <strong>up</strong>.</li>
+<li>
+<strong>Negative SHAP</strong> → pushes the predicted treatment effect <strong>down</strong>.</li>
+<li>Unlike standard prediction models, here we explain <strong>heterogeneity</strong> (variation in <span class="math inline">\(\hat{\tau}(X)\)</span>), not the outcome itself.</li>
+<li>Beeswarm plots often reveal non-linear patterns and interactions implicitly captured by the forest.</li>
+<li>Compare SHAP variable importance with <code><a href="https://rdrr.io/pkg/grf/man/variable_importance.html">grf::variable_importance()</a></code> — they measure similar concepts but from different perspectives (additive decomposition vs.&nbsp;permutation/impurity).</li>
+<li>For faster/more accurate SHAP on tree ensembles, packages like <a href="https://modeloriented.github.io/treeshap/">treeshap</a> work well with <a href="https://imbs-hl.github.io/ranger/">ranger</a>, but <a href="https://github.com/grf-labs/grf">grf</a> internals are not directly compatible → Kernel SHAP is reliable and model-agnostic.</li>
+</ul></section></section><section id="summary-and-conclusion" class="level2"><h2 class="anchored" data-anchor-id="summary-and-conclusion">Summary and Conclusion</h2>
+<p>This notebook demonstrated the <strong>Causal Survival Forest (CSF)</strong> from <a href="https://github.com/grf-labs/grf">grf</a> using the <strong>ACTG175</strong> dataset from <code>{BART}</code>. We prepared baseline covariates and binary treatment (zidovudine only vs other therapies), defined a time horizon for RMST, and fit a CSF to estimate heterogeneous treatment effects on time to CD4 decline, AIDS, or death. The CSF provides non-parametric CATE estimates while accounting for right-censoring, variable importance, and heterogeneity (e.g., via AUTOC/TOC). For methodology and theory, see Cui et al.&nbsp;(2023).</p>
+</section><section id="resources" class="level2"><h2 class="anchored" data-anchor-id="resources">Resources</h2>
+<ol type="1">
+<li><p><strong>Cui, Y., Kosorok, M. R., Sverdrup, E., Wager, S., &amp; Zhu, R. (2023).</strong> Estimating heterogeneous treatment effects with right-censored data via causal survival forests. <em>Journal of the Royal Statistical Society: Series B (Statistical Methodology)</em>, <strong>85</strong>(2), 179–211.<br><a href="https://academic.oup.com/jrsssb/article/85/2/179/7058918" class="uri">https://academic.oup.com/jrsssb/article/85/2/179/7058918</a></p></li>
+<li><p><strong>Hammer, S. M., et al.&nbsp;(1996).</strong> A trial comparing nucleoside monotherapy with combination therapy in HIV-infected adults with CD4 cell counts from 200 to 500 per cubic millimeter. <em>New England Journal of Medicine</em>, <strong>335</strong>, 1081–1090. (ACTG 175 trial.)</p></li>
+<li><p><a href="https://grf-labs.github.io/grf/articles/causal_survival_forest.html">grf Causal Survival Forest documentation</a></p></li>
+<li><p><a href="https://search.r-project.org/CRAN/refmans/grf/html/causal_survival_forest.html">grf R reference: causal_survival_forest</a></p></li>
+<li><p><a href="https://arxiv.org/abs/2006.09639">Original Causal Survival Forests preprint</a></p></li>
+</ol>
+
+
+<!-- -->
+
+</section></section><a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/zia207\.github\.io\/RCausalML\/tutorials");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><nav class="page-navigation"><div class="nav-page nav-page-previous">
+      <a href="./01-02-causal-forest-r.html" class="pagination-link" aria-label="Causal Forest">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Causal Forest</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./01-04-instrumental-causal-forest-r.html" class="pagination-link" aria-label="Instrumental Causal Forest">
+        <span class="nav-page-text">Instrumental Causal Forest</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="al">![](Images/01_banner_tree_based.png)</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu"># 1.3 Causal Survival Forest (CSF) {.unnumbered}</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>This section demonstrates how to use the **Causal Survival Forest (CSF)** from the `{RCausalML}` package in R to estimate heterogeneous treatment effects on survival data, particularly when outcomes are right-censored. The example uses the **ACTG175** dataset from the <span class="in">`{BART}`</span> package, a randomized trial comparing antiretroviral regimens in HIV-infected adults (Cui et al., 2023; <span class="co">[</span><span class="ot">JRSS Series B</span><span class="co">](https://academic.oup.com/jrsssb/article/85/2/179/7058918)</span>).</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Overview</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>A **Causal Survival Forest** extends causal forests to handle time-to-event data — situations where the outcome is not just *what happened*, but *when* it happened, and where many subjects are right-censored (their event time was never observed). Like its parent method, a CSF estimates the **Conditional Average Treatment Effect (CATE)**, $\tau(X)$, but it does so on a survival timescale rather than a simple continuous outcome.</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>CSFs are particularly valuable in medicine (does this drug extend survival, and for whom?), economics (when does job training lead to re-employment?), and any setting where dropout, loss to follow-up, or end-of-study cutoffs create incomplete outcome data.</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Concepts</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>**Defining the treatment effect** on survival data requires choosing a summary measure:</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>*Restricted Mean Survival Time (RMST):*</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>$$\tau(X) = E<span class="co">[</span><span class="ot">\min(T(1), h) - \min(T(0), h) \mid X = x</span><span class="co">]</span>$$ This compares average survival time up to a fixed horizon $h$ between treated and control groups.</span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>*Survival probability difference:*</span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>$$\tau(X) = P<span class="co">[</span><span class="ot">T(1) &gt; h \mid X = x</span><span class="co">]</span> - P<span class="co">[</span><span class="ot">T(0) &gt; h \mid X = x</span><span class="co">]</span>$$ This compares the probability of surviving past time $h$ under treatment versus control.</span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a>**Right-censoring** means we observe $Y = \min(T, C)$ and an event indicator $D = \mathbf{1}(T \leq C)$, where $C$ is the censoring time. CSFs correct for this using **Inverse Probability of Censoring Weighting (IPCW)**, which upweights observed events to account for those that were censored.</span>
+<span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a>**AIPW scores** (Augmented Inverse Probability Weighting, from Cui et al., 2023) provide doubly-robust pseudo-outcomes for each subject, combining a direct outcome model with a propensity model. These pseudo-outcomes are what the forest actually splits on, enabling unbiased CATE estimation even with censoring.</span>
+<span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a>**Honest estimation** — the same safeguard as in standard causal forests — partitions data so that the subsample used to find splits is strictly separate from the subsample used to estimate effects within leaves.</span>
+<span id="cb32-31"><a href="#cb32-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-32"><a href="#cb32-32" aria-hidden="true" tabindex="-1"></a><span class="fu">### How CSFs Work</span></span>
+<span id="cb32-33"><a href="#cb32-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-34"><a href="#cb32-34" aria-hidden="true" tabindex="-1"></a>**1. Inputs** — Covariates $X$, observed time $Y$, treatment $W$, event indicator $D$, and time horizon $h$.</span>
+<span id="cb32-35"><a href="#cb32-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-36"><a href="#cb32-36" aria-hidden="true" tabindex="-1"></a>**2. Censoring correction** — Estimate censoring probabilities $\hat{P}(C &gt; t \mid X)$ via a survival forest, then compute IPCW-corrected or AIPW pseudo-outcomes $\tilde{Y}_i$ for each individual.</span>
+<span id="cb32-37"><a href="#cb32-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-38"><a href="#cb32-38" aria-hidden="true" tabindex="-1"></a>**3. Tree construction** — Grow $B$ trees on random data/feature subsets. Each split maximizes the heterogeneity of pseudo-outcomes between child nodes, isolating subgroups with meaningfully different treatment effects.</span>
+<span id="cb32-39"><a href="#cb32-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-40"><a href="#cb32-40" aria-hidden="true" tabindex="-1"></a>**4. Honest leaf estimation** — A held-out subsample ($S_2$) estimates $\tau(x)$ within each leaf, preventing overfitting to the split-finding subsample ($S_1$).</span>
+<span id="cb32-41"><a href="#cb32-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-42"><a href="#cb32-42" aria-hidden="true" tabindex="-1"></a>**5. Aggregation and output** — Average $\tau(x)$ estimates across all $B$ trees. Final outputs: per-individual CATE $\hat{\tau}(x)$, population ATE, confidence intervals, and covariate importance.</span>
+<span id="cb32-43"><a href="#cb32-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-44"><a href="#cb32-44" aria-hidden="true" tabindex="-1"></a><span class="al">![](Images/cuasal_survival_forest.png)</span>{width="576"}</span>
+<span id="cb32-45"><a href="#cb32-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-46"><a href="#cb32-46" aria-hidden="true" tabindex="-1"></a>The key addition relative to a standard causal forest is **steps 2 and 3** — the censoring correction and pseudo-outcome construction. These are what make CSF handle survival data correctly. Without IPCW, censored subjects would introduce bias; without AIPW pseudo-outcomes, the forest would have nothing meaningful to split on.</span>
+<span id="cb32-47"><a href="#cb32-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-48"><a href="#cb32-48" aria-hidden="true" tabindex="-1"></a>The **choice of** $\tau(X)$ definition (RMST vs. survival probability) should be made based on the scientific question: RMST gives a time-scale interpretation ("this drug adds X months of survival for patients like you"), while the survival probability difference is more directly interpretable clinically ("this increases your chance of surviving 5 years by X%").</span>
+<span id="cb32-49"><a href="#cb32-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-50"><a href="#cb32-50" aria-hidden="true" tabindex="-1"></a>The **honest estimation** in step 4 mirrors what standard causal forests do but applied to the pseudo-outcomes from step 3 — it ensures the same data isn't used to both carve the covariate space and measure effects within it.</span>
+<span id="cb32-51"><a href="#cb32-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-52"><a href="#cb32-52" aria-hidden="true" tabindex="-1"></a><span class="fu">### How does it differ from Causal Forest and Survival Forest?</span></span>
+<span id="cb32-53"><a href="#cb32-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-54"><a href="#cb32-54" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Aspect** | **Survival Forest** | **Causal Forest** | **Causal Survival Forest** <span class="pp">|</span></span>
+<span id="cb32-55"><a href="#cb32-55" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------------|-------------------|------------------|------------------|</span></span>
+<span id="cb32-56"><a href="#cb32-56" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`Objective`</span> <span class="pp">|</span> Predict survival probability or hazard over time <span class="pp">|</span> Estimate heterogeneous treatment effects <span class="pp">|</span> Estimate treatment effects on survival outcomes <span class="pp">|</span></span>
+<span id="cb32-57"><a href="#cb32-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`Outcome Type`</span> <span class="pp">|</span> Time-to-event (censored) <span class="pp">|</span> Continuous or binary <span class="pp">|</span> Time-to-event (censored) <span class="pp">|</span></span>
+<span id="cb32-58"><a href="#cb32-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`Treatment Variable`</span> <span class="pp">|</span> None <span class="pp">|</span> Required (W: 0/1) <span class="pp">|</span> Required (W: 0/1) <span class="pp">|</span></span>
+<span id="cb32-59"><a href="#cb32-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`Inputs`</span> <span class="pp">|</span> X, Y, D <span class="pp">|</span> X, Y, W <span class="pp">|</span> X, Y, D, W <span class="pp">|</span></span>
+<span id="cb32-60"><a href="#cb32-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`Output`</span> <span class="pp">|</span> Survival curves or hazard functions <span class="pp">|</span> Treatment effect estimates $\tau(X)$ <span class="pp">|</span> Treatment effect on survival $\tau(X)$ <span class="pp">|</span></span>
+<span id="cb32-61"><a href="#cb32-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`Use Case`</span> <span class="pp">|</span> Survival prediction (e.g., patient prognosis) <span class="pp">|</span> Treatment effect heterogeneity (e.g., drug impact) <span class="pp">|</span> Treatment effect on survival (e.g., therapy impact) <span class="pp">|</span></span>
+<span id="cb32-62"><a href="#cb32-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`Assumptions`</span> <span class="pp">|</span> Handles censoring <span class="pp">|</span> Unconfoundedness, overlap <span class="pp">|</span> Unconfoundedness, overlap, censoring handled <span class="pp">|</span></span>
+<span id="cb32-63"><a href="#cb32-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`{grf} Function`</span> <span class="pp">|</span> <span class="in">`survival_forest()`</span> <span class="pp">|</span> <span class="in">`causal_forest()`</span> <span class="pp">|</span> <span class="in">`causal_survival_forest()`</span> <span class="pp">|</span></span>
+<span id="cb32-64"><a href="#cb32-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-65"><a href="#cb32-65" aria-hidden="true" tabindex="-1"></a><span class="fu">### Practical Notes</span></span>
+<span id="cb32-66"><a href="#cb32-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-67"><a href="#cb32-67" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`Survival Forest`</span>: Used when the goal is purely predictive (e.g., forecasting patient survival based on covariates). It does not involve a treatment variable.</span>
+<span id="cb32-68"><a href="#cb32-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-69"><a href="#cb32-69" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`Causal Forest`</span>: Used for non-survival outcomes (e.g., blood pressure, test scores) to understand how treatment effects vary across individuals.</span>
+<span id="cb32-70"><a href="#cb32-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-71"><a href="#cb32-71" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`Causal Survival Forest`</span>: Used when both treatment effects and survival outcomes are of interest, combining the strengths of the other two models.</span>
+<span id="cb32-72"><a href="#cb32-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-73"><a href="#cb32-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-74"><a href="#cb32-74" aria-hidden="true" tabindex="-1"></a><span class="fu">## Causal Survival Forest (CSF) in R</span></span>
+<span id="cb32-75"><a href="#cb32-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-76"><a href="#cb32-76" aria-hidden="true" tabindex="-1"></a>This tutorial uses the <span class="in">`{RCausalML}`</span> integrated with <span class="in">`{grf}`</span> package for robust implementation of Causal Survival Forests. The <span class="in">`grf`</span> package allows users to estimate Conditional Average Treatment Effects (CATE) and visualize treatment effect heterogeneity effectively.</span>
+<span id="cb32-77"><a href="#cb32-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-78"><a href="#cb32-78" aria-hidden="true" tabindex="-1"></a>We'll cover:</span>
+<span id="cb32-79"><a href="#cb32-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-80"><a href="#cb32-80" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Getting started Causal Survival Forest with simulated data</span>
+<span id="cb32-81"><a href="#cb32-81" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Use case with the <span class="in">`ACTG175`</span> dataset from <span class="in">`{BART}`</span> package</span>
+<span id="cb32-82"><a href="#cb32-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-83"><a href="#cb32-83" aria-hidden="true" tabindex="-1"></a><span class="fu">## Set Up</span></span>
+<span id="cb32-84"><a href="#cb32-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-85"><a href="#cb32-85" aria-hidden="true" tabindex="-1"></a><span class="fu">### Check and Install Required R Packages</span></span>
+<span id="cb32-86"><a href="#cb32-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-87"><a href="#cb32-87" aria-hidden="true" tabindex="-1"></a>Following R packages are required to run this notebook. If any of these packages are not installed, you can install them using the code below:</span>
+<span id="cb32-88"><a href="#cb32-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-89"><a href="#cb32-89" aria-hidden="true" tabindex="-1"></a><span class="in">`tidyverse`</span>, <span class="in">`plyr`</span>, <span class="in">`RCausalML`</span>, <span class="in">`causaldata`</span>, <span class="in">`mlbench`</span>, <span class="in">`survival`</span>, <span class="in">`BART`</span>, <span class="in">`grf`</span>, <span class="in">`kernelshap`</span>, <span class="in">`shapviz`</span></span>
+<span id="cb32-90"><a href="#cb32-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-93"><a href="#cb32-93" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-94"><a href="#cb32-94" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: lst-packages-vector</span></span>
+<span id="cb32-95"><a href="#cb32-95" aria-hidden="true" tabindex="-1"></a><span class="co">#| lst-cap: "Required R package names used throughout the notebook."</span></span>
+<span id="cb32-96"><a href="#cb32-96" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb32-97"><a href="#cb32-97" aria-hidden="true" tabindex="-1"></a>  <span class="st">"tidyverse"</span>,</span>
+<span id="cb32-98"><a href="#cb32-98" aria-hidden="true" tabindex="-1"></a>  <span class="st">"plyr"</span>,</span>
+<span id="cb32-99"><a href="#cb32-99" aria-hidden="true" tabindex="-1"></a>  <span class="st">"RCausalML"</span>,</span>
+<span id="cb32-100"><a href="#cb32-100" aria-hidden="true" tabindex="-1"></a>  <span class="st">"causaldata"</span>,</span>
+<span id="cb32-101"><a href="#cb32-101" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mlbench"</span>,</span>
+<span id="cb32-102"><a href="#cb32-102" aria-hidden="true" tabindex="-1"></a>  <span class="st">"survival"</span>,</span>
+<span id="cb32-103"><a href="#cb32-103" aria-hidden="true" tabindex="-1"></a>  <span class="st">"BART"</span>,</span>
+<span id="cb32-104"><a href="#cb32-104" aria-hidden="true" tabindex="-1"></a>  <span class="st">"grf"</span>,</span>
+<span id="cb32-105"><a href="#cb32-105" aria-hidden="true" tabindex="-1"></a>  <span class="st">"kernelshap"</span>,</span>
+<span id="cb32-106"><a href="#cb32-106" aria-hidden="true" tabindex="-1"></a>  <span class="st">"shapviz"</span></span>
+<span id="cb32-107"><a href="#cb32-107" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb32-108"><a href="#cb32-108" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-109"><a href="#cb32-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-110"><a href="#cb32-110" aria-hidden="true" tabindex="-1"></a><span class="fu">### Install Missing Packages</span></span>
+<span id="cb32-111"><a href="#cb32-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-114"><a href="#cb32-114" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-115"><a href="#cb32-115" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: lst-install-missing-packages</span></span>
+<span id="cb32-116"><a href="#cb32-116" aria-hidden="true" tabindex="-1"></a><span class="co">#| lst-cap: "Optional commands to install missing CRAN/GitHub dependencies (commented by default)."</span></span>
+<span id="cb32-117"><a href="#cb32-117" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb32-118"><a href="#cb32-118" aria-hidden="true" tabindex="-1"></a><span class="co">#| error: false</span></span>
+<span id="cb32-119"><a href="#cb32-119" aria-hidden="true" tabindex="-1"></a><span class="co"># Install missing packages</span></span>
+<span id="cb32-120"><a href="#cb32-120" aria-hidden="true" tabindex="-1"></a><span class="co"># new_packages &lt;- packages[!(packages %in% installed.packages()[, "Package"])]</span></span>
+<span id="cb32-121"><a href="#cb32-121" aria-hidden="true" tabindex="-1"></a><span class="co"># if (length(new_packages)) install.packages(new_packages)</span></span>
+<span id="cb32-122"><a href="#cb32-122" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-123"><a href="#cb32-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-124"><a href="#cb32-124" aria-hidden="true" tabindex="-1"></a><span class="fu">### Verify Installation</span></span>
+<span id="cb32-125"><a href="#cb32-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-128"><a href="#cb32-128" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-129"><a href="#cb32-129" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: lst-verify-package-installation</span></span>
+<span id="cb32-130"><a href="#cb32-130" aria-hidden="true" tabindex="-1"></a><span class="co">#| lst-cap: "Check that each required package namespace is available."</span></span>
+<span id="cb32-131"><a href="#cb32-131" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify installation</span></span>
+<span id="cb32-132"><a href="#cb32-132" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Installed packages:</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb32-133"><a href="#cb32-133" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">sapply</span>(packages, requireNamespace, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb32-134"><a href="#cb32-134" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-135"><a href="#cb32-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-136"><a href="#cb32-136" aria-hidden="true" tabindex="-1"></a><span class="fu">### Load R Packages</span></span>
+<span id="cb32-137"><a href="#cb32-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-140"><a href="#cb32-140" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-141"><a href="#cb32-141" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb32-142"><a href="#cb32-142" aria-hidden="true" tabindex="-1"></a><span class="co">#| error: false</span></span>
+<span id="cb32-143"><a href="#cb32-143" aria-hidden="true" tabindex="-1"></a><span class="co"># Load packages with suppressed messages</span></span>
+<span id="cb32-144"><a href="#cb32-144" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">lapply</span>(packages, <span class="cf">function</span>(pkg) {</span>
+<span id="cb32-145"><a href="#cb32-145" aria-hidden="true" tabindex="-1"></a>  <span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(pkg, <span class="at">character.only =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb32-146"><a href="#cb32-146" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb32-147"><a href="#cb32-147" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-148"><a href="#cb32-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-149"><a href="#cb32-149" aria-hidden="true" tabindex="-1"></a><span class="fu">### Check Loaded Packages</span></span>
+<span id="cb32-150"><a href="#cb32-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-153"><a href="#cb32-153" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-154"><a href="#cb32-154" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: lst-check-loaded-packages</span></span>
+<span id="cb32-155"><a href="#cb32-155" aria-hidden="true" tabindex="-1"></a><span class="co">#| lst-cap: "Confirm which package environments are attached on the search path."</span></span>
+<span id="cb32-156"><a href="#cb32-156" aria-hidden="true" tabindex="-1"></a><span class="co"># Check loaded packages</span></span>
+<span id="cb32-157"><a href="#cb32-157" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Successfully loaded packages:</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb32-158"><a href="#cb32-158" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">search</span>()[<span class="fu">grepl</span>(<span class="st">"package:"</span>, <span class="fu">search</span>())])</span>
+<span id="cb32-159"><a href="#cb32-159" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-160"><a href="#cb32-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-161"><a href="#cb32-161" aria-hidden="true" tabindex="-1"></a><span class="fu">## Use case with the `ACTG175` dataset from `{BART}` package</span></span>
+<span id="cb32-162"><a href="#cb32-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-163"><a href="#cb32-163" aria-hidden="true" tabindex="-1"></a>This section demonstrates how to use a causal survival forest (from the <span class="in">`grf`</span> package) to estimate Conditional Average Treatment Effects (CATE) on Restricted Mean Survival Time (RMST) using simulated data.\</span>
+<span id="cb32-164"><a href="#cb32-164" aria-hidden="true" tabindex="-1"></a>Below, we simulate data, train the forest, and show predictions.</span>
+<span id="cb32-165"><a href="#cb32-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-166"><a href="#cb32-166" aria-hidden="true" tabindex="-1"></a><span class="fu">### Data and Data Preparation</span></span>
+<span id="cb32-167"><a href="#cb32-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-170"><a href="#cb32-170" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-171"><a href="#cb32-171" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: simulate-data</span></span>
+<span id="cb32-172"><a href="#cb32-172" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate n = 3000 observations with p = 8 features</span></span>
+<span id="cb32-173"><a href="#cb32-173" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">3000</span></span>
+<span id="cb32-174"><a href="#cb32-174" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="dv">8</span></span>
+<span id="cb32-175"><a href="#cb32-175" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">runif</span>(n <span class="sc">*</span> p, <span class="at">min =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">max =</span> <span class="dv">1</span>), n, p)   <span class="co"># Covariates</span></span>
+<span id="cb32-176"><a href="#cb32-176" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.4</span>)                               <span class="co"># Binary treatment: 40% treatment group</span></span>
+<span id="cb32-177"><a href="#cb32-177" aria-hidden="true" tabindex="-1"></a>horizon <span class="ot">&lt;-</span> <span class="dv">2</span>                                         <span class="co"># Time horizon for RMST</span></span>
+<span id="cb32-178"><a href="#cb32-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-179"><a href="#cb32-179" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate failure and censoring times</span></span>
+<span id="cb32-180"><a href="#cb32-180" aria-hidden="true" tabindex="-1"></a>failure.time <span class="ot">&lt;-</span> <span class="fu">pmin</span>(<span class="fu">exp</span>(X[, <span class="dv">2</span>] <span class="sc">+</span> <span class="fl">0.5</span> <span class="sc">*</span> W <span class="sc">+</span> <span class="fl">0.25</span> <span class="sc">*</span> X[, <span class="dv">3</span>]), horizon)</span>
+<span id="cb32-181"><a href="#cb32-181" aria-hidden="true" tabindex="-1"></a>censor.time <span class="ot">&lt;-</span> <span class="fl">1.5</span> <span class="sc">*</span> <span class="fu">runif</span>(n)</span>
+<span id="cb32-182"><a href="#cb32-182" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">pmin</span>(failure.time, censor.time)                 <span class="co"># Observed event/censoring time</span></span>
+<span id="cb32-183"><a href="#cb32-183" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(failure.time <span class="sc">&lt;=</span> censor.time)         <span class="co"># Event indicator</span></span>
+<span id="cb32-184"><a href="#cb32-184" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(X) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"X"</span>, <span class="dv">1</span><span class="sc">:</span>p)                      <span class="co"># Named columns for SHAP/plots</span></span>
+<span id="cb32-185"><a href="#cb32-185" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-186"><a href="#cb32-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-187"><a href="#cb32-187" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fit CSF</span></span>
+<span id="cb32-188"><a href="#cb32-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-191"><a href="#cb32-191" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-192"><a href="#cb32-192" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fit-csf</span></span>
+<span id="cb32-193"><a href="#cb32-193" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit causal survival forest (event times discretized for efficiency)</span></span>
+<span id="cb32-194"><a href="#cb32-194" aria-hidden="true" tabindex="-1"></a>cs.forest <span class="ot">&lt;-</span> <span class="fu">causal_survival_forest</span>(X, <span class="fu">round</span>(Y, <span class="dv">2</span>), W, D, <span class="at">horizon =</span> horizon)</span>
+<span id="cb32-195"><a href="#cb32-195" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-196"><a href="#cb32-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-197"><a href="#cb32-197" aria-hidden="true" tabindex="-1"></a><span class="fu">### Predicting &amp; Evaluating on Simulated Data</span></span>
+<span id="cb32-198"><a href="#cb32-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-199"><a href="#cb32-199" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Predict on New Test Data</span></span>
+<span id="cb32-200"><a href="#cb32-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-203"><a href="#cb32-203" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-204"><a href="#cb32-204" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: predict-test-data</span></span>
+<span id="cb32-205"><a href="#cb32-205" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict on new test data</span></span>
+<span id="cb32-206"><a href="#cb32-206" aria-hidden="true" tabindex="-1"></a>X.test <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fl">0.5</span>, <span class="dv">10</span>, p)</span>
+<span id="cb32-207"><a href="#cb32-207" aria-hidden="true" tabindex="-1"></a>X.test[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">10</span>)</span>
+<span id="cb32-208"><a href="#cb32-208" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(X.test) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(X)</span>
+<span id="cb32-209"><a href="#cb32-209" aria-hidden="true" tabindex="-1"></a>cs.pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(cs.forest, X.test)</span>
+<span id="cb32-210"><a href="#cb32-210" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-211"><a href="#cb32-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-212"><a href="#cb32-212" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Obtain Out-of-Bag Predictions</span></span>
+<span id="cb32-213"><a href="#cb32-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-216"><a href="#cb32-216" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-217"><a href="#cb32-217" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: oob-predictions</span></span>
+<span id="cb32-218"><a href="#cb32-218" aria-hidden="true" tabindex="-1"></a><span class="co"># Obtain out-of-bag predictions on training data</span></span>
+<span id="cb32-219"><a href="#cb32-219" aria-hidden="true" tabindex="-1"></a>cs.oob <span class="ot">&lt;-</span> <span class="fu">predict</span>(cs.forest)</span>
+<span id="cb32-220"><a href="#cb32-220" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-221"><a href="#cb32-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-222"><a href="#cb32-222" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Predict with Confidence Intervals</span></span>
+<span id="cb32-223"><a href="#cb32-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-226"><a href="#cb32-226" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-227"><a href="#cb32-227" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: predict-with-ci</span></span>
+<span id="cb32-228"><a href="#cb32-228" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict with confidence intervals</span></span>
+<span id="cb32-229"><a href="#cb32-229" aria-hidden="true" tabindex="-1"></a>cs.ci <span class="ot">&lt;-</span> <span class="fu">predict</span>(cs.forest, X.test, <span class="at">estimate.variance =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb32-230"><a href="#cb32-230" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-231"><a href="#cb32-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-232"><a href="#cb32-232" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Estimate Average Treatment Effect (ATE)</span></span>
+<span id="cb32-233"><a href="#cb32-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-236"><a href="#cb32-236" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-237"><a href="#cb32-237" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: estimate-ate</span></span>
+<span id="cb32-238"><a href="#cb32-238" aria-hidden="true" tabindex="-1"></a><span class="co"># Estimate average treatment effect (ATE) with standard error</span></span>
+<span id="cb32-239"><a href="#cb32-239" aria-hidden="true" tabindex="-1"></a><span class="fu">average_treatment_effect</span>(cs.forest)</span>
+<span id="cb32-240"><a href="#cb32-240" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-241"><a href="#cb32-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-242"><a href="#cb32-242" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Best Linear Projection of CATE</span></span>
+<span id="cb32-243"><a href="#cb32-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-246"><a href="#cb32-246" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-247"><a href="#cb32-247" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: best-linear-projection</span></span>
+<span id="cb32-248"><a href="#cb32-248" aria-hidden="true" tabindex="-1"></a><span class="co"># Best linear projection of CATE along first covariate</span></span>
+<span id="cb32-249"><a href="#cb32-249" aria-hidden="true" tabindex="-1"></a>grf<span class="sc">::</span><span class="fu">best_linear_projection</span>(cs.forest, X[, <span class="dv">1</span>])</span>
+<span id="cb32-250"><a href="#cb32-250" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-251"><a href="#cb32-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-252"><a href="#cb32-252" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Assess Treatment Effect Heterogeneity</span></span>
+<span id="cb32-253"><a href="#cb32-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-256"><a href="#cb32-256" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-257"><a href="#cb32-257" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: assess-heterogeneity-sim</span></span>
+<span id="cb32-258"><a href="#cb32-258" aria-hidden="true" tabindex="-1"></a><span class="co"># Assess heterogeneity using train/evaluation split</span></span>
+<span id="cb32-259"><a href="#cb32-259" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb32-260"><a href="#cb32-260" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>n, n <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb32-261"><a href="#cb32-261" aria-hidden="true" tabindex="-1"></a>eval <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="dv">1</span><span class="sc">:</span>n, train)</span>
+<span id="cb32-262"><a href="#cb32-262" aria-hidden="true" tabindex="-1"></a>train.forest <span class="ot">&lt;-</span> <span class="fu">causal_survival_forest</span>(X[train, ], Y[train], W[train], D[train], <span class="at">horizon =</span> horizon)</span>
+<span id="cb32-263"><a href="#cb32-263" aria-hidden="true" tabindex="-1"></a>eval.forest  <span class="ot">&lt;-</span> <span class="fu">causal_survival_forest</span>(X[eval, ],  Y[eval],  W[eval],  D[eval],  <span class="at">horizon =</span> horizon)</span>
+<span id="cb32-264"><a href="#cb32-264" aria-hidden="true" tabindex="-1"></a>rate <span class="ot">&lt;-</span> <span class="fu">rank_average_treatment_effect</span>(eval.forest, <span class="fu">predict</span>(train.forest, X[eval, ])<span class="sc">$</span>predictions)</span>
+<span id="cb32-265"><a href="#cb32-265" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(rate)</span>
+<span id="cb32-266"><a href="#cb32-266" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-267"><a href="#cb32-267" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-268"><a href="#cb32-268" aria-hidden="true" tabindex="-1"></a><span class="fu">### Compute Kernel SHAP values for CATE</span></span>
+<span id="cb32-269"><a href="#cb32-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-270"><a href="#cb32-270" aria-hidden="true" tabindex="-1"></a>We explain the predicted treatment effects $\hat{\tau}(X)$ on a reasonably sized subset (e.g., 200–500 rows) of the training or test data — full data can be slow.</span>
+<span id="cb32-271"><a href="#cb32-271" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-274"><a href="#cb32-274" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-275"><a href="#cb32-275" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: compute-shap-csf</span></span>
+<span id="cb32-276"><a href="#cb32-276" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future)</span>
+<span id="cb32-277"><a href="#cb32-277" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-278"><a href="#cb32-278" aria-hidden="true" tabindex="-1"></a><span class="co"># Parallel backend </span></span>
+<span id="cb32-279"><a href="#cb32-279" aria-hidden="true" tabindex="-1"></a>n_cores <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">1</span>L, parallel<span class="sc">::</span><span class="fu">detectCores</span>() <span class="sc">-</span> <span class="dv">1</span>L)</span>
+<span id="cb32-280"><a href="#cb32-280" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession, <span class="at">workers =</span> n_cores)</span>
+<span id="cb32-281"><a href="#cb32-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-282"><a href="#cb32-282" aria-hidden="true" tabindex="-1"></a><span class="co"># Scale sample sizes to data available</span></span>
+<span id="cb32-283"><a href="#cb32-283" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2026</span>)</span>
+<span id="cb32-284"><a href="#cb32-284" aria-hidden="true" tabindex="-1"></a>n_total <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X)</span>
+<span id="cb32-285"><a href="#cb32-285" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-286"><a href="#cb32-286" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (n_total <span class="sc">&gt;</span> <span class="dv">5000</span>L) {</span>
+<span id="cb32-287"><a href="#cb32-287" aria-hidden="true" tabindex="-1"></a>  n_explain <span class="ot">&lt;-</span> <span class="dv">300</span>L</span>
+<span id="cb32-288"><a href="#cb32-288" aria-hidden="true" tabindex="-1"></a>  n_bg      <span class="ot">&lt;-</span> <span class="dv">100</span>L   <span class="co"># smaller background = biggest speed lever</span></span>
+<span id="cb32-289"><a href="#cb32-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-290"><a href="#cb32-290" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span> (n_total <span class="sc">&gt;</span> <span class="dv">1000</span>L) {</span>
+<span id="cb32-291"><a href="#cb32-291" aria-hidden="true" tabindex="-1"></a>  n_explain <span class="ot">&lt;-</span> <span class="dv">200</span>L</span>
+<span id="cb32-292"><a href="#cb32-292" aria-hidden="true" tabindex="-1"></a>  n_bg      <span class="ot">&lt;-</span> <span class="dv">75</span>L</span>
+<span id="cb32-293"><a href="#cb32-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-294"><a href="#cb32-294" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb32-295"><a href="#cb32-295" aria-hidden="true" tabindex="-1"></a>  n_explain <span class="ot">&lt;-</span> <span class="fu">min</span>(<span class="dv">100</span>L, n_total)</span>
+<span id="cb32-296"><a href="#cb32-296" aria-hidden="true" tabindex="-1"></a>  n_bg      <span class="ot">&lt;-</span> <span class="fu">min</span>(<span class="dv">50</span>L,  n_total)</span>
+<span id="cb32-297"><a href="#cb32-297" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb32-298"><a href="#cb32-298" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-299"><a href="#cb32-299" aria-hidden="true" tabindex="-1"></a><span class="co"># Non-overlapping explain / background indices </span></span>
+<span id="cb32-300"><a href="#cb32-300" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (n_total <span class="sc">&gt;=</span> n_explain <span class="sc">+</span> n_bg) {</span>
+<span id="cb32-301"><a href="#cb32-301" aria-hidden="true" tabindex="-1"></a>  all_idx     <span class="ot">&lt;-</span> <span class="fu">sample</span>(n_total)</span>
+<span id="cb32-302"><a href="#cb32-302" aria-hidden="true" tabindex="-1"></a>  explain_idx <span class="ot">&lt;-</span> all_idx[<span class="fu">seq_len</span>(n_explain)]</span>
+<span id="cb32-303"><a href="#cb32-303" aria-hidden="true" tabindex="-1"></a>  bg_idx      <span class="ot">&lt;-</span> all_idx[<span class="fu">seq</span>(n_explain <span class="sc">+</span> <span class="dv">1</span>L, n_explain <span class="sc">+</span> n_bg)]</span>
+<span id="cb32-304"><a href="#cb32-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-305"><a href="#cb32-305" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb32-306"><a href="#cb32-306" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Small dataset — allow overlap rather than error</span></span>
+<span id="cb32-307"><a href="#cb32-307" aria-hidden="true" tabindex="-1"></a>  explain_idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(n_total, n_explain, <span class="at">replace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb32-308"><a href="#cb32-308" aria-hidden="true" tabindex="-1"></a>  bg_idx      <span class="ot">&lt;-</span> <span class="fu">sample</span>(n_total, n_bg,      <span class="at">replace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb32-309"><a href="#cb32-309" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb32-310"><a href="#cb32-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-311"><a href="#cb32-311" aria-hidden="true" tabindex="-1"></a>X_explain <span class="ot">&lt;-</span> X[explain_idx, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb32-312"><a href="#cb32-312" aria-hidden="true" tabindex="-1"></a>bg_X      <span class="ot">&lt;-</span> X[bg_idx,      , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb32-313"><a href="#cb32-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-314"><a href="#cb32-314" aria-hidden="true" tabindex="-1"></a><span class="co"># Prediction wrapper </span></span>
+<span id="cb32-315"><a href="#cb32-315" aria-hidden="true" tabindex="-1"></a>pred_fun <span class="ot">&lt;-</span> <span class="cf">function</span>(object, newdata) {</span>
+<span id="cb32-316"><a href="#cb32-316" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(object, <span class="at">newdata =</span> newdata)<span class="sc">$</span>predictions</span>
+<span id="cb32-317"><a href="#cb32-317" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb32-318"><a href="#cb32-318" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-319"><a href="#cb32-319" aria-hidden="true" tabindex="-1"></a><span class="co">#: Switch to permshap — same quality, much faster than kernelshap</span></span>
+<span id="cb32-320"><a href="#cb32-320" aria-hidden="true" tabindex="-1"></a>shap_ksh <span class="ot">&lt;-</span> <span class="fu">permshap</span>(</span>
+<span id="cb32-321"><a href="#cb32-321" aria-hidden="true" tabindex="-1"></a>  <span class="at">object   =</span> cs.forest,</span>
+<span id="cb32-322"><a href="#cb32-322" aria-hidden="true" tabindex="-1"></a>  <span class="at">X        =</span> X_explain,</span>
+<span id="cb32-323"><a href="#cb32-323" aria-hidden="true" tabindex="-1"></a>  <span class="at">bg_X     =</span> bg_X,</span>
+<span id="cb32-324"><a href="#cb32-324" aria-hidden="true" tabindex="-1"></a>  <span class="at">pred_fun =</span> pred_fun,</span>
+<span id="cb32-325"><a href="#cb32-325" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose  =</span> <span class="cn">FALSE</span>       <span class="co"># set TRUE to watch progress</span></span>
+<span id="cb32-326"><a href="#cb32-326" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb32-327"><a href="#cb32-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-328"><a href="#cb32-328" aria-hidden="true" tabindex="-1"></a><span class="co"># Reset workers ──────────────────────────────────────────────────</span></span>
+<span id="cb32-329"><a href="#cb32-329" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(sequential)</span>
+<span id="cb32-330"><a href="#cb32-330" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-331"><a href="#cb32-331" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Step 7: Wrap for plotting ─────────────────────────────────────────────</span></span>
+<span id="cb32-332"><a href="#cb32-332" aria-hidden="true" tabindex="-1"></a>shp_csf <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(shap_ksh, <span class="at">X =</span> X_explain)</span>
+<span id="cb32-333"><a href="#cb32-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-334"><a href="#cb32-334" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-335"><a href="#cb32-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-336"><a href="#cb32-336" aria-hidden="true" tabindex="-1"></a><span class="fu">#### SHAP Summary Plot (Beeswarm + Importance)</span></span>
+<span id="cb32-337"><a href="#cb32-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-338"><a href="#cb32-338" aria-hidden="true" tabindex="-1"></a>This shows which covariates drive heterogeneity in treatment effects the most, and in which direction.</span>
+<span id="cb32-339"><a href="#cb32-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-342"><a href="#cb32-342" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-343"><a href="#cb32-343" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: shap-importance-beeswarm</span></span>
+<span id="cb32-344"><a href="#cb32-344" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig.width: 7</span></span>
+<span id="cb32-345"><a href="#cb32-345" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig.height: 5.5</span></span>
+<span id="cb32-346"><a href="#cb32-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-347"><a href="#cb32-347" aria-hidden="true" tabindex="-1"></a><span class="co"># Classic beeswarm (direction + magnitude)</span></span>
+<span id="cb32-348"><a href="#cb32-348" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_importance</span>(shp_csf, <span class="at">kind =</span> <span class="st">"beeswarm"</span>)</span>
+<span id="cb32-349"><a href="#cb32-349" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-350"><a href="#cb32-350" aria-hidden="true" tabindex="-1"></a><span class="co"># Bar version with mean absolute SHAP</span></span>
+<span id="cb32-351"><a href="#cb32-351" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_importance</span>(shp_csf, <span class="at">show_numbers =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb32-352"><a href="#cb32-352" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-353"><a href="#cb32-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-354"><a href="#cb32-354" aria-hidden="true" tabindex="-1"></a><span class="fu">#### SHAP Dependence Plots (main effects)</span></span>
+<span id="cb32-355"><a href="#cb32-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-356"><a href="#cb32-356" aria-hidden="true" tabindex="-1"></a>Explore how individual covariates modify the estimated treatment effect.</span>
+<span id="cb32-357"><a href="#cb32-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-360"><a href="#cb32-360" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-361"><a href="#cb32-361" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: shap-dependence</span></span>
+<span id="cb32-362"><a href="#cb32-362" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig.width: 8</span></span>
+<span id="cb32-363"><a href="#cb32-363" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig.height: 6</span></span>
+<span id="cb32-364"><a href="#cb32-364" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-365"><a href="#cb32-365" aria-hidden="true" tabindex="-1"></a><span class="co"># One plot per important variable (simulated data: X1–X8)</span></span>
+<span id="cb32-366"><a href="#cb32-366" aria-hidden="true" tabindex="-1"></a>important_vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"X1"</span>, <span class="st">"X2"</span>, <span class="st">"X3"</span>, <span class="st">"X4"</span>)</span>
+<span id="cb32-367"><a href="#cb32-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-368"><a href="#cb32-368" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_dependence</span>(shp_csf, <span class="at">v =</span> important_vars, <span class="at">share_y =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb32-369"><a href="#cb32-369" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-370"><a href="#cb32-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-371"><a href="#cb32-371" aria-hidden="true" tabindex="-1"></a>Or single detailed dependence + color interaction:</span>
+<span id="cb32-372"><a href="#cb32-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-375"><a href="#cb32-375" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-376"><a href="#cb32-376" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: shap-dependence-single</span></span>
+<span id="cb32-377"><a href="#cb32-377" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_dependence</span>(shp_csf, <span class="at">v =</span> <span class="st">"X2"</span>, <span class="at">color_var =</span> <span class="st">"X1"</span>)</span>
+<span id="cb32-378"><a href="#cb32-378" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-379"><a href="#cb32-379" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-380"><a href="#cb32-380" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Waterfall / Force plot for a single observation</span></span>
+<span id="cb32-381"><a href="#cb32-381" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-382"><a href="#cb32-382" aria-hidden="true" tabindex="-1"></a>Understand why a specific patient profile has a high/low estimated treatment benefit.</span>
+<span id="cb32-383"><a href="#cb32-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-386"><a href="#cb32-386" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-387"><a href="#cb32-387" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: shap-waterfall-single</span></span>
+<span id="cb32-388"><a href="#cb32-388" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig.width: 7</span></span>
+<span id="cb32-389"><a href="#cb32-389" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig.height: 4.5</span></span>
+<span id="cb32-390"><a href="#cb32-390" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-391"><a href="#cb32-391" aria-hidden="true" tabindex="-1"></a><span class="co"># Same rows as shapviz/permshap (X_explain); row_id must be in 1:nrow(X_explain)</span></span>
+<span id="cb32-392"><a href="#cb32-392" aria-hidden="true" tabindex="-1"></a>preds_explain <span class="ot">&lt;-</span> <span class="fu">predict</span>(cs.forest, X_explain)<span class="sc">$</span>predictions</span>
+<span id="cb32-393"><a href="#cb32-393" aria-hidden="true" tabindex="-1"></a>row_id_max <span class="ot">&lt;-</span> <span class="fu">which.max</span>(preds_explain)</span>
+<span id="cb32-394"><a href="#cb32-394" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-395"><a href="#cb32-395" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_waterfall</span>(shp_csf, <span class="at">row_id =</span> row_id_max) <span class="sc">+</span></span>
+<span id="cb32-396"><a href="#cb32-396" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"SHAP Waterfall - Patient with highest estimated RMST benefit"</span>)</span>
+<span id="cb32-397"><a href="#cb32-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-398"><a href="#cb32-398" aria-hidden="true" tabindex="-1"></a><span class="co"># Alternative: force plot style</span></span>
+<span id="cb32-399"><a href="#cb32-399" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_force</span>(shp_csf, <span class="at">row_id =</span> row_id_max)</span>
+<span id="cb32-400"><a href="#cb32-400" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-401"><a href="#cb32-401" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-402"><a href="#cb32-402" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Optional: Explain a few test set observations</span></span>
+<span id="cb32-403"><a href="#cb32-403" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-406"><a href="#cb32-406" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb32-407"><a href="#cb32-407" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: shap-test-set-example</span></span>
+<span id="cb32-408"><a href="#cb32-408" aria-hidden="true" tabindex="-1"></a>shap_test <span class="ot">&lt;-</span> <span class="fu">kernelshap</span>(</span>
+<span id="cb32-409"><a href="#cb32-409" aria-hidden="true" tabindex="-1"></a>  cs.forest,</span>
+<span id="cb32-410"><a href="#cb32-410" aria-hidden="true" tabindex="-1"></a>  <span class="at">X         =</span> X.test[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, ],            <span class="co"># X.test has 10 rows</span></span>
+<span id="cb32-411"><a href="#cb32-411" aria-hidden="true" tabindex="-1"></a>  <span class="at">bg_X      =</span> bg_X,</span>
+<span id="cb32-412"><a href="#cb32-412" aria-hidden="true" tabindex="-1"></a>  <span class="at">pred_fun  =</span> pred_fun</span>
+<span id="cb32-413"><a href="#cb32-413" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb32-414"><a href="#cb32-414" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-415"><a href="#cb32-415" aria-hidden="true" tabindex="-1"></a>shp_test <span class="ot">&lt;-</span> <span class="fu">shapviz</span>(shap_test, <span class="at">X =</span> X.test[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, ])</span>
+<span id="cb32-416"><a href="#cb32-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-417"><a href="#cb32-417" aria-hidden="true" tabindex="-1"></a><span class="fu">sv_importance</span>(shp_test, <span class="at">kind =</span> <span class="st">"beeswarm"</span>)</span>
+<span id="cb32-418"><a href="#cb32-418" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb32-419"><a href="#cb32-419" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-420"><a href="#cb32-420" aria-hidden="true" tabindex="-1"></a><span class="fu">### Interpretation Notes</span></span>
+<span id="cb32-421"><a href="#cb32-421" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-422"><a href="#cb32-422" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>**Positive SHAP** → the feature value pushes the predicted treatment effect (RMST gain) **up**.</span>
+<span id="cb32-423"><a href="#cb32-423" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>**Negative SHAP** → pushes the predicted treatment effect **down**.</span>
+<span id="cb32-424"><a href="#cb32-424" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Unlike standard prediction models, here we explain **heterogeneity** (variation in $\hat{\tau}(X)$), not the outcome itself.</span>
+<span id="cb32-425"><a href="#cb32-425" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Beeswarm plots often reveal non-linear patterns and interactions implicitly captured by the forest.</span>
+<span id="cb32-426"><a href="#cb32-426" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Compare SHAP variable importance with <span class="in">`grf::variable_importance()`</span> — they measure similar concepts but from different perspectives (additive decomposition vs. permutation/impurity).</span>
+<span id="cb32-427"><a href="#cb32-427" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>For faster/more accurate SHAP on tree ensembles, packages like <span class="in">`{treeshap}`</span> work well with <span class="in">`{ranger}`</span>, but <span class="in">`{grf}`</span> internals are not directly compatible → Kernel SHAP is reliable and model-agnostic.</span>
+<span id="cb32-428"><a href="#cb32-428" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-429"><a href="#cb32-429" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary and Conclusion</span></span>
+<span id="cb32-430"><a href="#cb32-430" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-431"><a href="#cb32-431" aria-hidden="true" tabindex="-1"></a>This notebook demonstrated the **Causal Survival Forest (CSF)** from `{grf}` using the **ACTG175** dataset from <span class="in">`{BART}`</span>. We prepared baseline covariates and binary treatment (zidovudine only vs other therapies), defined a time horizon for RMST, and fit a CSF to estimate heterogeneous treatment effects on time to CD4 decline, AIDS, or death. The CSF provides non-parametric CATE estimates while accounting for right-censoring, variable importance, and heterogeneity (e.g., via AUTOC/TOC). For methodology and theory, see Cui et al. (2023).</span>
+<span id="cb32-432"><a href="#cb32-432" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-433"><a href="#cb32-433" aria-hidden="true" tabindex="-1"></a><span class="fu">## Resources</span></span>
+<span id="cb32-434"><a href="#cb32-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-435"><a href="#cb32-435" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>**Cui, Y., Kosorok, M. R., Sverdrup, E., Wager, S., &amp; Zhu, R. (2023).** Estimating heterogeneous treatment effects with right-censored data via causal survival forests. *Journal of the Royal Statistical Society: Series B (Statistical Methodology)*, **85**(2), 179–211.\</span>
+<span id="cb32-436"><a href="#cb32-436" aria-hidden="true" tabindex="-1"></a>    <span class="ot">&lt;https://academic.oup.com/jrsssb/article/85/2/179/7058918&gt;</span></span>
+<span id="cb32-437"><a href="#cb32-437" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-438"><a href="#cb32-438" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>**Hammer, S. M., et al. (1996).** A trial comparing nucleoside monotherapy with combination therapy in HIV-infected adults with CD4 cell counts from 200 to 500 per cubic millimeter. *New England Journal of Medicine*, **335**, 1081–1090. (ACTG 175 trial.)</span>
+<span id="cb32-439"><a href="#cb32-439" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-440"><a href="#cb32-440" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span><span class="co">[</span><span class="ot">grf Causal Survival Forest documentation</span><span class="co">](https://grf-labs.github.io/grf/articles/causal_survival_forest.html)</span></span>
+<span id="cb32-441"><a href="#cb32-441" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-442"><a href="#cb32-442" aria-hidden="true" tabindex="-1"></a><span class="ss">4.  </span><span class="co">[</span><span class="ot">grf R reference: causal_survival_forest</span><span class="co">](https://search.r-project.org/CRAN/refmans/grf/html/causal_survival_forest.html)</span></span>
+<span id="cb32-443"><a href="#cb32-443" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-444"><a href="#cb32-444" aria-hidden="true" tabindex="-1"></a><span class="ss">5.  </span><span class="co">[</span><span class="ot">Original Causal Survival Forests preprint</span><span class="co">](https://arxiv.org/abs/2006.09639)</span></span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+<footer class="footer"><div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2026 RCausalML Tutorials</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/zia207/RCausalML/edit/main/01-03-causal-survival-forest-r.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/zia207/RCausalML/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+<li class="nav-item">
+    <a class="nav-link" href="https://quarto.org">
+<p>Built with Quarto</p>
+</a>
+  </li>  
+</ul>
+</div>
+  </div>
+</footer>
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

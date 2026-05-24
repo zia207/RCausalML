@@ -1,5 +1,3 @@
-![](images/logo_RCausalML.png){fig-align="left" width="200"}
-
 # RCausalML
 
 **RCausalML** is an R package for uplift modeling and causal inference, inspired by Python’s [CausalML](https://causalml.readthedocs.io/en/latest/about.html) and Microsoft’s [EconML](https://www.microsoft.com/en-us/research/project/econml/). It features automated ML for nuisance models, policy learning, CATE interpretation, DR-learner family, and multiple neural causal models (CEVAE, DragonNet, GANITE, and more) with support for SCMs, DAG learning (NOTEARS, DAG-GNN, GraN-DAG), GNN and transformer-based causal models, and counterfactual analysis. Includes tools for causal structure learning and example notebooks. Most neural modules require the R `torch` package.
@@ -16,7 +14,7 @@ The package estimates the **Conditional Average Treatment Effect (CATE)** and re
 
 Three core modules align with [EconML](https://www.microsoft.com/en-us/research/project/econml/)’s API and concepts:
 
--   [**R/DMLearner.R**](R/DMLearner.R) — **Double Machine Learning (DML)**: Chernozhukov et al.–style DML with cross-fitting; outcome and treatment are fitted with flexible ML (ranger, glmnet, xgb, lm), then a final stage (linear, sparse linear, kernel, nonparametric, or causal forest) estimates CATE from residuals. Includes **LinearDML**, **SparseLinearDML**, **KernelDML**, **NonParamDML**, **CausalForestDML**, plus native R **DynamicDMLearner** (panel/sequential treatments) and **OrthoIVLearner** / **DMLIVLearner** / **NonParamDMLIVLearner** for DML with instrumental variables. When **DoubleML**, **mlr3**, **mlr3learners**, and **mlr3measures** are installed, **DiD-style DML** on $\Delta y = y_1 - y_0$ is available via **`doubleml_did_linear`**, **`doubleml_did_rf`**, **`doubleml_did_xgboost`**, with optional nuisance metrics from **`doubleml_did_eval_*`** and **`doubleml_did_eval_preds`**; **`doubleml_plr`**, **`doubleml_plr_fit_data`** (pre-built **DoubleMLData** + any mlr3 learners, including pipelines / ensembles), **`doubleml_plr_tune_data`** (with **mlr3tuning**), and **`doubleml_pliv`** fit partially linear regression and PLIV through the DoubleML R package; **`doubleml_data_from_data_frame`** / **`doubleml_data_from_matrix`** build **DoubleMLData**; **`doubleml_make_plr_CCDDHNR2018`**, **`doubleml_make_pliv_CHS2015`**, **`doubleml_fetch_401k`**, and **`doubleml_fetch_bonus`** provide example / simulated data aligned with DoubleML.
+-   [**R/DMLearner.R**](R/DMLearner.R) — **Double Machine Learning (DML)**: Chernozhukov et al.–style DML with cross-fitting; outcome and treatment are fitted with flexible ML (ranger, glmnet, xgb, lm), then a final stage (linear, sparse linear, kernel, nonparametric, or causal forest) estimates CATE from residuals. Includes **LinearDML**, **SparseLinearDML**, **KernelDML**, **NonParamDML**, **CausalForestDML**, plus native R **DynamicDMLearner** (panel/sequential treatments) and **OrthoIVLearner** / **DMLIVLearner** / **NonParamDMLIVLearner** for DML with instrumental variables. `predict.DMLearner` is robust to near-degenerate OLS final stages (aliased `lm` coefficients replaced with zero) and guarantees finite output for all callers including `explain_cate()` / `kernelshap`. When **DoubleML**, **mlr3**, **mlr3learners**, and **mlr3measures** are installed, **DiD-style DML** on $\Delta y = y_1 - y_0$ is available via **`doubleml_did_linear`**, **`doubleml_did_rf`**, **`doubleml_did_xgboost`**, with optional nuisance metrics from **`doubleml_did_eval_*`** and **`doubleml_did_eval_preds`**; **`doubleml_plr`**, **`doubleml_plr_fit_data`** (pre-built **DoubleMLData** + any mlr3 learners, including pipelines / ensembles), **`doubleml_plr_tune_data`** (with **mlr3tuning**), and **`doubleml_pliv`** fit partially linear regression and PLIV through the DoubleML R package; **`doubleml_data_from_data_frame`** / **`doubleml_data_from_matrix`** build **DoubleMLData**; **`doubleml_make_plr_CCDDHNR2018`**, **`doubleml_make_pliv_CHS2015`**, **`doubleml_fetch_401k`**, and **`doubleml_fetch_bonus`** provide example / simulated data aligned with DoubleML.
 
 -   [**R/cate_interpreter.R**](R/cate_interpreter.R) — **CATE interpreters**: Single-tree interpretation of any CATE or policy model. **SingleTreeCateInterpreter** fits a regression tree to predicted CATE to summarize effect heterogeneity by covariates; **SingleTreePolicyInterpreter** fits a classification tree that predicts optimal treatment (who to treat) from covariates. API matches EconML’s `econml.cate_interpreter`.
 
@@ -30,6 +28,8 @@ Three core modules align with [EconML](https://www.microsoft.com/en-us/research/
 |----|----|----|
 | **Tree-based** | Uplift RF (KL, ED, Chi) | `uplift_rf_kl`, `uplift_rf_ed`, `uplift_rf_chi` |
 |  | Uplift RF on Contextual Treatment Selection | `uplift_rf_cts` |
+|  | Unified uplift random forest (classification & regression) | `uplift_randomForest`, `uplift_randomForestClassifier`, `uplift_randomForestRegressor` ([R/uplift_randomForest.R](R/uplift_randomForest.R)) |
+|  | Multi-treatment uplift RF | `uplift_rf_multi` |
 |  | Uplift tree on ΔΔP (binary outcome) | `uplift_tree_ddp` |
 |  | Uplift tree on IDDP (binary outcome) | `uplift_tree_iddp` |
 |  | Interaction Tree, Causal Inference Tree | `interaction_tree`, `causal_inference_tree` |
@@ -55,7 +55,7 @@ Three core modules align with [EconML](https://www.microsoft.com/en-us/research/
 | **Treatment optimization** | Counterfactual Value Estimator, Unit Selection | `counterfactual_value_estimator`, `counterfactual_unit_selection`, `predict_best_treatment` |
 | **Data & propensity** | Synthetic data, propensity, matching; textbook data (causaldata) | `synthetic_data`, `propensity_glmnet`/`propensity_glm`, `nearest_neighbor_match`, `create_table_one`; `load_causaldata`, `list_causaldata_datasets` (optional: install `causaldata`) |
 | **Automated ML** | Auto-select nuisance models (Y, T) with constraints | `EconAutoMLConfig`, `AutomatedMLModel`, `set_automated_ml_workspace`, `add_automated_ml` (EconML-style, local) |
-| **Causal structure learning** | NOTEARS (linear, nonlinear), DAG-GNN, GraN-DAG; unified API | [R/notears.R](R/notears.R): `notears_linear`, `notears_nonlinear`, `simulate_dag`, `count_accuracy`; [R/dag_gnn.r](R/dag_gnn.r): `make_daggnn`, `daggnn_adj`; [R/GraN_DAG.R](R/GraN_DAG.R): `GraNDAG` R6 class, `learn()`, `get_causal_matrix()`; [R/causalStructureML.R](R/causalStructureML.R): `causalStructureML`, `causal_structure_ml_model_descriptions` |
+| **Causal structure learning** | NOTEARS (linear, nonlinear), DAG-GNN, GraN-DAG; unified API | [R/causalDeepNet.R](R/causalDeepNet.R): `notears_linear`, `notears_nonlinear`, `simulate_dag`, `count_accuracy`, `make_daggnn`, `daggnn_adj`, `GraNDAG`, `GraphDAG`; [R/causalStructureML.R](R/causalStructureML.R): `causalStructureML`, `causal_structure_ml_model_descriptions` |
 
 ## Installation
 
@@ -150,7 +150,7 @@ install.packages("RCausalML_0.3.0.tar.gz", repos = NULL, type = "source")
 
 **Package name:** `RCausalML` (version 0.2.0). Load with `library(RCausalML)`.
 
-**Dependencies:** `glmnet`, `ranger`, `rpart`, `R6`, `expm`, `igraph`, `htetree`. Optional: `grf`, `MatchIt`, `xgboost`, `reticulate`, `devtools` (for `load_all` in standalone test scripts). For **DoubleML** helpers in [R/DMLearner.R](R/DMLearner.R) (PLR, PLIV, DiD, `DoubleMLData` wrappers, simulators / fetch): install `DoubleML`, `mlr3`, `mlr3learners`, and `mlr3measures`. For **NOTEARS** ([R/notears.R](R/notears.R)): `expm`, `igraph`; `torch` for nonlinear NOTEARS (MLP/Sobolev). For **DAG-GNN** ([R/dag_gnn.r](R/dag_gnn.r)) and **GraN-DAG** ([R/GraN_DAG.R](R/GraN_DAG.R)): `torch`, `R6`, `expm`; `ranger` and `progress` optional for GraN-DAG PNS and progress bars. For **causalStructureML** ([R/causalStructureML.R](R/causalStructureML.R)): same as NOTEARS / DAG-GNN / GraN-DAG depending on `method`. For **SHAP / shapviz** (see below): `kernelshap`, `shapviz`. For **causalDeepNet** ([R/causalDeepNet.R](R/causalDeepNet.R)): `torch (>= 0.10)` (CEVAE, DragonNet, TARNet, CFRNet, GANITE, CausalGAN, DSCM, CausalDiscrepancyVAE, neural Granger models `cMLP`, `cLSTM`, `EconomySRU`, `NRI` via `neural_granger_ml()`, and SCM Deep Components: `deep_scm`, `deci_model`, `dynotears`); `nnet` / `ranger` placeholders where applicable. For **SCM graph utilities** (`plot_scm_dag`): `reshape2` (optional, falls back to base graphics). For **tabular DCEVAE** (optional, not exported in this build): R package `reticulate` and a Python environment with `torch`, `numpy`, and `tqdm` (code under `inst/dcevae/DCEVAE_ours/`).
+**Dependencies:** `glmnet`, `ranger`, `rpart`, `R6`, `expm`, `igraph`, `htetree`. Optional: `grf`, `MatchIt`, `xgboost`, `reticulate`, `devtools` (for `load_all` in standalone test scripts). For **DoubleML** helpers in [R/DMLearner.R](R/DMLearner.R) (PLR, PLIV, DiD, `DoubleMLData` wrappers, simulators / fetch): install `DoubleML`, `mlr3`, `mlr3learners`, and `mlr3measures`. For **NOTEARS** ([R/causalDeepNet.R](R/causalDeepNet.R)): `expm`, `igraph`; `torch` for nonlinear NOTEARS (MLP/Sobolev). For **DAG-GNN** and **GraN-DAG** ([R/causalDeepNet.R](R/causalDeepNet.R)): `torch`, `R6`, `expm`; `ranger` and `progress` optional for GraN-DAG PNS and progress bars. For **causalStructureML** ([R/causalStructureML.R](R/causalStructureML.R)): same as NOTEARS / DAG-GNN / GraN-DAG depending on `method`. For **SHAP / shapviz** (see below): `kernelshap`, `shapviz`. For **causalDeepNet** ([R/causalDeepNet.R](R/causalDeepNet.R)): `torch (>= 0.10)` (CEVAE, DragonNet, TARNet, CFRNet, GANITE, CausalGAN, DSCM, CausalDiscrepancyVAE, neural Granger models `cMLP`, `cLSTM`, `EconomySRU`, `NRI` via `neural_granger_ml()`, and SCM Deep Components: `deep_scm`, `deci_model`, `dynotears`); `nnet` / `ranger` placeholders where applicable. For **SCM graph utilities** (`plot_scm_dag`): `reshape2` (optional, falls back to base graphics). For **tabular DCEVAE** (optional, not exported in this build): R package `reticulate` and a Python environment with `torch`, `numpy`, and `tqdm` (code under `inst/dcevae/DCEVAE_ours/`).
 
 ### Linux system libraries (only if installs fail compiling packages)
 
@@ -216,7 +216,7 @@ To run faster on multi-core machines (Unix/macOS), use the `n_cores` argument wh
 
 -   **Meta-learners** (`fit_predict`, `estimate_ate` with `return_ci=TRUE` or `bootstrap_ci=TRUE`): bootstrap runs in parallel, e.g. `fit_predict(sl, X, w, y, return_ci = TRUE, n_cores = 4)` or `estimate_ate(sl, X, w, y, bootstrap_ci = TRUE, n_cores = 4)`.
 -   **DR-Learner**: same `n_cores` for bootstrap in `fit_predict.DRLearner` and `estimate_ate.DRLearner`.
--   **Uplift forests** (`uplift_rf_kl`, `uplift_rf_ed`, `uplift_rf_chi`, `uplift_rf_cts`): tree building runs in parallel, e.g. `uplift_rf_kl(X, w, y, n_trees = 100, n_cores = 4)`.
+-   **Uplift forests** (`uplift_rf_kl`, `uplift_rf_ed`, `uplift_rf_chi`, `uplift_rf_cts`, `uplift_randomForest`): tree building runs in parallel, e.g. `uplift_randomForest(X, w, y, n_estimators = 100, n_cores = 4)`.
 
 Parallelization uses `parallel::mclapply` (multi-core lapply). On Windows, `n_cores > 1` is ignored and runs remain sequential.
 
@@ -287,9 +287,17 @@ Mean CATE (S-Learner): 0.6048919   Mean CATE (T-Learner): 0.5633381
 ### Uplift forest and IV
 
 ``` r
-# Uplift random forest (T-learner style)
-uf <- uplift_rf_kl(X, w, y, n_trees = 100)
+# Unified uplift random forest (auto-detects classification vs regression)
+uf <- uplift_randomForest(X, w, y, n_estimators = 100, evaluation_function = "KL")
 cate_u <- predict(uf, X)
+
+# Or explicitly for binary / continuous outcomes:
+# uplift_randomForestClassifier(X, w, y, n_estimators = 100)
+# uplift_randomForestRegressor(X, w, y, n_estimators = 100, evaluation_function = "TLearner")
+
+# Legacy entry points (same underlying tree builders):
+# uf <- uplift_rf_kl(X, w, y, n_trees = 100)
+# cate_u <- predict(uf, X)
 
 # 2SLS with instrument Z
 # iv_fit <- iv_2sls(Y, W, Z, X)
@@ -360,7 +368,7 @@ args <- add_automated_ml(list(learner = cfg), workspace = NULL)
 
 ## Testing Algorithms
 
-From the package root you can run the neural-network test (`tests/test-neural.R` for [R/causalDeepNet.R](R/causalDeepNet.R)), the DR-Learner test (`tests/test-DRLearner.R`), the **DMLearner test** (`tests/test-DMLearner.R`), the policy learner test (`tests/test-policy-learner.R`), the **CATE interpreter test** (`tests/test-cate-interpreter.R`), the **NOTEARS test** (`tests/test-notears.R`), the **DAG-GNN test** (`tests/test-dag_gnn.R`), the **GraN-DAG test** (`tests/test-GraN_DAG.R`), the **causalStructureML test** (`tests/test-causalStructureML.R` for [R/causalStructureML.R](R/causalStructureML.R)), the **automated ML test** (see [Automated ML](#automated-ml-econml-style) for inline checks), the uplift trees test (`tests/test-uplift-trees.R`), and the causal structure learning test (`tests/test-causal_structure_learning.R`) with synthetic data.
+From the package root you can run the neural-network test (`tests/test-neural.R` for [R/causalDeepNet.R](R/causalDeepNet.R)), the DR-Learner test (`tests/test-DRLearner.R`), the **DMLearner test** (`tests/test-DMLearner.R`), the policy learner test (`tests/test-policy-learner.R`), the **CATE interpreter test** (`tests/test-cate-interpreter.R`), the **NOTEARS test** (`tests/test-notears.R`), the **DAG-GNN test** (`tests/test-dag_gnn.R`), the **GraN-DAG test** (`tests/test-GraN_DAG.R`), the **causalStructureML test** (`tests/test-causalStructureML.R` for [R/causalStructureML.R](R/causalStructureML.R)), the **automated ML test** (see [Automated ML](#automated-ml-econml-style) for inline checks), the uplift trees test (`tests/test-uplift-trees.R`), the **uplift random forest test** (`tests/test-uplift_randomForest.R`), and the causal structure learning test (`tests/test-causal_structure_learning.R`) with synthetic data.
 
 **Table of contents**
 
@@ -377,9 +385,9 @@ From the package root you can run the neural-network test (`tests/test-neural.R`
 | [Run RNN/LSTM causal model test](#run-rnnlstm-causal-model-test) | RNN/LSTM Causal Models: `rnn_causal_model`, `causal_lstm_model`, `retain_model`, `intervention_rnn_model`, `causal_matrix_rnn`, `predict.rnn_causal_model` ([R/causalDeepNet.R](R/causalDeepNet.R)) |
 | [Run policy learner test](#run-policy-learner-test) | Policy learner, DR Policy Tree, DR Policy Forest |
 | [Run CATE interpreter test](#run-cate-interpreter-test) | SingleTreeCateInterpreter, SingleTreePolicyInterpreter |
-| [Run NOTEARS test](#run-notears-test) | Standalone NOTEARS ([R/notears.R](R/notears.R)): utilities, linear, nonlinear (MLP), demo_linear |
-| [Run DAG-GNN test](#run-dag-gnn-test) | DAG-GNN ([R/dag_gnn.r](R/dag_gnn.r)): device, forward, ELBO, make_daggnn, daggnn_adj |
-| [Run GraN-DAG test](#run-gran-dag-test) | GraN-DAG ([R/GraN_DAG.R](R/GraN_DAG.R)): is_acyclic, constraint, NormalizationData, GraNDAG learn |
+| [Run NOTEARS test](#run-notears-test) | NOTEARS in [R/causalDeepNet.R](R/causalDeepNet.R): utilities, linear, nonlinear (MLP), demo_linear |
+| [Run DAG-GNN test](#run-dag-gnn-test) | DAG-GNN ([R/causalDeepNet.R](R/causalDeepNet.R)): device, forward, ELBO, make_daggnn, daggnn_adj |
+| [Run GraN-DAG test](#run-gran-dag-test) | GraN-DAG ([R/causalDeepNet.R](R/causalDeepNet.R)): is_acyclic, constraint, NormalizationData, GraNDAG learn |
 | [Run causalStructureML test](#run-causalstructureml-test) | Unified API ([R/causalStructureML.R](R/causalStructureML.R)): all `method` values, `causal_structure_ml_model_descriptions` |
 | [Run causal structure learning test](#run-causal-structure-learning-test) | NOTEARS, DAG-GNN, GraN-DAG, optional Optuna tune |
 
@@ -490,6 +498,14 @@ uplift_rf_multi: fitted OK
   recommended_treatment sample: treatment2 control treatment2 control treatment2 control
 
 ========== test-uplift-trees.R done ==========
+```
+
+### Run uplift random forest test {#run-uplift-random-forest-test}
+
+[`tests/test-uplift_randomForest.R`](tests/test-uplift_randomForest.R) exercises **`uplift_randomForest()`** ([R/uplift_randomForest.R](R/uplift_randomForest.R)): binary classification (KL), multi-arm classification, regression (T-learner), and regression (IT trees).
+
+``` bash
+Rscript tests/test-uplift_randomForest.R
 ```
 
 ### Run DR-Learner test {#run-dr-learner-test}
@@ -797,7 +813,7 @@ All seven test blocks pass. CATE interpreter API aligns with [EconML cate_interp
 
 ### Run DAG-GNN test {#run-dag-gnn-test}
 
-[`tests/test-dag_gnn.R`](tests/test-dag_gnn.R) runs the **DAG-GNN** implementation in [R/dag_gnn.r](R/dag_gnn.r). It checks: **get_daggnn_device**, **preprocess_adj** / **matrix_poly**, **DAGGNN** forward pass, **elbo_loss** / **h_func**, **make_daggnn**, and **daggnn_adj**. Requires **torch**.
+[`tests/test-dag_gnn.R`](tests/test-dag_gnn.R) runs the **DAG-GNN** implementation in [R/causalDeepNet.R](R/causalDeepNet.R). It checks: **get_daggnn_device**, **preprocess_adj** / **matrix_poly**, **DAGGNN** forward pass, **elbo_loss** / **h_func**, **make_daggnn**, and **daggnn_adj**. Requires **torch**.
 
 ``` bash
 Rscript tests/test-dag_gnn.R
@@ -805,7 +821,7 @@ Rscript tests/test-dag_gnn.R
 
 ### Run GraN-DAG test {#run-gran-dag-test}
 
-[`tests/test-GraN_DAG.R`](tests/test-GraN_DAG.R) runs the **GraN-DAG** (gradient-based neural DAG learner) implementation in [R/GraN_DAG.R](R/GraN_DAG.R). It checks: **is_acyclic**, **compute_constraint**, **NormalizationData**, **GraNDAG** constructor, and **GraNDAG\$learn()** with a short training run. Requires **torch**, **R6**, **expm**; optional **ranger** and **progress** for PNS and progress bars.
+[`tests/test-GraN_DAG.R`](tests/test-GraN_DAG.R) runs the **GraN-DAG** (gradient-based neural DAG learner) implementation in [R/causalDeepNet.R](R/causalDeepNet.R). It checks: **is_acyclic**, **compute_constraint**, **NormalizationData**, **GraNDAG** constructor, and **GraNDAG\$learn()** with a short training run. Requires **torch**, **R6**, **expm**; optional **ranger** and **progress** for PNS and progress bars.
 
 ``` bash
 # Quick run (fewer iterations)
@@ -826,7 +842,7 @@ Rscript tests/test-causalStructureML.R
 
 ### Run NOTEARS test {#run-notears-test}
 
-[`tests/test-notears.R`](tests/test-notears.R) runs the **standalone NOTEARS** implementation in [R/notears.R](R/notears.R). It checks: (1) **set_random_seed**, (2) **is_dag**, (3) **simulate_dag** (ER, SF), (4) **simulate_parameter**, (5) **simulate_linear_sem** (gauss, uniform), (6) **count_accuracy**, (7) **notears_linear** (L-BFGS-B + augmented Lagrangian, l2 loss), (8) **demo_linear**, and (9) **notears_nonlinear** with **NotearsMLP** when **torch** is available (Adam + L-BFGS, custom autograd for trace(expm)). Requires **expm** and **igraph**; **torch** is optional for the nonlinear section.
+[`tests/test-notears.R`](tests/test-notears.R) runs the **NOTEARS** implementation in [R/causalDeepNet.R](R/causalDeepNet.R). It checks: (1) **set_random_seed**, (2) **is_dag**, (3) **simulate_dag** (ER, SF), (4) **simulate_parameter**, (5) **simulate_linear_sem** (gauss, uniform), (6) **count_accuracy**, (7) **notears_linear** (L-BFGS-B + augmented Lagrangian, l2 loss), (8) **demo_linear**, and (9) **notears_nonlinear** with **NotearsMLP** when **torch** is available (Adam + L-BFGS, custom autograd for trace(expm)). Requires **expm** and **igraph**; **torch** is optional for the nonlinear section.
 
 ``` bash
 # Full run (includes nonlinear if torch installed)
@@ -951,5 +967,3 @@ Apache License 2.0
 ------------------------------------------------------------------------
 
 **Contact:** Zia Ahmed, PhD, Upatta Analytics, NY, USA
-
-![](images/upatta_logo-01.png){width="200"}

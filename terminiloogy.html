@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>terminiloogy</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="terminiloogy_files/libs/clipboard/clipboard.min.js"></script>
+<script src="terminiloogy_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="terminiloogy_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="terminiloogy_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="terminiloogy_files/libs/quarto-html/popper.min.js"></script>
+<script src="terminiloogy_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="terminiloogy_files/libs/quarto-html/anchor.min.js"></script>
+<link href="terminiloogy_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="terminiloogy_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="terminiloogy_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="terminiloogy_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="terminiloogy_files/libs/bootstrap/bootstrap-e29a585edb4b49c5cab0427671728cec.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="scientific-terminology-for-beginners" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners">Scientific Terminology for Beginners</h2>
+<p>This quick glossary explains common scientific and causal-inference terms used in this notebook.</p>
+<section id="causal-effect" class="level3">
+<h3 class="anchored" data-anchor-id="causal-effect">1) Causal Effect</h3>
+<ul>
+<li><strong>Explanation</strong>: The change in outcome caused by a treatment (not just correlated with it).</li>
+<li><strong>Example</strong>: If a policy increases the average test score by 5 points, the causal effect is +5.</li>
+</ul>
+</section>
+<section id="treatment" class="level3">
+<h3 class="anchored" data-anchor-id="treatment">2) Treatment</h3>
+<ul>
+<li><strong>Explanation</strong>: The intervention, policy, or exposure whose effect we want to estimate.</li>
+<li><strong>Example</strong>: In this notebook, <code>repeal = 1</code> means a state received the policy treatment.</li>
+</ul>
+</section>
+<section id="outcome" class="level3">
+<h3 class="anchored" data-anchor-id="outcome">3) Outcome</h3>
+<ul>
+<li><strong>Explanation</strong>: The measured result affected by treatment.</li>
+<li><strong>Example</strong>: <code>lnr</code> (logged gonorrhea rate) is the outcome variable.</li>
+</ul>
+</section>
+<section id="covariate" class="level3">
+<h3 class="anchored" data-anchor-id="covariate">4) Covariate</h3>
+<ul>
+<li><strong>Explanation</strong>: A background variable that may influence treatment assignment and/or outcome.</li>
+<li><strong>Example</strong>: Income, poverty, and age are covariates in the abortion dataset.</li>
+</ul>
+</section>
+<section id="heterogeneous-treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneous-treatment-effect">5) Heterogeneous Treatment Effect</h3>
+<ul>
+<li><strong>Explanation</strong>: The treatment effect is not the same for everyone; it varies by subgroup.</li>
+<li><strong>Example</strong>: A policy may have a stronger effect for younger people than older people.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect">6) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Explanation</strong>: The average treatment effect for a specific subgroup defined by covariates.</li>
+<li><strong>Example</strong>: CATE for teens with low income might be +0.12, while high income might be +0.03.</li>
+</ul>
+</section>
+<section id="confounding" class="level3">
+<h3 class="anchored" data-anchor-id="confounding">7) Confounding</h3>
+<ul>
+<li><strong>Explanation</strong>: A third variable affects both treatment and outcome, creating biased estimates.</li>
+<li><strong>Example</strong>: If poorer states are more likely to adopt a policy and also have higher disease rates, poverty can confound the estimate.</li>
+</ul>
+</section>
+<section id="overfitting" class="level3">
+<h3 class="anchored" data-anchor-id="overfitting">8) Overfitting</h3>
+<ul>
+<li><strong>Explanation</strong>: A model learns noise in training data and performs poorly on new data.</li>
+<li><strong>Example</strong>: A very deep tree with tiny leaves fits training data well but gives unstable causal effects on test data.</li>
+</ul>
+</section>
+<section id="honest-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="honest-estimation">9) Honest Estimation</h3>
+<ul>
+<li><strong>Explanation</strong>: Use one part of data to choose splits and another part to estimate leaf effects.</li>
+<li><strong>Example</strong>: Train structure on 50% of data, then estimate treatment effects on the other 50%.</li>
+</ul>
+</section>
+<section id="pruning" class="level3">
+<h3 class="anchored" data-anchor-id="pruning">10) Pruning</h3>
+<ul>
+<li><strong>Explanation</strong>: Removing weak branches to simplify the tree and improve generalization.</li>
+<li><strong>Example</strong>: After cross-validation, branches that do not reduce error are cut off.</li>
+</ul>
+</section>
+<section id="common-support-overlap" class="level3">
+<h3 class="anchored" data-anchor-id="common-support-overlap">11) Common Support (Overlap)</h3>
+<ul>
+<li><strong>Explanation</strong>: Treated and control units should both exist across covariate ranges.</li>
+<li><strong>Example</strong>: If all high-income states are treated and none are control, causal comparison is weak there.</li>
+</ul>
+</section>
+<section id="permutation-test" class="level3">
+<h3 class="anchored" data-anchor-id="permutation-test">12) Permutation Test</h3>
+<ul>
+<li><strong>Explanation</strong>: A nonparametric test that shuffles treatment labels to build a null distribution.</li>
+<li><strong>Example</strong>: If observed CATE variance is much larger than shuffled-data variance, heterogeneity is likely real.</li>
+</ul>
+</section>
+<section id="causal-effect-1" class="level3">
+<h3 class="anchored" data-anchor-id="causal-effect-1">1) Causal Effect</h3>
+<ul>
+<li><strong>Explanation</strong>: The change in an outcome caused by treatment.</li>
+<li><strong>Example</strong>: A tutoring program increases average test scores by 5 points.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect-1" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect-1">2) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Explanation</strong>: The treatment effect for a subgroup defined by covariates.</li>
+<li><strong>Example</strong>: The tutoring effect may be larger for students with lower baseline scores.</li>
+</ul>
+</section>
+<section id="covariate-1" class="level3">
+<h3 class="anchored" data-anchor-id="covariate-1">3) Covariate</h3>
+<ul>
+<li><strong>Explanation</strong>: A background variable used to explain effect heterogeneity.</li>
+<li><strong>Example</strong>: Age, income, and education are covariates.</li>
+</ul>
+</section>
+<section id="confounding-1" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-1">4) Confounding</h3>
+<ul>
+<li><strong>Explanation</strong>: A variable influences both treatment and outcome and can bias estimates.</li>
+<li><strong>Example</strong>: Motivation can affect both program participation and exam results.</li>
+</ul>
+</section>
+<section id="honest-estimation-1" class="level3">
+<h3 class="anchored" data-anchor-id="honest-estimation-1">5) Honest Estimation</h3>
+<ul>
+<li><strong>Explanation</strong>: Use different samples for split selection and effect estimation.</li>
+<li><strong>Example</strong>: One subsample builds tree structure, another computes leaf-level effects.</li>
+</ul>
+</section>
+<section id="overlap" class="level3">
+<h3 class="anchored" data-anchor-id="overlap">6) Overlap</h3>
+<ul>
+<li><strong>Explanation</strong>: Treated and control observations exist for similar covariate values.</li>
+<li><strong>Example</strong>: Both treated and untreated patients are present at each risk level.</li>
+</ul>
+</section>
+<section id="heterogeneous-treatment-effect-1" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneous-treatment-effect-1">7) Heterogeneous Treatment Effect</h3>
+<ul>
+<li><strong>Explanation</strong>: Treatment effects vary across individuals or groups.</li>
+<li><strong>Example</strong>: A drug may work better for older patients than younger patients.</li>
+</ul>
+</section>
+<section id="variable-importance" class="level3">
+<h3 class="anchored" data-anchor-id="variable-importance">8) Variable Importance</h3>
+<ul>
+<li><strong>Explanation</strong>: A ranking of which features most influence estimated treatment-effect variation.</li>
+<li><strong>Example</strong>: Income and age may appear as top drivers of CATE differences.</li>
+</ul>
+</section>
+<section id="survival-outcome" class="level3">
+<h3 class="anchored" data-anchor-id="survival-outcome">1) Survival Outcome</h3>
+<ul>
+<li><strong>Explanation</strong>: An outcome measured as time until an event occurs.</li>
+<li><strong>Example</strong>: Time from treatment start to relapse.</li>
+</ul>
+</section>
+<section id="right-censoring" class="level3">
+<h3 class="anchored" data-anchor-id="right-censoring">2) Right-Censoring</h3>
+<ul>
+<li><strong>Explanation</strong>: The event is not observed for some individuals during follow-up.</li>
+<li><strong>Example</strong>: A patient leaves the study before the event occurs.</li>
+</ul>
+</section>
+<section id="rmst-restricted-mean-survival-time" class="level3">
+<h3 class="anchored" data-anchor-id="rmst-restricted-mean-survival-time">3) RMST (Restricted Mean Survival Time)</h3>
+<ul>
+<li><strong>Explanation</strong>: Average event-free time up to a fixed horizon.</li>
+<li><strong>Example</strong>: Average number of event-free months in the first 24 months.</li>
+</ul>
+</section>
+<section id="cate" class="level3">
+<h3 class="anchored" data-anchor-id="cate">4) CATE</h3>
+<ul>
+<li><strong>Explanation</strong>: The treatment effect for individuals with similar covariate profiles.</li>
+<li><strong>Example</strong>: Treatment may improve survival more for younger patients.</li>
+</ul>
+</section>
+<section id="ipcw" class="level3">
+<h3 class="anchored" data-anchor-id="ipcw">5) IPCW</h3>
+<ul>
+<li><strong>Explanation</strong>: A weighting method that adjusts for censoring.</li>
+<li><strong>Example</strong>: Individuals likely to be censored receive larger weights.</li>
+</ul>
+</section>
+<section id="honest-estimation-2" class="level3">
+<h3 class="anchored" data-anchor-id="honest-estimation-2">6) Honest Estimation</h3>
+<ul>
+<li><strong>Explanation</strong>: Separate data are used for split choice and effect estimation.</li>
+<li><strong>Example</strong>: One split sample selects nodes; another estimates survival effects in leaves.</li>
+</ul>
+</section>
+<section id="heterogeneous-treatment-effects" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneous-treatment-effects">7) Heterogeneous Treatment Effects</h3>
+<ul>
+<li><strong>Explanation</strong>: The treatment effect differs across subgroups.</li>
+<li><strong>Example</strong>: Benefit may be larger for severe baseline disease than mild disease.</li>
+</ul>
+</section>
+<section id="time-horizon" class="level3">
+<h3 class="anchored" data-anchor-id="time-horizon">8) Time Horizon</h3>
+<ul>
+<li><strong>Explanation</strong>: A fixed time point used to summarize survival effects.</li>
+<li><strong>Example</strong>: Compare survival probability at 12 months.</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-1" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-1">Scientific Terminology for Beginners</h2>
+<p>This glossary introduces key scientific terms used in this notebook with simple examples.</p>
+<section id="instrument-iv" class="level3">
+<h3 class="anchored" data-anchor-id="instrument-iv">1) Instrument (IV)</h3>
+<ul>
+<li><strong>Explanation</strong>: A variable that changes treatment assignment but affects the outcome only through treatment.</li>
+<li><strong>Example</strong>: Distance to a training center influences participation but not wages directly.</li>
+</ul>
+</section>
+<section id="endogeneity" class="level3">
+<h3 class="anchored" data-anchor-id="endogeneity">2) Endogeneity</h3>
+<ul>
+<li><strong>Explanation</strong>: Treatment is correlated with unobserved factors that also affect the outcome.</li>
+<li><strong>Example</strong>: More motivated people may both choose treatment and earn higher income.</li>
+</ul>
+</section>
+<section id="late" class="level3">
+<h3 class="anchored" data-anchor-id="late">3) LATE</h3>
+<ul>
+<li><strong>Explanation</strong>: Treatment effect for compliers affected by the instrument.</li>
+<li><strong>Example</strong>: Effect of training among people who attend only when encouraged.</li>
+</ul>
+</section>
+<section id="compliers" class="level3">
+<h3 class="anchored" data-anchor-id="compliers">4) Compliers</h3>
+<ul>
+<li><strong>Explanation</strong>: Individuals whose treatment behavior changes because of the instrument.</li>
+<li><strong>Example</strong>: People who take a course only if they receive a voucher.</li>
+</ul>
+</section>
+<section id="exogeneity" class="level3">
+<h3 class="anchored" data-anchor-id="exogeneity">5) Exogeneity</h3>
+<ul>
+<li><strong>Explanation</strong>: The instrument is independent of unmeasured outcome determinants.</li>
+<li><strong>Example</strong>: Random encouragement assignment is exogenous.</li>
+</ul>
+</section>
+<section id="exclusion-restriction" class="level3">
+<h3 class="anchored" data-anchor-id="exclusion-restriction">6) Exclusion Restriction</h3>
+<ul>
+<li><strong>Explanation</strong>: The instrument has no direct effect on the outcome.</li>
+<li><strong>Example</strong>: Voucher affects income only through training participation.</li>
+</ul>
+</section>
+<section id="heterogeneous-effects" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneous-effects">7) Heterogeneous Effects</h3>
+<ul>
+<li><strong>Explanation</strong>: Effects differ across covariate-defined subgroups.</li>
+<li><strong>Example</strong>: Program gains are larger for younger participants.</li>
+</ul>
+</section>
+<section id="honest-splitting" class="level3">
+<h3 class="anchored" data-anchor-id="honest-splitting">8) Honest Splitting</h3>
+<ul>
+<li><strong>Explanation</strong>: Use separate data for tree splitting and treatment-effect estimation.</li>
+<li><strong>Example</strong>: Half-sample defines leaves, remaining sample estimates IV effects.</li>
+</ul>
+<p>Scientific Terminology for Beginners</p>
+<p>This glossary introduces key scientific terms used in this notebook with simple examples.</p>
+</section>
+<section id="treatment-arm" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-arm">1) Treatment Arm</h3>
+<ul>
+<li><strong>Explanation</strong>: One treatment category in a multi-treatment study.</li>
+<li><strong>Example</strong>: <code>control</code>, <code>drug A</code>, and <code>drug B</code> are three treatment arms.</li>
+</ul>
+</section>
+<section id="multi-outcome" class="level3">
+<h3 class="anchored" data-anchor-id="multi-outcome">2) Multi-Outcome</h3>
+<ul>
+<li><strong>Explanation</strong>: Modeling more than one outcome variable at the same time.</li>
+<li><strong>Example</strong>: Estimating effects on both blood pressure and heart rate.</li>
+</ul>
+</section>
+<section id="counterfactual" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual">3) Counterfactual</h3>
+<ul>
+<li><strong>Explanation</strong>: The outcome that would have happened under a different treatment arm.</li>
+<li><strong>Example</strong>: For a patient given <code>drug A</code>, the untreated outcome is counterfactual.</li>
+</ul>
+</section>
+<section id="contrast" class="level3">
+<h3 class="anchored" data-anchor-id="contrast">4) Contrast</h3>
+<ul>
+<li><strong>Explanation</strong>: Difference in effects between two treatment arms.</li>
+<li><strong>Example</strong>: Effect of <code>drug B</code> minus effect of <code>control</code>.</li>
+</ul>
+</section>
+<section id="covariate-profile" class="level3">
+<h3 class="anchored" data-anchor-id="covariate-profile">5) Covariate Profile</h3>
+<ul>
+<li><strong>Explanation</strong>: The set of characteristics for one unit.</li>
+<li><strong>Example</strong>: Age 45, female, high baseline risk.</li>
+</ul>
+</section>
+<section id="propensity-score" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score">6) Propensity Score</h3>
+<ul>
+<li><strong>Explanation</strong>: Probability of receiving each treatment arm given covariates.</li>
+<li><strong>Example</strong>: A patient has 0.2 probability of arm A and 0.6 probability of arm B.</li>
+</ul>
+</section>
+<section id="heterogeneity" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneity">7) Heterogeneity</h3>
+<ul>
+<li><strong>Explanation</strong>: Treatment effects vary across units or subgroups.</li>
+<li><strong>Example</strong>: Arm A works better for older patients than younger patients.</li>
+</ul>
+</section>
+<section id="joint-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="joint-estimation">8) Joint Estimation</h3>
+<ul>
+<li><strong>Explanation</strong>: Estimating related outcomes/treatments together to share information.</li>
+<li><strong>Example</strong>: A model uses both outcomes to improve precision for each outcome effect.</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-2" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-2">Scientific Terminology for Beginners</h2>
+<p>This glossary introduces key scientific terms used in this notebook with simple examples.</p>
+<section id="potential-outcomes" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes">1) Potential Outcomes</h3>
+<ul>
+<li><strong>Explanation</strong>: Outcomes a unit would have under treatment and under control.</li>
+<li><strong>Example</strong>: A person has one potential wage with training and another without training.</li>
+</ul>
+</section>
+<section id="ite" class="level3">
+<h3 class="anchored" data-anchor-id="ite">2) ITE</h3>
+<ul>
+<li><strong>Explanation</strong>: Individual Treatment Effect for one unit.</li>
+<li><strong>Example</strong>: Predicted gain for one patient is +2.1 units.</li>
+</ul>
+</section>
+<section id="cate-1" class="level3">
+<h3 class="anchored" data-anchor-id="cate-1">3) CATE</h3>
+<ul>
+<li><strong>Explanation</strong>: Average treatment effect for units sharing similar covariates.</li>
+<li><strong>Example</strong>: Average gain among high-risk patients is +1.3.</li>
+</ul>
+</section>
+<section id="boosting" class="level3">
+<h3 class="anchored" data-anchor-id="boosting">4) Boosting</h3>
+<ul>
+<li><strong>Explanation</strong>: Sequentially adding trees to reduce residual error.</li>
+<li><strong>Example</strong>: Each new tree corrects mistakes made by earlier trees.</li>
+</ul>
+</section>
+<section id="masked-loss" class="level3">
+<h3 class="anchored" data-anchor-id="masked-loss">5) Masked Loss</h3>
+<ul>
+<li><strong>Explanation</strong>: Loss is computed only for the factual treatment head.</li>
+<li><strong>Example</strong>: Treated rows update only the treated-output head.</li>
+</ul>
+</section>
+<section id="counterfactual-prediction" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual-prediction">6) Counterfactual Prediction</h3>
+<ul>
+<li><strong>Explanation</strong>: Predicted outcome under the unobserved treatment state.</li>
+<li><strong>Example</strong>: For a treated unit, the predicted control outcome is counterfactual.</li>
+</ul>
+</section>
+<section id="ignorability" class="level3">
+<h3 class="anchored" data-anchor-id="ignorability">7) Ignorability</h3>
+<ul>
+<li><strong>Explanation</strong>: Given covariates, treatment assignment is as good as random.</li>
+<li><strong>Example</strong>: After adjusting for age and health, treatment choice is unconfounded.</li>
+</ul>
+</section>
+<section id="overlap-1" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-1">8) Overlap</h3>
+<ul>
+<li><strong>Explanation</strong>: Every covariate region has both treated and control observations.</li>
+<li><strong>Example</strong>: Across risk levels, both treatment groups are represented.</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-3" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-3">Scientific Terminology for Beginners</h2>
+<p>This glossary introduces key scientific terms used in this notebook with simple examples.</p>
+<section id="instrumental-variable-iv" class="level3">
+<h3 class="anchored" data-anchor-id="instrumental-variable-iv">1) Instrumental Variable (IV)</h3>
+<ul>
+<li><strong>Explanation</strong>: A variable that affects treatment but has no direct path to outcome.</li>
+<li><strong>Example</strong>: Distance to college affects education but not wages directly.</li>
+</ul>
+</section>
+<section id="endogenous-treatment" class="level3">
+<h3 class="anchored" data-anchor-id="endogenous-treatment">2) Endogenous Treatment</h3>
+<ul>
+<li><strong>Explanation</strong>: Treatment is correlated with unobserved factors affecting outcome.</li>
+<li><strong>Example</strong>: Ability influences both years of education and wages.</li>
+</ul>
+</section>
+<section id="residualization" class="level3">
+<h3 class="anchored" data-anchor-id="residualization">3) Residualization</h3>
+<ul>
+<li><strong>Explanation</strong>: Removing the part explained by covariates from Y, W, and Z.</li>
+<li><strong>Example</strong>: Use <code>Y - E[Y|X]</code> before final causal estimation.</li>
+</ul>
+</section>
+<section id="cross-fitting" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting">4) Cross-Fitting</h3>
+<ul>
+<li><strong>Explanation</strong>: Train nuisance models on one fold and predict on another fold.</li>
+<li><strong>Example</strong>: Five-fold cross-fitting avoids using the same rows for fit and prediction.</li>
+</ul>
+</section>
+<section id="nuisance-functions" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-functions">5) Nuisance Functions</h3>
+<ul>
+<li><strong>Explanation</strong>: Auxiliary models such as <code>E[Y|X]</code>, <code>E[W|X]</code>, and <code>E[Z|X]</code>.</li>
+<li><strong>Example</strong>: XGBoost estimates these functions before the IV forest stage.</li>
+</ul>
+</section>
+<section id="late-1" class="level3">
+<h3 class="anchored" data-anchor-id="late-1">6) LATE</h3>
+<ul>
+<li><strong>Explanation</strong>: Local average treatment effect identified by the instrument.</li>
+<li><strong>Example</strong>: Return to education for people whose schooling changes due to college proximity.</li>
+</ul>
+</section>
+<section id="weak-instrument" class="level3">
+<h3 class="anchored" data-anchor-id="weak-instrument">7) Weak Instrument</h3>
+<ul>
+<li><strong>Explanation</strong>: Instrument has little predictive power for treatment.</li>
+<li><strong>Example</strong>: Very small first-stage F-statistic signals weak IV strength.</li>
+</ul>
+</section>
+<section id="heterogeneous-late" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneous-late">8) Heterogeneous LATE</h3>
+<ul>
+<li><strong>Explanation</strong>: LATE varies across covariate-defined subgroups.</li>
+<li><strong>Example</strong>: Education returns differ by region or parental education.</li>
+</ul>
+</section>
+<section id="multi-arm-treatment" class="level3">
+<h3 class="anchored" data-anchor-id="multi-arm-treatment">1) Multi-Arm Treatment</h3>
+<ul>
+<li><strong>Explanation</strong>: A study with more than two treatment options.</li>
+<li><strong>Example</strong>: <code>placebo</code>, <code>A</code>, and <code>B</code> are three arms.</li>
+</ul>
+</section>
+<section id="baseline-arm" class="level3">
+<h3 class="anchored" data-anchor-id="baseline-arm">2) Baseline Arm</h3>
+<ul>
+<li><strong>Explanation</strong>: Reference treatment used for effect comparisons.</li>
+<li><strong>Example</strong>: Compare each active arm against <code>placebo</code>.</li>
+</ul>
+</section>
+<section id="outcome-model" class="level3">
+<h3 class="anchored" data-anchor-id="outcome-model">3) Outcome Model</h3>
+<ul>
+<li><strong>Explanation</strong>: A model that predicts expected outcome within each treatment arm.</li>
+<li><strong>Example</strong>: One boosted model estimates outcomes for arm <code>A</code>.</li>
+</ul>
+</section>
+<section id="treatment-contrast" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-contrast">4) Treatment Contrast</h3>
+<ul>
+<li><strong>Explanation</strong>: Difference in predicted outcomes between two arms.</li>
+<li><strong>Example</strong>: <code>tau_A-control(x) = mu_A(x) - mu_control(x)</code>.</li>
+</ul>
+</section>
+<section id="propensity-score-1" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score-1">5) Propensity Score</h3>
+<ul>
+<li><strong>Explanation</strong>: Probability of receiving each treatment arm given covariates.</li>
+<li><strong>Example</strong>: A subject has probabilities (0.3, 0.5, 0.2) across three arms.</li>
+</ul>
+</section>
+<section id="aipw" class="level3">
+<h3 class="anchored" data-anchor-id="aipw">6) AIPW</h3>
+<ul>
+<li><strong>Explanation</strong>: A doubly robust estimator that combines outcome and propensity models.</li>
+<li><strong>Example</strong>: ATE remains consistent if either model is correctly specified.</li>
+</ul>
+</section>
+<section id="shap-values" class="level3">
+<h3 class="anchored" data-anchor-id="shap-values">7) SHAP Values</h3>
+<ul>
+<li><strong>Explanation</strong>: Feature attributions explaining how variables affect predictions.</li>
+<li><strong>Example</strong>: Age contributes +0.4 to the predicted treatment contrast.</li>
+</ul>
+</section>
+<section id="heterogeneous-treatment-effects-1" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneous-treatment-effects-1">8) Heterogeneous Treatment Effects</h3>
+<ul>
+<li><strong>Explanation</strong>: Effects vary across subgroups with different covariates.</li>
+<li><strong>Example</strong>: Arm B helps severe cases more than mild cases.</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-4" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-4">Scientific Terminology for Beginners</h2>
+<p>This quick glossary explains the core scientific terms used in this notebook in plain language.</p>
+<section id="potential-outcomes-1" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes-1">1) Potential Outcomes</h3>
+<ul>
+<li><strong>Meaning</strong>: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.</li>
+<li><strong>Example</strong>: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.</li>
+</ul>
+</section>
+<section id="treatment-effect" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect">2) Treatment Effect</h3>
+<ul>
+<li><strong>Meaning</strong>: The difference between outcome with treatment and outcome without treatment.</li>
+<li><strong>Example</strong>: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect-2" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect-2">3) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Meaning</strong>: The average treatment effect for a specific subgroup with features (X) (for example, age group or risk profile).</li>
+<li><strong>Example</strong>: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.</li>
+</ul>
+</section>
+<section id="confounding-2" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-2">4) Confounding</h3>
+<ul>
+<li><strong>Meaning</strong>: A third factor affects both treatment assignment and the outcome, creating misleading associations.</li>
+<li><strong>Example</strong>: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.</li>
+</ul>
+</section>
+<section id="propensity-score-2" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score-2">5) Propensity Score</h3>
+<ul>
+<li><strong>Meaning</strong>: The probability of receiving treatment given covariates (X): (P(T=1X)).</li>
+<li><strong>Example</strong>: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.</li>
+</ul>
+</section>
+<section id="counterfactual-1" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual-1">6) Counterfactual</h3>
+<ul>
+<li><strong>Meaning</strong>: The unobserved outcome for the treatment status the person did not receive.</li>
+<li><strong>Example</strong>: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.</li>
+</ul>
+</section>
+<section id="overlap-positivity" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-positivity">7) Overlap (Positivity)</h3>
+<ul>
+<li><strong>Meaning</strong>: For each covariate profile, there is a non-zero chance of both treatment and control.</li>
+<li><strong>Example</strong>: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.</li>
+</ul>
+</section>
+<section id="nuisance-models" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-models">8) Nuisance Models</h3>
+<ul>
+<li><strong>Meaning</strong>: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.</li>
+<li><strong>Example</strong>: In DR- or R-learning, we first model (E[YX,T]) and (P(TX)), then combine them to estimate CATE.</li>
+</ul>
+</section>
+<section id="cross-fitting-1" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting-1">9) Cross-Fitting</h3>
+<ul>
+<li><strong>Meaning</strong>: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.</li>
+<li><strong>Example</strong>: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.</li>
+</ul>
+</section>
+<section id="doubly-robust-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="doubly-robust-estimation">10) Doubly Robust Estimation</h3>
+<ul>
+<li><strong>Meaning</strong>: An estimator is consistent if either the outcome model or the propensity model is correctly specified.</li>
+<li><strong>Example</strong>: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-5" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-5">Scientific Terminology for Beginners</h2>
+<p>This quick glossary explains the core scientific terms used in this notebook in plain language.</p>
+<section id="potential-outcomes-2" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes-2">1) Potential Outcomes</h3>
+<ul>
+<li><strong>Meaning</strong>: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.</li>
+<li><strong>Example</strong>: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.</li>
+</ul>
+</section>
+<section id="treatment-effect-1" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect-1">2) Treatment Effect</h3>
+<ul>
+<li><strong>Meaning</strong>: The difference between outcome with treatment and outcome without treatment.</li>
+<li><strong>Example</strong>: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect-3" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect-3">3) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Meaning</strong>: The average treatment effect for a specific subgroup with features (X) (for example, age group or risk profile).</li>
+<li><strong>Example</strong>: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.</li>
+</ul>
+</section>
+<section id="confounding-3" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-3">4) Confounding</h3>
+<ul>
+<li><strong>Meaning</strong>: A third factor affects both treatment assignment and the outcome, creating misleading associations.</li>
+<li><strong>Example</strong>: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.</li>
+</ul>
+</section>
+<section id="propensity-score-3" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score-3">5) Propensity Score</h3>
+<ul>
+<li><strong>Meaning</strong>: The probability of receiving treatment given covariates (X): (P(T=1X)).</li>
+<li><strong>Example</strong>: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.</li>
+</ul>
+</section>
+<section id="counterfactual-2" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual-2">6) Counterfactual</h3>
+<ul>
+<li><strong>Meaning</strong>: The unobserved outcome for the treatment status the person did not receive.</li>
+<li><strong>Example</strong>: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.</li>
+</ul>
+</section>
+<section id="overlap-positivity-1" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-positivity-1">7) Overlap (Positivity)</h3>
+<ul>
+<li><strong>Meaning</strong>: For each covariate profile, there is a non-zero chance of both treatment and control.</li>
+<li><strong>Example</strong>: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.</li>
+</ul>
+</section>
+<section id="nuisance-models-1" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-models-1">8) Nuisance Models</h3>
+<ul>
+<li><strong>Meaning</strong>: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.</li>
+<li><strong>Example</strong>: In DR- or R-learning, we first model (E[YX,T]) and (P(TX)), then combine them to estimate CATE.</li>
+</ul>
+</section>
+<section id="cross-fitting-2" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting-2">9) Cross-Fitting</h3>
+<ul>
+<li><strong>Meaning</strong>: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.</li>
+<li><strong>Example</strong>: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.</li>
+</ul>
+</section>
+<section id="doubly-robust-estimation-1" class="level3">
+<h3 class="anchored" data-anchor-id="doubly-robust-estimation-1">10) Doubly Robust Estimation</h3>
+<ul>
+<li><strong>Meaning</strong>: An estimator is consistent if either the outcome model or the propensity model is correctly specified.</li>
+<li><strong>Example</strong>: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-6" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-6">Scientific Terminology for Beginners</h2>
+<p>This quick glossary explains the core scientific terms used in this notebook in plain language.</p>
+<section id="potential-outcomes-3" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes-3">1) Potential Outcomes</h3>
+<ul>
+<li><strong>Meaning</strong>: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.</li>
+<li><strong>Example</strong>: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.</li>
+</ul>
+</section>
+<section id="treatment-effect-2" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect-2">2) Treatment Effect</h3>
+<ul>
+<li><strong>Meaning</strong>: The difference between outcome with treatment and outcome without treatment.</li>
+<li><strong>Example</strong>: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect-4" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect-4">3) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Meaning</strong>: The average treatment effect for a specific subgroup with features (X) (for example, age group or risk profile).</li>
+<li><strong>Example</strong>: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.</li>
+</ul>
+</section>
+<section id="confounding-4" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-4">4) Confounding</h3>
+<ul>
+<li><strong>Meaning</strong>: A third factor affects both treatment assignment and the outcome, creating misleading associations.</li>
+<li><strong>Example</strong>: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.</li>
+</ul>
+</section>
+<section id="propensity-score-4" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score-4">5) Propensity Score</h3>
+<ul>
+<li><strong>Meaning</strong>: The probability of receiving treatment given covariates (X): (P(T=1X)).</li>
+<li><strong>Example</strong>: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.</li>
+</ul>
+</section>
+<section id="counterfactual-3" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual-3">6) Counterfactual</h3>
+<ul>
+<li><strong>Meaning</strong>: The unobserved outcome for the treatment status the person did not receive.</li>
+<li><strong>Example</strong>: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.</li>
+</ul>
+</section>
+<section id="overlap-positivity-2" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-positivity-2">7) Overlap (Positivity)</h3>
+<ul>
+<li><strong>Meaning</strong>: For each covariate profile, there is a non-zero chance of both treatment and control.</li>
+<li><strong>Example</strong>: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.</li>
+</ul>
+</section>
+<section id="nuisance-models-2" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-models-2">8) Nuisance Models</h3>
+<ul>
+<li><strong>Meaning</strong>: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.</li>
+<li><strong>Example</strong>: In DR- or R-learning, we first model (E[YX,T]) and (P(TX)), then combine them to estimate CATE.</li>
+</ul>
+</section>
+<section id="cross-fitting-3" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting-3">9) Cross-Fitting</h3>
+<ul>
+<li><strong>Meaning</strong>: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.</li>
+<li><strong>Example</strong>: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.</li>
+</ul>
+</section>
+<section id="doubly-robust-estimation-2" class="level3">
+<h3 class="anchored" data-anchor-id="doubly-robust-estimation-2">10) Doubly Robust Estimation</h3>
+<ul>
+<li><strong>Meaning</strong>: An estimator is consistent if either the outcome model or the propensity model is correctly specified.</li>
+<li><strong>Example</strong>: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-7" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-7">Scientific Terminology for Beginners</h2>
+<p>This quick glossary explains the core scientific terms used in this notebook in plain language.</p>
+<section id="potential-outcomes-4" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes-4">1) Potential Outcomes</h3>
+<ul>
+<li><strong>Meaning</strong>: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.</li>
+<li><strong>Example</strong>: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.</li>
+</ul>
+</section>
+<section id="treatment-effect-3" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect-3">2) Treatment Effect</h3>
+<ul>
+<li><strong>Meaning</strong>: The difference between outcome with treatment and outcome without treatment.</li>
+<li><strong>Example</strong>: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect-5" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect-5">3) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Meaning</strong>: The average treatment effect for a specific subgroup with features (X) (for example, age group or risk profile).</li>
+<li><strong>Example</strong>: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.</li>
+</ul>
+</section>
+<section id="confounding-5" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-5">4) Confounding</h3>
+<ul>
+<li><strong>Meaning</strong>: A third factor affects both treatment assignment and the outcome, creating misleading associations.</li>
+<li><strong>Example</strong>: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.</li>
+</ul>
+</section>
+<section id="propensity-score-5" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score-5">5) Propensity Score</h3>
+<ul>
+<li><strong>Meaning</strong>: The probability of receiving treatment given covariates (X): (P(T=1X)).</li>
+<li><strong>Example</strong>: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.</li>
+</ul>
+</section>
+<section id="counterfactual-4" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual-4">6) Counterfactual</h3>
+<ul>
+<li><strong>Meaning</strong>: The unobserved outcome for the treatment status the person did not receive.</li>
+<li><strong>Example</strong>: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.</li>
+</ul>
+</section>
+<section id="overlap-positivity-3" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-positivity-3">7) Overlap (Positivity)</h3>
+<ul>
+<li><strong>Meaning</strong>: For each covariate profile, there is a non-zero chance of both treatment and control.</li>
+<li><strong>Example</strong>: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.</li>
+</ul>
+</section>
+<section id="nuisance-models-3" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-models-3">8) Nuisance Models</h3>
+<ul>
+<li><strong>Meaning</strong>: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.</li>
+<li><strong>Example</strong>: In DR- or R-learning, we first model (E[YX,T]) and (P(TX)), then combine them to estimate CATE.</li>
+</ul>
+</section>
+<section id="cross-fitting-4" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting-4">9) Cross-Fitting</h3>
+<ul>
+<li><strong>Meaning</strong>: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.</li>
+<li><strong>Example</strong>: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.</li>
+</ul>
+</section>
+<section id="doubly-robust-estimation-3" class="level3">
+<h3 class="anchored" data-anchor-id="doubly-robust-estimation-3">10) Doubly Robust Estimation</h3>
+<ul>
+<li><strong>Meaning</strong>: An estimator is consistent if either the outcome model or the propensity model is correctly specified.</li>
+<li><strong>Example</strong>: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-8" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-8">Scientific Terminology for Beginners</h2>
+<p>This quick glossary explains the core scientific terms used in this notebook in plain language.</p>
+<section id="potential-outcomes-5" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes-5">1) Potential Outcomes</h3>
+<ul>
+<li><strong>Meaning</strong>: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.</li>
+<li><strong>Example</strong>: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.</li>
+</ul>
+</section>
+<section id="treatment-effect-4" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect-4">2) Treatment Effect</h3>
+<ul>
+<li><strong>Meaning</strong>: The difference between outcome with treatment and outcome without treatment.</li>
+<li><strong>Example</strong>: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect-6" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect-6">3) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Meaning</strong>: The average treatment effect for a specific subgroup with features (X) (for example, age group or risk profile).</li>
+<li><strong>Example</strong>: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.</li>
+</ul>
+</section>
+<section id="confounding-6" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-6">4) Confounding</h3>
+<ul>
+<li><strong>Meaning</strong>: A third factor affects both treatment assignment and the outcome, creating misleading associations.</li>
+<li><strong>Example</strong>: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.</li>
+</ul>
+</section>
+<section id="propensity-score-6" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score-6">5) Propensity Score</h3>
+<ul>
+<li><strong>Meaning</strong>: The probability of receiving treatment given covariates (X): (P(T=1X)).</li>
+<li><strong>Example</strong>: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.</li>
+</ul>
+</section>
+<section id="counterfactual-5" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual-5">6) Counterfactual</h3>
+<ul>
+<li><strong>Meaning</strong>: The unobserved outcome for the treatment status the person did not receive.</li>
+<li><strong>Example</strong>: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.</li>
+</ul>
+</section>
+<section id="overlap-positivity-4" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-positivity-4">7) Overlap (Positivity)</h3>
+<ul>
+<li><strong>Meaning</strong>: For each covariate profile, there is a non-zero chance of both treatment and control.</li>
+<li><strong>Example</strong>: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.</li>
+</ul>
+</section>
+<section id="nuisance-models-4" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-models-4">8) Nuisance Models</h3>
+<ul>
+<li><strong>Meaning</strong>: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.</li>
+<li><strong>Example</strong>: In DR- or R-learning, we first model (E[YX,T]) and (P(TX)), then combine them to estimate CATE.</li>
+</ul>
+</section>
+<section id="cross-fitting-5" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting-5">9) Cross-Fitting</h3>
+<ul>
+<li><strong>Meaning</strong>: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.</li>
+<li><strong>Example</strong>: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.</li>
+</ul>
+</section>
+<section id="doubly-robust-estimation-4" class="level3">
+<h3 class="anchored" data-anchor-id="doubly-robust-estimation-4">10) Doubly Robust Estimation</h3>
+<ul>
+<li><strong>Meaning</strong>: An estimator is consistent if either the outcome model or the propensity model is correctly specified.</li>
+<li><strong>Example</strong>: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-9" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-9">Scientific Terminology for Beginners</h2>
+<p>This quick glossary explains the core scientific terms used in this notebook in plain language.</p>
+<section id="potential-outcomes-6" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes-6">1) Potential Outcomes</h3>
+<ul>
+<li><strong>Meaning</strong>: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.</li>
+<li><strong>Example</strong>: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.</li>
+</ul>
+</section>
+<section id="treatment-effect-5" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect-5">2) Treatment Effect</h3>
+<ul>
+<li><strong>Meaning</strong>: The difference between outcome with treatment and outcome without treatment.</li>
+<li><strong>Example</strong>: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect-7" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect-7">3) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Meaning</strong>: The average treatment effect for a specific subgroup with features (X) (for example, age group or risk profile).</li>
+<li><strong>Example</strong>: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.</li>
+</ul>
+</section>
+<section id="confounding-7" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-7">4) Confounding</h3>
+<ul>
+<li><strong>Meaning</strong>: A third factor affects both treatment assignment and the outcome, creating misleading associations.</li>
+<li><strong>Example</strong>: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.</li>
+</ul>
+</section>
+<section id="propensity-score-7" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score-7">5) Propensity Score</h3>
+<ul>
+<li><strong>Meaning</strong>: The probability of receiving treatment given covariates (X): (P(T=1X)).</li>
+<li><strong>Example</strong>: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.</li>
+</ul>
+</section>
+<section id="counterfactual-6" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual-6">6) Counterfactual</h3>
+<ul>
+<li><strong>Meaning</strong>: The unobserved outcome for the treatment status the person did not receive.</li>
+<li><strong>Example</strong>: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.</li>
+</ul>
+</section>
+<section id="overlap-positivity-5" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-positivity-5">7) Overlap (Positivity)</h3>
+<ul>
+<li><strong>Meaning</strong>: For each covariate profile, there is a non-zero chance of both treatment and control.</li>
+<li><strong>Example</strong>: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.</li>
+</ul>
+</section>
+<section id="nuisance-models-5" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-models-5">8) Nuisance Models</h3>
+<ul>
+<li><strong>Meaning</strong>: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.</li>
+<li><strong>Example</strong>: In DR- or R-learning, we first model (E[YX,T]) and (P(TX)), then combine them to estimate CATE.</li>
+</ul>
+</section>
+<section id="cross-fitting-6" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting-6">9) Cross-Fitting</h3>
+<ul>
+<li><strong>Meaning</strong>: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.</li>
+<li><strong>Example</strong>: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.</li>
+</ul>
+</section>
+<section id="doubly-robust-estimation-5" class="level3">
+<h3 class="anchored" data-anchor-id="doubly-robust-estimation-5">10) Doubly Robust Estimation</h3>
+<ul>
+<li><strong>Meaning</strong>: An estimator is consistent if either the outcome model or the propensity model is correctly specified.</li>
+<li><strong>Example</strong>: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-10" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-10">Scientific Terminology for Beginners</h2>
+<p>This quick glossary explains the core scientific terms used in this notebook in plain language.</p>
+<section id="potential-outcomes-7" class="level3">
+<h3 class="anchored" data-anchor-id="potential-outcomes-7">1) Potential Outcomes</h3>
+<ul>
+<li><strong>Meaning</strong>: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.</li>
+<li><strong>Example</strong>: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.</li>
+</ul>
+</section>
+<section id="treatment-effect-6" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect-6">2) Treatment Effect</h3>
+<ul>
+<li><strong>Meaning</strong>: The difference between outcome with treatment and outcome without treatment.</li>
+<li><strong>Example</strong>: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.</li>
+</ul>
+</section>
+<section id="cate-conditional-average-treatment-effect-8" class="level3">
+<h3 class="anchored" data-anchor-id="cate-conditional-average-treatment-effect-8">3) CATE (Conditional Average Treatment Effect)</h3>
+<ul>
+<li><strong>Meaning</strong>: The average treatment effect for a specific subgroup with features (X) (for example, age group or risk profile).</li>
+<li><strong>Example</strong>: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.</li>
+</ul>
+</section>
+<section id="confounding-8" class="level3">
+<h3 class="anchored" data-anchor-id="confounding-8">4) Confounding</h3>
+<ul>
+<li><strong>Meaning</strong>: A third factor affects both treatment assignment and the outcome, creating misleading associations.</li>
+<li><strong>Example</strong>: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.</li>
+</ul>
+</section>
+<section id="propensity-score-8" class="level3">
+<h3 class="anchored" data-anchor-id="propensity-score-8">5) Propensity Score</h3>
+<ul>
+<li><strong>Meaning</strong>: The probability of receiving treatment given covariates (X): (P(T=1X)).</li>
+<li><strong>Example</strong>: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.</li>
+</ul>
+</section>
+<section id="counterfactual-7" class="level3">
+<h3 class="anchored" data-anchor-id="counterfactual-7">6) Counterfactual</h3>
+<ul>
+<li><strong>Meaning</strong>: The unobserved outcome for the treatment status the person did not receive.</li>
+<li><strong>Example</strong>: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.</li>
+</ul>
+</section>
+<section id="overlap-positivity-6" class="level3">
+<h3 class="anchored" data-anchor-id="overlap-positivity-6">7) Overlap (Positivity)</h3>
+<ul>
+<li><strong>Meaning</strong>: For each covariate profile, there is a non-zero chance of both treatment and control.</li>
+<li><strong>Example</strong>: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.</li>
+</ul>
+</section>
+<section id="nuisance-models-6" class="level3">
+<h3 class="anchored" data-anchor-id="nuisance-models-6">8) Nuisance Models</h3>
+<ul>
+<li><strong>Meaning</strong>: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.</li>
+<li><strong>Example</strong>: In DR- or R-learning, we first model (E[YX,T]) and (P(TX)), then combine them to estimate CATE.</li>
+</ul>
+</section>
+<section id="cross-fitting-7" class="level3">
+<h3 class="anchored" data-anchor-id="cross-fitting-7">9) Cross-Fitting</h3>
+<ul>
+<li><strong>Meaning</strong>: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.</li>
+<li><strong>Example</strong>: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.</li>
+</ul>
+</section>
+<section id="doubly-robust-estimation-6" class="level3">
+<h3 class="anchored" data-anchor-id="doubly-robust-estimation-6">10) Doubly Robust Estimation</h3>
+<ul>
+<li><strong>Meaning</strong>: An estimator is consistent if either the outcome model or the propensity model is correctly specified.</li>
+<li><strong>Example</strong>: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).</li>
+</ul>
+</section>
+</section>
+<section id="scientific-terminology-for-beginners-11" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-11">Scientific Terminology for Beginners</h2>
+<p>Before fitting uplift classifiers, it helps to know the core terminology.</p>
+<ul>
+<li><strong>Classification outcome</strong>: A binary target such as 0/1, no purchase/purchase, or no click/click.</li>
+<li><strong>Treatment assignment</strong>: Indicator of who received the intervention (for example, <code>control</code> vs <code>treatment1</code>).</li>
+<li><strong>Potential outcomes</strong>: The two hypothetical outcomes for each person: one if treated, one if not treated.</li>
+<li><strong>Individual Treatment Effect (ITE)</strong>: Difference between those two potential outcomes for one person.</li>
+<li><strong>CATE (Conditional Average Treatment Effect)</strong>: Average treatment effect for people with similar features <span class="math inline">\(X\)</span>.</li>
+<li><strong>Uplift curve / AUUC</strong>: Evaluation tools that measure how well the model ranks people by true incremental impact.</li>
+</ul>
+</section>
+<section id="scientific-terminology-for-beginners-12" class="level1">
+<h1>Scientific Terminology for Beginners</h1>
+<p>In regression uplift, outcomes are continuous rather than binary. These terms are used throughout the notebook.</p>
+<ul>
+<li><strong>Continuous outcome</strong>: A numeric target such as revenue, time, cost, or test score.</li>
+<li><strong>Treatment effect</strong>: Difference in expected outcome between treated and control groups.</li>
+<li><strong>CATE</strong>: <span class="math inline">\(\tau(x)=\mathbb{E}[Y\mid T=1,X=x]-\mathbb{E}[Y\mid T=0,X=x]\)</span>, the expected effect for a profile <span class="math inline">\(x\)</span>.</li>
+<li><strong>T-learner</strong>: A method that fits separate outcome models for treatment and control, then subtracts predictions.</li>
+<li><strong>Interaction tree</strong>: A tree that finds subgroups where treatment effects differ significantly.</li>
+<li><strong>Gain curve</strong>: A ranking diagnostic that shows cumulative benefit when targeting high-predicted-uplift units first.</li>
+</ul>
+<section id="scientific-terminology-for-beginners-13" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-13">Scientific Terminology for Beginners</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Simple explanation</th>
+<th>Beginner example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Dynamic treatment effect</td>
+<td>Treatment effect that changes over time.</td>
+<td>“A job program has small effects at 3 months, larger at 12 months.”</td>
+</tr>
+<tr class="even">
+<td>Lag</td>
+<td>A past value used to explain current outcomes.</td>
+<td>“Use last month’s sales to predict this month’s sales.”</td>
+</tr>
+<tr class="odd">
+<td>Panel data</td>
+<td>Repeated observations of the same units over time.</td>
+<td>“Monthly income records for the same households.”</td>
+</tr>
+<tr class="even">
+<td>State dependence</td>
+<td>Current outcome depends on previous outcome states.</td>
+<td>“Unemployment today depends on unemployment last quarter.”</td>
+</tr>
+<tr class="odd">
+<td>Time-varying confounder</td>
+<td>A confounder that changes over time and affects treatment/outcome.</td>
+<td>“Health status changes yearly and influences both treatment and costs.”</td>
+</tr>
+<tr class="even">
+<td>Sequential ignorability</td>
+<td>At each time point, treatment is as-if random after conditioning on history.</td>
+<td>“Given past covariates and outcomes, treatment timing is unconfounded.”</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="scientific-terminology-for-beginners-14" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-14">Scientific Terminology for Beginners</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Simple explanation</th>
+<th>Beginner example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sample weight</td>
+<td>Importance assigned to each observation in estimation.</td>
+<td>“Underrepresented groups get larger weights in the analysis.”</td>
+</tr>
+<tr class="even">
+<td>Inverse Probability Weighting (IPW)</td>
+<td>Reweights data by inverse treatment probability to balance groups.</td>
+<td>“If treatment probability is 0.2, that treated unit gets weight 1/0.2=5.”</td>
+</tr>
+<tr class="odd">
+<td>Weighted ATE</td>
+<td>Average treatment effect computed with observation weights.</td>
+<td>“Population-representative effect using survey weights.”</td>
+</tr>
+<tr class="even">
+<td>Covariate balance</td>
+<td>Similar distribution of covariates across treatment groups after weighting.</td>
+<td>“Age and income look comparable after reweighting.”</td>
+</tr>
+<tr class="odd">
+<td>Stabilized weights</td>
+<td>Modified IPW weights to reduce variance from extreme values.</td>
+<td>“Use bounded weights to avoid one observation dominating results.”</td>
+</tr>
+<tr class="even">
+<td>Positivity</td>
+<td>Every covariate profile has a non-zero chance of each treatment level.</td>
+<td>“For all X values, both treated and control cases exist.”</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="scientific-terminology-for-beginners-15" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-15">Scientific Terminology for Beginners</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Simple explanation</th>
+<th>Beginner example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Clustered data</td>
+<td>Observations grouped in units where errors may be correlated.</td>
+<td>“Students nested within schools.”</td>
+</tr>
+<tr class="even">
+<td>Cluster-robust standard errors</td>
+<td>Standard errors adjusted for within-cluster correlation.</td>
+<td>“Do not treat students in same school as independent.”</td>
+</tr>
+<tr class="odd">
+<td>Intra-cluster correlation (ICC)</td>
+<td>Similarity of observations within the same cluster.</td>
+<td>“People in same village have similar outcomes.”</td>
+</tr>
+<tr class="even">
+<td>Effective sample size</td>
+<td>Independent information amount after accounting for clustering.</td>
+<td>“1,000 rows may behave like only 400 independent units.”</td>
+</tr>
+<tr class="odd">
+<td>Design effect</td>
+<td>Variance inflation caused by clustered sampling.</td>
+<td>“Ignoring clustering gives confidence intervals that are too narrow.”</td>
+</tr>
+<tr class="even">
+<td>Multiway clustering</td>
+<td>Robust errors allowing correlation across multiple cluster dimensions.</td>
+<td>“Cluster by firm and by year at the same time.”</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="scientific-terminology-for-beginners-16" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-16">Scientific Terminology for Beginners</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Simple explanation</th>
+<th>Beginner example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Ensemble learner</td>
+<td>Combines multiple models to improve prediction robustness.</td>
+<td>“Average random forest and boosting predictions.”</td>
+</tr>
+<tr class="even">
+<td>Stacking</td>
+<td>Learns optimal combination weights for base learners.</td>
+<td>“Meta-model learns how much to trust each algorithm.”</td>
+</tr>
+<tr class="odd">
+<td>Bias-variance tradeoff</td>
+<td>Balance between underfitting and overfitting error.</td>
+<td>“Simple model has high bias; complex model may have high variance.”</td>
+</tr>
+<tr class="even">
+<td>Hyperparameter tuning</td>
+<td>Searching model settings that improve performance.</td>
+<td>“Choose tree depth and learning rate by cross-validation.”</td>
+</tr>
+<tr class="odd">
+<td>Out-of-fold prediction</td>
+<td>Prediction for each row from models not trained on that row.</td>
+<td>“Row i is predicted by folds where i was held out.”</td>
+</tr>
+<tr class="even">
+<td>Metalearner</td>
+<td>The model that combines outputs of base learners.</td>
+<td>“Linear regression on predictions from RF, XGBoost, and Lasso.”</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="scientific-terminology-for-beginners-17" class="level2">
+<h2 class="anchored" data-anchor-id="scientific-terminology-for-beginners-17">Scientific terminology for beginners</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Simple explanation</th>
+<th>Beginner example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Covariate</td>
+<td>An input feature used to describe each unit.</td>
+<td>Patient age, blood pressure, and prior diagnosis before treatment.</td>
+</tr>
+<tr class="even">
+<td>Confounder</td>
+<td>A variable that affects both treatment choice and outcome.</td>
+<td>Older patients are more likely to get intensive care and also have worse outcomes.</td>
+</tr>
+<tr class="odd">
+<td>Counterfactual</td>
+<td>The unobserved outcome under the treatment not received.</td>
+<td>For a treated patient, what would recovery have been under no treatment?</td>
+</tr>
+<tr class="even">
+<td>Propensity score</td>
+<td>Probability of receiving treatment given covariates.</td>
+<td>A model estimates <code>P(T=1|X)=0.72</code> for one individual.</td>
+</tr>
+<tr class="odd">
+<td>ITE (Individual Treatment Effect)</td>
+<td>Estimated effect for one specific individual.</td>
+<td>Predicted gain of <code>+3</code> points for patient A if treated.</td>
+</tr>
+<tr class="even">
+<td>ATE (Average Treatment Effect)</td>
+<td>Mean treatment effect across the population.</td>
+<td>Across all patients, treatment improves outcome by <code>+1.2</code> on average.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

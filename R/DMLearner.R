@@ -700,6 +700,7 @@ predict.DMLearner <- function(object, newdata, treatment = NULL, y = NULL,
     L <- if (!is.null(m$phi_width)) m$phi_width else ncol(phi_new)
     d <- if (!is.null(m$n_treat)) m$n_treat else 1L
     cf <- stats::coef(m$model)
+    cf[is.na(cf)] <- 0  # lm drops aliased columns (sets coef NA); treat as zero
     if (d == 1L) {
       te <- as.vector(as.matrix(phi_new) %*% cf[seq_len(L)])
     } else {
@@ -733,6 +734,7 @@ predict.DMLearner <- function(object, newdata, treatment = NULL, y = NULL,
     L <- if (!is.null(m$phi_width)) m$phi_width else ncol(phi_new)
     d <- if (!is.null(m$n_treat)) m$n_treat else 1L
     cf <- stats::coef(m$model)
+    cf[is.na(cf)] <- 0  # lm drops aliased columns (sets coef NA); treat as zero
     if (d == 1L) {
       te <- as.vector(as.matrix(phi_new) %*% cf[seq_len(L)])
     } else {
@@ -764,6 +766,15 @@ predict.DMLearner <- function(object, newdata, treatment = NULL, y = NULL,
   if (is.matrix(te) && !is.null(object$treatment_names) &&
       ncol(te) == length(object$treatment_names))
     colnames(te) <- object$treatment_names
+
+  # Replace any remaining non-finite values so callers (e.g. kernelshap/shapviz) never receive NA/Inf
+  if (is.numeric(te)) {
+    bad <- !is.finite(te)
+    if (any(bad)) {
+      fallback <- if (any(!bad)) mean(te[!bad]) else 0
+      te[bad] <- fallback
+    }
+  }
 
   if (return_components) {
     yhat_c <- matrix(NA_real_, n, length(object$models_y))

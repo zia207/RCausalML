@@ -1,0 +1,589 @@
+# CEVAE: Counterfactual Variational Autoencoder (CEVAE): Gnerative Model with Latent Confounders
+
+Generative models for causal inference have gained traction as a powerful framework for estimating treatment effects in complex, high-dimensional settings. Among these, the Counterfactual Variational Autoencoder (CEVAE) stands out for its ability to handle latent confounding — a common challenge in observational data where the true confounders are not directly observed but are instead measured through noisy proxies. CEVAE leverages the representational power of deep neural networks to learn a latent space that captures the underlying confounding structure, enabling more accurate counterfactual predictions and treatment effect estimation. In this notebook, we provide a comprehensive overview of CEVAE's architecture, assumptions, and training procedure, followed by an implementation in R using the {RCausalML} package. We benchmark CEVAE against traditional meta-learners (S-, T-, X-, R-Learners) on both the IHDP semi-synthetic dataset and a synthetic dataset with hidden confounding, evaluating performance in terms of ATE, MAE, AUUC, and cumulative gain.
+
+## Overview
+
+CEVAE is a deep generative model for causal inference introduced by Louizos et al. (2017). Its core insight is that in many real-world settings, the observed covariates **X** are not the true confounders — they are noisy proxies of some underlying latent variable **Z** that simultaneously influences both treatment assignment and outcomes. Standard causal methods that condition on **X** directly may therefore fail to fully adjust for confounding. CEVAE addresses this by learning the latent confounder **Z** from data using a Variational Autoencoder (VAE) framework, then performing causal inference in that latent space.
+
+### The Causal Problem It Solves
+
+`TARNet`, `CFRNet`, `DragonNet`, `GANITE` all assume ignorability — that all confounders are observed in $x$. In practice, you often have proxy measurements of the true confounder, not the confounder itself. A patient's true health status $z$ is never fully measured; you only see noisy proxies (blood pressure, lab values, doctor notes). If you condition on these proxies as if they were $z$, your causal estimates are biased. `CEVAE` (Louizos et al., NeurIPS 2017) learns from  the latent confounder $z$ from the proxies, then do causal inference in the latent space. It uses a `VAE `to infer a posterior over $z$ and jointly trains a causal model on top of it.
+
+In a standard potential outcomes setup, we observe:
+
+- **X** — proxy covariates (e.g., test scores, survey responses, medical readings)
+- **T** — binary treatment
+- **Y** — outcome
+
+The assumption is that there exists a latent **Z** such that:
+
+$$T \perp Y(t) \mid Z \quad \text{(ignorability in latent space)}$$
+
+but **not** necessarily $T \perp Y(t) \mid X$. That is, X is an imperfect, noisy measurement of the true confounder Z. If you condition only on X, residual confounding remains. CEVAE recovers Z and conditions on it instead.
+
+### The Generative Model
+
+CEVAE specifies a joint generative process over all observed variables, driven by the latent confounder Z:
+
+$$p(Z) = \mathcal{N}(0, I)$$
+
+$$p(X \mid Z) = \prod_j p(x_j \mid Z) \quad \text{(factored, mixed likelihood)}$$
+
+$$p(T \mid Z) = \text{Bernoulli}(\sigma(f_T(Z)))$$
+
+$$p(Y \mid T, Z) = p(Y \mid T=0, Z) \cdot (1-T) + p(Y \mid T=1, Z) \cdot T$$
+
+where $f_T$ and the outcome distributions are parameterized by neural networks. The outcome likelihood can be Gaussian (continuous Y) or Bernoulli (binary Y). Crucially, **T and Y are conditionally independent given Z**, enforcing the ignorability assumption in latent space.
+
+### The Inference Model (Encoder)
+
+Because Z is unobserved, CEVAE must infer it from data. It defines a variational posterior:
+
+$$q(Z \mid X, T, Y) \approx p(Z \mid X, T, Y)$$
+
+This encoder is a neural network that takes all observed variables as input and outputs the parameters $(\mu_Z, \sigma_Z^2)$ of a Gaussian approximate posterior. Importantly, treatment T and outcome Y are fed into the encoder during training — this allows the model to infer Z more accurately by leveraging all available signal about the latent confounder.
+
+### Training via the ELBO
+
+CEVAE is trained by maximizing the Evidence Lower Bound (ELBO), which balances reconstruction fidelity against regularization of the latent space:
+
+$$\mathcal{L} = \mathbb{E}_{q(Z|X,T,Y)}\left[\log p(X|Z) + \log p(T|Z) + \log p(Y|T,Z)\right] - D_{KL}(q(Z|X,T,Y) \| p(Z))$$
+
+- The **reconstruction terms** ensure the generative model explains the observed data well.
+- The **KL divergence** regularizes Z toward the prior, preventing overfitting and encouraging a smooth latent space.
+- The reparameterization trick enables gradients to flow through the stochastic Z samples, making end-to-end backpropagation possible.
+
+### Counterfactual Prediction
+
+Once trained, CEVAE estimates individual treatment effects (ITE) as follows:
+
+1. **Encode**: given $(X_i, T_i, Y_i)$, sample $Z_i \sim q(Z \mid X_i, T_i, Y_i)$
+2. **Predict factual**: $\hat{Y}_i(T_i) = \mathbb{E}[Y \mid T_i, Z_i]$
+3. **Predict counterfactual**: $\hat{Y}_i(1 - T_i) = \mathbb{E}[Y \mid 1-T_i, Z_i]$
+4. **Estimate ITE**: $\hat{\tau}_i = \hat{Y}_i(1) - \hat{Y}_i(0)$
+
+The same latent Z supports both potential outcome predictions, which is what gives CEVAE its counterfactual coherence — both outcomes are grounded in the same inferred confounder.
+
+### Key Architectural Components
+
+| Component | Role |
+|---|---|
+| **Encoder** $q(Z \mid X, T, Y)$ | Infers latent confounder from all observed variables |
+| **Decoder** $p(X \mid Z)$ | Reconstructs proxy covariates from Z |
+| **Treatment head** $p(T \mid Z)$ | Models propensity score in latent space |
+| **Outcome heads** $p(Y \mid T{=}0, Z),\ p(Y \mid T{=}1, Z)$ | Two separate networks for potential outcomes |
+| **Prior** $p(Z)$ | Standard Gaussian regularizer on latent space |
+
+### How It Relates to Other Methods
+
+| Method | Handles Latent Confounders | Architecture |
+|---|---|---|
+| TARNet / CFRNet | No — assumes X contains all confounders | Shared encoder + two outcome heads |
+| DragonNet | No — same assumption, adds propensity head | Shared encoder + propensity + outcome heads |
+| **CEVAE** | **Yes** — explicitly models Z as latent | Full VAE generative model |
+
+CEVAE is strictly more general in its confounding assumptions. The tradeoff is that it is harder to train, more sensitive to misspecification of the generative model, and computationally heavier than discriminative approaches like TARNet.
+
+### Assumptions and Limitations
+
+**Assumptions it makes:**
+- Ignorability holds in the latent space Z, not necessarily in X
+- The generative model structure (how Z produces X, T, Y) is correctly specified
+- The VAE posterior approximation is sufficiently flexible
+
+**Practical limitations:**
+- Sensitive to the choice of decoder architecture for X — misspecifying $p(X \mid Z)$ can corrupt the inferred Z
+- Identifiability of Z is not guaranteed in general; the model relies on the structured causal graph to anchor the latent space
+- Harder to train stably than TARNet/CFRNet, especially on small datasets
+- The quality of counterfactual estimates depends on how well the encoder separates confounding signal from noise in X
+
+### Extensions and Limitations
+
+Subsequent work has pushed this further:
+
+-   **DCEVAE** disentangles the latent space into parts that are *independent* of treatment vs. *correlated* with treatment — improving counterfactual generation quality. [ojs.aaai.org](https://ojs.aaai.org/index.php/AAAI/article/view/16990)
+
+-   **VCI (Variational Causal Inference)** argues that the vanilla CEVAE formulation is still not fully aligned with Pearl's counterfactual semantics, and proposes a stricter framework with disentangled exogenous noise abduction — especially important for high-dimensional outcomes like gene expression profiles. [arxiv.org](https://arxiv.org/html/2410.12730v2)
+
+The main limitation of CEVAE is that it still relies on the assumption that \$\$X\$\$ is informative enough about \$\$Z\$\$ to recover it. If your proxies are very weak, the confounder posterior will be poorly identified, and causal estimates will degrade.
+
+
+## Implementation in R
+
+We use {RCuasalML}s `CEVAE` implementation (torch-based when available, else a placeholder) to fit the model on the IHDP semi-synthetic dataset and a synthetic dataset with hidden confounding. We compare CEVAE's ITE predictions against meta-learners (S/T/X/R), evaluating ATE, MAE, and AUUC on both training and validation sets.
+
+### Setup
+
+### Load and Check Required Libraries
+
+```{r}
+#| label: packages-list
+#| warning: false
+packages <- c(
+  'tidyverse',
+  'plyr',
+  'RCausalML',
+  'causaldata',
+  'torch',
+  'ForCausality',
+  'mlbench',
+  'xgboost',
+  'future'
+)
+```
+
+### Install Missing Packages
+
+```{r}
+#| label: install-missing-packages
+#| warning: false
+#| error: false
+# Install missing packages
+#new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+#if(length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r}
+#| label: verify-installation
+#| warning: false
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load Required Libraries
+
+```{r}
+#| label: load-required-libraries
+#| warning: false
+# When rendering from package root, use local RCausalML (so causal_tree fixes are used)
+if (file.exists("DESCRIPTION") && requireNamespace("devtools", quietly = TRUE)) {
+  try(devtools::load_all(".", quiet = TRUE), silent = TRUE)
+}
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+```{r}
+#| label: setup
+#| include: true
+run_fast <- TRUE
+device_use <- NULL
+if (requireNamespace("torch", quietly = TRUE)) {
+  device_use <- if (torch::cuda_is_available()) "cuda" else "cpu"
+}
+set.seed(42)
+torch_manual_seed(42)
+```
+
+##  Fit CEVAE on IHDP dataset (semi-synthetic)
+
+We benchmark CEVAE on the IHDP dataset, which simulates a randomized trial of an intervention on infant health outcomes. The Python example uses all 9 IHDP files, replicates them, and compares CEVAE against S/T/X/R Learners with elastic net propensity. We follow the same structure for loading data, fitting models, and evaluating results.
+
+### Dataset
+
+The example loads all nine IHDP files (`ihdp_npci_1.csv` through `ihdp_npci_9.csv`), concatenates them, and replicates the combined dataset 100 times to match the scale used in the original CEVAE experiments. The column layout follows the standard IHDP convention: `treatment`, `y_factual`, `y_cfactual`, `mu0`, `mu1`, and 25 covariates. Covariates are reordered so that binary features come first (indices 6–24 in Python; columns 7–25 in R), followed by continuous features (indices 0–5 in Python; columns 1–6 in R). For reference, see the [CEVAE example in the CausalML documentation](https://causalml.readthedocs.io/en/latest/examples/cevae_example.html).
+
+```{r load-data}
+#| label: load-ihdp
+base_url <- "https://raw.githubusercontent.com/uber/causalml/master/docs/examples/data"
+cols <- c("treatment", "y_factual", "y_cfactual", "mu0", "mu1", paste0("X", 0:24))
+df <- NULL
+for (i in 1:9) {
+  url <- sprintf("%s/ihdp_npci_%d.csv", base_url, i)
+  tmp <- tryCatch({
+    read.csv(url, header = FALSE)
+  }, error = function(e) NULL)
+  if (!is.null(tmp) && nrow(tmp) > 0) {
+    colnames(tmp) <- cols[seq_len(ncol(tmp))]
+    if (is.null(df)) df <- tmp else df <- rbind(df, tmp)
+  }
+}
+if (!is.null(df) && nrow(df) > 0) {
+  replications <- if (run_fast) 2L else 10L
+  df <- do.call(rbind, replicate(replications, df, simplify = FALSE))
+  message("Loaded IHDP (all 9 files × ", replications, " replications): ", nrow(df), " × ", ncol(df))
+} else {
+  df <- NULL
+}
+
+if (is.null(df) || nrow(df) == 0) {
+  d <- synthetic_data(mode = 1, n = 5000, p = 25, sigma = 1.0, adj = 0)
+  df <- as.data.frame(d$X)
+  colnames(df) <- paste0("X", 0:(ncol(df) - 1))
+  df$treatment <- d$w
+  df$y_factual <- d$y
+  df$y_cfactual <- ifelse(d$w == 1, d$b - 0.5 * d$tau, d$b + 0.5 * d$tau)
+  df$mu0 <- d$b - 0.5 * d$tau
+  df$mu1 <- d$b + 0.5 * d$tau
+  message("Using synthetic fallback: ", nrow(df), " × ", ncol(df))
+}
+
+# Feature order: binary first (Python indices 6-24 -> R columns 7-25), then continuous (0-5 -> 1-6)
+binfeats <- 7:25
+contfeats <- 1:6
+perm <- c(binfeats, contfeats)
+xcols <- paste0("X", 0:24)
+X <- as.matrix(df[, xcols][, perm])
+treatment <- as.integer(df$treatment)
+y <- as.numeric(df$y_factual)
+y_cf <- as.numeric(df$y_cfactual)
+mu0 <- as.numeric(df$mu0)
+mu1 <- as.numeric(df$mu1)
+tau <- ifelse(df$treatment == 1, df$y_factual - df$y_cfactual, df$y_cfactual - df$y_factual)
+
+# Train/validation split (80/20, random_state=1 like Python)
+n <- nrow(X)
+set.seed(1)
+ite <- sample(n, size = round(0.2 * n))
+itr <- setdiff(seq_len(n), ite)
+X_train <- X[itr, ]
+treatment_train <- treatment[itr]
+y_train <- y[itr]
+tau_train <- tau[itr]
+mu_0_train <- mu0[itr]
+mu_1_train <- mu1[itr]
+X_val <- X[ite, ]
+treatment_val <- treatment[ite]
+y_val <- y[ite]
+tau_val <- tau[ite]
+cat("Train size:", length(itr), "| Val size:", length(ite), "\n")
+```
+
+### Fit CEVAE model
+
+We fit **CEVAE** (torch when available, else placeholder) on the training set and predict ITE on train and validation. When CUDA is available, training runs on GPU for speed. When `run_fast` is TRUE, fewer epochs, smaller networks, and fewer prediction samples are used for faster rendering. Use `num_samples = 1` in prediction for a fast deterministic path (single forward pass).
+
+```{r cevae-fit}
+#| label: cevae-model
+n_samp_pred <- if (run_fast) 1L else 100L   # 1 = deterministic (fast), >1 = MC sampling
+cv <- cevae(X_train, treatment_train, y_train, device = device_use,
+            num_epochs = if (run_fast) 10L else 50L,
+            num_samples = if (run_fast) 20L else 1000L,
+            batch_size = if (run_fast) 256L else 100L,
+            hidden_dim = if (run_fast) 64L else 200L,
+            num_layers = if (run_fast) 2L else 3L,
+            latent_dim = if (run_fast) 10L else 20L,
+            verbose = !run_fast)
+ite_train_cevae <- predict(cv, X_train, num_samples = n_samp_pred)
+ite_val_cevae <- predict(cv, X_val, num_samples = n_samp_pred)
+if (is.matrix(ite_train_cevae)) ite_train_cevae <- ite_train_cevae[, 1]
+if (is.matrix(ite_val_cevae)) ite_val_cevae <- ite_val_cevae[, 1]
+ate_train_cevae <- mean(ite_train_cevae)
+ate_val_cevae <- mean(ite_val_cevae)
+cat("CEVAE — ATE (train):", round(ate_train_cevae, 4), "| ATE (val):", round(ate_val_cevae, 4), "\n")
+```
+
+### Fit Meta-learners
+
+We fit **propensity** with elastic net (like Python's `ElasticNetPropensityModel`) and **S-, T-, X-, R-Learners** with ranger (Python uses LGBM). X- and R-Learners use the propensity scores.
+
+```{r meta-learners}
+#| label: meta-learners
+p_train <- propensity_glmnet(X_train, treatment_train)
+p_val <- propensity_glmnet(X_val, treatment_val)
+
+n_fold_meta <- if (run_fast) 3L else 5L
+sl <- fit(SLearner(learner = "ranger"), X_train, treatment_train, y_train)
+tl <- fit(TLearner(learner = "ranger"), X_train, treatment_train, y_train)
+xl <- fit(XLearner(learner = "ranger"), X_train, treatment_train, y_train, p = p_train)
+rl <- fit(RLearner(learner = "ranger", n_fold = n_fold_meta), X_train, treatment_train, y_train, p = p_train)
+
+s_ite_train <- as.vector(predict(sl, X_train))
+s_ite_val <- as.vector(predict(sl, X_val))
+t_ite_train <- as.vector(predict(tl, X_train))
+t_ite_val <- as.vector(predict(tl, X_val))
+x_ite_train <- as.vector(predict(xl, X_train))
+x_ite_val <- as.vector(predict(xl, X_val))
+r_ite_train <- as.vector(predict(rl, X_train))
+r_ite_val <- as.vector(predict(rl, X_val))
+```
+
+### Model results comparison
+
+### Training
+
+Build the prediction data frame (S, T, X, R, CEVAE, tau, w, y) and compute **ATE**, **MAE** (vs. true τ), and **AUUC** (mean of normalized cumulative gain). Then plot cumulative gain.
+
+```{r df-preds-train}
+#| label: df-preds-train
+df_preds_train <- data.frame(
+  S = s_ite_train,
+  T = t_ite_train,
+  X = x_ite_train,
+  R = r_ite_train,
+  CEVAE = ite_train_cevae,
+  tau = tau_train,
+  w = treatment_train,
+  y = y_train
+)
+```
+
+```{r result-train}
+#| label: result-train
+df_result_train <- data.frame(
+  Method = c("S", "T", "X", "R", "CEVAE", "actual"),
+  ATE = c(
+    mean(s_ite_train), mean(t_ite_train), mean(x_ite_train), mean(r_ite_train),
+    ate_train_cevae, mean(tau_train)
+  )
+)
+tau_train_1d <- as.numeric(tau_train)
+df_result_train$MAE <- c(
+  mean(abs(s_ite_train - tau_train_1d)),
+  mean(abs(t_ite_train - tau_train_1d)),
+  mean(abs(x_ite_train - tau_train_1d)),
+  mean(abs(r_ite_train - tau_train_1d)),
+  mean(abs(ite_train_cevae - tau_train_1d)),
+  NA_real_
+)
+# AUUC = mean of normalized cumulative gain (like Python auuc_score)
+gain_train <- get_cumgain(df_preds_train, outcome_col = "y", treatment_col = "w",
+                         treatment_effect_col = "tau", normalize = TRUE)
+model_cols <- c("S", "T", "X", "R", "CEVAE", "tau")
+model_cols <- intersect(model_cols, colnames(gain_train))
+auuc_train <- colMeans(gain_train[, model_cols, drop = FALSE])
+df_result_train$AUUC <- NA_real_
+for (m in names(auuc_train)) {
+  idx <- which(df_result_train$Method == if (m == "tau") "actual" else m)
+  if (length(idx)) df_result_train$AUUC[idx] <- auuc_train[m]
+}
+knitr::kable(df_result_train, digits = 4)
+```
+
+```{r plot-gain-train, fig.height=5}
+plot_gain(df_preds_train, outcome_col = "y", treatment_col = "w",
+          treatment_effect_col = "tau",
+          model_cols = c("S", "T", "X", "R", "CEVAE", "tau"),
+          main = "Cumulative gain (Training)", normalize = TRUE)
+```
+
+### Validation
+
+Same metrics and gain plot on the validation set.
+
+```{r df-preds-val}
+#| label: df-preds-val
+df_preds_val <- data.frame(
+  S = s_ite_val,
+  T = t_ite_val,
+  X = x_ite_val,
+  R = r_ite_val,
+  CEVAE = ite_val_cevae,
+  tau = tau_val,
+  w = treatment_val,
+  y = y_val
+)
+```
+
+```{r result-val}
+#| label: result-val
+df_result_val <- data.frame(
+  Method = c("S", "T", "X", "R", "CEVAE", "actual"),
+  ATE = c(
+    mean(s_ite_val), mean(t_ite_val), mean(x_ite_val), mean(r_ite_val),
+    ate_val_cevae, mean(tau_val)
+  )
+)
+tau_val_1d <- as.numeric(tau_val)
+df_result_val$MAE <- c(
+  mean(abs(s_ite_val - tau_val_1d)),
+  mean(abs(t_ite_val - tau_val_1d)),
+  mean(abs(x_ite_val - tau_val_1d)),
+  mean(abs(r_ite_val - tau_val_1d)),
+  mean(abs(ite_val_cevae - tau_val_1d)),
+  NA_real_
+)
+gain_val <- get_cumgain(df_preds_val, outcome_col = "y", treatment_col = "w",
+                       treatment_effect_col = "tau", normalize = TRUE)
+auuc_val <- colMeans(gain_val[, model_cols, drop = FALSE])
+df_result_val$AUUC <- NA_real_
+for (m in names(auuc_val)) {
+  idx <- which(df_result_val$Method == if (m == "tau") "actual" else m)
+  if (length(idx)) df_result_val$AUUC[idx] <- auuc_val[m]
+}
+knitr::kable(df_result_val, digits = 4)
+```
+
+```{r plot-gain-val, fig.height=5}
+plot_gain(df_preds_val, outcome_col = "y", treatment_col = "w",
+          treatment_effect_col = "tau",
+          model_cols = c("S", "T", "X", "R", "CEVAE", "tau"),
+          main = "Cumulative gain (Validation)", normalize = TRUE)
+```
+
+##  Fit CEAVE on Synthetic Dataset with Hidden confounding
+
+We will fit CEVAE on a synthetic dataset generated with `simulate_hidden_confounder`, which creates a setting where the observed covariates are noisy proxies of an underlying latent confounder. 
+
+### Dataset
+
+The Python example uses `simulate_hidden_confounder(n=100000, p=5, sigma=1.0, adj=0)` and compares S/T/X/R with LinearRegression and XGBRegressor plus CEVAE. We use **simulate_hidden_confounder** with a smaller `n` for speed and compare S/T/X/R with **lm** and **ranger** plus **CEVAE****. Summary: ATE, MSE, Abs % Error of ATE, AUUC; cumulative gain on validation.
+
+```{r synthetic-data}
+#| label: synthetic-data
+n_syn <- if (run_fast) 2000L else 10000L
+d_syn <- simulate_hidden_confounder(n = n_syn, p = 5, sigma = 1.0, adj = 0)
+X_syn <- d_syn$X
+y_syn <- d_syn$y
+w_syn <- d_syn$w
+tau_syn <- d_syn$tau
+b_syn <- d_syn$b
+e_syn <- d_syn$e
+
+set.seed(123)
+n_syn <- nrow(X_syn)
+idx_val <- sample(n_syn, size = round(0.2 * n_syn))
+idx_train <- setdiff(seq_len(n_syn), idx_val)
+
+X_syn_tr <- X_syn[idx_train, , drop = FALSE]
+X_syn_val <- X_syn[idx_val, , drop = FALSE]
+y_syn_tr <- y_syn[idx_train]
+y_syn_val <- y_syn[idx_val]
+w_syn_tr <- w_syn[idx_train]
+w_syn_val <- w_syn[idx_val]
+tau_syn_tr <- tau_syn[idx_train]
+tau_syn_val <- tau_syn[idx_val]
+
+p_syn_tr <- propensity_glmnet(X_syn_tr, w_syn_tr)
+p_syn_val <- propensity_glmnet(X_syn_val, w_syn_val)
+```
+
+
+### Fit CEVAE and meta-learners
+
+```{r synthetic-models}
+#| label: synthetic-models
+# CEVAE on synthetic (fewer epochs / smaller net / fewer samples when run_fast)
+n_samp_syn <- if (run_fast) 1L else 100L   # 1 = deterministic (fast)
+cv_syn <- cevae(X_syn_tr, w_syn_tr, y_syn_tr, device = device_use,
+                num_epochs = if (run_fast) 8L else 50L,
+                num_samples = if (run_fast) 20L else 1000L,
+                batch_size = if (run_fast) 256L else 100L,
+                hidden_dim = if (run_fast) 64L else 200L,
+                num_layers = if (run_fast) 2L else 3L,
+                latent_dim = if (run_fast) 10L else 20L,
+                verbose = FALSE)
+ite_syn_cevae_tr <- as.vector(predict(cv_syn, X_syn_tr, num_samples = n_samp_syn))
+ite_syn_cevae_val <- as.vector(predict(cv_syn, X_syn_val, num_samples = n_samp_syn))
+if (is.matrix(ite_syn_cevae_tr)) ite_syn_cevae_tr <- ite_syn_cevae_tr[, 1]
+if (is.matrix(ite_syn_cevae_val)) ite_syn_cevae_val <- ite_syn_cevae_val[, 1]
+
+# Meta-learners: S/T/X/R with lm and ranger (like Python LR + XGB)
+preds_syn_train <- list()
+preds_syn_valid <- list()
+for (learner_name in c("lm", "ranger")) {
+  sl_s <- fit(SLearner(learner = learner_name), X_syn_tr, w_syn_tr, y_syn_tr)
+  tl_s <- fit(TLearner(learner = learner_name), X_syn_tr, w_syn_tr, y_syn_tr)
+  xl_s <- fit(XLearner(learner = learner_name), X_syn_tr, w_syn_tr, y_syn_tr, p = p_syn_tr)
+  rl_s <- fit(RLearner(learner = learner_name, n_fold = n_fold_meta), X_syn_tr, w_syn_tr, y_syn_tr, p = p_syn_tr)
+  preds_syn_train[[paste0("S Learner (", learner_name, ")")]] <- as.vector(predict(sl_s, X_syn_tr))
+  preds_syn_train[[paste0("T Learner (", learner_name, ")")]] <- as.vector(predict(tl_s, X_syn_tr))
+  preds_syn_train[[paste0("X Learner (", learner_name, ")")]] <- as.vector(predict(xl_s, X_syn_tr))
+  preds_syn_train[[paste0("R Learner (", learner_name, ")")]] <- as.vector(predict(rl_s, X_syn_tr))
+  preds_syn_valid[[paste0("S Learner (", learner_name, ")")]] <- as.vector(predict(sl_s, X_syn_val))
+  preds_syn_valid[[paste0("T Learner (", learner_name, ")")]] <- as.vector(predict(tl_s, X_syn_val))
+  preds_syn_valid[[paste0("X Learner (", learner_name, ")")]] <- as.vector(predict(xl_s, X_syn_val))
+  preds_syn_valid[[paste0("R Learner (", learner_name, ")")]] <- as.vector(predict(rl_s, X_syn_val))
+}
+preds_syn_train[["CEVAE"]] <- ite_syn_cevae_tr
+preds_syn_valid[["CEVAE"]] <- ite_syn_cevae_val
+```
+
+### Model results comparison
+
+```{r synthetic-summary}
+#| label: synthetic-summary
+actual_ate_train <- mean(tau_syn_tr)
+actual_ate_val <- mean(tau_syn_val)
+
+synthetic_summary_train <- data.frame(
+  Method = c(names(preds_syn_train), "Actuals"),
+  ATE = c(vapply(preds_syn_train, mean, numeric(1)), actual_ate_train),
+  MSE = c(vapply(preds_syn_train, function(p) mean((p - tau_syn_tr)^2), numeric(1)), NA_real_)
+)
+synthetic_summary_train$AbsPctErrorATE <- if (actual_ate_train != 0) abs(synthetic_summary_train$ATE / actual_ate_train - 1) else rep(NA_real_, nrow(synthetic_summary_train))
+synthetic_summary_train$AbsPctErrorATE[synthetic_summary_train$Method == "Actuals"] <- NA
+
+synthetic_summary_val <- data.frame(
+  Method = c(names(preds_syn_valid), "Actuals"),
+  ATE = c(vapply(preds_syn_valid, mean, numeric(1)), actual_ate_val),
+  MSE = c(vapply(preds_syn_valid, function(p) mean((p - tau_syn_val)^2), numeric(1)), NA_real_)
+)
+synthetic_summary_val$AbsPctErrorATE <- if (actual_ate_val != 0) abs(synthetic_summary_val$ATE / actual_ate_val - 1) else rep(NA_real_, nrow(synthetic_summary_val))
+synthetic_summary_val$AbsPctErrorATE[synthetic_summary_val$Method == "Actuals"] <- NA
+
+# AUUC on training
+df_syn_train <- as.data.frame(preds_syn_train, stringsAsFactors = FALSE)
+df_syn_train$tau <- tau_syn_tr
+df_syn_train$w <- w_syn_tr
+df_syn_train$y <- y_syn_tr
+gain_syn_tr <- get_cumgain(df_syn_train, outcome_col = "y", treatment_col = "w",
+                          treatment_effect_col = "tau", normalize = TRUE)
+synthetic_summary_train$AUUC <- NA_real_
+for (m in names(preds_syn_train)) {
+  if (m %in% colnames(gain_syn_tr))
+    synthetic_summary_train$AUUC[synthetic_summary_train$Method == m] <- mean(gain_syn_tr[, m])
+}
+
+# AUUC on validation
+df_syn_val <- as.data.frame(preds_syn_valid, stringsAsFactors = FALSE)
+df_syn_val$tau <- tau_syn_val
+df_syn_val$w <- w_syn_val
+df_syn_val$y <- y_syn_val
+gain_syn <- get_cumgain(df_syn_val, outcome_col = "y", treatment_col = "w",
+                        treatment_effect_col = "tau", normalize = TRUE)
+model_cols_syn <- setdiff(colnames(gain_syn), c("tau"))
+synthetic_summary_val$AUUC <- NA_real_
+for (m in names(preds_syn_valid)) {
+  if (m %in% colnames(gain_syn))
+    synthetic_summary_val$AUUC[synthetic_summary_val$Method == m] <- mean(gain_syn[, m])
+}
+
+cat("Synthetic — Training summary:\n")
+knitr::kable(synthetic_summary_train, digits = 4)
+cat("\nSynthetic — Validation summary:\n")
+knitr::kable(synthetic_summary_val, digits = 4)
+```
+
+### Visualize cumulative gain on validation
+
+
+```{r plot-gain-synthetic, fig.height=5}
+df_syn_val$Actuals <- tau_syn_val
+plot_gain(df_syn_val, outcome_col = "y", treatment_col = "w",
+          treatment_effect_col = "tau",
+          model_cols = c(names(preds_syn_valid), "Actuals"),
+          main = "Cumulative gain (Synthetic validation)", normalize = TRUE)
+```
+
+
+## Summary and Conclusions
+
+CEVAE is best understood as a principled answer to a question that simpler methods ignore: *what if our covariates are just noisy measurements of the true underlying confounders?* By embedding causal assumptions directly into a generative model and learning a latent representation that satisfies ignorability, it provides a theoretically grounded path to counterfactual inference under proxy confounding — at the cost of greater modeling complexity and stronger reliance on correct generative model specification.
+
+
+
+-   **IHDP**: Same structure as the [Python CausalML CEVAE example](https://causalml.readthedocs.io/en/latest/examples/cevae_example.html): load all 9 IHDP files, replicate (2× when `run_fast`, 10× otherwise), binary-first feature order; **CEVAE** (torch or placeholder) plus **S-, T-, X-, R-Learners** with elastic-net propensity; **Training** and **Validation** tables (ATE, MAE, AUUC) and cumulative gain plots for all models.
+-   **Synthetic**: `simulate_hidden_confounder(n=2000 or 10000 when run_fast is FALSE, p=5, sigma=1, adj=0)` with 80/20 split; S/T/X/R with **lm** and **ranger** plus **CEVAE**; summary table (ATE, MSE, Abs % Error of ATE, AUUC) and gain plot on validation.
+-   **CEVAE**: When **torch** is installed, the full VAE-based CEVAE is used (GPU when CUDA is available); otherwise a placeholder implementation is used. Set **run_fast = TRUE** (default) for faster rendering with fewer epochs/iterations/samples; set **run_fast = FALSE** for a full benchmark.
+
+## References
+
+-   [CEVAE vs. Meta-Learners Benchmark (CausalML)](https://causalml.readthedocs.io/en/latest/examples/cevae_example.html)
+-   Louizos, C., Shalit, U., Mooij, J. M., Sontag, D., Zemel, R., & Welling, M. (2017). [Causal Effect Inference with Deep Latent Variable Models](http://papers.nips.cc/paper/7223-causal-effect-inference-with-deep-latent-variable-models.pdf). NeurIPS.
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Proxy confounder | Observed variable that indirectly reflects an unobserved confounder. | A noisy survey score as proxy for true socioeconomic status. |
+| Variational inference | Approximate Bayesian inference using tractable distributions. | CEVAE approximates posterior over latent confounders with neural networks. |
+| ELBO | Optimization target balancing fit and regularization in VAEs. | Training maximizes ELBO instead of exact log-likelihood. |
+| Posterior | Updated belief about hidden variables after seeing data. | `q(z|x,t,y)` estimates likely latent confounders for each record. |
+| KL divergence | Measure of difference between two probability distributions. | Penalizes encoder posterior for drifting too far from prior. |
+| Hidden confounding | Bias caused by unobserved factors affecting treatment and outcome. | Motivation, not in data, affects both therapy uptake and recovery. |

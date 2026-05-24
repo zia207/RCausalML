@@ -1,0 +1,905 @@
+# 1.  Double Machine Learning: From Basics to Application {.unnumbered}
+
+**Double/debiased machine learning (DML)** is a framework for valid causal
+inference when flexible ML methods are used to control for confounding.
+By combining **Neyman-orthogonal scores**, **sample splitting**, and
+**cross-fitting**, DML produces $\sqrt{n}$-consistent, asymptotically normal
+estimates of causal parameters even when nuisance functions are estimated with
+high-dimensional ML.
+
+This notebook is organized in two parts:
+
+- **Part A** — Fit models with synthetic data: illustrates regularization bias,
+  orthogonalization, overfitting bias, sample splitting, and cross-fitting using
+  a simulated partially linear model.
+- **Part B** — Use case on the 401(k) data: **train–test split**, DML on the
+  training fold, **holdout validation** of nuisance predictions, and **SHAP**
+  (via `explain_cate()` in `R/shapviz_integration.R`) for a flexible **LinearDML**
+  CATE surface using **future** parallel permutation SHAP.
+  
+## Overview
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Causal effect | How much a treatment changes an outcome. | "If training adds $200 to monthly income, the causal effect is +$200." |
+| Confounder | A variable that affects both treatment and outcome. | "Motivation affects both joining training and earning more." |
+| Nuisance function | A helper model we estimate to remove confounding, not the final target. | "Model income from background variables first, then isolate treatment impact." |
+| Neyman orthogonality | A design that makes small ML errors have little impact on the final causal estimate. | "Even if the helper model is imperfect, the treatment estimate stays stable." |
+| Cross-fitting | Training ML on one fold and predicting on another to reduce overfitting bias. | "Train on 80% of people and predict on 20%, then rotate folds." |
+| ATE (Average Treatment Effect) | The average effect of treatment across all units. | "On average, the program increases savings by $500." |
+
+Double/debiased machine learning (DML) targets a low-dimensional causal parameter (e.g., $\theta_0$ in a PLR) while using flexible ML for nuisances $m_0(X) = \mathbb{E}[D|X]$ and $\ell_0(X) = \mathbb{E}[Y|X]$ (or $g_0$ in IV-type scores). **Regularization and overfitting** in the nuisances would bias naive plug-in estimators; DML uses **Neyman-orthogonal scores** and **cross-fitting** so that inference remains valid.
+
+| Challenge | DML response |
+|-----------|----------------|
+| Regularization bias from ML | Orthogonal scores (partialling-out or IV-type) |
+| Overfitting (same data for nuisances and $\theta$) | Sample splitting + cross-fitting |
+| Flexible nuisances | mlr3 learners (e.g., ranger, glmnet) |
+  
+
+## The Partially Linear Regression (PLR) Model
+
+Both parts rely on the **partially linear regression (PLR)** model:
+
+$$Y = D\,\theta_0 + g_0(X) + \zeta, \quad \mathbb{E}(\zeta \mid D, X) = 0$$
+
+$$D = m_0(X) + V, \quad \mathbb{E}(V \mid X) = 0$$
+
+| Symbol | Role |
+|--------|------|
+| $Y$ | Outcome variable |
+| $D$ | Treatment variable |
+| $X$ | High-dimensional confounders |
+| $\theta_0$ | Causal parameter (ATE) |
+| $g_0(X),\, m_0(X)$ | Nuisance functions estimated by ML |
+| $\zeta,\, V$ | Stochastic errors |
+
+## Implementation in R
+
+We use **RCausalML**’s `doubleml_plr()` (see `R/DMLearner.R`): a wrapper around [DoubleML](https://docs.doubleml.org)’s `DoubleMLPLR` that accepts a covariate matrix `X`, treatment `d`, and outcome `y`, and passes `score`, `n_folds`, and `apply_cross_fitting` through to the same PLR implementation. Simulation draws and the 401(k) dataset still come from the **DoubleML** package (`make_plr_CCDDHNR2018`, `fetch_401k`); **mlr3** learners are unchanged. 
+
+### Setup
+
+### Load and Install Required Packages {#setup-packages}
+
+```{r setup-packages, warning=FALSE, message=FALSE}
+packages_core <- c(
+  "DoubleML",
+  "mlr3",
+  "mlr3learners",
+  "data.table",
+  "tidyverse",
+  "lgr",
+  "ranger",
+  "glmnet",
+  "RCausalML"
+)
+
+new_packages <- packages_core[!(packages_core %in% installed.packages()[, "Package"])]
+if (length(new_packages)) install.packages(new_packages)
+
+invisible(lapply(packages_core, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+
+# RCausalML: use this source tree when rendering from inst/notebooks/... (avoids stale CRAN API)
+pkg_root <- normalizePath(file.path("..", "..", ".."), mustWork = FALSE)
+desc_path <- file.path(pkg_root, "DESCRIPTION")
+is_dev_rcausalml <- file.exists(desc_path) &&
+  identical(tryCatch(
+    unname(read.dcf(desc_path, fields = "Package")[1L, 1L]),
+    error = function(e) NA_character_
+  ), "RCausalML")
+
+if (is_dev_rcausalml) {
+  if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools", quiet = TRUE)
+  devtools::load_all(pkg_root, quiet = TRUE)
+} else {
+  if (!"RCausalML" %in% rownames(installed.packages())) install.packages("RCausalML")
+  suppressPackageStartupMessages(library(RCausalML))
+}
+
+lgr::get_logger("mlr3")$set_threshold("warn")
+
+# Part B: SHAP / parallel SHAP (kernelshap + shapviz + future)
+packages_b <- c("kernelshap", "shapviz", "future", "foreach")
+new_b <- packages_b[!(packages_b %in% installed.packages()[, "Package"])]
+if (length(new_b)) install.packages(new_b, quiet = TRUE)
+invisible(lapply(packages_b, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+
+## Part A: Fit Models with Synthetic Data {.unnumbered}
+
+We simulate data from the **partially linear model** of Chernozhukov et al. (2018):
+
+$$y_i = \theta_0\, d_i + g_0(x_i) + \zeta_i, \quad \zeta_i \sim \mathcal{N}(0,1)$$
+
+$$d_i = m_0(x_i) + v_i, \quad v_i \sim \mathcal{N}(0,1)$$
+
+Covariates $x_i \sim \mathcal{N}(0, \Sigma)$ with $\Sigma_{kj} = 0.7^{|j-k|}$.
+The true causal parameter is $\theta_0 = 0.5$. Nuisance functions:
+
+$$m_0(x_i) = x_{i,1} + \frac{1}{4}\frac{\exp(x_{i,3})}{1 + \exp(x_{i,3})}$$
+
+$$g_0(x_i) = \frac{\exp(x_{i,1})}{1 + \exp(x_{i,1})} + \frac{1}{4}x_{i,3}$$
+
+We run 100 replications to compare estimator distributions across three
+approaches: naive ML, orthogonalized ML without sample splitting, and full DML
+with cross-fitting.
+
+### A.1 Generate Simulated Data {#sim-dgp}
+
+Covariate matrix for PLR data frames: all columns except `y` and `d`.
+
+```{r plr-x-matrix}
+plr_x_matrix <- function(df) {
+   as.matrix(df[, setdiff(names(df), c("y", "d")), drop = FALSE])
+ }
+```
+
+
+```{r sim-dgp}
+set.seed(1234)
+
+n_rep  <- 100   # replications (set to 1000 for full replication)
+n_obs  <- 500
+n_vars <- 5
+alpha  <- 0.5   # true theta_0
+
+data_sim <- vector("list", n_rep)
+for (i_rep in seq_len(n_rep)) {
+  data_sim[[i_rep]] <- make_plr_CCDDHNR2018(
+    alpha       = alpha,
+    n_obs       = n_obs,
+    dim_x       = n_vars,
+    return_type = "data.frame"
+  )
+}
+
+head(data_sim[[1]])
+```
+
+## A.2 Define Shared Learners {#sim-learners}
+
+```{r sim-learners}
+ml_l <- lrn("regr.ranger", num.trees = 300, max.depth = 5)
+ml_m <- lrn("regr.ranger", num.trees = 300, max.depth = 5)
+ml_g <- ml_l$clone()
+```
+
+
+## A.3 Approach 1 — Naive ML (Non-Orthogonal Score) {#sim-nonorth}
+
+A **naive** estimator splits the sample in two, fits $\hat{g}_0(X)$ with ML on
+one half, then computes:
+
+$$\hat{\theta}_0 = \Bigl(\tfrac{1}{n}\sum_{i \in I} D_i^2\Bigr)^{-1}
+  \tfrac{1}{n}\sum_{i \in I} D_i\bigl(Y_i - \hat{g}_0(X_i)\bigr)$$
+
+This uses a **non-orthogonal score**. Regularization bias from estimating $g_0$
+with ML does not vanish; $\sqrt{n}(\hat{\theta}_0 - \theta_0)$ does not stay
+bounded.
+
+### A.3.1 Define Non-Orthogonal Score {#sim-nonorth-score}
+
+```{r sim-nonorth-score}
+non_orth_score <- function(y, d, l_hat, m_hat, g_hat, smpls) {
+  u_hat  <- y - g_hat
+  psi_a  <- -1 * d * d
+  psi_b  <- d * u_hat
+  list(psi_a = psi_a, psi_b = psi_b)
+}
+```
+
+### A.3.2 Fit Naive ML Over Replications {#sim-nonorth-fit}
+
+```{r sim-nonorth-fit}
+set.seed(1111)
+
+theta_nonorth <- rep(NA, n_rep)
+se_nonorth    <- rep(NA, n_rep)
+
+for (i_rep in seq_len(n_rep)) {
+  df <- data_sim[[i_rep]]
+  r  <- doubleml_plr(
+    plr_x_matrix(df), df$d, df$y,
+    ml_l = ml_l$clone(),
+    ml_m = ml_m$clone(),
+    ml_g = ml_g$clone(),
+    n_folds = 2L,
+    score = non_orth_score,
+    apply_cross_fitting = FALSE
+  )
+  theta_nonorth[i_rep] <- r$ate
+  se_nonorth[i_rep]    <- r$ate_se
+}
+```
+
+### A.3.3 Plot Distribution — Non-Orthogonal {#sim-nonorth-plot}
+
+Under valid inference, $(\hat{\theta} - \theta_0) / \hat{\text{se}}$ should
+follow $\mathcal{N}(0,1)$. For the naive estimator it does not — the histogram
+is shifted and spread, revealing **regularization bias**.
+
+```{r sim-nonorth-plot}
+t_nonorth <- (theta_nonorth - alpha) / se_nonorth
+
+ggplot(data.frame(t = t_nonorth)) +
+  geom_histogram(
+    aes(x = t, y = after_stat(density),
+        colour = "Non-orthogonal ML", fill = "Non-orthogonal ML"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_vline(xintercept = 0, col = "black") +
+  stat_function(fun = dnorm, aes(colour = "N(0,1)"), linewidth = 0.8) +
+  scale_colour_manual(
+    name = "",
+    values = c("Non-orthogonal ML" = "darkblue", "N(0,1)" = "black")
+  ) +
+  scale_fill_manual(
+    name = "",
+    values = c("Non-orthogonal ML" = "darkblue", "N(0,1)" = NA)
+  ) +
+  xlim(-6, 6) + xlab("Rescaled estimate") + ylab("Density") +
+  ggtitle("Naive ML: Regularization Bias") +
+  theme_minimal()
+```
+
+
+## A.4 Approach 2 — Orthogonalized ML, No Sample Splitting {#sim-orth-nosplit}
+
+We **orthogonalize** by partialling $X$ out of $D$: let $\hat{V} = D - \hat{m}(X)$
+and use the IV-type score:
+
+$$\check{\theta}_0 = \Bigl(\tfrac{1}{n}\sum_{i \in I} \hat{V}_i D_i\Bigr)^{-1}
+  \tfrac{1}{n}\sum_{i \in I} \hat{V}_i\bigl(Y_i - \hat{g}_0(X_i)\bigr)$$
+
+With `n_folds = 1` and `apply_cross_fitting = FALSE`, **nuisances and the final
+estimate use the same data**, so overfitting bias can still be present.
+
+### A.4.1 Fit IV-Type Score, No Sample Splitting {#sim-orth-nosplit-fit}
+
+```{r sim-orth-nosplit-fit}
+set.seed(2222)
+
+theta_orth_nosplit <- rep(NA, n_rep)
+se_orth_nosplit    <- rep(NA, n_rep)
+
+for (i_rep in seq_len(n_rep)) {
+  df <- data_sim[[i_rep]]
+  r  <- doubleml_plr(
+    plr_x_matrix(df), df$d, df$y,
+    ml_l = ml_l$clone(),
+    ml_m = ml_m$clone(),
+    ml_g = ml_g$clone(),
+    n_folds = 1L,
+    score = "IV-type",
+    apply_cross_fitting = FALSE
+  )
+  theta_orth_nosplit[i_rep] <- r$ate
+  se_orth_nosplit[i_rep]    <- r$ate_se
+}
+```
+
+### A.4.2 Plot Distribution — Orthogonal, No Sample Splitting {#sim-orth-nosplit-plot}
+
+```{r sim-orth-nosplit-plot}
+t_orth_nosplit      <- (theta_orth_nosplit - alpha) / se_orth_nosplit
+t_orth_nosplit_plot <- t_orth_nosplit[is.finite(t_orth_nosplit)]
+
+ggplot(data.frame(t = t_orth_nosplit_plot)) +
+  geom_histogram(
+    aes(x = t, y = after_stat(density),
+        colour = "DML (no sample splitting)", fill = "DML (no sample splitting)"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_vline(xintercept = 0, col = "black") +
+  stat_function(fun = dnorm, aes(colour = "N(0,1)"), linewidth = 0.8) +
+  scale_colour_manual(
+    name = "",
+    values = c("DML (no sample splitting)" = "darkorange", "N(0,1)" = "black")
+  ) +
+  scale_fill_manual(
+    name = "",
+    values = c("DML (no sample splitting)" = "darkorange", "N(0,1)" = NA)
+  ) +
+  xlim(-6, 6) + xlab("Rescaled estimate") + ylab("Density") +
+  ggtitle("Orthogonal Score, No Sample Splitting: Overfitting Bias") +
+  theme_minimal()
+```
+
+Without sample splitting, overfitting can still distort the distribution
+(extreme or non-finite values are typical).
+
+
+## A.5 Approach 3 — Full DML with Cross-Fitting (IV-Type Score) {#sim-dml-ivtype}
+
+Using **cross-fitting** (`n_folds = 2`): train nuisances on one fold, estimate
+$\theta$ on the other; swap roles and average. This removes both regularization
+bias and overfitting bias and uses the full sample.
+
+### A.5.1 Fit DML with Cross-Fitting (IV-Type) {#sim-dml-ivtype-fit}
+
+```{r sim-dml-ivtype-fit}
+set.seed(3333)
+
+theta_dml <- rep(NA, n_rep)
+se_dml    <- rep(NA, n_rep)
+
+for (i_rep in seq_len(n_rep)) {
+  df <- data_sim[[i_rep]]
+  r  <- doubleml_plr(
+    plr_x_matrix(df), df$d, df$y,
+    ml_l = ml_l$clone(),
+    ml_m = ml_m$clone(),
+    ml_g = ml_g$clone(),
+    n_folds = 2L,
+    score = "IV-type",
+    apply_cross_fitting = TRUE
+  )
+  theta_dml[i_rep] <- r$ate
+  se_dml[i_rep]    <- r$ate_se
+}
+```
+
+### A.5.2 Plot Distribution — DML with Cross-Fitting {#sim-dml-ivtype-plot}
+
+```{r sim-dml-ivtype-plot}
+t_dml <- (theta_dml - alpha) / se_dml
+
+ggplot(data.frame(t = t_dml)) +
+  geom_histogram(
+    aes(x = t, y = after_stat(density),
+        colour = "DML with cross-fitting", fill = "DML with cross-fitting"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_vline(xintercept = 0, col = "black") +
+  stat_function(fun = dnorm, aes(colour = "N(0,1)"), linewidth = 0.8) +
+  scale_colour_manual(
+    name = "",
+    values = c("DML with cross-fitting" = "darkgreen", "N(0,1)" = "black")
+  ) +
+  scale_fill_manual(
+    name = "",
+    values = c("DML with cross-fitting" = "darkgreen", "N(0,1)" = NA)
+  ) +
+  xlim(-6, 6) + xlab("Rescaled estimate") + ylab("Density") +
+  ggtitle("Full DML with Cross-Fitting: Valid Inference") +
+  theme_minimal()
+```
+
+The rescaled estimates align with $\mathcal{N}(0,1)$ — **valid inference** is
+achieved.
+
+## A.6 Comparison: All Three IV-Type Approaches {#sim-comparison-ivtype}
+
+```{r sim-comparison-ivtype, fig.width=7, fig.height=4}
+df_compare <- data.frame(
+  t_nonorth      = (theta_nonorth - alpha) / se_nonorth,
+  t_orth_nosplit = (theta_orth_nosplit - alpha) / se_orth_nosplit,
+  t_dml          = (theta_dml - alpha) / se_dml
+)
+
+ggplot() +
+  geom_histogram(
+    data = df_compare,
+    aes(x = t_nonorth, y = after_stat(density),
+        colour = "Non-orthogonal ML", fill = "Non-orthogonal ML"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_histogram(
+    data = df_compare,
+    aes(x = t_orth_nosplit, y = after_stat(density),
+        colour = "DML (no sample splitting)", fill = "DML (no sample splitting)"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_histogram(
+    data = df_compare,
+    aes(x = t_dml, y = after_stat(density),
+        colour = "DML with cross-fitting", fill = "DML with cross-fitting"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_vline(xintercept = 0, col = "black") +
+  stat_function(fun = dnorm, aes(colour = "N(0,1)"), linewidth = 0.8) +
+  scale_colour_manual(
+    name = "",
+    values = c(
+      "Non-orthogonal ML"       = "darkblue",
+      "DML (no sample splitting)" = "darkorange",
+      "DML with cross-fitting"  = "darkgreen",
+      "N(0,1)"                  = "black"
+    )
+  ) +
+  scale_fill_manual(
+    name = "",
+    values = c(
+      "Non-orthogonal ML"       = "darkblue",
+      "DML (no sample splitting)" = "darkorange",
+      "DML with cross-fitting"  = "darkgreen",
+      "N(0,1)"                  = NA
+    )
+  ) +
+  xlim(-6, 6) + xlab("Rescaled estimate") + ylab("Density") +
+  ggtitle("Comparison of All Three Approaches") +
+  theme_minimal()
+```
+
+Only **DML with cross-fitting** aligns with $\mathcal{N}(0,1)$.
+
+## A.7 Partialling-Out Score {#sim-partout}
+
+The **partialling-out** score uses $\ell_0(X) = \mathbb{E}[Y|X]$ and
+$m_0(X) = \mathbb{E}[D|X]$; no separate $g_0$ learner is needed. The orthogonal
+moment condition is:
+
+$$\psi(W;\,\theta,\eta) := \bigl[Y - \ell(X) - \theta(D - m(X))\bigr](D - m(X))$$
+
+We compare no-sample-splitting vs cross-fitting under this score.
+
+### A.7.1 Partialling-Out, No Sample Splitting {#sim-partout-nosplit-fit}
+
+```{r sim-partout-nosplit-fit}
+set.seed(4444)
+
+theta_po_nosplit <- rep(NA, n_rep)
+se_po_nosplit    <- rep(NA, n_rep)
+
+for (i_rep in seq_len(n_rep)) {
+  df <- data_sim[[i_rep]]
+  r  <- doubleml_plr(
+    plr_x_matrix(df), df$d, df$y,
+    ml_l = ml_l$clone(),
+    ml_m = ml_m$clone(),
+    n_folds = 1L,
+    score = "partialling out",
+    apply_cross_fitting = FALSE
+  )
+  theta_po_nosplit[i_rep] <- r$ate
+  se_po_nosplit[i_rep]    <- r$ate_se
+}
+```
+
+### A.7.2 Partialling-Out with Cross-Fitting {#sim-partout-cf-fit}
+
+```{r sim-partout-cf-fit}
+set.seed(5555)
+
+theta_dml_po <- rep(NA, n_rep)
+se_dml_po    <- rep(NA, n_rep)
+
+for (i_rep in seq_len(n_rep)) {
+  df <- data_sim[[i_rep]]
+  r  <- doubleml_plr(
+    plr_x_matrix(df), df$d, df$y,
+    ml_l = ml_l$clone(),
+    ml_m = ml_m$clone(),
+    n_folds = 2L,
+    score = "partialling out",
+    apply_cross_fitting = TRUE
+  )
+  theta_dml_po[i_rep] <- r$ate
+  se_dml_po[i_rep]    <- r$ate_se
+}
+```
+
+### A.7.3 Plot Distribution — Partialling-Out with Cross-Fitting {#sim-partout-plot}
+
+```{r sim-partout-plot}
+t_dml_po <- (theta_dml_po - alpha) / se_dml_po
+
+ggplot(data.frame(t = t_dml_po)) +
+  geom_histogram(
+    aes(x = t, y = after_stat(density),
+        colour = "DML (partialling out)", fill = "DML (partialling out)"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_vline(xintercept = 0, col = "black") +
+  stat_function(fun = dnorm, aes(colour = "N(0,1)"), linewidth = 0.8) +
+  scale_colour_manual(
+    name = "",
+    values = c("DML (partialling out)" = "darkgreen", "N(0,1)" = "black")
+  ) +
+  scale_fill_manual(
+    name = "",
+    values = c("DML (partialling out)" = "darkgreen", "N(0,1)" = NA)
+  ) +
+  xlim(-6, 6) + xlab("Rescaled estimate") + ylab("Density") +
+  ggtitle("Partialling-Out Score with Cross-Fitting: Valid Inference") +
+  theme_minimal()
+```
+
+### A.7.4 Comparison: Partialling-Out vs IV-Type (with Cross-Fitting) {#sim-comparison-scores}
+
+```{r sim-comparison-scores, fig.width=7, fig.height=4}
+df_scores <- data.frame(
+  t_ivtype  = (theta_dml    - alpha) / se_dml,
+  t_partout = (theta_dml_po - alpha) / se_dml_po
+)
+
+ggplot() +
+  geom_histogram(
+    data = df_scores,
+    aes(x = t_ivtype, y = after_stat(density),
+        colour = "DML — IV-type", fill = "DML — IV-type"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_histogram(
+    data = df_scores,
+    aes(x = t_partout, y = after_stat(density),
+        colour = "DML — partialling out", fill = "DML — partialling out"),
+    bins = 30, alpha = 0.3
+  ) +
+  geom_vline(xintercept = 0, col = "black") +
+  stat_function(fun = dnorm, aes(colour = "N(0,1)"), linewidth = 0.8) +
+  scale_colour_manual(
+    name = "",
+    values = c(
+      "DML — IV-type"       = "darkgreen",
+      "DML — partialling out" = "steelblue",
+      "N(0,1)"              = "black"
+    )
+  ) +
+  scale_fill_manual(
+    name = "",
+    values = c(
+      "DML — IV-type"       = "darkgreen",
+      "DML — partialling out" = "steelblue",
+      "N(0,1)"              = NA
+    )
+  ) +
+  xlim(-6, 6) + xlab("Rescaled estimate") + ylab("Density") +
+  ggtitle("IV-Type vs Partialling-Out Score (both with cross-fitting)") +
+  theme_minimal()
+```
+
+Both scores with cross-fitting yield approximately valid inference.
+
+### A.7.5 Summary Table — Simulation Results {#sim-summary-table}
+
+```{r sim-summary-table}
+summary_sim <- data.frame(
+  Approach = c(
+    "Non-orthogonal ML",
+    "IV-type, no sample splitting",
+    "IV-type with cross-fitting",
+    "Partialling-out, no sample splitting",
+    "Partialling-out with cross-fitting"
+  ),
+  Mean_theta = round(c(
+    mean(theta_nonorth,    na.rm = TRUE),
+    mean(theta_orth_nosplit, na.rm = TRUE),
+    mean(theta_dml,        na.rm = TRUE),
+    mean(theta_po_nosplit, na.rm = TRUE),
+    mean(theta_dml_po,     na.rm = TRUE)
+  ), 4),
+  SD_theta = round(c(
+    sd(theta_nonorth,    na.rm = TRUE),
+    sd(theta_orth_nosplit, na.rm = TRUE),
+    sd(theta_dml,        na.rm = TRUE),
+    sd(theta_po_nosplit, na.rm = TRUE),
+    sd(theta_dml_po,     na.rm = TRUE)
+  ), 4),
+  Bias = round(c(
+    mean(theta_nonorth,    na.rm = TRUE) - alpha,
+    mean(theta_orth_nosplit, na.rm = TRUE) - alpha,
+    mean(theta_dml,        na.rm = TRUE) - alpha,
+    mean(theta_po_nosplit, na.rm = TRUE) - alpha,
+    mean(theta_dml_po,     na.rm = TRUE) - alpha
+  ), 4)
+)
+
+knitr::kable(
+  summary_sim,
+  caption = paste0("Simulation results across ", n_rep,
+                   " replications (true theta_0 = ", alpha, ")"),
+  col.names = c("Approach", "Mean estimate", "SD", "Bias")
+)
+```
+
+## Part B: Use Case — Fit Models with Real-World Data {.unnumbered}
+
+We apply DML to the **401(k) dataset** (Chernozhukov et al., 2020) to estimate
+the average causal effect of employer-sponsored 401(k) eligibility (`e401`) on
+net total financial assets (`net_tfa`), controlling for age, income, education,
+family structure, and other confounders.
+
+We **hold out a test set** for **nuisance validation** (out-of-sample fit of
+$\mathbb{E}[Y|X]$ and $\mathbb{E}[D|X]$ trained on the training fold only).
+**Formal PLR inference** (`summary`, `confint`) is for the **training** sample
+where `doubleml_plr()` is fit. For **SHAP**, the PLR coefficient is constant in
+$X$, so we use **LinearDML** (same nuisance idea, linear CATE in $X$) on the
+training fold and explain **predicted CATE** $\hat{\tau}(X)$ with
+`explain_cate()` from `R/shapviz_integration.R`, using **`future`** with
+`plan(multisession)` and `kernelshap::permshap(..., parallel = TRUE)`.
+
+## B.1 Load and Inspect the 401(k) Data {#real-load-data}
+
+```{r real-load-data}
+df_401k <- fetch_401k(return_type = "data.frame", instrument = FALSE)
+
+# Variables:
+#   net_tfa : net total financial assets (outcome Y)
+#   e401    : = 1 if employer offers 401(k) (treatment D)
+#   age, inc, fsize, educ, db, marr, twoearn, pira, hown : covariates (X)
+
+cat("Dimensions:", nrow(df_401k), "x", ncol(df_401k), "\n")
+head(df_401k)
+```
+
+## B.2 Outcome, treatment, covariates, and train–test split {#real-dml-data}
+
+We use an **80% / 20%** split **stratified** on `e401` so both folds retain similar
+treatment prevalence.
+
+```{r real-dml-data}
+x_cols_401k <- c("age", "inc", "fsize", "educ", "db", "marr", "twoearn", "pira", "hown")
+X_401k      <- as.matrix(df_401k[, x_cols_401k, drop = FALSE])
+y_401k      <- df_401k$net_tfa
+t_401k      <- df_401k$e401
+
+set.seed(3141)
+train_frac <- 0.8
+i1 <- which(t_401k == 1L)
+i0 <- which(t_401k == 0L)
+n1_tr <- max(1L, floor(train_frac * length(i1)))
+n0_tr <- max(1L, floor(train_frac * length(i0)))
+train_idx <- c(sample(i1, n1_tr), sample(i0, n0_tr))
+test_idx  <- setdiff(seq_along(t_401k), train_idx)
+
+X_tr <- X_401k[train_idx, , drop = FALSE]
+X_te <- X_401k[test_idx, , drop = FALSE]
+y_tr <- y_401k[train_idx]
+y_te <- y_401k[test_idx]
+t_tr <- t_401k[train_idx]
+t_te <- t_401k[test_idx]
+
+cat(
+  "Train n =", length(train_idx), "| Test n =", length(test_idx),
+  "| mean(e401) train =", round(mean(t_tr), 3),
+  "test =", round(mean(t_te), 3), "\n"
+)
+```
+
+## B.3 Specify Learners {#real-learners}
+
+We use **random forest** (via `ranger`) for both nuisance models — flexible and
+well-suited to the moderate-dimensional observational setting.
+
+```{r real-learners}
+learner_rf <- lrn("regr.ranger", num.trees = 500, max.depth = 5, min.node.size = 2)
+ml_l_401k  <- learner_rf$clone()
+ml_m_401k  <- learner_rf$clone()
+```
+
+## B.4 Fit DML on the training set {#real-fit}
+
+We use the **partialling-out** score with 5-fold cross-fitting via `doubleml_plr()` on **`(X_tr, t_tr, y_tr)`**; `return_ml_object = TRUE` keeps the fitted `DoubleMLPLR` object for `summary` and `confint`.
+
+```{r real-fit}
+set.seed(3142)
+
+fit_401k <- doubleml_plr(
+  X_tr, t_tr, y_tr,
+  ml_l = ml_l_401k,
+  ml_m = ml_m_401k,
+  n_folds = 5L,
+  score = "partialling out",
+  return_ml_object = TRUE
+)
+
+obj_dml_401k <- fit_401k$dml_obj
+print(obj_dml_401k)
+```
+
+## B.5 Statistical Inference (training sample) {#real-inference}
+
+### B.5.1 Coefficient Summary {#real-summary}
+
+```{r real-summary}
+cat("Effect of 401(k) eligibility on net financial assets (training fit):\n")
+obj_dml_401k$summary
+```
+
+### B.5.2 Confidence Interval {#real-confint}
+
+```{r real-confint}
+cat("95% confidence interval (training sample):\n")
+obj_dml_401k$confint(level = 0.95)
+```
+
+### B.5.3 Visualize the Estimate {#real-plot}
+
+```{r real-plot}
+coef_val <- obj_dml_401k$coef
+ci       <- obj_dml_401k$confint(level = 0.95)
+ci_lo    <- ci[1, 1]
+ci_hi    <- ci[1, 2]
+
+df_result <- data.frame(
+  label = "e401 → net_tfa (train)",
+  estimate = coef_val,
+  ci_lo    = ci_lo,
+  ci_hi    = ci_hi
+)
+
+ggplot(df_result, aes(x = label, y = estimate)) +
+  geom_point(size = 4, colour = "darkgreen") +
+  geom_errorbar(aes(ymin = ci_lo, ymax = ci_hi), width = 0.15,
+                colour = "darkgreen", linewidth = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+  xlab("") +
+  ylab("Estimated effect (USD)") +
+  ggtitle(
+    "DML Estimate: Effect of 401(k) Eligibility on Net Financial Assets",
+    subtitle = "Training sample; partialling-out, 5-fold CF, RF nuisances"
+  ) +
+  theme_minimal()
+```
+
+### B.5.4 Interpretation {#real-interpretation}
+
+The estimated coefficient on `e401` is the **PLR treatment effect** on the
+**training** subsample, with inference that assumes the usual PLR assumptions for
+that fit. A positive and significant estimate aligns with 401(k) eligibility
+raising net assets (Chernozhukov et al., 2020).
+
+## B.6 Holdout validation of nuisance models {#real-validation}
+
+We assess whether the **nuisance regressions** generalize to the held-out test
+fold: **random forests** fit **only on training** data predict $\mathbb{E}[Y|X]$
+(regression) and $\mathbb{E}[D|X]$ (binary treatment via `probability = TRUE`).
+Lower **RMSE** (outcome) and **Brier** score (treatment) indicate better
+out-of-sample nuisance fit. This does **not** replace PLR assumption checks; it
+is a standard **predictive sanity check** on $X$.
+
+```{r real-validation}
+df_tr <- cbind(as.data.frame(X_tr), net_tfa = y_tr, e401 = t_tr)
+df_te <- cbind(as.data.frame(X_te), net_tfa = y_te, e401 = t_te)
+
+rf_y <- ranger::ranger(
+  net_tfa ~ .,
+  data = df_tr[, c(x_cols_401k, "net_tfa")],
+  num.trees = 500L,
+  max.depth = 5L,
+  min.node.size = 2L
+)
+rf_d <- ranger::ranger(
+  as.factor(e401) ~ .,
+  data = df_tr[, c(x_cols_401k, "e401")],
+  probability = TRUE,
+  num.trees = 500L,
+  max.depth = 5L,
+  min.node.size = 2L
+)
+
+y_hat <- predict(rf_y, df_te)$predictions
+p_hat <- predict(rf_d, df_te)$predictions[, 2L]
+
+rmse_y <- sqrt(mean((y_te - y_hat)^2))
+brier_d <- mean((t_te - p_hat)^2)
+
+validation_tbl <- data.frame(
+  Metric = c("RMSE of Y (net_tfa)", "Brier score for D (e401)"),
+  Value  = round(c(rmse_y, brier_d), 2)
+)
+knitr::kable(
+  validation_tbl,
+  caption = "Test-set metrics for RF nuisances trained on the training fold only"
+)
+```
+
+## B.7 SHAP interpretation (LinearDML + `explain_cate`) {#real-shap}
+
+**Motivation:** `DoubleMLPLR` targets a **scalar** $\hat{\theta}$; SHAP needs a
+prediction that **varies with** $X$. We therefore fit **LinearDML** on the
+**training** fold (ranger first stages, OLS on residual-on-residual design —
+see `R/DMLearner.R`) and compute **permutation SHAP** for **predicted CATE**
+$\hat{\tau}(X)$ on a **subset of test rows** (speed), with background data from
+**train**. Parallelism uses **`future::plan(multisession)`** and
+`permshap(..., parallel = TRUE)` (see `?kernelshap::permshap`).
+
+```{r real-shap-fit}
+set.seed(3143)
+ldml_401k <- LinearDML(
+  model_y = "ranger",
+  model_t = "ranger",
+  n_fold  = 5L,
+  seed    = 3143
+)
+ldml_401k <- fit(ldml_401k, X_tr, t_tr, y_tr)
+
+n_explain <- min(120L, nrow(X_te))
+X_explain <- as.data.frame(X_te[seq_len(n_explain), , drop = FALSE])
+colnames(X_explain) <- x_cols_401k
+bg_X_df <- as.data.frame(X_tr)
+colnames(bg_X_df) <- x_cols_401k
+
+n_workers <- min(4L, max(1L, future::availableCores() - 1L))
+# Fitted ranger objects exceed future's default 500 MiB export cap for workers
+fg_prev <- getOption("future.globals.maxSize", default = 500 * 1024^2)
+options(future.globals.maxSize = max(2 * 1024^3, fg_prev))
+future::plan(future::multisession, workers = n_workers)
+ks <- tryCatch(
+  explain_cate(
+    ldml_401k,
+    X = X_explain,
+    bg_X = bg_X_df,
+    use_permshap = TRUE,
+    parallel = TRUE,
+    verbose = FALSE,
+    parallel_args = list(packages = c("ranger", "RCausalML"))
+  ),
+  finally = {
+    future::plan(future::sequential)
+    options(future.globals.maxSize = fg_prev)
+  }
+)
+
+shp <- shapviz::shapviz(ks)
+```
+
+```{r real-shap-importance, fig.width=7, fig.height=3.8}
+shapviz::sv_importance(shp, max_display = 9L) +
+  ggplot2::labs(title = "SHAP importance for predicted CATE (LinearDML)")
+```
+
+```{r real-shap-dependence, fig.width=7, fig.height=3.8}
+shapviz::sv_dependence(shp, x_cols_401k[[1L]]) +
+  ggplot2::labs(title = paste("SHAP dependence on", x_cols_401k[[1L]]))
+```
+
+**Reading the plots:** Feature contributions are to **$\hat{\tau}(X)$** from
+**LinearDML**, a **descriptive** heterogeneity model on the training fold — not
+the same object as the **DoubleML PLR** scalar $\hat{\theta}$ in B.4–B.5. Use
+them to **explore** which covariates move the **estimated** CATE surface under
+this specification.
+
+```{r real-shap-cleanup}
+future::plan(future::sequential)
+```
+
+---
+
+# Summary {.unnumbered}
+
+| Step | Lesson |
+|------|--------|
+| **Naive ML** | Non-orthogonal score + ML → regularization bias, invalid inference |
+| **Orthogonalization** | IV-type or partialling-out score removes leading bias |
+| **No sample splitting** | Same data for ML and $\hat{\theta}$ → overfitting bias |
+| **Cross-fitting** | Sample splitting + cross-fitting → valid $\sqrt{n}$-consistent estimates |
+| **Real data** | Train–test split, `doubleml_plr()` on train; validate nuisances on test; SHAP for `LinearDML` CATE via `explain_cate()` + **future** |
+
+**Takeaway**: Double ML combines **orthogonal scores**, **sample splitting**, and
+**cross-fitting** so that flexible ML can be used for nuisances while preserving
+valid inference on $\theta_0$.
+
+---
+
+# Resources {.unnumbered}
+
+**Key References**
+
+- Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C.,
+  Newey, W., & Robins, J. (2018). *Double/debiased machine learning for
+  treatment and structural parameters*. The Econometrics Journal, 21(1), C1–C68.
+- Chernozhukov, V., Hansen, C., & Spindler, M. (2020). *DoubleML –
+  Double/debiased machine learning in R and Python*. Journal of Statistical
+  Software.
+
+**Documentation**
+
+- [DoubleML Getting Started](https://docs.doubleml.org/stable/intro/intro.html)
+- [DoubleML R Basics Example](https://docs.doubleml.org/stable/examples/R_double_ml_basics.html)
+- [DoubleML User Guide](https://docs.doubleml.org/stable/guide/index.html)
+- [DoubleML R API](https://docs.doubleml.org/r/stable/)
+
+**Packages**
+
+- [DoubleML on CRAN](https://cran.r-project.org/package=DoubleML)
+- [mlr3](https://mlr3.mlr-org.com/)

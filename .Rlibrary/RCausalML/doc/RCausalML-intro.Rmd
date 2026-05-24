@@ -1,0 +1,226 @@
+---
+title: "Getting Started with RCausalML"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with RCausalML}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  warning   = FALSE,
+  message   = FALSE
+)
+```
+
+## Overview
+
+**RCausalML** is an R port of the Python
+[CausalML](https://causalml.readthedocs.io/en/latest/about.html) and
+[EconML](https://www.microsoft.com/en-us/research/project/econml/) packages.
+It provides a unified interface for estimating the **Conditional Average
+Treatment Effect (CATE)** from experimental or observational data, covering:
+
+| Module | Algorithms |
+|---|---|
+| **Meta-Learners** | S, T, X, R, DR, TMLE, Domain Adaptation |
+| **Double ML** | LinearDML, SparseLinearDML, KernelDML, NonParamDML, CausalForestDML |
+| **IV Learners** | OrthoIV, DMLIV, NonParamDMLIV, DRIV, 2SLS |
+| **DoubleML Bridges** | PLR, PLIV, DiD-DML, 401k/Bonus datasets |
+| **Uplift Trees/RF** | KL, ED, Chi, CTS splits; multi-arm |
+| **GRF wrappers** | Causal, Survival, Multi-arm, Instrumental |
+| **Deep Causal Nets** | DragonNet, TARNet, CFRNet, CEVAE, GANITE, CausalGAN, … |
+| **Causal Structure** | NOTEARS, DAGMA, CASTLE, DAG-GNN, GraN-DAG |
+| **Policy Learning** | DRPolicyTree, DRPolicyForest, LRSRegressor |
+
+---
+
+## Installation
+
+```r
+# From GitHub (recommended)
+# install.packages("devtools")
+devtools::install_github("zia207/RCausalML")
+```
+
+Core R dependencies are installed automatically. Neural models additionally
+require the `torch` package:
+
+```r
+install.packages("torch")
+torch::install_torch()
+```
+
+---
+
+## Quick Example: T-Learner
+
+The T-Learner fits separate outcome models for treated and control units and
+estimates CATE as the difference.
+
+```{r tlearner, eval = FALSE}
+library(RCausalML)
+
+# Simulate a simple randomised trial
+set.seed(42)
+n   <- 500
+X   <- matrix(rnorm(n * 5), n, 5)
+W   <- rbinom(n, 1, 0.5)
+tau <- 2 + X[, 1]            # heterogeneous treatment effect
+Y   <- tau * W + rnorm(n)
+
+# Fit the T-Learner
+tl  <- TLearner$new(learner = "ranger")
+tl$fit(X, W, Y)
+
+# Predict CATE on new data
+X_test <- matrix(rnorm(100 * 5), 100, 5)
+cate   <- tl$predict(X_test)
+head(cate)
+```
+
+---
+
+## Quick Example: Linear DML
+
+Double Machine Learning (DML) removes the confounding bias of nuisance models
+via cross-fitting before estimating the treatment effect.
+
+```{r dml, eval = FALSE}
+library(RCausalML)
+
+set.seed(42)
+n    <- 1000
+X    <- matrix(rnorm(n * 10), n, 10)
+W    <- as.numeric(X[, 1] > 0) + rnorm(n, sd = 0.1)
+Y    <- 2 * W + X[, 1] + rnorm(n)
+
+dml  <- LinearDML$new(
+  model_y      = "ranger",
+  model_t      = "ranger",
+  n_folds      = 5
+)
+dml$fit(X, W, Y)
+
+ate  <- dml$effect()
+cat("Estimated ATE:", round(ate, 3), "\n")
+```
+
+---
+
+## Quick Example: Uplift Random Forest
+
+Uplift forests directly optimise the difference in outcomes between treated and
+control units at each split.
+
+```{r uplift, eval = FALSE}
+library(RCausalML)
+
+# Simulate uplift dataset
+df <- make_uplift_classification(
+  n_samples  = 2000,
+  treatment_name = "treatment"
+)
+
+# KL-based uplift random forest
+uf <- uplift_rf_kl(
+  formula   = ~ . - treatment - outcome,
+  data      = df,
+  treatment = df$treatment,
+  outcome   = df$outcome
+)
+
+# Gain and Qini curves
+gain_df <- gain_curve(uf, df$treatment, df$outcome)
+plot_gain(gain_df)
+```
+
+---
+
+## Quick Example: Causal Forest (GRF)
+
+```{r grf, eval = FALSE}
+library(RCausalML)
+
+set.seed(42)
+n  <- 800
+X  <- matrix(rnorm(n * 10), n, 10)
+W  <- rbinom(n, 1, 0.4)
+Y  <- (1 + X[, 1]) * W + rnorm(n)
+
+cf  <- grf_causal_forest(X, Y, W)
+
+# Average treatment effect
+grf_average_treatment_effect(cf)
+
+# Variable importance
+grf_variable_importance(cf)
+```
+
+---
+
+## Quick Example: DragonNet (Deep)
+
+DragonNet jointly estimates the propensity score and the potential outcomes
+using a shared representation and a targeted regularisation term.
+
+```{r dragonnet, eval = FALSE}
+library(RCausalML)
+
+set.seed(42)
+n   <- 600
+X   <- matrix(rnorm(n * 8), n, 8)
+W   <- rbinom(n, 1, plogis(X[, 1]))
+Y   <- (0.5 + X[, 2]) * W + rnorm(n)
+
+net <- dragonnet(X, W, Y,
+  hidden_size = 64,
+  epochs      = 100,
+  batch_size  = 64
+)
+
+preds <- predict(net, X)
+head(preds)
+```
+
+---
+
+## Package Architecture
+
+```
+RCausalML/
+├── R/
+│   ├── meta_learners.R          # S/T/X/R/DR/TMLE learners
+│   ├── DMLearner.R              # DML + DoubleML bridges
+│   ├── iv.R                     # IV learners
+│   ├── causalForest.R           # GRF wrappers + GNN causal models
+│   ├── causalTree.R             # Tree-based causal methods
+│   ├── causalDeepNet.R          # Neural causal models (DragonNet, …)
+│   ├── causalXGBoost.R          # CXGBoost R6 class
+│   ├── uplift_trees.R           # Uplift tree utilities
+│   ├── uplift_tree_core.R       # Core uplift splitting logic
+│   ├── policy_learner.R         # Policy learning
+│   ├── cate_interpreter.R       # CATE / policy interpretation
+│   ├── propensity.R             # Propensity score estimation
+│   ├── match.R                  # Matching methods
+│   ├── notears.R                # NOTEARS DAG learning
+│   ├── automated_ml.R           # AutoML nuisance models
+│   ├── synthetic_data.R         # Data generators
+│   └── utils.R                  # Shared utilities
+└── inst/notebooks/              # 59 Quarto tutorial notebooks
+```
+
+---
+
+## Further Reading
+
+- [Reference documentation](https://zia207.github.io/RCausalML/reference/index.html)
+- [Tutorial notebooks](https://github.com/zia207/RCausalML/tree/main/inst/notebooks)
+- [Python CausalML](https://causalml.readthedocs.io/en/latest/)
+- [Microsoft EconML](https://econml.azurewebsites.net/)
+- [DoubleML R package](https://docs.doubleml.org/stable/guide/r.html)

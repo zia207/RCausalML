@@ -1,0 +1,692 @@
+# 5. Causal ML with Targeted Maximum Likelihood Estimation (TMLE)
+
+This notebook demonstrates how to use Targeted Maximum Likelihood Estimation (TMLE) for validating some metalearners in R, following the same workflow as the [Python example](https://causalml.readthedocs.io/en/latest/examples/validation_with_tmle.html). We use synthetic data where the true treatment effect is known to compare uplift curves with and without TMLE, then apply the same idea to a real observational dataset (LaLonde) where the true effect is unknown.
+
+## Overview
+
+**Targeted Maximum Likelihood Estimation (TMLE)** is a statistical method used to estimate causal effects (like the Average Treatment Effect) from observational data. It was developed primarily by Mark van der Laan and colleagues.
+
+In simple terms, TMLE is a **hybrid approach** that combines the flexibility of **Machine Learning (ML)** with the rigorous inference of **Semiparametric Statistics**.
+
+### The Core Problem TMLE Solves
+
+In causal inference, we want to estimate a specific parameter (e.g., "How much did the drug increase recovery rates?").
+1.  **Traditional Statistics (e.g., Linear Regression):** Makes strong assumptions about the data structure. If the assumptions are wrong, the estimate is biased.
+2.  **Pure Machine Learning (e.g., XGBoost, Neural Nets):** Great at prediction, but terrible at causal inference. ML algorithms optimize for predicting $Y$, not for estimating the causal effect of $A$ on $Y$. They introduce "regularization bias" that invalidates confidence intervals.
+
+**TMLE bridges this gap.** It allows you to use powerful ML algorithms to model the data, but then performs a specific "targeting" step to remove the bias relevant to the causal parameter, allowing for valid confidence intervals and hypothesis testing.
+
+
+### How TMLE Works 
+
+TMLE is a **two-stage substitution estimator**. Imagine you want to estimate the Average Treatment Effect (ATE).
+
+#### Notation
+
+*   $W$: Covariates (patient features).
+*   $A$: Treatment (0 or 1).
+*   $Y$: Outcome.
+*   $Q(A, W)$: The outcome model (expected $Y$ given $A$ and $W$).
+*   $g(A, W)$: The propensity score (probability of treatment given $W$).
+
+#### Initial Estimation (The "Learning" Phase)
+
+You use flexible Machine Learning (e.g., Random Forest, SuperLearner) to estimate two "nuisance" parameters:
+
+1.  **Outcome Regression:** $\hat{Q}(A, W) = E[Y | A, W]$
+2.  **Propensity Score:** $\hat{g}(A, W) = P(A | W)$
+
+*At this stage, these estimates are optimized for prediction accuracy, not causal inference. They likely contain bias regarding the treatment effect.*
+
+#### The Targeting Step (The "Correction" Phase)
+
+This is the magic of TMLE. We update the initial outcome estimate $\hat{Q}$ to create a new estimate $\hat{Q}^*$.
+We do this by fitting a simple logistic regression model where the **outcome is $Y$**, the **offset is $\text{logit}(\hat{Q})$**, and the **predictor is a "Clever Covariate"**.
+
+The **Clever Covariate** is defined as:
+
+$$ H(A, W) = \frac{2A - 1}{\hat{g}(A, W)} $$
+
+*   **Why?** This covariate weights the observations based on how likely they were to receive the treatment they actually got. It forces the model to pay more attention to the parts of the data distribution that matter most for estimating the causal effect.
+*   **Result:** This update step minimizes the bias of the estimator specifically along the path of the **Efficient Influence Function (EIF)**. It makes the estimator "locally efficient."
+
+#### Step 3: Substitution (The "Plug-in" Phase)
+
+Finally, you plug the updated $\hat{Q}^*$ into the formula for the ATE:
+
+$$ \hat{ATE}_{TMLE} = \frac{1}{n} \sum_{i=1}^{n} \left( \hat{Q}^*(1, W_i) - \hat{Q}^*(0, W_i) \right) $$
+
+Because $\hat{Q}^*$ has been "targeted," this final plug-in estimate is **Double Robust** and **Efficient**.
+
+### Key Properties of TMLE
+
+1.  **Double Robustness:** The estimate is consistent (correct) if *either* the Outcome Model ($Q$) *or* the Propensity Model ($g$) is correctly specified. If both are wrong, it fails, but it's more robust than methods requiring both to be right.
+2.  **Semiparametric Efficiency:** It achieves the lowest possible variance (narrowest confidence intervals) allowed by the data, asymptotically.
+3.  **Valid Inference:** Unlike standard ML, TMLE allows you to calculate valid p-values and confidence intervals because the targeting step removes the first-order bias introduced by the ML algorithms.
+4.  **Respects Bounds:** Since it is a substitution estimator (plug-in), if the outcome is a probability (0 to 1), the TMLE estimate will also stay within 0 to 1. (Some other methods like Double Machine Learning can produce estimates outside valid bounds).
+
+
+### TMLE as an Estimator within Causal ML
+
+TMLE is not a "model" in the same sense as a T-Learner or X-Learner; it is an **estimation procedure**.
+*   **Meta-Learners (T, X, R, S-Learners):** These define *how* you structure your ML models to isolate the treatment effect.
+*   **TMLE:** Defines *how* you correct the bias of those models to get valid inference.
+*   **Integration:** You can actually use TMLE *inside* a Meta-Learner framework. For example, you can use TMLE to estimate the final effect in an X-Learner structure to ensure robustness.
+
+### TMLE vs. Double Machine Learning (DML)
+
+DML (Chernozhukov et al.) is the closest cousin to TMLE. Both aim to solve the same problem (ML bias in causal inference).
+*   **Similarity:** Both use "Neyman Orthogonality" (making the estimate insensitive to small errors in the nuisance models) and Cross-Fitting.
+*   **Difference:**
+    *   **DML** solves an estimating equation (moment condition). It is often easier to implement for high-dimensional parameters.
+    *   **TMLE** updates the likelihood directly. It generally respects parameter bounds (e.g., probabilities) better than DML and is often more efficient in finite samples.
+    *   **Choice:** In Uplift modeling, if you need strict probability bounds, TMLE is preferred. If you need speed and simplicity for high-dimensional data, DML is often chosen.
+
+### TMLE for Uplift (CATE Estimation)
+
+Standard TMLE estimates the **ATE** (Average Treatment Effect). Uplift modeling requires the **CATE** (Conditional Average Treatment Effect), i.e., $E[Y(1) - Y(0) | W]$.
+*   **Stratified TMLE:** You can run TMLE within subgroups of $W$.
+*   **Targeted Learning of CATE:** Advanced extensions of TMLE exist specifically to target the conditional effect. Instead of fluctuating the outcome model to match the ATE, you fluctuate it to match the CATE function.
+*   **Advantage in Uplift:** In marketing or medicine, you want to target specific users. Standard ML uplift models (like causal forests) give point estimates but often lack valid confidence intervals. **TMLE provides the uncertainty quantification** needed to decide if an uplift is statistically significant for a specific segment.
+
+### Practical Workflow in Causal ML
+
+If you are building an Uplift model using Causal ML libraries (like `EconML` or `CausalML`):
+1.  **Propensity Model:** Use ML to estimate $P(A|W)$.
+2.  **Outcome Model:** Use ML to estimate $E[Y|A, W]$.
+3.  **TMLE Step:** Apply the fluctuation step to correct the Outcome Model using the Propensity Model.
+4.  **Result:** You get an uplift score that is debiased, along with a standard error telling you how confident you are in that score.
+
+### Summary Comparison
+
+| Feature | Standard ML (e.g., Causal Forest) | Double Machine Learning (DML) | Targeted ML (TMLE) |
+| :--- | :--- | :--- | :--- |
+| **Primary Goal** | Prediction / Point Estimate | Causal Parameter Estimation | Causal Parameter Estimation |
+| **Bias Correction** | Minimal / Heuristic | Orthogonal Moment Conditions | Likelihood Fluctuation (EIF) |
+| **Inference** | Bootstrapping (often unstable) | Asymptotically Normal | Asymptotically Normal |
+| **Parameter Bounds** | Not guaranteed | Not guaranteed | **Guaranteed** (Substitution) |
+| **Efficiency** | Lower | High | **Highest (Semiparametric)** |
+| **Best For** | Exploratory Uplift | High-dimensional controls | **Precision & Inference** |
+
+
+## Implementation in R
+
+This notebook implements the same workflow as the [Python example](https://causalml.readthedocs.io/en/latest/examples/validation_with_tmle.html) to demonstrate how TMLE can be used for validating uplift models in R. We use the **RCausalML** package for meta-learners and gain/Qini curves, and the **tmle** package for TMLE estimation.
+
+- **Part A: Synthetic data** — known τ: same DGP as the Python example (`mode=1`, `p=10`, `sigma=5`). We compare uplift with and without τ, then TMLE-based curves.
+
+- **Part B: Use case (LaLonde)** — real observational data with **no** individual τ: the same validation idea (observed-only uplift vs segment-level TMLE as a proxy).
+
+Within Part A:
+
+1. **Generating synthetic data** — same DGP as the Python example (`mode=1`, `p=10`, `sigma=5`).
+2. **Calculating Individual Treatment Effect (ITE/CATE)** — X-Learner predicts CATE; we compare its distribution to the actual τ.
+3. **Validating CATE without TMLE** — uplift curve **with** ground truth (when τ is known) vs **without** ground truth (observed outcomes only, which can be misleading).
+4. **TMLE** — using TMLE as a proxy for ground truth: uplift curve with TMLE (with/without CI), AUUC score, then Qini curve with TMLE (with/without CI) and Qini score.
+
+The R package **RCausalML** provides `plot_gain`, `plot_qini`, `get_cumgain`, `qini_score`; for TMLE we use the **tmle** package (ATE and segment-level validation) to approximate Python’s `get_tmlegain` / `plot_tmlegain` and `get_tmleqini` / `plot_tmleqini`.
+
+
+## Part A: Synthetic data
+
+### Generating Synthetic Data
+
+We use the same data-generating process as the [Python example](https://causalml.readthedocs.io/en/latest/examples/validation_with_tmle.html): `synthetic_data(mode=1, n=..., p=10, sigma=5)`. The Python notebook uses `n=1,000,000`; here we use a smaller `n` for faster run time—increase it for smoother curves.
+
+```{r setup}
+# Load RCausalML from source when rendering from inst/.../ (Quarto knitr cwd = this folder)
+find_pkg_root <- function(start = getwd()) {
+  d <- normalizePath(start, winslash = "/", mustWork = TRUE)
+  for (i in seq_len(8L)) {
+    if (file.exists(file.path(d, "DESCRIPTION"))) {
+      desc <- readLines(file.path(d, "DESCRIPTION"), n = 5L)
+      if (any(grepl("^Package:\\s*RCausalML", desc))) return(d)
+    }
+    parent <- dirname(d)
+    if (identical(parent, d)) break
+    d <- parent
+  }
+  NA_character_
+}
+pkg_root <- find_pkg_root()
+if (!is.na(pkg_root)) {
+  devtools::load_all(pkg_root, quiet = TRUE)
+} else {
+  library(RCausalML)
+}
+set.seed(42)
+# Optional: tmle package for TMLE-based validation
+has_tmle <- requireNamespace("tmle", quietly = TRUE)
+if (!has_tmle) message("Install 'tmle' for TMLE section: install.packages(\"tmle\")")
+# Optional: MatchIt for LaLonde (Part B)
+has_matchit <- requireNamespace("MatchIt", quietly = TRUE)
+if (!has_matchit) message("Install 'MatchIt' for Part B (LaLonde): install.packages(\"MatchIt\")")
+```
+
+```{r synthetic}
+# Generate synthetic data using mode 1 (same as Python: mode=1, p=10, sigma=5)
+n_total <- 20000L   # Python uses 1e6; increase (e.g. 100000) for smoother curves
+p <- 10
+sigma <- 5.0
+d <- synthetic_data(mode = 1, n = n_total, p = p, sigma = sigma)
+y <- d$y
+X <- d$X
+treatment <- d$w
+tau <- d$tau
+e <- d$e
+```
+
+```{r train-test-split}
+# 50/50 train-test split (Python: train_test_split(..., test_size=0.5, random_state=42))
+train_frac <- 0.5
+n_train <- round(n_total * train_frac)
+idx <- sample.int(n_total, n_train)
+X_train   <- X[idx, , drop = FALSE]
+X_test    <- X[-idx, , drop = FALSE]
+y_train   <- y[idx]
+y_test    <- y[-idx]
+e_train   <- e[idx]
+e_test    <- e[-idx]
+treatment_train <- treatment[idx]
+treatment_test <- treatment[-idx]
+tau_train <- tau[idx]
+tau_test  <- tau[-idx]
+n_test <- nrow(X_test)
+cat("Train:", n_train, "Test:", n_test, "\n")
+```
+
+### Calculating Individual Treatment Effect (ITE/CATE)
+
+We fit an **X-Learner** on the training set and predict CATE on the test set (Python uses `BaseXRegressor(learner=LGBMRegressor())`; in R we use `XLearner(learner="ranger")`).
+
+```{r xlearner}
+learner_x <- XLearner(learner = "ranger")
+learner_x <- fit(learner_x, X_train, treatment_train, y_train, p = e_train)
+cate_x_test <- as.vector(predict(learner_x, X_test))
+```
+
+### Distribution of CATE Predictions by X-Learner and Actual
+
+With synthetic data we can compare the distribution of predicted CATE to the true treatment effect (Python: "Distribution of CATE Predictions by X-Learner and Actual").
+
+```{r hist-cate, fig.height=4}
+alpha <- 0.5
+bins <- 30
+par(mar = c(4, 4, 3, 1))
+hist(cate_x_test, col = adjustcolor("steelblue", alpha), breaks = bins, border = NA,
+     main = "Distribution of CATE Predictions by X-Learner and Actual",
+     xlab = "Individual Treatment Effect (ITE/CATE)", ylab = "# of Samples")
+hist(tau_test, col = adjustcolor("darkorange", alpha), breaks = bins, border = NA, add = TRUE)
+legend("topright", legend = c("X-Learner", "Actual"), fill = c("steelblue", "darkorange"), bty = "n")
+```
+
+### Validating CATE without TMLE
+
+We build a data frame with outcome, treatment, true τ, and model CATE (like the Python `df`). For the TMLE section we will add propensity `p` and inference columns (`col_0` … `col_9`).
+
+```{r df}
+df <- data.frame(
+  y = y_test,
+  w = treatment_test,
+  p = e_test,
+  tau = tau_test,
+  X_Learner = cate_x_test,
+  Actual = tau_test
+)
+```
+
+### Uplift Curve With Ground Truth
+
+If the true treatment effect is known (as in simulations), the uplift curve of a model uses the cumulative sum of the treatment effect sorted by the model’s CATE estimate. In the figure below, the uplift curve of the X-Learner shows positive lift close to the optimal lift by the ground truth.
+
+- **x-axis**: fraction of samples (0 to 1), ordered by predicted CATE (descending).
+- **y-axis**: cumulative sum of true τ in that order, normalized so the final value is 1 (gain curve).
+
+```{r uplift-with-truth, fig.height=5}
+# Python: plot(df, outcome_col='y', treatment_col='w', treatment_effect_col='tau')
+plot_gain(df,
+          outcome_col = "y",
+          treatment_col = "w",
+          treatment_effect_col = "tau",
+          model_cols = c("X_Learner", "Actual"),
+          main = "Uplift curve with ground truth",
+          normalize = TRUE)
+```
+
+The X-Learner curve is close to the optimal curve (sorted by true τ). For later use we compute the gain matrix via `get_cumgain` (Python: cumulative gain with ground truth):
+
+```{r gain-for-auuc}
+gain_mat <- get_cumgain(df, outcome_col = "y", treatment_col = "w",
+                        treatment_effect_col = "tau", normalize = TRUE)
+n_pts <- nrow(gain_mat)
+frac <- (0:(n_pts - 1)) / (n_pts - 1)
+gain_x <- gain_mat[, "X_Learner"]
+gain_actual <- gain_mat[, "Actual"]
+```
+
+### Uplift Curve Without Ground Truth
+
+If the true treatment effect is unknown (as in practice), the uplift curve of a model uses the cumulative mean difference of outcome in the treatment and control group sorted by the model’s CATE estimate. In the figure below, the uplift curves of the X-Learner and the ground truth can show no lift or be misleading when we do not use the true τ.
+
+Using `plot_gain()` without `treatment_effect_col` uses observed outcomes only (Python: `plot(df.drop('tau', axis=1), outcome_col='y', treatment_col='w')`).
+
+```{r uplift-without-truth, fig.height=5}
+# Data without tau so gain uses observed outcome difference (Python: df.drop('tau', axis=1))
+df_no_tau <- df[, c("y", "w", "X_Learner", "Actual")]
+# Mirrors Python: plot(df.drop('tau', axis=1), outcome_col='y', treatment_col='w')
+plot_gain(df_no_tau,
+          outcome_col = "y",
+          treatment_col = "w",
+          main = "Uplift curve without ground truth (observed outcome difference)")
+```
+
+Without ground truth, the “observed” curve can look flat or noisy; using TMLE (or another robust estimator) as a proxy for τ helps validate the ranking, as in the [Python example](https://causalml.readthedocs.io/en/latest/examples/validation_with_tmle.html).
+
+### TMLE (Part A)
+
+**Targeted Maximum Likelihood Estimation (TMLE)** provides a doubly robust, efficient estimate of the average treatment effect. The [Python example](https://causalml.readthedocs.io/en/latest/examples/validation_with_tmle.html) uses `get_tmlegain` and `get_tmleqini` with cross-fitting (e.g. `n_segment=5`, `KFold(n_splits=5)`) to build uplift and Qini curves with TMLE as a proxy for ground truth. In R we approximate this with segment-level TMLE: split the test set into segments by CATE rank, run TMLE within each segment, then build cumulative gain and Qini curves.
+
+### Prepare dataframe with inference columns
+
+We add the covariate columns to the dataframe for TMLE (Python: `inference_cols = ['col_0', ..., 'col_9']`).
+
+```{r df-inference}
+# Add X_test columns as col_0, col_1, ... (Python: inference_cols)
+inference_cols <- paste0("col_", seq_len(ncol(X_test)) - 1)
+for (j in seq_len(ncol(X_test)))
+  df[[inference_cols[j]]] <- X_test[, j]
+head(df)
+```
+
+### Uplift Curve with TMLE as Ground Truth
+
+By using TMLE as a proxy for the ground truth, the uplift curves become closer to the curves we would get with the true τ. We use 5 segments (Python: `n_segment=5`). The following chunks require the **tmle** package.
+
+#### Uplift curve without CI
+
+Python: `get_tmlegain(..., ci=False)` and `plot_tmlegain(...)` or `plot(..., kind='gain', tmle=True)`.
+
+### ATE with TMLE (R `tmle` package)
+
+If the **tmle** package is installed, we can estimate the ATE on the test set and compare it to the meta-learner ATE (optional; Python doc focuses on gain/qini with TMLE).
+
+```{r tmle-ate, eval=has_tmle}
+# ATE via tmle on test set
+W_df <- as.data.frame(X_test)
+colnames(W_df) <- paste0("W", seq_len(ncol(W_df)))
+# Use SL libraries that work with tmle (add SL.ranger if SuperLearner is installed)
+fit_tmle <- tmle::tmle(
+  Y = y_test,
+  A = treatment_test,
+  W = W_df,
+  Q.SL.library = c("SL.mean", "SL.glm"),
+  g.SL.library = c("SL.mean", "SL.glm")
+)
+ate_tmle <- fit_tmle$estimates$ATE$psi
+ate_tmle_ci <- fit_tmle$estimates$ATE$CI
+cat("ATE (TMLE):", round(ate_tmle, 4), "95% CI:", round(ate_tmle_ci, 4), "\n")
+```
+
+```{r meta-ate}
+# Meta-learner ATE on test set (for comparison)
+ate_x <- estimate_ate(learner_x, X_test, treatment_test, y_test, p = e_test)
+cat("ATE (X-Learner):", round(ate_x$ate, 4), "95% CI:", round(ate_x$ate_lb, 4), "-", round(ate_x$ate_ub, 4), "\n")
+```
+
+#### Uplift curve without CI
+
+Python: `get_tmlegain(..., ci=False)` and `plot_tmlegain(...)`. Segment-level TMLE below (5 segments; requires **tmle** package).
+
+```{r tmle-gain, eval=has_tmle}
+# Segment-level TMLE (n_segment=5, like Python get_tmlegain)
+n_seg_tmle <- 5
+seg_size_tmle <- floor(n_test / n_seg_tmle)
+ord_x <- order(cate_x_test, decreasing = TRUE)
+tmle_gain_seg <- numeric(n_seg_tmle)
+for (k in seq_len(n_seg_tmle)) {
+  idx_k <- ord_x[((k - 1) * seg_size_tmle + 1):(k * seg_size_tmle)]
+  W_k <- as.data.frame(X_test[idx_k, , drop = FALSE])
+  colnames(W_k) <- paste0("W", seq_len(ncol(W_k)))
+  fit_k <- tmle::tmle(
+    Y = y_test[idx_k],
+    A = treatment_test[idx_k],
+    W = W_k,
+    Q.SL.library = c("SL.mean", "SL.glm"),
+    g.SL.library = c("SL.mean", "SL.glm")
+  )
+  tmle_gain_seg[k] <- fit_k$estimates$ATE$psi
+}
+cum_tmle_gain <- cumsum(tmle_gain_seg * seg_size_tmle)
+tot_tmle <- cum_tmle_gain[n_seg_tmle]
+gain_tmle_norm <- if (tot_tmle != 0) cum_tmle_gain / tot_tmle else cum_tmle_gain
+frac_tmle <- (1:n_seg_tmle) / n_seg_tmle
+```
+
+```{r plot-tmle-gain, eval=has_tmle, fig.height=5}
+plot(frac_tmle, gain_tmle_norm, type = "b", pch = 19, lwd = 2, col = "purple",
+     xlab = "Fraction of samples (sorted by X-Learner CATE)",
+     ylab = "Cumulative gain (TMLE segment ATE, normalized)",
+     main = "Uplift curve with TMLE as proxy for ground truth")
+lines(frac, gain_x, lwd = 2, col = "steelblue", lty = 2)
+legend("bottomright", legend = c("TMLE (segment ATE)", "X-Learner (true τ)"),
+       col = c("purple", "steelblue"), lty = c(1, 2), lwd = 2, pch = c(19, NA), bty = "n")
+```
+
+#### AUUC Score
+
+Python: `auuc_score(..., tmle=True)`. With ground truth we use the normalized cumulative gain; with TMLE we can use the area under the segment TMLE gain curve. Below: AUUC with true τ (like Python when τ is known).
+
+```{r auuc}
+# AUUC = mean of normalized cumulative gain (Python auuc_score(..., normalize=True))
+auuc_scores <- colMeans(gain_mat[, c("X_Learner", "Actual")])
+cat("AUUC (X-Learner, with true τ):", round(auuc_scores["X_Learner"], 4), "\n")
+cat("AUUC (Optimal by true τ):", round(auuc_scores["Actual"], 4), "\n")
+```
+
+```{r auuc-tmle, eval=has_tmle}
+# AUUC with TMLE: area under normalized segment TMLE gain (Python auuc_score(..., tmle=True))
+auuc_tmle_x <- mean(gain_tmle_norm)
+cat("AUUC (X-Learner, TMLE segment gain):", round(auuc_tmle_x, 4), "\n")
+```
+
+#### Uplift curve with CI
+
+Python: `get_tmlegain(..., ci=True)` and `plot_tmlegain(..., ci=True)` use cross-fitting for confidence intervals. The R segment-level TMLE above does not implement CI; you could bootstrap segment ATEs for an approximate interval.
+
+### Qini Curve with TMLE as Ground Truth
+
+Python: `get_tmleqini`, `plot_tmleqini`, and `plot(..., kind='qini', tmle=True)`. We build a Qini-like curve from segment-level TMLE: cumulative incremental outcome when treating top k% (cumsum of segment ATE × segment size).
+
+#### Qini curve without CI
+
+```{r tmle-qini, eval=has_tmle}
+# Qini with TMLE: cumulative incremental outcome by segment (Python get_tmleqini(..., ci=False))
+n_cum <- c(0, seg_size_tmle * (1:n_seg_tmle))
+qini_tmle <- c(0, cum_tmle_gain)
+```
+
+```{r plot-tmle-qini, eval=has_tmle, fig.height=5}
+plot(n_cum, qini_tmle, type = "b", pch = 19, lwd = 2, col = "purple",
+     xlab = "# of samples (sorted by X-Learner CATE)",
+     ylab = "Cumulative incremental outcome (TMLE)",
+     main = "Qini curve with TMLE as proxy for ground truth")
+```
+
+#### Qini Score
+
+Python: `qini_score(..., tmle=True)`. Area under the Qini curve. With ground truth and with TMLE (when **tmle** is available):
+
+```{r qini-score}
+# With ground truth (Python qini_score(..., treatment_effect_col='tau'))
+qini_scores <- qini_score(df,
+                          outcome_col = "y",
+                          treatment_col = "w",
+                          treatment_effect_col = "tau",
+                          model_cols = c("X_Learner", "Actual"))
+print(round(qini_scores, 2))
+```
+
+```{r qini-score-tmle, eval=has_tmle}
+# Approximate Qini score from TMLE segments (trapezoidal area under qini_tmle vs n_cum)
+qini_tmle_score <- sum(diff(n_cum) * (qini_tmle[-1] + qini_tmle[-length(qini_tmle)]) / 2)
+cat("Qini score (TMLE segment curve):", round(qini_tmle_score, 2), "\n")
+```
+
+#### Qini curve with CI
+
+Python: `get_tmleqini(..., ci=True)` and `plot_tmleqini(..., ci=True)`. The R segment-level TMLE above does not implement CI for the Qini curve.
+
+### Qini curve with ground truth (reference)
+
+For comparison, the standard Qini curve using true τ (Python: `plot(df, kind='qini', ...)` with `treatment_effect_col='tau'`):
+
+```{r plot-qini, fig.height=5}
+# Mirrors Python: plot(df, kind='qini', outcome_col='y', treatment_col='w', treatment_effect_col='tau')
+plot_qini(df,
+          outcome_col = "y",
+          treatment_col = "w",
+          treatment_effect_col = "tau",
+          model_cols = c("X_Learner", "Actual"),
+          main = "Qini curve (with ground truth)")
+```
+
+
+## Part B: Use case — LaLonde (NSW job training)
+
+In applications you rarely know individual τ. You still need to check whether an uplift model’s **ranking** is plausible. **TMLE on segments** (or cross-fitted TMLE in production) gives a doubly robust proxy for segment-level effects, similar to Part A but without a true τ column.
+
+The **LaLonde** sample in **MatchIt** combines the NSW experimental treated units with non-experimental comparison groups (observational controls). Effects are not identified as cleanly as in a pure RCT; this notebook uses the data **only** to illustrate the uplift + TMLE validation workflow (X-Learner, observed gain curve, segment TMLE gain/Qini)—not to claim a causal ATE for policy.
+
+### Data
+
+- **Treatment:** `treat` (1 = job training, 0 = control)
+- **Outcome:** `re78` (real earnings in 1978)
+- **Covariates:** age, education, race, marital status, `nodegree`, `re74`, `re75`
+
+Covariates are expanded to a numeric design matrix for the meta-learner; **tmle** uses the same linear predictors as numeric columns.
+
+```{r lalonde-load, eval=has_matchit}
+data("lalonde", package = "MatchIt")
+str(lalonde)
+```
+
+```{r lalonde-prep, eval=has_matchit}
+W_lal_df <- lalonde[, c("age", "educ", "race", "married", "nodegree", "re74", "re75")]
+Y_lal <- as.numeric(lalonde$re78)
+A_lal <- as.integer(lalonde$treat)
+cc_lal <- complete.cases(Y_lal, A_lal, W_lal_df)
+Y_lal <- Y_lal[cc_lal]
+A_lal <- A_lal[cc_lal]
+W_lal_df <- W_lal_df[cc_lal, , drop = FALSE]
+X_lal <- model.matrix(~ ., data = W_lal_df)[, -1L, drop = FALSE]
+n_lal <- length(Y_lal)
+cat("n after complete cases:", n_lal, "\n")
+```
+
+### Train–test split and X-Learner
+
+Same 50/50 split idea as Part A (separate `set.seed(42)` so Part B is reproducible even if Part A chunks are skipped).
+
+```{r lalonde-split, eval=has_matchit}
+set.seed(42)
+train_frac_lal <- 0.5
+n_train_lal <- round(n_lal * train_frac_lal)
+idx_lal <- sample.int(n_lal, n_train_lal)
+X_train_lal <- X_lal[idx_lal, , drop = FALSE]
+X_test_lal <- X_lal[-idx_lal, , drop = FALSE]
+Y_train_lal <- Y_lal[idx_lal]
+Y_test_lal <- Y_lal[-idx_lal]
+A_train_lal <- A_lal[idx_lal]
+A_test_lal <- A_lal[-idx_lal]
+n_test_lal <- nrow(X_test_lal)
+cat("LaLonde train:", n_train_lal, " test:", n_test_lal, "\n")
+```
+
+```{r lalonde-xlearner, eval=has_matchit}
+learner_x_lal <- XLearner(learner = "ranger")
+learner_x_lal <- fit(learner_x_lal, X_train_lal, A_train_lal, Y_train_lal)
+cate_x_lal_test <- as.vector(predict(learner_x_lal, X_test_lal))
+# Propensity on train → predict test (same idea as internal X-Learner glmnet; not stored on fitted object after TLearner stage)
+ps_lal <- glmnet::cv.glmnet(X_train_lal, A_train_lal, family = "binomial", nfolds = 5)
+p_test_lal <- as.vector(predict(ps_lal, newx = X_test_lal, s = "lambda.1se", type = "response"))
+```
+
+### Uplift from observed outcomes only
+
+There is no `tau` column: `plot_gain()` without `treatment_effect_col` uses cumulative treatment–control outcome contrasts along the X-Learner ranking.
+
+```{r lalonde-df, eval=has_matchit}
+df_lal <- data.frame(y = Y_test_lal, w = A_test_lal, p = p_test_lal, X_Learner = cate_x_lal_test)
+```
+
+```{r lalonde-gain-observed, fig.height=5, eval=has_matchit}
+plot_gain(df_lal,
+          outcome_col = "y",
+          treatment_col = "w",
+          main = "LaLonde (test): uplift from observed outcomes (no true τ)")
+```
+
+### TMLE on the test set and by segment
+
+Optional **tmle** steps: overall ATE on the test sample, then the same **five-segment** cumulative gain and Qini-style curve as in Part A, overlaid with the **normalized observed** gain for the X-Learner (not comparable to Part A’s “optimal by τ” line).
+
+```{r lalonde-tmle-ate, eval=has_matchit && has_tmle}
+W_tmle_lal <- as.data.frame(X_test_lal)
+colnames(W_tmle_lal) <- paste0("W", seq_len(ncol(W_tmle_lal)))
+fit_tmle_lal <- tmle::tmle(
+  Y = Y_test_lal,
+  A = A_test_lal,
+  W = W_tmle_lal,
+  Q.SL.library = c("SL.mean", "SL.glm"),
+  g.SL.library = c("SL.mean", "SL.glm")
+)
+psi_lal <- fit_tmle_lal$estimates$ATE$psi
+ci_lal <- fit_tmle_lal$estimates$ATE$CI
+cat("ATE (TMLE, test set):", round(psi_lal, 2),
+    " 95% CI:", round(ci_lal[1], 2), "-", round(ci_lal[2], 2), "\n")
+```
+
+```{r lalonde-meta-ate, eval=has_matchit}
+ate_x_lal <- estimate_ate(learner_x_lal, X_test_lal, A_test_lal, Y_test_lal, p = p_test_lal)
+cat("ATE (X-Learner, test):", round(ate_x_lal$ate, 2),
+    " 95% CI:", round(ate_x_lal$ate_lb, 2), "-", round(ate_x_lal$ate_ub, 2), "\n")
+```
+
+```{r lalonde-tmle-segments, eval=has_matchit && has_tmle}
+n_seg_lal <- 5L
+seg_size_lal <- floor(n_test_lal / n_seg_lal)
+ord_lal <- order(cate_x_lal_test, decreasing = TRUE)
+tmle_seg_lal <- numeric(n_seg_lal)
+for (k in seq_len(n_seg_lal)) {
+  idx_seg <- ord_lal[((k - 1L) * seg_size_lal + 1L):(k * seg_size_lal)]
+  W_k <- as.data.frame(X_test_lal[idx_seg, , drop = FALSE])
+  colnames(W_k) <- paste0("W", seq_len(ncol(W_k)))
+  fit_k <- tmle::tmle(
+    Y = Y_test_lal[idx_seg],
+    A = A_test_lal[idx_seg],
+    W = W_k,
+    Q.SL.library = c("SL.mean", "SL.glm"),
+    g.SL.library = c("SL.mean", "SL.glm")
+  )
+  tmle_seg_lal[k] <- fit_k$estimates$ATE$psi
+}
+cum_tmle_lal <- cumsum(tmle_seg_lal * seg_size_lal)
+tot_lal <- cum_tmle_lal[n_seg_lal]
+gain_tmle_norm_lal <- if (abs(tot_lal) > 1e-10) cum_tmle_lal / tot_lal else cum_tmle_lal
+frac_tmle_lal <- (1:n_seg_lal) / n_seg_lal
+
+gain_obs_lal <- get_cumgain(df_lal, outcome_col = "y", treatment_col = "w", normalize = TRUE)
+n_pts_lal <- nrow(gain_obs_lal)
+frac_obs_lal <- (0:(n_pts_lal - 1)) / (n_pts_lal - 1)
+gain_x_obs_lal <- gain_obs_lal[, "X_Learner"]
+```
+
+```{r lalonde-plot-tmle-gain, fig.height=5, eval=has_matchit && has_tmle}
+plot(frac_tmle_lal, gain_tmle_norm_lal, type = "b", pch = 19, lwd = 2, col = "purple",
+     xlab = "Fraction of test sample (by X-Learner CATE)",
+     ylab = "Cumulative gain (normalized)",
+     main = "LaLonde: TMLE segment ATE vs observed gain (X-Learner ranking)")
+lines(frac_obs_lal, gain_x_obs_lal, lwd = 2, col = "steelblue", lty = 2)
+legend("bottomright",
+       legend = c("TMLE (segment ATE)", "Observed gain (X-Learner)"),
+       col = c("purple", "steelblue"), lty = c(1, 2), lwd = 2, pch = c(19, NA), bty = "n")
+```
+
+```{r lalonde-tmle-qini, eval=has_matchit && has_tmle}
+n_cum_lal <- c(0, seg_size_lal * (1:n_seg_lal))
+qini_tmle_lal <- c(0, cum_tmle_lal)
+qini_tmle_score_lal <- sum(diff(n_cum_lal) * (qini_tmle_lal[-1] + qini_tmle_lal[-length(qini_tmle_lal)]) / 2)
+cat("Qini-style score (TMLE segments, LaLonde):", round(qini_tmle_score_lal, 2), "\n")
+```
+
+```{r lalonde-plot-tmle-qini, fig.height=5, eval=has_matchit && has_tmle}
+plot(n_cum_lal, qini_tmle_lal, type = "b", pch = 19, lwd = 2, col = "purple",
+     xlab = "# of test samples (by X-Learner CATE)",
+     ylab = "Cumulative incremental outcome (TMLE)",
+     main = "LaLonde: Qini-style curve (TMLE segment effects)")
+```
+
+**Interpretation:** On observational data, segment TMLE is noisy with small *n* per segment; prefer more segments, cross-fitting, or a larger sample for stable curves. The point is methodological alignment with Part A when **τ** is unknown.
+
+
+## Summary and Conclusions
+
+**TMLE is the "gold standard" for robust causal estimation when using Machine Learning.**
+
+In the context of **Causal ML and Uplift**, TMLE is the engine that ensures your fancy ML models don't lie to you about the treatment effect. While Meta-learners (T/X-Learners) provide the *architecture* for estimating heterogeneous effects, TMLE provides the *statistical guarantees* that allow you to trust the results and make decisions (like sending a coupon or prescribing a drug) with known risk levels.
+
+**Part A** used synthetic data with known τ to show when observed-only uplift curves mislead and how segment TMLE tracks validation against τ. **Part B** applied the same workflow to LaLonde: without τ, only observed gain plus TMLE-by-segment is available—interpret cautiously on small samples and observational designs.
+
+
+| Element | Python CausalML | This R tutorial |
+|--------|------------------|------------------|
+| Part A data | `synthetic_data(mode=1, n=1e6, p=10, sigma=5)` | `synthetic_data(mode=1, n=20000, p=10, sigma=5)` |
+| Part B data | — | `MatchIt::lalonde` + `model.matrix` covariates |
+| Split | `train_test_split(..., test_size=0.5, random_state=42)` | 50/50 train-test, `set.seed(42)` |
+| CATE | `BaseXRegressor(learner=LGBMRegressor())` | `XLearner(learner="ranger")` |
+| Uplift with τ | `plot(df, ...)`, `get_cumgain` | `plot_gain(..., treatment_effect_col='tau')`, `get_cumgain` (Part A) |
+| Uplift without τ | `plot(df.drop('tau', axis=1), ...)` | `plot_gain(...)` without `treatment_effect_col` (Part A: `df_no_tau`; Part B: `df_lal`) |
+| TMLE / inference | `inference_cols`, `get_tmlegain`, `plot_tmlegain`, `plot(..., kind='gain', tmle=True)` | Segment-level `tmle::tmle()`; Part A also adds `col_0`…`col_9` for illustration |
+| AUUC | `auuc_score()`, `auuc_score(..., tmle=True)` | `colMeans(get_cumgain(..., normalize=TRUE))` with τ (Part A); segment TMLE curve where shown |
+| Qini | `get_tmleqini`, `plot_tmleqini`, `plot(..., kind='qini', tmle=True)`, `qini_score(..., tmle=True)` | `plot_qini()` with τ (Part A); segment TMLE Qini-style curve (Parts A–B) |
+
+
+## Resources
+
+- **References**: [Uplift Curves with TMLE Example](https://causalml.readthedocs.io/en/latest/examples/validation_with_tmle.html); [causalml.metrics.visualize](https://github.com/uber/causalml/blob/master/causalml/metrics/visualize.py) (`plot`, `get_cumgain`, `get_cumlift`, `get_qini`, `get_tmlegain`, `get_tmleqini`, `auuc_score`, `qini_score`).
+- **R**: This package provides `plot_gain`, `plot_qini`, `get_cumgain`, `get_cumlift`, `qini_score`; the [tmle](https://cran.r-project.org/package=tmle) package is used for ATE and segment-level TMLE to approximate Python’s `get_tmlegain` and `get_tmleqini` when true τ is unknown. **MatchIt** supplies the LaLonde data in Part B.
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+

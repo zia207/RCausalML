@@ -1,0 +1,442 @@
+# 4.  Causal Survival Forest (CSF) {.unnumbered}
+
+This notebook demonstrates how to use the **Causal Survival Forest (CSF)**  package in R to estimate heterogeneous treatment effects on survival data, particularly when outcomes are right-censored. The example uses the **ACTG175** dataset from the `{BART}` package, a randomized trial comparing antiretroviral regimens in HIV-infected adults (Cui et al., 2023; [JRSS Series B](https://academic.oup.com/jrsssb/article/85/2/179/7058918)).
+
+## Overview
+
+A **Causal Survival Forest (CSF)** is designed to estimate **heterogeneous treatment effects** for survival data, particularly when outcomes are right-censored. It extends the concept of causal forests to handle time-to-event data, enabling researchers to estimate how a treatment impacts survival outcomes across different subgroups defined by covariates, without relying on restrictive parametric assumptions. CSFs are useful in fields like medicine, economics, and social sciences, where understanding how treatments affect survival outcomes across diverse populations is critical (e.g., estimating the effect of a drug on patient survival based on age, sex, or disease severity).
+
+### Key Concepts of Causal Survival Forests
+
+1.  `Heterogeneous Treatment Effects`: CSFs estimate the **conditional average treatment effect (CATE)**, denoted as $\tau(X)$, which varies across individuals based on their covariate profile $X$. For survival data, this effect can be defined in two ways:
+
+-   `Restricted Mean Survival Time (RMST)`: $\tau(X) = E[\min(T(1), h) - \min(T(0), h) | X = x]$, where $T(1)$ and $T(0)$ are the potential survival times under treatment and control, respectively, and $h$ is a specified time horizon.
+
+-   `Survival Probability`: $\tau(X) = P[T(1) > h | X = x] - P[T(0) > h | X = x]$, which compares the probability of surviving past time $h$ under treatment versus control.
+
+2.  `Right-Censoring`: Survival data often involves censoring, where the event time is not observed for all subjects. CSFs account for this by incorporating censoring indicators and using techniques like inverse probability of censoring weighting (IPCW).
+
+3.  `Non-parametric Approach`: Unlike traditional survival models (e.g., Cox proportional hazards), CSFs are non-parametric, making them flexible for capturing complex, non-linear relationships between covariates and treatment effects.
+
+4.  `Forest-Based Estimation`: CSFs build an ensemble of trees, where each tree splits the covariate space to maximize heterogeneity in treatment effects. Predictions are made by aggregating estimates across trees, weighted by how often a test sample falls into the same leaf as training samples.
+
+5.  `Honest Estimation`: The `grf` package uses "honest" estimation, splitting the data into subsets for choosing tree splits and populating leaf estimates, reducing overfitting.
+
+6.  `Applications`: CSFs are useful in fields like medicine, economics, and social sciences, where understanding how treatments affect survival outcomes across diverse populations is critical (e.g., estimating the effect of a drug on patient survival based on age, sex, or disease severity).
+
+### How CSFs Work
+
+1.  Input Data
+
+-   $X$: Covariates (e.g., age, sex, clinical measurements).
+
+-   $Y$: Observed time (minimum of event time and censoring time).
+
+-   $W$: Treatment assignment (binary or continuous).
+
+-   $D$: Censoring indicator (1 if the event is observed, 0 if censored).
+
+-   $h$: Time horizon for RMST or survival probability.
+
+2.  Splitting Criterion
+
+-   Trees are grown by maximizing the difference in treatment effects between child nodes, using a modified objective that accounts for censoring (e.g., via AIPW scores, as described in Cui et al., 2023).
+
+3.  Prediction
+
+-   For a given covariate profile (X = x), the forest estimates $\tau(x)$ by averaging treatment effect estimates from trees, using weights based on sample: CSFs use techniques like IPCW or survival forests to estimate censoring probabilities, ensuring unbiased treatment effect estimates.
+
+### How does it differ from Causal Forest and Survival Forest?
+
+
+
+| **Aspect**                | **Survival Forest**                              | **Causal Forest**                              | **Causal Survival Forest**                     |
+|---------------------------|--------------------------------------------------|-----------------------------------------------|-----------------------------------------------|
+| `Objective`             | Predict survival probability or hazard over time | Estimate heterogeneous treatment effects       | Estimate treatment effects on survival outcomes |
+| `Outcome Type`          | Time-to-event (censored)                        | Continuous or binary                          | Time-to-event (censored)                      |
+| `Treatment Variable`    | None                                            | Required (W: 0/1)                            | Required (W: 0/1)                             |
+| `Inputs`                | X, Y, D                                         | X, Y, W                                      | X, Y, D, W                                    |
+| `Output`                | Survival curves or hazard functions             | Treatment effect estimates $\tau(X)$        | Treatment effect on survival $\tau(X)$       |
+| `Use Case`              | Survival prediction (e.g., patient prognosis)   | Treatment effect heterogeneity (e.g., drug impact) | Treatment effect on survival (e.g., therapy impact) |
+| `Assumptions`           | Handles censoring                               | Unconfoundedness, overlap                    | Unconfoundedness, overlap, censoring handled  |
+| `{grf} Function`        | `survival_forest()`                             | `causal_forest()`                            | `causal_survival_forest()`                    |
+
+### Practical Notes
+
+- `Survival Forest`: Used when the goal is purely predictive (e.g., forecasting patient survival based on covariates). It does not involve a treatment variable.
+
+- `Causal Forest`: Used for non-survival outcomes (e.g., blood pressure, test scores) to understand how treatment effects vary across individuals.
+
+- `Causal Survival Forest`: Used when both treatment effects and survival outcomes are of interest, combining the strengths of the other two models.
+
+
+
+## Scientific Terminology for Beginners
+
+This glossary introduces key scientific terms used in this notebook with simple examples.
+
+### 1) Survival Outcome
+
+- **Explanation**: An outcome measured as time until an event occurs.
+- **Example**: Time from treatment start to relapse.
+
+### 2) Right-Censoring
+
+- **Explanation**: The event is not observed for some individuals during follow-up.
+- **Example**: A patient leaves the study before the event occurs.
+
+### 3) RMST (Restricted Mean Survival Time)
+
+- **Explanation**: Average event-free time up to a fixed horizon.
+- **Example**: Average number of event-free months in the first 24 months.
+
+### 4) CATE
+
+- **Explanation**: The treatment effect for individuals with similar covariate profiles.
+- **Example**: Treatment may improve survival more for younger patients.
+
+### 5) IPCW
+
+- **Explanation**: A weighting method that adjusts for censoring.
+- **Example**: Individuals likely to be censored receive larger weights.
+
+### 6) Honest Estimation
+
+- **Explanation**: Separate data are used for split choice and effect estimation.
+- **Example**: One split sample selects nodes; another estimates survival effects in leaves.
+
+### 7) Heterogeneous Treatment Effects
+
+- **Explanation**: The treatment effect differs across subgroups.
+- **Example**: Benefit may be larger for severe baseline disease than mild disease.
+
+### 8) Time Horizon
+
+- **Explanation**: A fixed time point used to summarize survival effects.
+- **Example**: Compare survival probability at 12 months.
+
+
+## Causal Survival Forest (CSF) in  R
+
+This tutorial uses the `{RCausalML}` integrated with `{grf}` package for robust implementation of Causal Survival Forests. The `grf`  package allows users to estimate Conditional Average Treatment Effects (CATE) and visualize treatment effect heterogeneity effectively.
+
+We'll cover: 
+
+- Getting started Causal Survival Forest  with simulated data
+- Use case with the `ACTG175` dataset from `{BART}` package
+
+### Load and Check Required Libraries
+
+
+```{r}
+#| label: load-packages
+packages <- c('tidyverse', 
+              'plyr',
+              'RCausalML',
+              'causaldata',
+              'mlbench',
+              'survival',
+              'BART',
+              'grf',
+              'kernelshap',
+              'shapviz')
+```
+
+### Install Missing Packages
+
+```         
+#| warning: false
+#| error: false
+#| label: install-missing-packages
+#new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+#if(length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r}
+#| label: verify-installation
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load Required Libraries
+
+```{r}
+#| label: load-libraries
+# Load packages with suppressed messages
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Check Loaded Packages
+
+```{r}
+#| label: check-loaded-packages
+# Check loaded packages
+cat("Successfully loaded packages:\n")
+print(search()[grepl("package:", search())])
+```
+
+## Use case with the `ACTG175` dataset from `{BART}` package
+
+This section demonstrates how to use a causal survival forest (from the `grf` package) to estimate Conditional Average Treatment Effects (CATE) on Restricted Mean Survival Time (RMST) using simulated data.  
+Below, we simulate data, train the forest, and show predictions.
+
+
+### Data and Data Preparation
+
+```{r}
+#| label: simulate-data
+# Simulate n = 3000 observations with p = 8 features
+n <- 3000
+p <- 8
+X <- matrix(runif(n * p, min = -1, max = 1), n, p)   # Covariates
+W <- rbinom(n, 1, 0.4)                               # Binary treatment: 40% treatment group
+horizon <- 2                                         # Time horizon for RMST
+
+# Generate failure and censoring times
+failure.time <- pmin(exp(X[, 2] + 0.5 * W + 0.25 * X[, 3]), horizon)
+censor.time <- 1.5 * runif(n)
+Y <- pmin(failure.time, censor.time)                 # Observed event/censoring time
+D <- as.integer(failure.time <= censor.time)         # Event indicator
+colnames(X) <- paste0("X", 1:p)                      # Named columns for SHAP/plots
+```
+
+### Fit CSF
+
+```{r}
+#| label: fit-csf
+# Fit causal survival forest (event times discretized for efficiency)
+cs.forest <- causal_survival_forest(X, round(Y, 2), W, D, horizon = horizon)
+```
+
+### Predicting & Evaluating on Simulated Data
+
+#### Predict on New Test Data
+
+```{r}
+#| label: predict-test-data
+# Predict on new test data
+X.test <- matrix(0.5, 10, p)
+X.test[, 1] <- seq(0, 1, length.out = 10)
+colnames(X.test) <- colnames(X)
+cs.pred <- predict(cs.forest, X.test)
+```
+
+#### Obtain Out-of-Bag Predictions
+
+```{r}
+#| label: oob-predictions
+# Obtain out-of-bag predictions on training data
+cs.oob <- predict(cs.forest)
+```
+
+#### Predict with Confidence Intervals
+
+```{r}
+#| label: predict-with-ci
+# Predict with confidence intervals
+cs.ci <- predict(cs.forest, X.test, estimate.variance = TRUE)
+```
+
+#### Estimate Average Treatment Effect (ATE)
+
+```{r}
+#| label: estimate-ate
+# Estimate average treatment effect (ATE) with standard error
+average_treatment_effect(cs.forest)
+```
+
+#### Best Linear Projection of CATE
+
+```{r}
+#| label: best-linear-projection
+# Best linear projection of CATE along first covariate
+grf::best_linear_projection(cs.forest, X[, 1])
+```
+
+#### Assess Treatment Effect Heterogeneity
+
+```{r}
+#| label: assess-heterogeneity-sim
+# Assess heterogeneity using train/evaluation split
+set.seed(1)
+train <- sample(1:n, n / 2)
+eval <- setdiff(1:n, train)
+train.forest <- causal_survival_forest(X[train, ], Y[train], W[train], D[train], horizon = horizon)
+eval.forest  <- causal_survival_forest(X[eval, ],  Y[eval],  W[eval],  D[eval],  horizon = horizon)
+rate <- rank_average_treatment_effect(eval.forest, predict(train.forest, X[eval, ])$predictions)
+plot(rate)
+```
+
+### Compute Kernel SHAP values for CATE
+
+We explain the predicted treatment effects $\hat{\tau}(X)$ on a reasonably sized subset (e.g., 200–500 rows) of the training or test data — full data can be slow.
+
+
+```{r}
+#| label: compute-shap-csf
+library(future)
+
+# Parallel backend 
+n_cores <- max(1L, parallel::detectCores() - 1L)
+plan(multisession, workers = n_cores)
+
+# Scale sample sizes to data available
+set.seed(2026)
+n_total <- nrow(X)
+
+if (n_total > 5000L) {
+  n_explain <- 300L
+  n_bg      <- 100L   # smaller background = biggest speed lever
+
+} else if (n_total > 1000L) {
+  n_explain <- 200L
+  n_bg      <- 75L
+
+} else {
+  n_explain <- min(100L, n_total)
+  n_bg      <- min(50L,  n_total)
+}
+
+# Non-overlapping explain / background indices 
+if (n_total >= n_explain + n_bg) {
+  all_idx     <- sample(n_total)
+  explain_idx <- all_idx[seq_len(n_explain)]
+  bg_idx      <- all_idx[seq(n_explain + 1L, n_explain + n_bg)]
+
+} else {
+  # Small dataset — allow overlap rather than error
+  explain_idx <- sample(n_total, n_explain, replace = FALSE)
+  bg_idx      <- sample(n_total, n_bg,      replace = FALSE)
+}
+
+X_explain <- X[explain_idx, , drop = FALSE]
+bg_X      <- X[bg_idx,      , drop = FALSE]
+
+# Prediction wrapper 
+pred_fun <- function(object, newdata) {
+  predict(object, newdata = newdata)$predictions
+}
+
+#: Switch to permshap — same quality, much faster than kernelshap
+shap_ksh <- permshap(
+  object   = cs.forest,
+  X        = X_explain,
+  bg_X     = bg_X,
+  pred_fun = pred_fun,
+  verbose  = FALSE       # set TRUE to watch progress
+)
+
+# Reset workers ──────────────────────────────────────────────────
+plan(sequential)
+
+# ── Step 7: Wrap for plotting ─────────────────────────────────────────────
+shp_csf <- shapviz(shap_ksh, X = X_explain)
+
+```
+
+
+#### SHAP Summary Plot (Beeswarm + Importance)
+
+This shows which covariates drive heterogeneity in treatment effects the most, and in which direction.
+
+```{r}
+#| label: shap-importance-beeswarm
+#| fig.width: 7
+#| fig.height: 5.5
+
+# Classic beeswarm (direction + magnitude)
+sv_importance(shp_csf, kind = "beeswarm")
+
+# Bar version with mean absolute SHAP
+sv_importance(shp_csf, show_numbers = TRUE)
+```
+
+#### SHAP Dependence Plots (main effects)
+
+Explore how individual covariates modify the estimated treatment effect.
+
+```{r}
+#| label: shap-dependence
+#| fig.width: 8
+#| fig.height: 6
+
+# One plot per important variable (simulated data: X1–X8)
+important_vars <- c("X1", "X2", "X3", "X4")
+
+sv_dependence(shp_csf, v = important_vars, share_y = TRUE)
+```
+
+Or single detailed dependence + color interaction:
+
+```{r}
+#| label: shap-dependence-single
+sv_dependence(shp_csf, v = "X2", color_var = "X1")
+```
+
+#### Waterfall / Force plot for a single observation
+
+Understand why a specific patient profile has a high/low estimated treatment benefit.
+
+```{r}
+#| label: shap-waterfall-single
+#| fig.width: 7
+#| fig.height: 4.5
+
+# Same rows as shapviz/permshap (X_explain); row_id must be in 1:nrow(X_explain)
+preds_explain <- predict(cs.forest, X_explain)$predictions
+row_id_max <- which.max(preds_explain)
+
+sv_waterfall(shp_csf, row_id = row_id_max) +
+  ggtitle("SHAP Waterfall - Patient with highest estimated RMST benefit")
+
+# Alternative: force plot style
+sv_force(shp_csf, row_id = row_id_max)
+```
+
+#### Optional: Explain a few test set observations
+
+```{r}
+#| label: shap-test-set-example
+shap_test <- kernelshap(
+  cs.forest,
+  X         = X.test[1:10, ],            # X.test has 10 rows
+  bg_X      = bg_X,
+  pred_fun  = pred_fun
+)
+
+shp_test <- shapviz(shap_test, X = X.test[1:10, ])
+
+sv_importance(shp_test, kind = "beeswarm")
+```
+
+### Interpretation Notes
+
+- **Positive SHAP** → the feature value pushes the predicted treatment effect (RMST gain) **up**.
+- **Negative SHAP** → pushes the predicted treatment effect **down**.
+- Unlike standard prediction models, here we explain **heterogeneity** (variation in $\hat{\tau}(X)$), not the outcome itself.
+- Beeswarm plots often reveal non-linear patterns and interactions implicitly captured by the forest.
+- Compare SHAP variable importance with `grf::variable_importance()` — they measure similar concepts but from different perspectives (additive decomposition vs. permutation/impurity).
+- For faster/more accurate SHAP on tree ensembles, packages like `{treeshap}` work well with `{ranger}`, but `{grf}` internals are not directly compatible → Kernel SHAP is reliable and model-agnostic.
+
+
+## Summary and Conclusion
+
+This notebook demonstrated the **Causal Survival Forest (CSF)** from `{grf}` using the **ACTG175** dataset from `{BART}`. We prepared baseline covariates and binary treatment (zidovudine only vs other therapies), defined a time horizon for RMST, and fit a CSF to estimate heterogeneous treatment effects on time to CD4 decline, AIDS, or death. The CSF provides non-parametric CATE estimates while accounting for right-censoring, variable importance, and heterogeneity (e.g., via AUTOC/TOC). For methodology and theory, see Cui et al. (2023).
+
+## Resources
+
+1.  **Cui, Y., Kosorok, M. R., Sverdrup, E., Wager, S., & Zhu, R. (2023).** Estimating heterogeneous treatment effects with right-censored data via causal survival forests. *Journal of the Royal Statistical Society: Series B (Statistical Methodology)*, **85**(2), 179–211.  
+    [https://academic.oup.com/jrsssb/article/85/2/179/7058918](https://academic.oup.com/jrsssb/article/85/2/179/7058918)
+
+2.  **Hammer, S. M., et al. (1996).** A trial comparing nucleoside monotherapy with combination therapy in HIV-infected adults with CD4 cell counts from 200 to 500 per cubic millimeter. *New England Journal of Medicine*, **335**, 1081–1090. (ACTG 175 trial.)
+
+3.  [grf Causal Survival Forest documentation](https://grf-labs.github.io/grf/articles/causal_survival_forest.html)
+
+4.  [grf R reference: causal_survival_forest](https://search.r-project.org/CRAN/refmans/grf/html/causal_survival_forest.html)
+
+5.  [Original Causal Survival Forests preprint](https://arxiv.org/abs/2006.09639)

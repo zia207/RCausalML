@@ -614,7 +614,7 @@ causal_structure_ml_model_descriptions()   # list all supported methods
 | `causalStructureML(X, method, ...)` | Fit a causal structure model. Returns adjacency matrix + metadata. |
 | `causal_structure_ml_model_descriptions()` | Print descriptions of all supported methods. |
 
-### NOTEARS (`R/notears.R`)
+### NOTEARS (`R/causalDeepNet.R`)
 
 | Function | Description |
 |---|---|
@@ -626,7 +626,7 @@ causal_structure_ml_model_descriptions()   # list all supported methods
 | `demo_nonlinear_mlp(n, d, ...)` | Demo: nonlinear NOTEARS (MLP). |
 | `demo_nonlinear_sobolev(n, d, ...)` | Demo: nonlinear NOTEARS (Sobolev). |
 
-### DAGMA (`R/notears.R` / `R/causalStructureML.R`)
+### DAGMA (`R/causalDeepNet.R` / `R/causalStructureML.R`)
 
 | Function | Description |
 |---|---|

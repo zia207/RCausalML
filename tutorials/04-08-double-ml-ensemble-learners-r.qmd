@@ -1,0 +1,498 @@
+![](Images/04-double-ml.png)
+
+# 4.8 DoubleML with Ensemble Learners  {.unnumbered}
+
+This tutorial shows how to use **ensemble learners** and **mlr3pipelines** with DoubleML in R. We combine multiple machine learning algorithms (e.g., lasso, random forest, regression trees), build pipelines for feature engineering and tuning, and pass them as nuisance learners to DoubleML. We follow the [DoubleML R: Ensemble Learners and More with mlr3pipelines](https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html) example, using **simulated data** and the **Bonus data** set.
+
+## Overview
+
+Ensemble learners and pipelines allow us to combine multiple machine learning algorithms and preprocessing steps to improve the estimation of nuisance functions in DoubleML. By using mlr3pipelines, we can create complex workflows that include feature engineering, multiple learners, and tuning, all wrapped into a single learner object that DoubleML can use for cross-fitting and score computation.
+
+**Key idea**: mlr3pipelines defines a **pipeline** (e.g., preprocessing → learner, or multiple learners → average). The pipeline is converted to a **Learner** with `as_learner()`, which DoubleML uses like any other nuisance learner for cross-fitting and score computation.
+
+
+## Implementation in R
+
+In R we use the **`mlr3`** ecosystem for machine learning and pipelines, and the **`DoubleML`** package for double machine learning estimation. **Data backends** for PLR are built with **RCausalML** [`R/DMLearner.R`](../../../R/DMLearner.R): **`doubleml_data_from_matrix()`** (simulated PLR), **`doubleml_data_from_data_frame()`** (Bonus sample), and **`doubleml_fetch_bonus()`** to download the Bonus data (same as `DoubleML::fetch_bonus`). For a single call that fits **PLR** from an existing **`DoubleMLData`** object with your learners (including **`GraphLearner`** pipelines and ensembles), use **`doubleml_plr_fit_data()`**; for **`$tune()`** then **`$fit()`**, use **`doubleml_plr_tune_data()`** (requires **mlr3tuning**). The tutorial covers:
+
+| Topic | What we cover |
+|-------|----------------|
+| **RCausalML `R/DMLearner.R`** | `doubleml_data_from_matrix`, `doubleml_data_from_data_frame`, `doubleml_fetch_bonus` → `DoubleMLData`; `doubleml_plr_fit_data` / `doubleml_plr_tune_data` for pipeline PLR |
+| **mlr3 / mlr3learners** | Using standard learners (lasso, random forest) for nuisance parts in PLR |
+| **mlr3pipelines** | Wrapping learners in pipelines with `po()` and `as_learner()` |
+| **Ensemble learners** | Averaging predictions from multiple learners (glmnet, ranger, rpart) via `gunion` and `regravg` / `classifavg` |
+| **Stacking** | Stacked learner (e.g., rpart CV + feature union + rpart) for classification nuisance |
+| **Preprocessing** | Feature engineering (e.g. mutate) in a pipeline before the learner |
+| **Parameter tuning** | Tuning pipeline hyperparameters with DoubleML's `tune()` and mlr3tuning |
+
+
+## Set Up
+
+### Check and Install Required R Packages
+
+Following R packages are required to run this notebook. If any of these packages are not installed, you can install them using the code below:
+
+`RCausalML`, `DoubleML`, `mlr3`, `mlr3learners`, `mlr3pipelines`, `mlr3tuning`, `paradox`, `lgr`
+
+```{r}
+#| label: lst-packages-vector
+#| lst-cap: "Required R package names used throughout the notebook."
+packages <- c(
+  "RCausalML",
+  "DoubleML",
+  "mlr3",
+  "mlr3learners",
+  "mlr3pipelines",
+  "mlr3tuning",
+  "paradox",
+  "lgr"
+)
+```
+
+### Install Missing Packages
+
+```{r}
+#| label: lst-install-missing-packages
+#| lst-cap: "Optional commands to install missing CRAN/GitHub dependencies (commented by default)."
+#| warning: false
+#| error: false
+# Install missing packages
+# new_packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+# if (length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r}
+#| label: lst-verify-package-installation
+#| lst-cap: "Check that each required package namespace is available."
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load R Packages
+
+```{r}
+#| warning: false
+#| error: false
+# Load packages with suppressed messages
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Check Loaded Packages
+
+```{r}
+#| label: lst-check-loaded-packages
+#| lst-cap: "Confirm which package environments are attached on the search path."
+# Check loaded packages
+cat("Successfully loaded packages:\n")
+print(search()[grepl("package:", search())])
+```
+
+```{r setup-dmlearner}
+#| warning: false
+# RCausalML R/DMLearner.R: doubleml_data_from_*, doubleml_fetch_bonus, doubleml_plr_fit_data, …
+.qmd_dir <- tryCatch({
+  .inp <- knitr::current_input()
+  if (is.null(.inp) || !nzchar(.inp)) stop("no knitr input")
+  dirname(normalizePath(.inp, winslash = "/", mustWork = FALSE))
+}, error = function(e) NA_character_)
+if (!is.na(.qmd_dir) && nzchar(.qmd_dir)) {
+  .pkg_root <- normalizePath(file.path(.qmd_dir, "..", "..", ".."), mustWork = FALSE)
+  .dml_r <- file.path(.pkg_root, "R", "DMLearner.R")
+  if (file.exists(.dml_r)) {
+    sys.source(.dml_r, envir = .GlobalEnv)
+    message("Sourced RCausalML R/DMLearner.R from: ", .dml_r)
+  }
+}
+stopifnot(
+  exists("doubleml_data_from_matrix", mode = "function"),
+  exists("doubleml_data_from_data_frame", mode = "function"),
+  exists("doubleml_fetch_bonus", mode = "function"),
+  exists("doubleml_plr_fit_data", mode = "function")
+)
+```
+
+## Part 1: Data and Standard Learners (mlr3 / mlr3learners)
+
+We use two data sets: (1) **simulated data** (continuous treatment, PLR) and (2) **Bonus data** (binary treatment, PLR with classification for the propensity score). **`DoubleMLData`** objects are created via **`doubleml_data_from_matrix()`** and **`doubleml_data_from_data_frame()`** from **RCausalML** **`R/DMLearner.R`** (wrappers around **DoubleML**). We first set up the data and use standard mlr3 learners (lasso, random forest) without pipelines.
+
+### Simulated Data (Continuous Treatment)
+
+```{r}
+#| label: ensemble-sim-plr-data
+
+set.seed(3141)
+n_obs <- 500
+n_vars <- 100
+theta <- 3
+X <- matrix(rnorm(n_obs * n_vars), nrow = n_obs, ncol = n_vars)
+d <- X[, 1:3] %*% c(5, 5, 5) + rnorm(n_obs)
+y <- theta * d + X[, 1:3] %*% c(5, 5, 5) + rnorm(n_obs)
+
+dml_data_sim <- doubleml_data_from_matrix(X = X, y = y, d = d)
+stopifnot(!is.null(dml_data_sim), inherits(dml_data_sim, "DoubleMLData"))
+print(dml_data_sim)
+```
+
+### Bonus Data (Binary Treatment)
+
+**`doubleml_fetch_bonus()`** (in **`R/DMLearner.R`**) calls **`DoubleML::fetch_bonus()`**; we then build the PLR backend with **`doubleml_data_from_data_frame()`**.
+
+```{r}
+#| label: ensemble-bonus-fetch-and-backend
+
+df_bonus <- doubleml_fetch_bonus(return_type = "data.table")
+stopifnot(!is.null(df_bonus))
+head(df_bonus)
+
+x_vars <- c("female", "black", "othrace", "dep1", "dep2",
+            "q2", "q3", "q4", "q5", "q6", "agelt35", "agegt54",
+            "durable", "lusd", "husd")
+dim_x <- length(x_vars)
+dml_data_bonus <- doubleml_data_from_data_frame(
+  as.data.frame(df_bonus),
+  y_col = "inuidur1",
+  d_cols = "tg",
+  x_cols = x_vars
+)
+stopifnot(!is.null(dml_data_bonus), inherits(dml_data_bonus, "DoubleMLData"))
+print(dml_data_bonus)
+```
+
+### Standard Learners: Lasso and Random Forest
+
+For the **simulated data** we use cross-validated lasso for both nuisance parts (outcome and treatment). For the **Bonus data** we use a regression forest for the outcome nuisance and a **classification** forest for the propensity score (binary treatment).
+
+```{r}
+#| label: ensemble-standard-learners
+
+# Lasso for simulated data (both ml_l and ml_m continuous)
+learner_lasso <- lrn("regr.cv_glmnet", s = "lambda.min")
+ml_l_lasso <- learner_lasso$clone()
+ml_m_lasso <- learner_lasso$clone()
+
+# Random forest for Bonus: regression for ml_l, classification for ml_m
+learner_forest_regr <- lrn("regr.ranger",
+                           num.trees = 500,
+                           mtry = floor(sqrt(dim_x)),
+                           max.depth = 5,
+                           min.node.size = 2)
+learner_forest_classif <- lrn("classif.ranger",
+                              num.trees = 500,
+                              mtry = floor(sqrt(dim_x)),
+                              max.depth = 5,
+                              min.node.size = 2)
+ml_l_forest <- learner_forest_regr$clone()
+ml_m_forest <- learner_forest_classif$clone()
+```
+
+### Fit PLR with Standard Learners
+
+```{r}
+#| label: ensemble-fit-plr-sim-standard
+
+set.seed(123)
+obj_dml_plr_sim <- DoubleMLPLR$new(dml_data_sim,
+                                   ml_l = ml_l_lasso,
+                                   ml_m = ml_m_lasso)
+obj_dml_plr_sim$fit()
+print(obj_dml_plr_sim)
+```
+
+```{r}
+#| label: ensemble-fit-plr-bonus-standard
+
+set.seed(123)
+obj_dml_plr_bonus <- DoubleMLPLR$new(dml_data_bonus,
+                                     ml_l = ml_l_forest,
+                                     ml_m = ml_m_forest)
+obj_dml_plr_bonus$fit()
+print(obj_dml_plr_bonus)
+```
+
+
+
+## Part 2: Learners from mlr3pipelines
+
+The same learners can be built as **pipelines** using `po()` (PipeOp) and then converted to a learner with `as_learner()`. DoubleML accepts these **GraphLearner** objects like any other learner.
+
+### Lasso and Random Forest as Pipelines
+
+```{r}
+#| label: ensemble-pipeline-learners-build
+
+# Lasso pipeline
+pipe_lasso <- po(lrn("regr.cv_glmnet"), s = "lambda.min")
+ml_l_lasso_pipe <- as_learner(pipe_lasso)
+ml_m_lasso_pipe <- as_learner(pipe_lasso)
+
+# Random forest pipelines
+pipe_forest_regr <- po(lrn("regr.ranger"),
+                       num.trees = 500,
+                       mtry = floor(sqrt(dim_x)),
+                       max.depth = 5,
+                       min.node.size = 2)
+pipe_forest_classif <- po(lrn("classif.ranger"),
+                          num.trees = 500,
+                          mtry = floor(sqrt(dim_x)),
+                          max.depth = 5,
+                          min.node.size = 2)
+ml_l_forest_pipe <- as_learner(pipe_forest_regr)
+ml_m_forest_pipe <- as_learner(pipe_forest_classif)
+```
+
+### Fit PLR with Pipeline Learners
+
+Results match the standard-learner fits because the pipelines are equivalent.
+
+```{r}
+#| label: ensemble-fit-plr-sim-pipe
+
+set.seed(123)
+obj_dml_plr_sim_pipe <- DoubleMLPLR$new(dml_data_sim,
+                                        ml_l = ml_l_lasso_pipe,
+                                        ml_m = ml_m_lasso_pipe)
+obj_dml_plr_sim_pipe$fit()
+print(obj_dml_plr_sim_pipe)
+```
+
+```{r}
+#| label: ensemble-fit-plr-bonus-pipe
+
+set.seed(123)
+obj_dml_plr_bonus_pipe <- DoubleMLPLR$new(dml_data_bonus,
+                                          ml_l = ml_l_forest_pipe,
+                                          ml_m = ml_m_forest_pipe)
+obj_dml_plr_bonus_pipe$fit()
+print(obj_dml_plr_bonus_pipe)
+```
+
+## Part 3: Ensemble Learners (Averaging)
+
+We combine **three learners** (lasso, random forest, regression tree) and average their predictions using `gunion()` and `po("regravg", 3)` for regression, and `po("classifavg", 3)` for classification. The result is a single learner that DoubleML can use for the nuisance parts.
+
+### Regression Ensemble (for ml_l and ml_m in Simulated Data)
+
+```{r}
+#| label: ensemble-graph-regr
+
+graph_ensemble_regr <- gunion(list(
+  po("learner", lrn("regr.cv_glmnet", s = "lambda.min")),
+  po("learner", lrn("regr.ranger")),
+  po("learner", lrn("regr.rpart", cp = 0.01))
+)) %>>%
+  po("regravg", 3)
+
+ensemble_pipe_regr <- as_learner(graph_ensemble_regr)
+```
+
+### Classification Ensemble (for ml_m in Bonus Data)
+
+```{r}
+#| label: ensemble-graph-classif
+
+graph_ensemble_classif <- gunion(list(
+  po("learner", lrn("classif.cv_glmnet", s = "lambda.min")),
+  po("learner", lrn("classif.ranger")),
+  po("learner", lrn("classif.rpart", cp = 0.01))
+)) %>>%
+  po("classifavg", 3)
+
+ensemble_pipe_classif <- as_learner(graph_ensemble_classif)
+```
+
+### Fit PLR with Ensemble Learners
+
+```{r}
+#| label: ensemble-fit-plr-sim-ensemble
+
+set.seed(123)
+obj_dml_plr_sim_ensemble <- DoubleMLPLR$new(dml_data_sim,
+                                            ml_l = ensemble_pipe_regr,
+                                            ml_m = ensemble_pipe_regr)
+obj_dml_plr_sim_ensemble$fit()
+print(obj_dml_plr_sim_ensemble)
+```
+
+```{r}
+#| label: ensemble-fit-plr-bonus-ensemble
+
+set.seed(123)
+obj_dml_plr_bonus_ensemble <- DoubleMLPLR$new(dml_data_bonus,
+                                              ml_l = ensemble_pipe_regr,
+                                              ml_m = ensemble_pipe_classif)
+obj_dml_plr_bonus_ensemble$fit()
+print(obj_dml_plr_bonus_ensemble)
+```
+
+## Part 4: Stacked Learner (Bonus Data)
+
+We illustrate **stacking**: a first-stage learner (e.g., cross-validated rpart) and the original features are combined via `featureunion`, then a second learner (rpart) is trained on the combined features. This follows the Pipelines chapter in the mlr3book.
+
+```{r}
+#| label: ensemble-stack-graph-build
+
+lrn_rpart <- lrn("classif.rpart")
+lrn_0 <- po("learner_cv", lrn_rpart$clone())
+lrn_0$id <- "rpart_cv"
+
+level_0 <- gunion(list(lrn_0, po("nop")))
+combined <- level_0 %>>% po("featureunion", 2)
+stack <- combined %>>% po("learner", lrn_rpart$clone())
+stacklrn <- as_learner(stack)
+```
+
+### Fit PLR with Stacked Learner for ml_m
+
+```{r}
+#| label: ensemble-fit-plr-bonus-stack
+
+set.seed(123)
+obj_dml_plr_bonus_stack <- DoubleMLPLR$new(dml_data_bonus,
+                                           ml_l = ml_l_forest,
+                                           ml_m = stacklrn)
+obj_dml_plr_bonus_stack$fit()
+print(obj_dml_plr_bonus_stack)
+```
+
+
+## Part 5: Data Preprocessing in the Pipeline
+
+We add **preprocessing** steps before the learner: a **mutate** step (for optional feature engineering) and then a classification tree. The pipeline is converted to a learner and used as `ml_m` in the Bonus PLR; we keep **`ml_l_forest`** for the outcome nuisance, as in the other Bonus examples above. (For variance-based feature filtering, you can add `mlr3filters` and use `po("filter", filter = mlr3filters::flt("variance"), ...)` in the graph.)
+
+### Preprocessing Pipeline: Mutate → Learner
+
+```{r}
+#| label: ensemble-preprocess-pipeline-build
+
+mutate <- po("mutate")
+graph_preprocess <- mutate %>>%
+  po("learner", learner = lrn("classif.rpart"))
+
+glrn <- as_learner(graph_preprocess)
+```
+
+### Fit PLR with Preprocessing Pipeline for ml_m
+
+```{r}
+#| label: ensemble-fit-plr-bonus-preprocess
+
+set.seed(123)
+obj_dml_plr_bonus_preprocess <- DoubleMLPLR$new(dml_data_bonus,
+                                               ml_l = ml_l_forest,
+                                               ml_m = glrn)
+obj_dml_plr_bonus_preprocess$fit()
+print(obj_dml_plr_bonus_preprocess)
+```
+
+### Changing Pipeline Hyperparameters
+
+Pipeline parameters can be set via the learner's `param_set` (e.g. tree complexity for rpart):
+
+```{r}
+#| label: ensemble-fit-plr-bonus-preprocess-tuned-cp
+
+glrn$param_set$values$classif.rpart.cp <- 0.01
+
+set.seed(123)
+obj_dml_plr_bonus_preprocess2 <- DoubleMLPLR$new(dml_data_bonus,
+                                                 ml_l = ml_l_forest,
+                                                 ml_m = glrn)
+obj_dml_plr_bonus_preprocess2$fit()
+print(obj_dml_plr_bonus_preprocess2)
+```
+
+## Part 6: Parameter Tuning with Pipelines
+
+We use a **pipeline** that includes a mutate step and a lasso learner, then tune **pipeline hyperparameters** (e.g., `regr.glmnet.lambda`) with DoubleML's `tune()` method. Tuning uses mlr3tuning (e.g., grid search) and a resampling strategy.
+
+### Lasso Pipeline for Tuning
+
+```{r}
+#| label: ensemble-tuning-lasso-pipeline
+
+lasso_pipe <- mutate %>>%
+  po("learner", learner = lrn("regr.glmnet"))
+glrn_lasso <- as_learner(lasso_pipe)
+```
+
+### Parameter Grid and Tune Settings
+
+```{r}
+#| label: ensemble-tuning-param-grid
+
+par_grids <- ps(
+  regr.glmnet.lambda = p_dbl(lower = 0.05, upper = 0.1)
+)
+
+tune_settings <- list(
+  terminator = trm("evals", n_evals = 10),
+  algorithm = tnr("grid_search", resolution = 10),
+  rsmp_tune = rsmp("cv", folds = 5),
+  measure = list("ml_l" = msr("regr.mse"),
+                 "ml_m" = msr("regr.mse"))
+)
+```
+
+### Tune and Fit
+
+```{r}
+#| label: ensemble-tune-plr-sim
+#| warning: false
+
+set.seed(123)
+obj_dml_plr_sim_tune <- DoubleMLPLR$new(dml_data_sim,
+                                        ml_l = glrn_lasso,
+                                        ml_m = glrn_lasso)
+obj_dml_plr_sim_tune$tune(param_set = list("ml_l" = par_grids,
+                                           "ml_m" = par_grids),
+                          tune_settings = tune_settings)
+```
+
+```{r}
+#| label: ensemble-fit-plr-sim-after-tune
+
+obj_dml_plr_sim_tune$fit()
+print(obj_dml_plr_sim_tune)
+```
+
+
+
+## Summary and Conclusions
+
+This tutorial used **simulated data** and the **Bonus data** set to illustrate standard learners, pipeline-based learners, ensemble (averaging) and stacked learners, preprocessing pipelines, and parameter tuning with DoubleML in R, following the [DoubleML R: Ensemble Learners and More with mlr3pipelines](https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html) example. **Data** were constructed with **RCausalML** **`R/DMLearner.R`**: **`doubleml_data_from_matrix()`**, **`doubleml_fetch_bonus()`**, and **`doubleml_data_from_data_frame()`**. The key steps for using mlr3pipelines with DoubleML are summarized below:
+
+| Step | Description |
+|------|-------------|
+| **RCausalML data helpers** | `doubleml_data_from_matrix` / `doubleml_data_from_data_frame` / `doubleml_fetch_bonus` (see **`R/DMLearner.R`**) |
+| **Standard learners** | Use `lrn("regr.cv_glmnet")`, `lrn("regr.ranger")`, `lrn("classif.ranger")`, etc., and pass clones to `DoubleMLPLR` |
+| **Pipeline learners** | Build with `po(learner)` and `as_learner()`; DoubleML accepts the resulting GraphLearner |
+| **Ensemble (averaging)** | Use `gunion(list(po("learner", ...), ...)) %>>% po("regravg", k)` or `po("classifavg", k)` |
+| **Stacking** | Combine base learner(s) and original features with `featureunion`, then a final learner |
+| **Preprocessing** | Add `mutate`, optional `filter` (e.g., variance with mlr3filters), etc., before `po("learner", ...)` in the graph |
+| **Tuning** | Define a pipeline, create `param_set` with paradox, and call `obj_dml$tune(...)` with mlr3tuning settings |
+
+
+## Resources
+
+- Becker, M., Binder, M., Bischl, B., Lang, M., Pfisterer, F., Reich, N.G., Richter, J., Schratz, P., Sonabend, R. (2020). *mlr3 book*. <https://mlr3book.mlr-org.com>
+
+- Binder, M., Pfisterer, F., Lang, M., Schneider, L., Kotthof, L., & Bischl, B. (2021). mlr3pipelines—flexible machine learning pipelines in R. *Journal of Machine Learning Research*, 22(184), 1–7. <https://jmlr.org/papers/v22/21-0281.html>
+
+- Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., & Robins, J. (2018). Double/debiased machine learning for treatment and structural parameters. *The Econometrics Journal*, 21(1), C1–C68. <https://doi.org/10.1111/ectj.12097>
+
+- Lang, M., Binder, M., Richter, J., Schratz, P., Pfisterer, F., Coors, S., Au, Q., Casalicchio, G., Kotthoff, L., & Bischl, B. (2019). mlr3: A modern object-oriented machine learning framework in R. *Journal of Open Source Software*. <https://doi.org/10.21105/joss.01903>
+
+- [DoubleML R: Ensemble Learners and More with mlr3pipelines](https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html)
+
+- [DoubleML User Guide](https://docs.doubleml.org/stable/guide/index.html)
+
+- [mlr3book: Pipelines](https://mlr3book.mlr-org.com/pipelines.html)
+
+- [mlr3pipelines](https://mlr3pipelines.mlr-org.com/)
+
+- RCausalML **`R/DMLearner.R`**: `doubleml_data_from_matrix()`, `doubleml_data_from_data_frame()`, `doubleml_fetch_bonus()`, `doubleml_plr`, `doubleml_pliv`, and related DoubleML bridges

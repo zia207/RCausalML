@@ -1,0 +1,473 @@
+Started: 2026-05-24T02:35:05-04:00
+CAUSALML_FAST_RENDER=TRUE
+
+=== Rendering 00-scientific-terminology-glossary.qmd at 2026-05-24T02:35:05-04:00 ===
+39/39                                  
+[31moutput file: 01-03-causal-survival-forest-r.knit.md
+
+[39m[31mWarning message:
+In x$unload() : Could not cancel cli thread
+[39m[91mERROR: attempt to write a readonly database
+
+Stack trace:
+    at async Object.openKv (ext:deno_kv/01_db.ts:10:15)
+    at async sassCache (file:///opt/quarto/bin/quarto.js:81908:16)
+    at async compileWithCache (file:///opt/quarto/bin/quarto.js:89298:20)
+    at async compileSass (file:///opt/quarto/bin/quarto.js:89106:19)
+    at async resolveQuartoSyntaxHighlighting (file:///opt/quarto/bin/quarto.js:110640:32)
+    at async resolveSassBundles (file:///opt/quarto/bin/quarto.js:110561:12)
+    at async resolveExtras (file:///opt/quarto/bin/quarto.js:115312:14)
+    at async runPandoc (file:///opt/quarto/bin/quarto.js:114755:20)
+    at async renderPandoc (file:///opt/quarto/bin/quarto.js:116431:24)
+    at async Object.onRender (file:///opt/quarto/bin/quarto.js:125129:30)[39m
+FAIL: 01-03-causal-survival-forest-r.qmd
+
+=== Rendering 01-04-instrumental-causal-forest-r.qmd at 2026-05-24T02:35:07-04:00 ===
+[1mpandoc [22m
+  to: html
+  output-file: 00-scientific-terminology-glossary.html
+  standalone: true
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  toc: true
+  toc-depth: 3
+  number-sections: false
+  variables: {}
+  
+[1mmetadata[22m
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: en
+  toc-location: left
+  toc-title: On This Page
+  code-copy: true
+  smooth-scroll: true
+  
+[31m
+
+processing file: 01-04-instrumental-causal-forest-r.qmd
+[39m1/31                                  
+2/31 [lst-packages-vector]            
+3/31                                  
+4/31 [lst-install-missing-packages]   
+[33mWARN: Refusing to remove directory /home/zia207/Github/RCausalML/docs/tutorials/00-scientific-terminology-glossary_files/libs since it is not a subdirectory of the main project directory.[39m
+[33mWARN: Quarto did not expect the path configuration being used in this project, and strange behavior may result.[39m
+Output created: ../docs/tutorials/00-scientific-terminology-glossary.html
+
+OK: 00-scientific-terminology-glossary.qmd
+
+=== Rendering 01-00-casual-tree-introduction-r.qmd at 2026-05-24T02:35:09-04:00 ===
+5/31                                  
+6/31 [lst-verify-package-installation]
+7/31                                  
+8/31 [unnamed-chunk-1]                
+[1mpandoc [22m
+  to: html
+  output-file: 01-00-casual-tree-introduction-r.html
+  standalone: true
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  toc: true
+  toc-depth: 3
+  number-sections: false
+  variables: {}
+  
+[1mmetadata[22m
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: en
+  toc-location: left
+  toc-title: On This Page
+  code-copy: true
+  smooth-scroll: true
+  
+9/31                                  
+10/31 [lst-check-loaded-packages]      
+11/31                                  
+12/31 [ivf-load-card-data]             
+[31mError in `open.connection()`:
+! cannot open the connection
+Backtrace:
+    ▆
+ 1. └─haven::read_dta(card_url)
+ 2.   └─readr::datasource(file)
+ 3.     └─readr:::datasource_connection(...)
+ 4.       └─readr:::read_connection(path)
+ 5.         ├─base::open(con, "rb")
+ 6.         └─base::open.connection(con, "rb")
+[39m[31m
+Quitting from 01-04-instrumental-causal-forest-r.qmd:170-192 [ivf-load-card-data]
+[39m[31mExecution halted
+[39m[31mWarning message:
+In x$unload() :[39m[31m Could not cancel cli thread
+[39m[33mWARN: Refusing to remove directory /home/zia207/Github/RCausalML/docs/tutorials/01-00-casual-tree-introduction-r_files/libs since it is not a subdirectory of the main project directory.[39m
+[33mWARN: Quarto did not expect the path configuration being used in this project, and strange behavior may result.[39m
+Output created: ../docs/tutorials/01-00-casual-tree-introduction-r.html
+
+OK: 01-00-casual-tree-introduction-r.qmd
+
+=== Rendering 01-01-causal-tree-r.qmd at 2026-05-24T02:35:13-04:00 ===
+Warning message:
+In x$unload() : Could not cancel cli thread
+[33mWARN: Error encountered when rendering files[39m
+FAIL: 01-04-instrumental-causal-forest-r.qmd
+
+=== Rendering 01-05-multi-arm-causal-forest-r.qmd at 2026-05-24T02:35:13-04:00 ===
+[31m
+
+processing file: 01-01-causal-tree-r.qmd
+[39m1/49                                  
+2/49 [lst-packages-vector]            
+3/49                                  
+4/49 [lst-install-missing-packages]   
+5/49                                  
+6/49 [lst-verify-package-installation]
+[31m
+
+processing file: 01-05-multi-arm-causal-forest-r.qmd
+[39m1/41                                  
+2/41 [lst-packages-vector]            
+3/41                                  
+4/41 [lst-install-missing-packages]   
+5/41                                  
+6/41 [lst-verify-package-installation]
+7/49                                  
+8/49 [unnamed-chunk-1]                
+7/41                                  
+8/41 [unnamed-chunk-1]                
+9/49                                  
+10/49 [lst-check-loaded-packages]      
+11/49                                  
+12/49 [sim-data-generation]            
+13/49                                  
+14/49 [sim-data-frame]                 
+15/49                                  
+16/49 [sim-train-test-split]           
+17/49                                  
+18/49 [fit-causal-tree-sim]            
+19/49                                  
+20/49 [sim-test-cate-estimation]       
+21/49                                  
+22/49 [list-causaldata-datasets]       
+23/49                                  
+24/49 [load-abortion-data]             
+25/49                                  
+26/49 [abortion-data-visualization]    
+9/41                                  
+10/41 [lst-check-loaded-packages]      
+11/41                                  
+12/41 [load-data]                      
+13/41                                  
+14/41 [train-macf]                     
+15/41                                  
+16/41 [predict-test]                   
+17/41                                  
+18/41 [ate-aipw]                       
+19/41                                  
+20/41 [fig-var-imp-log-time]           
+29/39                                  
+30/39 [shap-importance-beeswarm]       
+21/41                                  
+22/41 [fig-var-imp-health-status]      
+23/41                                  
+24/41 [relevel-refit-macf]             
+25/41                                  
+26/41 [check-predict-colnames]         
+27/41                                  
+28/41 [pred-wrappers-shap]             
+29/41                                  
+30/41 [kernel-shap-compute]            
+31/39                                  
+32/39 [shap-dependence]                
+27/49                                  
+28/49 [abortion-data-processing]       
+29/49                                  
+30/49 [abortion-train-test-split]      
+31/49                                  
+32/49 [abortion-train-data-frame]      
+33/49                                  
+34/49 [fit-causal-tree-abortion]       
+35/49                                  
+36/49 [plot-causal-tree]               
+37/49                                  
+38/49 [extract-leaf-rules]             
+39/49                                  
+40/49 [positive-cate-subgroups]        
+41/49                                  
+42/49 [cv-error-plot]                  
+33/39                                  
+34/39 [shap-dependence-single]         
+43/49                                  
+44/49 [hete-test-permutation]          
+35/39                                  
+36/39 [shap-waterfall-single]          
+45/49                                  
+46/49 [leaf-treatment-effects-plot]    
+47/49                                  
+48/49 [shap-interpret-causal-tree]     
+37/39                                  
+38/39 [shap-test-set-example]          
+49/49                                  
+[31moutput file: 01-01-causal-tree-r.knit.md
+
+[39m[1mpandoc [22m
+  to: html
+  output-file: 01-01-causal-tree-r.html
+  standalone: true
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  toc: true
+  toc-depth: 3
+  number-sections: false
+  variables: {}
+  
+[1mmetadata[22m
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: en
+  toc-location: left
+  toc-title: On This Page
+  code-copy: true
+  smooth-scroll: true
+  
+39/39                                  
+[31moutput file: 01-03-causal-survival-forest-r.knit.md
+
+[39m[31mError in readLines(con, warn = FALSE) : cannot open the connection
+Calls: .main ... partition_yaml_front_matter -> grep -> is.factor -> read_utf8 -> readLines
+In addition: Warning message:
+In readLines(con, warn = FALSE) :
+  cannot open file '01-03-causal-survival-forest-r.qmd': No such file or directory
+[39m[31mExecution halted
+[39m[33mWARN: Refusing to remove directory /home/zia207/Github/RCausalML/docs/tutorials/01-01-causal-tree-r_files since it is not a subdirectory of the main project directory.[39m
+[33mWARN: Quarto did not expect the path configuration being used in this project, and strange behavior may result.[39m
+Output created: ../docs/tutorials/01-01-causal-tree-r.html
+
+OK: 01-01-causal-tree-r.qmd
+
+=== Rendering 01-02-causal-forest-r.qmd at 2026-05-24T02:35:30-04:00 ===
+[33mWARN: Error encountered when rendering files[39m
+31/41                                  
+32/41 [shap-preview-kable]             
+33/41                                  
+34/41 [shapviz-objects]                
+35/41                                  
+36/41 [fig-shap-importance-panel]      
+[31m
+
+processing file: 01-02-causal-forest-r.qmd
+[39m1/55                                  
+2/55 [lst-packages-vector]            
+3/55                                  
+4/55 [lst-install-missing-packages]   
+5/55                                  
+6/55 [lst-verify-package-installation]
+37/41                                  
+38/41 [shap-list-features]             
+39/41                                  
+40/41 [fig-shap-dependence]            
+7/55                                  
+8/55 [unnamed-chunk-1]                
+41/41                                  
+[31moutput file: 01-05-multi-arm-causal-forest-r.knit.md
+
+[39m[31mWarning message:
+In x$unload() : Could not cancel cli thread
+[39m9/55                                  
+10/55 [lst-check-loaded-packages]      
+11/55                                  
+12/55 [sim-cf-data-generation]         
+13/55                                  
+14/55 [sim-cf-fit]                     
+[91mERROR: attempt to write a readonly database
+
+Stack trace:
+    at async Object.openKv (ext:deno_kv/01_db.ts:10:15)
+    at async sassCache (file:///opt/quarto/bin/quarto.js:81908:16)
+    at async compileWithCache (file:///opt/quarto/bin/quarto.js:89298:20)
+    at async compileSass (file:///opt/quarto/bin/quarto.js:89106:19)
+    at async resolveQuartoSyntaxHighlighting (file:///opt/quarto/bin/quarto.js:110640:32)
+    at async resolveSassBundles (file:///opt/quarto/bin/quarto.js:110561:12)
+    at async resolveExtras (file:///opt/quarto/bin/quarto.js:115312:14)
+    at async runPandoc (file:///opt/quarto/bin/quarto.js:114755:20)
+    at async renderPandoc (file:///opt/quarto/bin/quarto.js:116431:24)
+    at async Object.onRender (file:///opt/quarto/bin/quarto.js:125129:30)[39m
+FAIL: 01-05-multi-arm-causal-forest-r.qmd
+
+=== Rendering 01-06-causal-xgboost-r.qmd at 2026-05-24T02:35:35-04:00 ===
+[31m
+
+processing file: 01-06-causal-xgboost-r.qmd
+[39m1/57                                   
+2/57 [lst-packages-vector]             
+3/57                                   
+4/57 [lst-install-missing-packages]    
+5/57                                   
+6/57 [lst-verify-package-installation] 
+7/57                                   
+8/57 [unnamed-chunk-1]                 
+9/57                                   
+10/57 [lst-check-loaded-packages]       
+11/57                                   
+12/57 [synthetic-data-train-test]       
+13/57                                   
+14/57 [fit-cxgboost-synthetic]          
+15/55                                  
+16/55 [unnamed-chunk-2]                
+17/55                                  
+18/55 [sim-cf-predict]                 
+19/55                                  
+20/55 [sim-cf-varimp]                  
+21/55                                  
+22/55 [list-causaldata-datasets]       
+23/55                                  
+24/55 [load-abortion-data]             
+25/55                                  
+26/55 [abortion-data-visualization]    
+27/55                                  
+28/55 [abortion-data-processing]       
+29/55                                  
+30/55 [train-test-split-abortion]      
+31/55                                  
+32/55 [train-causal-forest-abortion]   
+15/57                                   
+16/57 [predict-synthetic]               
+17/57                                   
+18/57 [summary-synthetic]               
+19/57                                   
+20/57 [evaluate-synthetic]              
+21/57                                   
+22/57 [list-causaldata-datasets]        
+23/57                                   
+24/57 [load-abortion-data]              
+25/57                                   
+26/57 [abortion-data-processing]        
+27/57                                   
+28/57 [abortion-train-test-split]       
+29/57                                   
+30/57 [fit-cxgboost-abortion]           
+31/57                                   
+32/57 [abortion-pred-train-ate]         
+33/57                                   
+34/57 [abortion-predict-test]           
+35/57                                   
+36/57 [abortion-cate-summary]           
+37/57                                   
+38/57 [abortion-observational-eval-note]
+39/57                                   
+40/57 [abortion-plot-importance]        
+41/57                                   
+42/57 [define-explain-cate]             
+43/57                                   
+44/57 [shap-estimation]                 
+45/57                                   
+46/57 [shap-importance-plot]            
+47/57                                   
+48/57 [shap-importance-plot-number]     
+49/57                                   
+50/57 [shap-dependence-plots]           
+51/57                                   
+52/57 [shap-single-prediction]          
+53/57                                   
+54/57 [shap-female-waterfall]           
+55/57                                   
+56/57 [abortion-propensity-histogram]   
+57/57                                   
+[31moutput file: 01-06-causal-xgboost-r.knit.md
+
+[39m[31mWarning message:
+In x$unload() : Could not cancel cli thread
+[39m[91mERROR: attempt to write a readonly database
+
+Stack trace:
+    at async Object.openKv (ext:deno_kv/01_db.ts:10:15)
+    at async sassCache (file:///opt/quarto/bin/quarto.js:81908:16)
+    at async compileWithCache (file:///opt/quarto/bin/quarto.js:89298:20)
+    at async compileSass (file:///opt/quarto/bin/quarto.js:89106:19)
+    at async resolveQuartoSyntaxHighlighting (file:///opt/quarto/bin/quarto.js:110640:32)
+    at async resolveSassBundles (file:///opt/quarto/bin/quarto.js:110561:12)
+    at async resolveExtras (file:///opt/quarto/bin/quarto.js:115312:14)
+    at async runPandoc (file:///opt/quarto/bin/quarto.js:114755:20)
+    at async renderPandoc (file:///opt/quarto/bin/quarto.js:116431:24)
+    at async Object.onRender (file:///opt/quarto/bin/quarto.js:125129:30)[39m
+FAIL: 01-06-causal-xgboost-r.qmd
+
+=== Rendering 01-07-instrumental-causal-xgboost-r.qmd at 2026-05-24T02:36:46-04:00 ===
+[31m
+
+processing file: 01-07-instrumental-causal-xgboost-r.qmd
+[39m1/37                                  
+2/37 [lst-packages-vector]            
+3/37                                  
+4/37 [lst-install-missing-packages]   
+5/37                                  
+6/37 [lst-verify-package-installation]
+7/37                                  
+8/37 [unnamed-chunk-1]                
+9/37                                  
+10/37 [lst-check-loaded-packages]      
+11/37                                  
+12/37 [load-prepare-card-data]         
+[31mError in `open.connection()`:
+! cannot open the connection
+Backtrace:
+    ▆
+ 1. └─haven::read_dta(card_url)
+ 2.   └─readr::datasource(file)
+ 3.     └─readr:::datasource_connection(...)
+ 4.       └─readr:::read_connection(path)
+ 5.         ├─base::open(con, "rb")
+ 6.         └─base::open.connection(con, "rb")
+[39m[31m
+Quitting from 01-07-instrumental-causal-xgboost-r.qmd:150-167 [load-prepare-card-data]
+[39m[31mExecution halted
+[39m[31mWarning message:
+In x$unload() : Could not cancel cli thread
+[39mWarning message:
+In x$unload() : Could not cancel cli thread
+[33mWARN: Error encountered when rendering files[39m
+FAIL: 01-07-instrumental-causal-xgboost-r.qmd
+
+=== Rendering 01-08-multi-arm-causal-boost-r.qmd at 2026-05-24T02:36:51-04:00 ===
+[31m
+
+processing file: 01-08-multi-arm-causal-boost-r.qmd
+[39m1/33                                  
+2/33 [lst-packages-vector]            
+3/33                                  
+4/33 [lst-install-missing-packages]   
+5/33                                  
+6/33 [lst-verify-package-installation]
+7/33                                  
+8/33 [unnamed-chunk-1]                
+9/33                                  
+10/33 [lst-check-loaded-packages]      
+11/33                                  
+12/33 [load-data]                      
+13/33                                  
+14/33 [fit-model]                      
+15/33                                  
+16/33 [predict-test]                   
+17/33                                  
+18/33 [aipw-ate]                       
+19/33                                  
+20/33 [avg-contrasts]                  
+21/33                                  
+22/33 [cate-vs-age]                    
+23/33                                  
+24/33 [importance-log-time]            
+25/33                                  
+26/33 [importance-health-status]       
+27/33                                  
+28/33 [extract-booster]                
+29/33                                  
+30/33 [kernel-shap-cate]               

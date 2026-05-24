@@ -1,0 +1,809 @@
+![](Images/05-04-deep-CausalML-Temporal.png)
+
+# 5.4.5 Graph Neural Network (GNN) Causal Models {.unnumbered}
+
+**Graph Neural Networks (GNNs)** treat multivariate time-series variables as nodes and causal relationships as directed edges in a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$. Message passing makes causal structure explicit and inspectable:
+
+$$\mathbf{h}_i^{(\ell+1)} = \mathrm{UPDATE}\!\left(\mathbf{h}_i^{(\ell)},\ \mathrm{AGGREGATE}\left(\{\mathbf{h}_j^{(\ell)} : j \in \mathcal{N}(i)\}\right)\right)$$
+
+Unlike RNNs or Transformers where causal effects hide inside hidden states, GNN causal models make the graph a first-class object that can be regularised, inspected, and interpreted.
+
+## The Three Models
+
+### 1) GVAR — Graph Vector Autoregression
+
+GVAR extends classical VAR with lag-specific learned adjacency matrices and nonlinear GNN transforms:
+
+$$X_i^{(t)} = \sum_{k=1}^{p} \sum_{j=1}^{d} A_{ij}^{(k)} \, \phi\!\left(X_j^{(t-k)}\right) + \epsilon_i^{(t)}$$
+
+- $A^{(k)} \in \mathbb{R}^{d \times d}$: lag-$k$ soft adjacency (sigmoid-parameterised, no self-loops)
+- $\phi(\cdot)$: nonlinear per-lag GNN feature map (Linear + ReLU)
+- Two stacked message-passing layers aggregate cross-variable information
+- Sparsity (L1) + NOTEARS acyclicity penalties encourage parsimonious DAGs:
+
+$$h(A) = \operatorname{tr}(e^{A \odot A}) - d = 0 \iff A \text{ is a DAG}$$
+
+### 2) CausalGNN / CD-GNN
+
+Joint learning: a bilinear graph learner infers a soft DAG from temporal summaries; stacked edge-conditioned message passing (EdgeConv + GRU update) propagates causal information for forecasting:
+
+$$\mathbf{m}_{j \to i}^{(t)} = \mathrm{MSG}\!\left(\mathbf{h}_j^{(t)}, \mathbf{h}_i^{(t)}, e_{ij}\right), \quad \mathbf{h}_i^{(t+1)} = \mathrm{UPDATE}\!\left(\mathbf{h}_i^{(t)}, \sum_{j \in \mathrm{Pa}(i)} \mathbf{m}_{j \to i}^{(t)}\right)$$
+
+### 3) CUTS+ Inspired — Causal Discovery Under Missing Time Series
+
+Designed for datasets with missing values. Learns probabilistic Bernoulli graph edges $q(G) \approx \prod_{ij} \mathrm{Bernoulli}(\pi_{ij})$ and jointly imputes missing values before forecasting. The composite ELBO-style loss is:
+
+$$\mathcal{L} = \underbrace{\mathbb{E}[\log p(X_{\mathrm{obs}} \mid G, X_{\mathrm{miss}})]}_{\text{reconstruction}} + \underbrace{\mathbb{E}[\log p(X_{\mathrm{miss}} \mid G)]}_{\text{imputation}} - \underbrace{\mathrm{KL}[q(G) \| p(G)]}_{\text{graph prior}}$$
+
+## Implementation in R
+
+We use `{RCausalML}`'s `gnn_causal_model()` function (and convenience wrappers `gvar_model()`, `causal_gnn_model()`, `cuts_model()`) to fit all three architectures on S&P 500 sector ETF daily log-return data (2018–2024).
+
+### Load and Check Required Libraries
+
+```{r}
+#| label: packages-list
+#| warning: false
+packages <- c(
+  'tidyverse',
+  'plyr',
+  'RCausalML',
+  'torch',
+  'tidyquant',
+  'reshape2',
+  'scales',
+  'patchwork',
+  'igraph',
+  'zoo'
+)
+```
+
+### Install Missing Packages
+
+```{r}
+#| label: install-missing-packages
+#| warning: false
+#| error: false
+# Install missing packages
+#new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+#if(length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r}
+#| label: verify-installation
+#| warning: false
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load Required Libraries
+
+```{r}
+#| label: load-required-libraries
+#| warning: false
+# Find package root (DESCRIPTION file) and load dev version of RCausalML
+.pkg_root <- local({
+  paths <- c(".", "../..", "../../..", "../../../..")
+  found <- Filter(function(p) file.exists(file.path(p, "DESCRIPTION")), paths)
+  if (length(found)) normalizePath(found[1]) else NULL
+})
+if (!is.null(.pkg_root) && requireNamespace("devtools", quietly = TRUE)) {
+  try(devtools::load_all(.pkg_root, quiet = TRUE), silent = TRUE)
+}
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+```{r}
+#| label: setup
+#| include: true
+set.seed(42)
+run_fast <- Sys.getenv("CAUSALML_FAST_RENDER", "TRUE") == "TRUE"
+
+select_torch_device <- function(min_free_mb = 512L) {
+  if (!requireNamespace("torch", quietly = TRUE)) return("cpu")
+  if (!torch::cuda_is_available()) return("cpu")
+
+  smi_out <- tryCatch(
+    suppressWarnings(system2(
+      "nvidia-smi",
+      args = c("--query-gpu=memory.free", "--format=csv,noheader,nounits"),
+      stdout = TRUE,
+      stderr = FALSE
+    )),
+    error = function(e) character(0)
+  )
+  if (length(smi_out) >= 1L) {
+    free_mb <- suppressWarnings(as.numeric(trimws(smi_out[1L])))
+    if (!is.na(free_mb) && free_mb < min_free_mb) {
+      message(sprintf(
+        "CUDA has ~%d MiB free (< %d MiB required); using CPU.",
+        round(free_mb), min_free_mb
+      ))
+      return("cpu")
+    }
+  }
+
+  ok <- tryCatch({
+    x <- torch::torch_randn(c(32L, 20L, 128L), device = "cuda")
+    torch::nnf_gelu(x)
+    rm(x)
+    torch::cuda_empty_cache()
+    TRUE
+  }, error = function(e) FALSE)
+  if (!ok) {
+    message("CUDA probe failed (likely out of memory); using CPU.")
+    return("cpu")
+  }
+  "cuda"
+}
+
+device_use <- if (run_fast) "cpu" else select_torch_device(min_free_mb = 512L)
+if (requireNamespace("torch", quietly = TRUE)) torch::torch_manual_seed(42)
+cat(sprintf("Using device: %s (run_fast=%s)\n", device_use, run_fast))
+```
+
+## Data Loading and Preprocessing
+
+This section downloads S&P 500 sector ETF prices, converts them to standardized log-returns, builds lagged input/output arrays, and injects synthetic missingness (15 %) for the CUTS+ demonstration.
+
+> **Note:** If online market data is unavailable, the notebook automatically falls back to synthetic demo data so all downstream cells remain runnable.
+
+```{r}
+#| label: data-download
+#| warning: false
+
+TICKERS <- c(
+  "XLF" = "Financials",
+  "XLE" = "Energy",
+  "XLK" = "Technology",
+  "XLV" = "Healthcare",
+  "XLI" = "Industrials",
+  "XLY" = "ConsumerDisc",
+  "XLP" = "ConsumerStap",
+  "XLU" = "Utilities"
+)
+
+fetch_close_prices <- function(tickers, start = "2018-01-01", end = "2024-01-01") {
+  tryCatch({
+    raw <- tidyquant::tq_get(names(tickers), get = "stock.prices",
+                              from = start, to = end, complete_cases = TRUE)
+    if (is.null(raw) || nrow(raw) == 0) return(NULL)
+    raw |>
+      dplyr::select(symbol, date, adjusted) |>
+      tidyr::pivot_wider(names_from = symbol, values_from = adjusted) |>
+      dplyr::arrange(date) |>
+      tidyr::drop_na()
+  }, error = function(e) NULL)
+}
+
+close_wide <- fetch_close_prices(TICKERS)
+
+if (is.null(close_wide) || nrow(close_wide) < 30) {
+  message("Warning: market data unavailable; using synthetic demo data.")
+  set.seed(42)
+  n_steps <- 1600L
+  d_syn   <- length(TICKERS)
+  A_syn   <- matrix(0, d_syn, d_syn)
+  for (i in seq_len(d_syn)) {
+    A_syn[i, i] <- 0.45
+    if (i > 1)                 A_syn[i, i - 1] <- 0.25
+    if (i > 2 && i %% 2 == 1) A_syn[i, i - 2] <- 0.15
+  }
+  x_syn      <- matrix(0, n_steps, d_syn)
+  x_syn[1, ] <- rnorm(d_syn)
+  noise_syn  <- 0.15 * matrix(rnorm(n_steps * d_syn), n_steps, d_syn)
+  for (t in seq(2L, n_steps)) x_syn[t, ] <- x_syn[t - 1L, ] %*% t(A_syn) + noise_syn[t, ]
+  returns_df <- as.data.frame(x_syn)
+  colnames(returns_df) <- unname(TICKERS)
+  data_np    <- scale(x_syn)
+} else {
+  price_mat  <- as.matrix(close_wide[, names(TICKERS)])
+  log_ret    <- log(price_mat[-1L, ] / price_mat[-nrow(price_mat), ])
+  colnames(log_ret) <- unname(TICKERS[colnames(price_mat)])
+  returns_df <- as.data.frame(log_ret)
+  data_np    <- scale(log_ret)
+}
+
+VAR_NAMES <- colnames(data_np)
+d         <- ncol(data_np)
+Tt        <- nrow(data_np)
+
+cat(sprintf("d=%d variables, T=%d\n", d, Tt))
+cat("Variables:", paste(VAR_NAMES, collapse = ", "), "\n")
+```
+
+```{r}
+#| label: build-lag-dataset
+#| warning: false
+
+LAG   <- 10L
+AHEAD <- 1L
+
+build_lag_dataset <- function(data, lag, ahead = 1L) {
+  N     <- nrow(data) - lag - ahead + 1L
+  x_seq <- array(NA_real_, dim = c(N, lag, ncol(data)))
+  y_mat <- matrix(NA_real_, nrow = N, ncol = ncol(data))
+  for (t in seq_len(N)) {
+    x_seq[t, , ] <- data[t:(t + lag - 1L), , drop = FALSE]
+    y_mat[t,  ]  <- data[t + lag + ahead - 1L, ]
+  }
+  list(x_seq = x_seq, y_mat = y_mat)
+}
+
+lag_data <- build_lag_dataset(data_np, LAG, AHEAD)
+X_seq    <- lag_data$x_seq
+Y_mat    <- lag_data$y_mat
+
+split  <- floor(0.8 * nrow(X_seq))
+X_tr   <- X_seq[seq_len(split), , ]
+X_val  <- X_seq[(split + 1L):nrow(X_seq), , ]
+Y_tr   <- Y_mat[seq_len(split), ]
+Y_val  <- Y_mat[(split + 1L):nrow(Y_mat), ]
+
+cat(sprintf("Train: (%d, %d, %d)  Val: (%d, %d, %d)\n",
+            dim(X_tr)[1], dim(X_tr)[2], dim(X_tr)[3],
+            dim(X_val)[1], dim(X_val)[2], dim(X_val)[3]))
+```
+
+```{r}
+#| label: synthetic-missingness
+#| warning: false
+
+# Inject 15 % synthetic missingness for CUTS+ demo (same as Python notebook)
+set.seed(0L)
+MISS_RATE <- 0.15
+miss_mask <- array(runif(prod(dim(X_seq))) < MISS_RATE, dim = dim(X_seq))
+X_miss    <- X_seq
+X_miss[miss_mask] <- 0.0
+X_miss_tr  <- X_miss[seq_len(split), , ]
+X_miss_val <- X_miss[(split + 1L):nrow(X_seq), , ]
+
+cat(sprintf("Missing rate: %.1f%%\n", 100 * mean(miss_mask)))
+cat(sprintf("Missing tensor shape: (%d, %d, %d)\n", dim(X_miss)[1], dim(X_miss)[2], dim(X_miss)[3]))
+```
+
+## Model Architectures Overview
+
+All three architectures are implemented as R torch `nn_module` objects inside `{RCausalML}` and are accessible through the single entry-point `gnn_causal_model()`.
+
+### GVAR Architecture
+
+1. **GVARGraphLearner**: $p$ lag-specific $(d \times d)$ sigmoid-parameterised adjacency matrices; diagonal forced to zero (no self-loops); L1 sparsity penalty.
+2. **GVARMessagePass** (×2): per-lag linear transform + ReLU → batch-matmul with $A^{(k)}$ → concatenate → aggregate linear layer.
+3. **Prediction head**: input-projected features (1 → hidden) pass through two stacked GNN layers then a two-layer GELU MLP producing $d$-vector forecasts.
+4. **Losses**: MSE + sparsity (L1) + DAG (NOTEARS acyclicity).
+
+### CausalGNN Architecture
+
+1. **Per-variable GRU encoder**: each variable's $T$-step sequence is encoded to a `hidden`-dim state.
+2. **CausalGraphLearner**: bilinear edge scoring on temporal summaries → soft DAG $\hat{A} \in [0,1]^{d \times d}$.
+3. **EdgeConvLayer** (×`n_gnn_layers`): concatenates source/target features + edge weight → two-layer MLP → GRU update → layer norm.
+4. **Losses**: MSE + DAG acyclicity + L1 sparsity.
+
+### CUTS+ Architecture
+
+```
+Input x_t (d vars, possibly missing)
+      │
+      ▼
+Imputation Network (values + mask → lag*d)
+      │
+      ▼
+Per-variable GRU Encoder
+      │
+      ▼
+Variational Graph  q(G) = Bernoulli(π_ij)
+      │
+      ▼
+EdgeConv Message Passing
+      │
+      ▼
+Forecast ŷ (d variables)
+```
+
+Losses: MSE + DAG acyclicity + KL($q(G) \| \text{Bernoulli}(0.1)$)
+
+## Fit All Three Models
+
+`gnn_causal_model()` is the single entry point for all three architectures. Internally it:
+
+- Builds windowed `(lag, d)` input/output tensors (with optional synthetic missingness).
+- Trains each model with AdamW + cosine LR schedule + early stopping.
+- Extracts the $d \times d$ causal matrix from each trained model.
+
+```{r}
+#| label: fit-all-models
+#| warning: false
+
+cat("Fitting GVAR, CausalGNN, and CUTS+-like models ...\n")
+
+gnn_fit <- gnn_causal_model(
+  data         = data_np,
+  lag          = LAG,
+  models       = c("gvar", "causalgnn", "cuts"),
+  hidden       = if (run_fast) 32L else 48L,
+  n_gnn_layers = if (run_fast) 2L else 3L,
+  lam_sparse   = 0.003,
+  lam_dag      = 0.08,
+  lam_kl       = 1e-3,
+  miss_rate    = MISS_RATE,
+  epochs       = if (run_fast) 30L else 60L,
+  lr           = 4e-4,
+  patience     = if (run_fast) 8L else 12L,
+  batch_size   = if (identical(device_use, "cuda")) 32L else 64L,
+  val_split    = 0.2,
+  device       = device_use,
+  verbose      = !run_fast
+)
+
+cat("\nTraining complete.\n")
+cat("Validation MSE:\n")
+print(round(gnn_fit$val_mse, 6))
+```
+
+### Validation MSE Summary Table
+
+```{r}
+#| label: val-mse-table
+#| warning: false
+
+val_mse_df <- data.frame(
+  Model   = c("GVAR", "CausalGNN", "CUTS+like"),
+  Val_MSE = unname(gnn_fit$val_mse)
+) |> dplyr::arrange(Val_MSE)
+
+print(val_mse_df)
+```
+
+## Training Loss Curves
+
+```{r}
+#| label: plot-training-loss
+#| warning: false
+
+hist_list <- gnn_fit$histories
+
+make_loss_df <- function(nm) {
+  h <- hist_list[[nm]]
+  if (is.null(h)) return(NULL)
+  n_ep <- sum(h$val != 0)
+  data.frame(
+    epoch = seq_len(n_ep),
+    val   = h$val[seq_len(n_ep)],
+    train = h$train[seq_len(n_ep)],
+    model = nm
+  )
+}
+
+loss_df <- dplyr::bind_rows(lapply(names(hist_list), make_loss_df))
+loss_df$model <- factor(loss_df$model,
+                         levels = c("gvar", "causalgnn", "cuts"),
+                         labels = c("GVAR", "CausalGNN", "CUTS+like"))
+
+ggplot(loss_df, aes(x = epoch, y = val, colour = model)) +
+  geom_line(linewidth = 0.9) +
+  scale_colour_manual(values = c(
+    "GVAR"      = "#1b9e77",
+    "CausalGNN" = "#d95f02",
+    "CUTS+like" = "#7570b3"
+  )) +
+  labs(
+    title  = "Validation Loss Curves — GNN Causal Models",
+    x      = "Epoch",
+    y      = "MSE",
+    colour = NULL
+  ) +
+  theme_minimal()
+```
+
+### Training vs. Validation Loss per Model
+
+```{r}
+#| label: plot-train-val-loss
+#| warning: false
+#| fig-width: 12
+#| fig-height: 4
+
+plot_model_loss <- function(nm, label, colour) {
+  h <- hist_list[[nm]]
+  if (is.null(h)) return(NULL)
+  n_ep <- sum(h$val != 0)
+  df <- data.frame(
+    epoch = seq_len(n_ep),
+    Train = h$train[seq_len(n_ep)],
+    Val   = h$val[seq_len(n_ep)]
+  ) |> tidyr::pivot_longer(-epoch, names_to = "split", values_to = "loss")
+  ggplot(df, aes(x = epoch, y = loss, colour = split)) +
+    geom_line(linewidth = 0.85) +
+    scale_colour_manual(values = c("Train" = colour, "Val" = "grey40")) +
+    labs(title = label, x = "Epoch", y = "MSE", colour = NULL) +
+    theme_minimal(base_size = 9)
+}
+
+p1 <- plot_model_loss("gvar",      "GVAR",      "#1b9e77")
+p2 <- plot_model_loss("causalgnn", "CausalGNN", "#d95f02")
+p3 <- plot_model_loss("cuts",      "CUTS+like", "#7570b3")
+
+patchwork::wrap_plots(p1, p2, p3, ncol = 3)
+```
+
+## Causal Matrix Visualization
+
+For each model, the learned causal matrix $C \in \mathbb{R}^{d \times d}$ encodes variable-to-variable influence:
+
+- **GVAR**: lag-averaged soft adjacency $\sum_k A^{(k)}$, where $A^{(k)}_{ij}$ encodes the causal influence of $j$ on $i$ at lag $k$.
+- **CausalGNN**: bilinear soft edge scores $\hat{A}_{ij}$ reflecting the inferred directed dependency strength.
+- **CUTS+like**: Bernoulli variational parameters $\pi_{ij} = \sigma(\text{logit}_{ij})$, the posterior edge probabilities.
+
+```{r}
+#| label: extract-causal-matrices
+#| warning: false
+
+C_gvar   <- causal_matrix_gnn(gnn_fit, model = "gvar")
+C_cgnn   <- causal_matrix_gnn(gnn_fit, model = "causalgnn")
+C_cuts   <- causal_matrix_gnn(gnn_fit, model = "cuts")
+
+cat("GVAR causal matrix (first 3 rows):\n")
+print(round(C_gvar[1:3, ], 4))
+cat("\nDiagonal (should be ~0 — no self-loops):", round(diag(C_gvar), 3), "\n")
+```
+
+### Heatmap Comparison
+
+```{r}
+#| label: heatmap-comparison
+#| warning: false
+#| fig-width: 15
+#| fig-height: 5
+
+plot_causal_heatmap <- function(C, title, var_names) {
+  A <- as.matrix(C)
+  diag(A) <- NA_real_
+  rownames(A) <- var_names
+  colnames(A) <- var_names
+  df <- reshape2::melt(A, na.rm = TRUE)
+  colnames(df) <- c("Target", "Source", "Weight")
+  df$Target <- factor(df$Target, levels = rev(var_names))
+  df$Source <- factor(df$Source, levels = var_names)
+  ggplot(df, aes(x = Source, y = Target, fill = Weight)) +
+    geom_tile(colour = "white") +
+    geom_text(aes(label = round(Weight, 2)), size = 2.5, colour = "black") +
+    scale_fill_gradient(low = "white", high = "#D7191C",
+                        na.value = "grey90", name = "Weight") +
+    labs(title = title, x = "Source (cause)", y = "Target (effect)") +
+    theme_minimal(base_size = 9) +
+    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+}
+
+p_gvar <- plot_causal_heatmap(C_gvar, "GVAR — Lag-Averaged Adjacency",        VAR_NAMES)
+p_cgnn <- plot_causal_heatmap(C_cgnn, "CausalGNN — Bilinear Edge Scores",      VAR_NAMES)
+p_cuts <- plot_causal_heatmap(C_cuts, "CUTS+like — Bernoulli Edge Posteriors",  VAR_NAMES)
+
+patchwork::wrap_plots(p_gvar, p_cgnn, p_cuts, ncol = 3)
+```
+
+### Top Causal Edges
+
+```{r}
+#| label: top-causal-edges
+#| warning: false
+
+top_edges <- function(C, names, k = 10L) {
+  n   <- length(names)
+  idx <- which(row(C) != col(C), arr.ind = FALSE)
+  edges <- data.frame(
+    source = names[col(C)[idx]],
+    target = names[row(C)[idx]],
+    weight = C[idx]
+  )
+  edges[order(edges$weight, decreasing = TRUE), ][seq_len(min(k, nrow(edges))), ]
+}
+
+for (label_nm in list(list("GVAR", C_gvar), list("CausalGNN", C_cgnn), list("CUTS+like", C_cuts))) {
+  cat(sprintf("\nTop 10 edges for %s (source -> target):\n", label_nm[[1]]))
+  te <- top_edges(label_nm[[2]], VAR_NAMES, 10L)
+  for (i in seq_len(nrow(te))) {
+    cat(sprintf("  %-14s -> %-14s | %.3f\n", te$source[i], te$target[i], te$weight[i]))
+  }
+}
+```
+
+### Causal Graph Network Diagrams
+
+```{r}
+#| label: network-diagram-comparison
+#| warning: false
+
+draw_gnn_igraph <- function(C, title, var_names, threshold = 0.12,
+                             node_colour = "steelblue") {
+  M     <- as.matrix(C)
+  M[is.na(M)] <- 0.0
+  A_bin <- (M > threshold) * 1L
+  diag(A_bin) <- 0L
+  g <- igraph::graph_from_adjacency_matrix(
+    A_bin, mode = "directed", weighted = NULL, diag = FALSE
+  )
+  igraph::V(g)$name        <- var_names
+  igraph::V(g)$color       <- node_colour
+  igraph::V(g)$label       <- var_names
+  igraph::V(g)$size        <- 28
+  igraph::V(g)$label.color <- "white"
+  igraph::V(g)$label.cex   <- 0.8
+  igraph::E(g)$color       <- "grey50"
+  igraph::E(g)$arrow.size  <- 0.6
+
+  old_par <- par(mar = c(0, 0, 2, 0))
+  plot(g,
+       layout = igraph::layout_in_circle(g),
+       main   = title,
+       vertex.frame.color = "white")
+  par(old_par)
+}
+
+par(mfrow = c(1, 3))
+draw_gnn_igraph(C_gvar, "GVAR (threshold > 0.12)",      VAR_NAMES, 0.12, "steelblue")
+draw_gnn_igraph(C_cgnn, "CausalGNN (threshold > 0.12)", VAR_NAMES, 0.12, "darkorange")
+draw_gnn_igraph(C_cuts, "CUTS+like (threshold > 0.12)", VAR_NAMES, 0.12, "mediumpurple")
+par(mfrow = c(1, 1))
+```
+
+## Graph Statistics
+
+```{r}
+#| label: graph-statistics
+#| warning: false
+
+graph_stats_gnn <- function(C, threshold = 0.12, name = "") {
+  M     <- as.matrix(C)
+  M[is.na(M)] <- 0.0
+  A_bin <- (M > threshold) * 1L
+  diag(A_bin) <- 0L
+  g    <- igraph::graph_from_adjacency_matrix(
+    A_bin, mode = "directed", weighted = NULL, diag = FALSE
+  )
+  d_n  <- igraph::gorder(g)
+  e_n  <- igraph::gsize(g)
+  dens <- if (d_n > 1) e_n / (d_n * (d_n - 1)) else 0.0
+  data.frame(
+    model          = name,
+    nodes          = d_n,
+    edges          = e_n,
+    density        = round(dens, 4),
+    is_dag         = igraph::is_dag(g),
+    max_in_degree  = if (d_n > 0) max(igraph::degree(g, mode = "in"))  else 0L,
+    max_out_degree = if (d_n > 0) max(igraph::degree(g, mode = "out")) else 0L
+  )
+}
+
+stats_all <- do.call(rbind, list(
+  graph_stats_gnn(C_gvar, 0.12, "GVAR"),
+  graph_stats_gnn(C_cgnn, 0.12, "CausalGNN"),
+  graph_stats_gnn(C_cuts, 0.12, "CUTS+like")
+))
+rownames(stats_all) <- NULL
+
+cat("Graph statistics (threshold = 0.12):\n")
+print(stats_all)
+```
+
+## Model Validation: Prediction Error on Held-Out Data
+
+```{r}
+#| label: validation-mse
+#| warning: false
+
+pred_gvar <- predict(gnn_fit, model = "gvar",      newdata = X_val)
+pred_cgnn <- predict(gnn_fit, model = "causalgnn", newdata = X_val)
+pred_cuts <- predict(gnn_fit, model = "cuts",      newdata = X_val)
+
+mse_gvar <- mean((pred_gvar - Y_val)^2)
+mse_cgnn <- mean((pred_cgnn - Y_val)^2)
+mse_cuts <- mean((pred_cuts - Y_val)^2)
+
+val_df <- data.frame(
+  model   = c("GVAR", "CausalGNN", "CUTS+like"),
+  val_mse = c(mse_gvar, mse_cgnn, mse_cuts)
+)
+
+cat("Validation MSE (next-step reconstruction):\n")
+print(val_df)
+
+ggplot(val_df, aes(x = reorder(model, val_mse), y = val_mse, fill = model)) +
+  geom_col(show.legend = FALSE, alpha = 0.85) +
+  scale_fill_manual(values = c(
+    "GVAR"      = "#1b9e77",
+    "CausalGNN" = "#d95f02",
+    "CUTS+like" = "#7570b3"
+  )) +
+  coord_flip() +
+  labs(
+    title = "Validation MSE by Model",
+    x     = NULL,
+    y     = "Mean Squared Error"
+  ) +
+  theme_minimal()
+```
+
+### Per-Variable Prediction Error
+
+```{r}
+#| label: per-variable-mse
+#| warning: false
+
+per_var_mse <- data.frame(
+  variable  = VAR_NAMES,
+  GVAR      = colMeans((pred_gvar - Y_val)^2),
+  CausalGNN = colMeans((pred_cgnn - Y_val)^2),
+  CUTSlike  = colMeans((pred_cuts - Y_val)^2)
+)
+
+cat("Per-variable MSE:\n")
+print(data.frame(
+  variable = per_var_mse$variable,
+  round(per_var_mse[, -1], 5)
+))
+
+pv_long <- tidyr::pivot_longer(per_var_mse, -variable,
+                                names_to = "model", values_to = "mse")
+
+ggplot(pv_long, aes(x = variable, y = mse, fill = model)) +
+  geom_col(position = "dodge", alpha = 0.85) +
+  scale_fill_manual(values = c(
+    "GVAR"      = "#1b9e77",
+    "CausalGNN" = "#d95f02",
+    "CUTSlike"  = "#7570b3"
+  )) +
+  labs(
+    title = "Per-Variable Validation MSE",
+    x     = "Sector",
+    y     = "MSE",
+    fill  = "Model"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+## CUTS+ Missing Data Analysis
+
+CUTS+-like's imputation network fills in zero-coded missing values before encoding. We analyse prediction quality under missingness by comparing CUTS+ (which sees a corrupted input) against GVAR (which sees the same zero-filled input without explicit imputation).
+
+```{r}
+#| label: cuts-missing-data-analysis
+#| warning: false
+#| fig-width: 10
+#| fig-height: 4
+
+# Predict on the missing-data validation set
+pred_cuts_miss <- predict(gnn_fit, model = "cuts", newdata = X_miss_val)
+pred_gvar_miss <- predict(gnn_fit, model = "gvar", newdata = X_miss_val)
+
+mse_cuts_miss <- colMeans((pred_cuts_miss - Y_val)^2)
+mse_gvar_miss <- colMeans((pred_gvar_miss - Y_val)^2)
+
+miss_cmp <- data.frame(
+  variable = rep(VAR_NAMES, 2),
+  mse      = c(mse_cuts_miss, mse_gvar_miss),
+  method   = rep(c("CUTS+like (imputation)", "GVAR (no imputation)"), each = d)
+)
+
+ggplot(miss_cmp, aes(x = variable, y = mse, fill = method)) +
+  geom_col(position = "dodge", alpha = 0.85) +
+  scale_fill_manual(values = c(
+    "CUTS+like (imputation)" = "#7570b3",
+    "GVAR (no imputation)"   = "#1b9e77"
+  )) +
+  labs(
+    title = sprintf("Per-Variable MSE on %.0f%% Missing Input: CUTS+like vs. GVAR", 100 * MISS_RATE),
+    x     = "Sector",
+    y     = "MSE",
+    fill  = NULL
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+```{r}
+#| label: cuts-imputation-gain
+#| warning: false
+
+imputation_gain <- data.frame(
+  variable        = VAR_NAMES,
+  MSE_GVAR_miss   = round(mse_gvar_miss, 5),
+  MSE_CUTS_miss   = round(mse_cuts_miss, 5),
+  imputation_gain = round(mse_gvar_miss - mse_cuts_miss, 5)
+)
+cat("Imputation gain (positive = CUTS+ helps):\n")
+print(imputation_gain)
+```
+
+## Causal Matrix Comparison Across Models
+
+```{r}
+#| label: causal-matrix-correlation
+#| warning: false
+
+# Compare off-diagonal entries across model pairs
+off_diag <- function(C) {
+  M <- as.matrix(C); diag(M) <- NA
+  M[!is.na(M)]
+}
+
+gvar_v  <- off_diag(C_gvar)
+cgnn_v  <- off_diag(C_cgnn)
+cuts_v  <- off_diag(C_cuts)
+
+corr_mat <- matrix(c(
+  1,                      cor(gvar_v, cgnn_v),   cor(gvar_v, cuts_v),
+  cor(cgnn_v, gvar_v),   1,                      cor(cgnn_v, cuts_v),
+  cor(cuts_v, gvar_v),   cor(cuts_v, cgnn_v),   1
+), nrow = 3, dimnames = list(c("GVAR","CausalGNN","CUTS+like"),
+                              c("GVAR","CausalGNN","CUTS+like")))
+cat("Pairwise Pearson correlation of causal matrices (off-diagonal entries):\n")
+print(round(corr_mat, 4))
+```
+
+## Interpretation Notes
+
+- **GVAR** yields explicit lag-specific adjacency matrices, making it the closest to classical Granger causality in a GNN framework. Its learned mask is directly interpretable as a sparse directed influence graph.
+- **CausalGNN** jointly learns the graph topology and nonlinear dynamics using bilinear edge scoring, which can capture asymmetric dependencies that linear methods miss.
+- **CUTS+like** is designed for missing-data scenarios. Its variational graph posterior produces probabilistic edge weights, and its imputation network recovers missing observations using graph-aware context.
+
+In practice, combining these models is often powerful:
+
+1. Use **GVAR** for a sparse, lag-structured Granger-style causal graph.
+2. Use **CausalGNN** for nonlinear, jointly discovered structure.
+3. Use **CUTS+like** when input data have substantial missingness or uneven sampling.
+
+## Summary and Conclusions
+
+In this notebook, we explored three GNN-based causal discovery architectures — **GVAR**, **CausalGNN**, and **CUTS+-like** — on S&P 500 sector ETF data and compared their learned causal graphs.
+
+**Key Findings:**
+
+- All three models achieve comparable validation MSE, demonstrating that explicit graph structure constraints need not hurt predictive performance.
+- **GVAR** produces sparse, lag-structured adjacency matrices that resemble a multi-lag Granger-causal graph; its L1 + NOTEARS penalties promote DAG-consistent structure.
+- **CausalGNN** recovers both symmetric and asymmetric dependencies via nonlinear bilinear edge scoring; the learned DAG often differs meaningfully from linear GVAR, highlighting nonlinear relationships.
+- The **CUTS+-like** model's imputation network provides measurable benefit on missing-data inputs, and its Bernoulli edge posteriors offer uncertainty-aware causal graphs.
+
+**Conclusions and Recommendations:**
+
+- GNN causal models unify temporal representation learning and graph structure discovery, offering richer modeling power than purely linear baselines.
+- Visualization of learned adjacency matrices and ranking of discovered edges help practitioners interpret results and guide domain validation.
+- For robust application: apply thresholding, stability selection, and bootstrap confidence intervals before treating discovered edges as causal hypotheses.
+- The NOTEARS acyclicity penalty provides a differentiable mechanism to encourage DAG structure, but should be combined with domain knowledge for final graph selection.
+- Further work could include larger financial universes, formal bootstrap uncertainty on causal matrices, and integration with intervention-based validation.
+
+## Resources
+
+### Primary References
+
+- **GVAR (2022):** [Learning Granger Causal Feature Representations](https://arxiv.org/abs/2206.10311) — lag-specific graph autoregression for Granger-causal discovery.
+- **CausalGNN / CD-GNN (2022):** [Causal Discovery with Graph Neural Networks](https://arxiv.org/abs/2003.12769) — joint graph learning and dynamics for multivariate time series.
+- **CUTS+ (2023):** [CUTS+: High-dimensional Causal Discovery from Irregular Time-Series](https://arxiv.org/abs/2305.05890) — variational causal discovery under missingness and irregular sampling.
+- **NOTEARS (2018):** [DAGs with NO TEARS: Continuous Optimization for Structure Learning](https://arxiv.org/abs/1803.01422) — Zheng et al.; the acyclicity penalty used in all three models.
+
+### Background Texts
+
+- **Causality (Judea Pearl):** [Causality: Models, Reasoning and Inference](https://bayes.cs.ucla.edu/BOOK-2K/) — definitive reference for structural causal models.
+- **Elements of Causal Inference (Peters, Janzing & Schölkopf):** [MIT Press](https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/) — rigorous treatment of SCMs and identifiability.
+- **The Book of Why (J. Pearl & D. Mackenzie)** — accessible introduction to causal reasoning.
+- **Graph Neural Networks Review:** [Exploring Causal Learning through GNNs](https://arxiv.org/html/2311.14994) — comprehensive review of GNN approaches to causal discovery.
+
+### Software and Datasets
+
+- **R torch:** <https://torch.mlverse.org/> — PyTorch bindings for R used by `{RCausalML}`.
+- **tidyquant:** <https://business-science.github.io/tidyquant/> — tidy finance data retrieval.
+- **{RCausalML}:** `gnn_causal_model()`, `causal_matrix_gnn()`, `predict.gnn_causal_model()` — main API for this notebook.
+
+### Companion Notebooks in This Series
+
+- `05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.qmd` — Neural Granger Causality (cMLP, cLSTM, SRU, NRI) on the same sector ETF universe.
+- `05-04-02-DeepCausalML-timeseries-structural-causal-model-SMC-r.qmd` — Deep Structural Causal Models: DeepSCM, DECI, DynoTEARS on sector ETF data.
+- `05-04-03-DeepCausalML-attension-transformer-r.qmd` — Attention-Based/Transformer Causal Models: TCDF, CausalTransformer, TFT on sector ETF data.
+- `05-04-04-DeepCausalML-timeseries-RNN-LSTM-causaML-r.qmd` — RNN/LSTM Causal Models: CausalLSTM, RETAIN, Intervention-Aware RNN on sector ETF data.
+
+

@@ -1,0 +1,544 @@
+# 6. Domain Adaptation Learner (DA-Learner)
+
+Thisssss notebook demonstrates the **Domain Adaptation Learner (DA-Learner)**, a meta-learner for estimating Conditional Average Treatment Effects (CATE) in the presence of significant domain shift between treatment and control groups. The DA-Learner uses propensity-score-based weighting to adapt the outcome models, making it robust to selection bias and distributional differences. We wwill use RCausalML's `DomainAdaptationLearner` to implement this method on a real dataset, showcasing its advantages over standard meta-learners in scenarios with strong domain shift.          
+
+## Overview
+
+**Domain Adaptation Learner** (also called **DA-Learner** or `DomainAdaptationLearner` in the EconML library) is a meta-learner designed for estimating the **Conditional Average Treatment Effect (CATE)**, denoted as $\tau(x) = E[Y(1) - Y(0) \mid X = x]$, from observational data.
+
+It is particularly useful when the probability distributions of the outcome under treatment $P(Y^1 \mid X)$ and under control $P(Y^0 \mid X)$ differ substantially (i.e., there is a significant **domain shift** or **selection bias** between the treatment and control groups). Standard meta-learners like the plain T-Learner can produce biased estimates in such cases because the outcome models trained on one group do not generalize well to the other group.
+
+It can be viewed as a **domain-adapted variant of the T-Learner** (or sometimes described in literature as a weighted extension related to the X-Learner) that uses **propensity-score-based sample weighting** to align the training distributions. This makes the outcome models more robust when predicting counterfactuals across domains.
+
+### How It Works 
+
+The algorithm follows these main steps:
+
+1. **Estimate the propensity score** $g(x) = P(T=1 \mid X=x)$ (the probability of receiving treatment given covariates $X$). This is usually done with a separate classifier (e.g., logistic regression, random forest, etc.).
+
+2. **Train two outcome models with domain-adaptive weighting** (this is the key "domain adaptation" part):
+   - Control outcome model $\hat{\mu}_0$ (predicts $Y^0$) is trained **only on control samples** ($T=0$), but each control sample is re-weighted by $\frac{g(X^0)}{1 - g(X^0)}$.  
+     This weighting makes the control data distribution look more like the treatment-group distribution.
+   - Treatment outcome model $\hat{\mu}_1$ (predicts $Y^1$) is trained **only on treated samples** ($T=1$), but each treated sample is re-weighted by $\frac{1 - g(X^1)}{g(X^1)}$.  
+     This makes the treated data distribution look more like the control-group distribution.
+
+   Any machine-learning regressor can be used for $M_1$ and $M_2$ (e.g., RandomForest, LightGBM, neural nets).
+
+3. **Compute imputed treatment-effect residuals** (pseudo-effects) for each group:
+   - For treated units: $\hat{D}^1 = Y^1 - \hat{\mu}_0(X^1)$  
+     (actual outcome minus the *adapted* prediction of what the outcome would have been under control).
+   - For control units: $\hat{D}^0 = \hat{\mu}_1(X^0) - Y^0$  
+     (the *adapted* prediction of what the outcome would have been under treatment minus the actual outcome).
+
+4. **Train a final CATE model** on the combined residuals:
+   - Concatenate the two sets of residuals and features: $\hat{D}^0$ (from controls) and $\hat{D}^1$ (from treated), with their respective $X^0$ and $X^1$.
+   - Fit a model $M_3$ that predicts the residuals as a function of $X$. This final model directly gives $\hat{\tau}(x)$.
+
+### Mathematical Formulation
+
+The full procedure is expressed as:
+
+$$
+\begin{split}
+\hat{\mu}_0 &= M_1\left(Y^0 \sim X^0,\ \text{weights}=\frac{g(X^0)}{1-g(X^0)}\right) \\
+\hat{\mu}_1 &= M_2\left(Y^1 \sim X^1,\ \text{weights}=\frac{1-g(X^1)}{g(X^1)}\right) \\
+\hat{D}^1 &= Y^1 - \hat{\mu}_0(X^1) \\
+\hat{D}^0 &= \hat{\mu}_1(X^0) - Y^0 \\
+\hat{\tau} &= M_3(\hat{D}^0 \mid \hat{D}^1 \sim X^0 \mid X^1)
+\end{split}
+$$
+
+where:
+
+- $M_1, M_2, M_3$ = arbitrary ML models,
+- $g(x)$ = propensity score,
+- $|$ denotes dataset concatenation (training on the combined data).
+
+### Why the Weighting Works (Intuition)
+
+The weights come from **importance weighting** in domain adaptation:
+
+- To predict the counterfactual $Y^0$ for *treated* individuals, you want the control training data to mimic the treated population → multiply control samples by $\frac{P(\text{treated})}{P(\text{control})} = \frac{g}{1-g}$.
+- Symmetrically for the treatment model.
+
+This reduces bias when the support or distribution of $X$ differs between groups, which is common in real-world observational data.
+
+## Implementation in in R
+
+RCausalML provides an implementation of the DA-Learner through the `DomainAdaptationLearner` class. Below is an example of how to use it:
+
+
+### Setup
+
+#### Define required packages
+
+```{r}
+#| label: packages-list
+#| warning: false
+packages <- c(
+  "tidyverse",
+  "plyr",
+  "RCausalML",
+  "causaldata",
+  "mlbench",
+  "xgboost",
+  "kernelshap",
+  "shapviz",
+  "future",
+  "mlr3",
+  "mlr3learners",
+  "nnet",
+  "gridExtra",
+  "survival"
+)
+```
+
+### Install Missing Packages
+
+#### Optional install commands (commented out)
+
+```{r}
+#| label: install-missing-packages
+#| warning: false
+#| error: false
+# new_packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+# if (length(new_packages)) install.packages(new_packages)
+# remotes::install_github("mlr-org/mlr3learners")
+```
+
+### Verify Installation
+
+#### Check package namespaces
+
+```{r}
+#| label: verify-installation
+#| warning: false
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load Required Libraries
+
+#### Attach libraries and local RCausalML
+
+```{r}
+#| label: load-required-libraries
+#| warning: false
+
+if (file.exists("DESCRIPTION") && requireNamespace("devtools", quietly = TRUE)) {
+  try(devtools::load_all(".", quiet = TRUE), silent = TRUE)
+}
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Data
+
+Synthetic data with **confounded treatment** (propensity depends on $X_1$ via a logistic link) and an outcome that depends on treatment and $X_1$, matching the usual Python sketch:
+
+$T \sim \mathrm{Bernoulli}(\mathrm{expit}(X_1))$, $y = (1 + 0.5 X_1) T + X_1 + \varepsilon$.
+
+#### Simulate confounded synthetic data
+
+```{r}
+#| label: synthetic-dgp-da-learner
+#| warning: false
+
+set.seed(123)
+n <- 1000L
+p <- 5L
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+colnames(X) <- paste0("X", seq_len(p))
+# Treatment w corresponds to Python T; avoid naming it `T` in R (conflicts with TRUE).
+w <- rbinom(n, 1L, prob = stats::plogis(X[, 1L]))
+y <- (1 + 0.5 * X[, 1L]) * w + X[, 1L] + stats::rnorm(n)
+```
+
+Dimensions: `r nrow(X)` observations, `r ncol(X)` covariates; treatment rate `r mean(w)`.
+
+For this DGP the **conditional treatment effect** is linear in the first covariate only:
+
+$$
+\tau(x) = \mathbb{E}[Y(1) - Y(0) \mid X = x] = 1 + 0.5 x_1.
+$$
+
+We use that closed form for **validation** (holdout RMSE / correlation). The **population** average effect is $\mathbb{E}[\tau(X)] = 1$ when $X_1 \sim \mathcal{N}(0,1)$.
+
+### Fit `DomainAdaptationLearner`
+
+The [EconML](https://econml.azurewebsites.net/) `DomainAdaptationLearner` takes three estimator choices. **RCausalML** uses the same stages but names the *constructor* arguments after the **base learner string** you pass in (not arbitrary sklearn objects):
+
+| EconML argument | Role | RCausalML argument |
+|-----------------|------|-------------------|
+| `models` | Weighted outcome models $\hat\mu_0$, $\hat\mu_1$ on each arm (must support sample weights) | `learner` (`"lm"`, `"ranger"`, `"glmnet"`, `"xgb"`) |
+| `final_models` | One regressor per non-control treatment: fits pseudo–treatment effects $\hat D$ on $X$ to get $\hat\tau(x)$ | `final_learner` (same options; default copies `learner`) |
+| `propensity_model` | Classifier for $P(T=\text{arm}\mid X)$ vs control on the pooled $\{\text{control},\text{arm}\}$ sample | `propensity_learner` (`"glm"` or `"glmnet"`) |
+
+After `fit()`, the fitted objects are stored as **`dal$final_models`** (list, one element per treatment level vs `control_name`) and **`dal$propensity_models`** (list, parallel: arm-vs-control propensity fit used for weights in that arm’s loop).
+
+#### Fit DA-Learner and predict CATE
+
+```{r}
+#| label: fit-da-learner
+#| warning: false
+
+# EconML: models=..., final_models=..., propensity_model=...
+dal <- DomainAdaptationLearner(
+  learner = "lm",             # weighted outcome models (EconML `models`)
+  final_learner = "lm",       # pseudo-effects on X -> CATE (EconML `final_models`)
+  propensity_learner = "glm", # P(arm|X) vs control (EconML `propensity_model`)
+  control_name = 0
+)
+dal <- fit(dal, X, w, y)
+tau_hat <- predict(dal, X)
+head(tau_hat, 10L)
+```
+
+#### Summarize `final_models` and `propensity_models`
+
+```{r}
+#| label: fitted-components-da
+#| warning: false
+
+cat("Treatment arms (non-control):", paste(dal$t_groups, collapse = ", "), "\n\n")
+
+cat("final_models — estimators for pseudo-treatment effects (one list slot per arm):\n")
+for (i in seq_along(dal$final_models)) {
+  fm <- dal$final_models[[i]]
+  cat("  arm ", dal$t_groups[i], ": type = ", fm$type, "\n", sep = "")
+  if (identical(fm$type, "lm")) print(stats::coef(fm$model))
+}
+
+cat("\npropensity_models — fitted propensity for each arm vs control:\n")
+for (i in seq_along(dal$propensity_models)) {
+  pm <- dal$propensity_models[[i]]
+  cat("  arm ", dal$t_groups[i], " vs control: type = ", pm$type, "\n", sep = "")
+  if (identical(pm$type, "glm")) {
+    print(stats::coef(pm$model))
+  } else if (identical(pm$type, "glmnet")) {
+    print(as.matrix(glmnet::coef(pm$model, s = "lambda.1se")))
+  }
+}
+```
+
+### Average treatment effect (`estimate_ate`)
+
+#### Point and interval ATE estimates
+
+```{r}
+#| label: estimate-ate-da
+#| warning: false
+
+ate_dal <- estimate_ate(dal, X, w, y, pretrain = TRUE, return_ci = TRUE, bootstrap_ci = FALSE)
+print(ate_dal)
+cat(
+  "\nPopulation ATE (theory): 1.0\n",
+  "Sample mean true tau(X): ", mean(1 + 0.5 * X[, 1L]), "\n",
+  sep = ""
+)
+```
+
+### Holdout validation vs known $\tau(x)$
+
+Split the data, **fit only on the training half**, predict on the test set, and compare to $1 + 0.5 X_1$. We also fit a plain **T-Learner** (`TLearner` in the same file) for contrast when selection bias is strong.
+
+#### Holdout metrics: DA-Learner vs T-Learner
+
+```{r}
+#| label: validate-da-holdout
+#| warning: false
+
+set.seed(456)
+idx <- sample.int(n, n)
+n_te <- floor(0.3 * n)
+te_idx <- idx[seq_len(n_te)]
+tr_idx <- idx[-seq_len(n_te)]
+
+true_tau <- function(Xm) 1 + 0.5 * Xm[, 1L]
+
+X_tr <- X[tr_idx, , drop = FALSE]
+w_tr <- w[tr_idx]
+y_tr <- y[tr_idx]
+X_te <- X[te_idx, , drop = FALSE]
+tau_te <- true_tau(X_te)
+
+dal_v <- DomainAdaptationLearner(
+  learner = "lm",             # weighted outcome models (EconML `models`)
+  final_learner = "lm",       # pseudo-effect on X (EconML `final_models`)
+  propensity_learner = "glm", # propensity ê(x) (EconML `propensity_model`)
+  control_name = 0
+)
+dal_v <- fit(dal_v, X_tr, w_tr, y_tr)
+pred_da <- as.numeric(predict(dal_v, X_te))
+
+tl_v <- TLearner(learner = "lm", control_name = 0)
+tl_v <- fit(tl_v, X_tr, w_tr, y_tr)
+pred_tl <- as.numeric(predict(tl_v, X_te))
+
+rmse <- function(a, b) sqrt(mean((a - b)^2))
+mae <- function(a, b) mean(abs(a - b))
+
+val_tbl <- tibble::tibble(
+  learner = c("DomainAdaptationLearner", "TLearner"),
+  RMSE = c(rmse(pred_da, tau_te), rmse(pred_tl, tau_te)),
+  MAE = c(mae(pred_da, tau_te), mae(pred_tl, tau_te)),
+  cor_true = c(cor(pred_da, tau_te), cor(pred_tl, tau_te))
+)
+print(val_tbl)
+```
+
+#### Scatter: predicted vs true CATE on holdout
+
+```{r}
+#| label: fig-cate-scatter-da
+#| warning: false
+#| fig-cap: "Holdout predicted CATE vs true $\\tau(x) = 1 + 0.5 X_1$."
+#| fig-width: 7
+#| fig-height: 4
+
+viz <- tibble::tibble(
+  true_tau = tau_te,
+  DA_Learner = pred_da,
+  T_Learner = pred_tl
+) |>
+  tidyr::pivot_longer(-true_tau, names_to = "method", values_to = "predicted")
+
+ggplot2::ggplot(viz, ggplot2::aes(x = true_tau, y = predicted, color = method)) +
+  ggplot2::geom_point(alpha = 0.35, size = 1.2) +
+  ggplot2::geom_abline(intercept = 0, slope = 1, linetype = 2, color = "gray40") +
+  ggplot2::coord_fixed() +
+  ggplot2::theme_bw() +
+  ggplot2::labs(
+    x = expression("True " * tau * (x)),
+    y = expression("Predicted " * hat(tau) * (x)),
+    color = NULL
+  )
+```
+
+### SHAP for predicted CATE (synthetic DGP, training subsample)
+
+As in the binary-treatment meta-learner notebook (**Part C** there), we attribute **predicted** $\hat{\tau}(X)$ from each fitted meta-learner to covariates using **permutation SHAP** (`explain_cate(..., use_permshap = TRUE)`). Background and explanation rows are drawn **only from the training split** (`X_tr`) defined in the holdout section above. The **X-Learner** is fit **without** a fixed propensity vector, so `predict()` evaluates learned $e(X)$ on any `newdata`, which **kernelshap** requires when features are perturbed. Parallel workers use the same **future** / `parallel` / `parallel_args` pattern as that notebook, with **ranger** included in `parallel_args$packages` for the **DA-, S-, and T-learners**, and **xgboost** / **glmnet** for the **X-Learner** (stage-2 surfaces and glmnet propensity).
+
+#### Permutation SHAP and mean $\|\mathrm{SHAP}\|$ by learner
+
+```{r da-shap-cate-meta}
+#| warning: false
+#| fig.width: 10
+#| fig.height: 9
+fast_run <- Sys.getenv("CAUSALML_FAST_RENDER", "TRUE") == "TRUE"
+has_ks_da <- requireNamespace("kernelshap", quietly = TRUE)
+has_sv_da <- requireNamespace("shapviz", quietly = TRUE)
+shp_list_da <- NULL
+X_explain_da <- NULL
+if (!has_ks_da || !has_sv_da) {
+  message("Skipping SHAP: install.packages(c(\"kernelshap\", \"shapviz\")) to run this section.")
+} else if (!exists("X_tr") || nrow(X_tr) < 30L) {
+  message("Skipping SHAP: run the holdout chunk first so X_tr is defined with enough rows.")
+} else {
+  suppressPackageStartupMessages({
+    library(kernelshap)
+    library(shapviz)
+  })
+  num_trees_shap <- if (fast_run) 80L else 200L
+  nrounds_x_shap <- if (fast_run) 40L else 80L
+  learner_da_shap <- fit(
+    DomainAdaptationLearner(
+      learner = "ranger",
+      final_learner = "ranger",
+      propensity_learner = "glm",
+      control_name = 0
+    ),
+    X_tr, w_tr, y_tr,
+    num.trees = num_trees_shap
+  )
+  learner_s_shap <- fit(
+    SLearner(learner = "ranger", control_name = 0),
+    X_tr, w_tr, y_tr,
+    num.trees = num_trees_shap
+  )
+  learner_t_shap <- fit(
+    TLearner(learner = "ranger", control_name = 0),
+    X_tr, w_tr, y_tr,
+    num.trees = num_trees_shap
+  )
+  learner_x_shap <- fit(
+    XLearner(learner = "xgb", control_name = 0),
+    X_tr, w_tr, y_tr,
+    nrounds = nrounds_x_shap
+  )
+
+  set.seed(4242)
+  n_explain_da <- if (fast_run) 80L else 200L
+  bg_size_da <- if (fast_run) 100L else min(300L, nrow(X_tr))
+  n_explain_da <- min(n_explain_da, nrow(X_tr))
+  bg_size_da <- min(bg_size_da, nrow(X_tr))
+  idx_ex_da <- sample.int(nrow(X_tr), n_explain_da)
+  bg_idx_da <- sample.int(nrow(X_tr), bg_size_da)
+  X_explain_da <- as.data.frame(X_tr[idx_ex_da, , drop = FALSE])
+  bg_X_da <- as.data.frame(X_tr[bg_idx_da, , drop = FALSE])
+
+  has_future_da <- requireNamespace("future", quietly = TRUE)
+  n_workers_shap_da <- if (has_future_da) {
+    min(4L, future::availableCores(omit = 1L))
+  } else {
+    1L
+  }
+  use_parallel_shap_da <- isTRUE(n_workers_shap_da > 1L)
+  if (use_parallel_shap_da) {
+    shap_plan_old_da <- future::plan()
+    on.exit(future::plan(shap_plan_old_da), add = TRUE)
+    future::plan(future::multisession, workers = n_workers_shap_da)
+  }
+
+  meta_da_shap <- list(
+    "DA (ranger)" = learner_da_shap,
+    "S (ranger)" = learner_s_shap,
+    "T (ranger)" = learner_t_shap,
+    "X (xgb, learned e(X))" = learner_x_shap
+  )
+
+  shap_parallel_args_da <- if (use_parallel_shap_da) {
+    list(packages = c("RCausalML", "ranger", "xgboost", "glmnet"))
+  } else {
+    NULL
+  }
+
+  shap_list_da <- vector("list", length(meta_da_shap))
+  names(shap_list_da) <- names(meta_da_shap)
+  for (i in seq_along(meta_da_shap)) {
+    shap_list_da[[i]] <- explain_cate(
+      meta_da_shap[[i]],
+      X = X_explain_da,
+      bg_X = bg_X_da,
+      use_permshap = TRUE,
+      verbose = FALSE,
+      parallel = use_parallel_shap_da,
+      parallel_args = shap_parallel_args_da
+    )
+  }
+
+  shp_list_da <- lapply(shap_list_da, function(ks) shapviz::shapviz(ks, X = X_explain_da))
+
+  imp_rows_da <- lapply(names(shap_list_da), function(lab) {
+    ks <- shap_list_da[[lab]]
+    S_mat <- as.matrix(ks$S)
+    data.frame(
+      feature = colnames(ks$X),
+      mean_abs_shap = colMeans(abs(S_mat)),
+      learner = lab,
+      stringsAsFactors = FALSE
+    )
+  })
+  imp_df_da <- dplyr::bind_rows(imp_rows_da)
+
+  p_imp_da <- ggplot2::ggplot(imp_df_da, ggplot2::aes(x = reorder(feature, mean_abs_shap), y = mean_abs_shap)) +
+    ggplot2::geom_col(fill = "steelblue", width = 0.75) +
+    ggplot2::facet_wrap(~learner, scales = "free_y", ncol = 2) +
+    ggplot2::coord_flip() +
+    ggplot2::labs(
+      title = "Synthetic DGP: mean |SHAP| for predicted CATE by meta-learner (train subsample)",
+      x = NULL,
+      y = "Mean |SHAP|"
+    ) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(strip.text = ggplot2::element_text(face = "bold"))
+  print(p_imp_da)
+}
+```
+
+### Visualize SHAP with beeswarm and waterfall plots (T-Learner with ranger base)
+
+#### Beeswarm for each learner; waterfall for highest predicted CATE (T-Learner)
+
+```{r da-shap-beeswarm-waterfall}
+#| warning: false
+#| fig.width: 9
+#| fig.height: 11
+if (!is.null(shp_list_da) && length(shp_list_da) > 0) {
+  for (lab in names(shp_list_da)) {
+    print(
+      shapviz::sv_importance(shp_list_da[[lab]], kind = "beeswarm") +
+        ggplot2::ggtitle(lab)
+    )
+  }
+  pred_t_da <- as.numeric(predict(learner_t_shap, as.matrix(X_explain_da)))
+  row_hi_da <- which.max(pred_t_da)
+  print(
+    shapviz::sv_waterfall(shp_list_da[["T (ranger)"]], row_id = row_hi_da) +
+      ggplot2::ggtitle(
+        "Waterfall SHAP — T-Learner (ranger), highest predicted CATE in explain set (synthetic DGP)"
+      )
+  )
+}
+```
+
+## Summary and Conclusion
+
+This notebook introduced the **Domain Adaptation Learner (DA-Learner)** for estimating **conditional average treatment effects (CATE)** when treatment and control groups can differ systematically in covariate distributions (**selection bias** / **domain shift**). We mapped **EconML**’s `models`, `final_models`, and `propensity_model` to **RCausalML**’s `learner`, `final_learner`, and `propensity_learner`, and showed how **`fit()`** stores fitted **`final_models`** and **`propensity_models`** for inspection.
+
+On a **synthetic confounded DGP** with closed-form $\tau(x) = 1 + 0.5 x_1$, we **fit** `DomainAdaptationLearner`, reported **ATE** via **`estimate_ate()`**, and **validated** predictions on a **holdout** split against the true CATE (RMSE, MAE, correlation), alongside a plain **T-Learner** for contrast. **Permutation SHAP** via **`explain_cate(..., use_permshap = TRUE)`** on a **training subsample** illustrated which covariates drive **predicted** $\hat{\tau}(X)$ for **DA-, S-, T-, and X-learners** (with **parallel** **future** workers and **`parallel_args$packages`** where applicable). SHAP values summarize the **fitted surfaces**, not additional causal identification beyond the assumptions already encoded in the estimators.
+
+## Resources
+
+- [EconML: `DomainAdaptationLearner`](https://econml.azurewebsites.net/) — Python reference implementation and API (models, final_models, propensity_model).
+- [CausalML: meta-learners with synthetic data](https://causalml.readthedocs.io/en/latest/examples/meta_learners_with_synthetic_data.html) — related meta-learner workflows and benchmarks.
+- [kernelshap](https://CRAN.R-project.org/package=kernelshap) — Kernel and permutation SHAP used by **`RCausalML::explain_cate()`**.
+- [shapviz](https://CRAN.R-project.org/package=shapviz) — Visualization (`sv_importance`, `sv_waterfall`, beeswarm plots).
+- Künzel et al. (2019). Metalearners for estimating heterogeneous treatment effects using machine learning. *PNAS*.
+- Nie & Wager (2018). Quasi-oracle estimation of heterogeneous treatment effects. *Biometrika*.
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+

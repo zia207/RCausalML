@@ -2,11 +2,11 @@ Package: RCausalML
 Type: Package
 Title: RCausalML - Uplift Modeling and Causal Inference with Machine Learning
 Version: 0.3.0
-Date: 2026-05-19
-Author: RCausalML Authors [aut, cre]
-Maintainer: RCausalML Authors <rcausalml@example.com>
-Authors@R: person("RCausalML", "Authors", email = "rcausalml@example.com", role = c("aut", "cre"))
-Description: R port of the Python RCausalML package. Provides uplift modeling and causal
+Date: 2026-05-21
+Author: Zia Ahmed [aut, cre]
+Maintainer: Zia Ahmed <zia207@gmail.com>
+Authors@R: person("Zia", "Ahmed", email = "zia207@gmail.com", role = c("aut", "cre"))
+Description: R package for Causal Machine Learning. Provides uplift modeling and causal
     inference methods using machine learning. Estimates the Conditional Average Treatment
     Effect (CATE) from experimental or observational data. Includes meta-learners (S, T, X, R, DR),
     Double Machine Learning (DML: LinearDML, SparseLinearDML, KernelDML, NonParamDML, CausalForestDML),
@@ -37,11 +37,16 @@ Description: R port of the Python RCausalML package. Provides uplift modeling an
     penalty, and sparsity regularisation (TemporalCausalVAE, temporal_causal_loss). Temporal
     Causal Discovery Framework (R/temporalCausaDiscovery.R): depthwise-TCN ADDSTCN architecture
     (Nauta et al.) for attention-based time-series causal discovery. Also propensity score
-    estimation and matching, synthetic data, uplift trees, policy learning, and instrumental
+    estimation and matching, synthetic data, uplift trees and forests
+    (R/uplift_trees.R; unified Python-style API in R/uplift_randomForest.R with
+    uplift_randomForest, uplift_randomForestClassifier, and
+    uplift_randomForestRegressor for binary and continuous outcomes; T-learner
+    uplift XGBoost in R/uplift_xgboost.R with uplift_xgboost,
+    uplift_xgboostClassifier, and uplift_xgboostRegressor), policy
+    learning, and instrumental
     variable (2SLS) methods. DML API aligned with EconML; see also DoubleML (R). Causal DAG
     discovery is exposed through R/causalStructureML.R: causalStructureML() and
-    causal_structure_ml_model_descriptions() unify NOTEARS (R/notears.R), DAG-GNN
-    (R/dag_gnn.r), and GraN-DAG (R/GraN_DAG.R). Attention-Based/Transformer Causal
+    causal_structure_ml_model_descriptions() unify NOTEARS, DAG-GNN, and GraN-DAG (in R/causalDeepNet.R).
     Models (R/causalDeepNet.R): TCDF (Temporal Causal Discovery Framework; Nauta et al.,
     2019) with stacked causal dilated convolutions and variable-importance attention,
     CausalTransformer with autoregressive masking and inter-variable cross-attention, and

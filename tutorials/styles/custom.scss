@@ -1,0 +1,17 @@
+/*-- scss:defaults --*/
+$primary: #2C6FAC;
+$link-color: #2C6FAC;
+
+/*-- scss:rules --*/
+.navbar {
+  box-shadow: none;
+}
+
+pre.sourceCode {
+  border-left: 4px solid $primary;
+}
+
+#TOC .nav-link.active {
+  color: $primary;
+  font-weight: 600;
+}

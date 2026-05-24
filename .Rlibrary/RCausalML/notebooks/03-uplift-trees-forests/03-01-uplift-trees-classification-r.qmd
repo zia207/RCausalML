@@ -1,0 +1,574 @@
+# Uplift Trees- Classification
+
+In this notebook, we use synthetic data set to demonstrate the use of the tree-based algorithms in classification example. It mirrors the [Uplift Trees Example with Synthetic Data](https://causalml.readthedocs.io/en/latest/examples/uplift_trees_with_synthetic_data.html) from the Python CausalML docs.
+
+
+## Scientific Terminology for Beginners
+
+Before fitting uplift classifiers, it helps to know the core terminology.
+
+- **Classification outcome**: A binary target such as 0/1, no purchase/purchase, or no click/click.
+- **Treatment assignment**: Indicator of who received the intervention (for example, `control` vs `treatment1`).
+- **Potential outcomes**: The two hypothetical outcomes for each person: one if treated, one if not treated.
+- **Individual Treatment Effect (ITE)**: Difference between those two potential outcomes for one person.
+- **CATE (Conditional Average Treatment Effect)**: Average treatment effect for people with similar features $X$.
+- **Uplift curve / AUUC**: Evaluation tools that measure how well the model ranks people by true incremental impact.
+
+### Simple example
+
+Imagine an online campaign with a binary outcome (**conversion**).
+
+- Among users predicted as high uplift, treated conversion is 40% and control conversion is 25%.
+- Estimated CATE in that segment is **0.15** (15 percentage points).
+
+This means targeting that segment is expected to create additional conversions relative to not targeting it.
+
+## Overview
+
+Uplift trees are a powerful tool for estimating heterogeneous treatment effects, allowing us to identify which individuals are most likely to respond positively to an intervention. In this notebook, we will use synthetic data to demonstrate how to fit an uplift random forest model, make predictions, and evaluate the model's performance using uplift curves. We also use **kernel SHAP** (`kernelshap`, `shapviz`) to explain heterogeneity in predicted uplift (CATE), following the same pattern as the causal survival forest notebook. This example closely follows the structure of the Python {CausalML} documentation on uplift trees with synthetic data. 
+
+## Uplift Trees in R
+
+In this section, we will use the `RCausalML` package to fit an uplift random forest model. The `uplift_rf_multi()` function allows us to handle multiple treatment groups and estimate the uplift for each group compared to a control group. We will then use the fitted model to predict the uplift on a test set and evaluate the results.
+
+## Setup
+
+### Load and Check Required Libraries
+
+```{r setup-packages}
+packages <- c('tidyverse', 
+              'RCausalML', 
+              'rpart.plot', 
+              'shapviz',
+              'kernelshap')
+```
+
+
+### Install Missing Packages (if needed)
+
+```{r}
+#| label: install-missing-packages
+#| warning: false
+#| error: false
+# new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+# if(length(new_packages)) install.packages(new_packages)
+# In an R session
+# install.packages(
+#   "/home/zia207/WebSites/R_Website/Causal_Inference_R/Cursor_R/RCausalML",
+#   repos = NULL,
+#   type = "source"
+# )
+```
+
+### Load Required Libraries
+
+```{r}
+#| label: load-required-libraries
+# When rendering from package root, use local RCausalML (so causal_tree fixes are used)
+if (file.exists("DESCRIPTION") && requireNamespace("devtools", quietly = TRUE)) {
+  try(devtools::load_all(".", quiet = TRUE), silent = TRUE)
+}
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+## Getting started with simulated data
+
+We use **simulated data** from `synthetic_data()` (see `R/synthetic_data.R`) to illustrate fitting a causal tree, estimating treatment effects on a test set, and visualizing results. The data has a known heterogeneous treatment effect structure, which is useful for validation.
+
+### Generate synthetic dataset
+
+The CausalML package contains various functions to generate synthetic datasets for uplift modeling. Here we generate a classification dataset using the `make_uplift_classification()` function.
+
+```{r make-data}
+# Python: df, x_names = make_uplift_classification(). R uses same structure with explicit params for 4 groups.
+out <- make_uplift_classification(
+  treatment_name = c("control", "treatment1", "treatment2", "treatment3"),
+  y_name = "conversion",
+  n_samples = 4000,
+  n_classification_features = 10,
+  n_classification_informative = 5,
+  n_uplift_increase_dict = list(treatment1 = 5, treatment2 = 5, treatment3 = 5),
+  n_uplift_decrease_dict = list(treatment1 = 3, treatment2 = 3, treatment3 = 3),
+  delta_uplift_increase_dict = list(treatment1 = 0.1, treatment2 = 0.15, treatment3 = 0.2),
+  delta_uplift_decrease_dict = list(treatment1 = -0.1, treatment2 = -0.1, treatment3 = -0.1),
+  random_seed = 111
+)
+df <- out$data
+x_names <- out$X_names
+```
+
+```{r df-head}
+head(df, 5)
+```
+
+Look at the conversion rate and sample size in each group:
+
+```{r pivot}
+# Conversion rate and sample size by treatment group (Python: pivot_table values='conversion', aggfunc=[np.mean, np.size], margins=True)
+agg <- aggregate(conversion ~ treatment_group_key, data = df,
+                 FUN = function(z) c(mean = mean(z), size = length(z)))
+agg <- do.call(data.frame, agg)
+names(agg) <- c("treatment_group_key", "mean", "size")
+agg <- rbind(agg, data.frame(treatment_group_key = "All", mean = mean(df$conversion), size = nrow(df)))
+print(agg)
+```
+
+### Run the uplift classifier
+
+In this section, we first fit the uplift tree classifier using training data. We then use the fitted model to make a prediction using testing data. The prediction returns an array in which each column contains the predicted uplift if the unit was in the corresponding treatment group (or with `full_output=TRUE`, control and treatment probabilities plus recommended treatment and deltas, as in Python).
+
+```{r split}
+# Split data to training and testing samples for model validation (next section)
+# Python: train_test_split(df, test_size=0.2, random_state=111)
+set.seed(111)
+idx_test <- sample(nrow(df), size = round(0.2 * nrow(df)))
+df_train <- df[-idx_test, ]
+df_test <- df[idx_test, ]
+```
+
+#### Single uplift tree (UpliftTreeClassifier)
+
+Python uses `UpliftTreeClassifier(control_name='control')` on the full multi-treatment data; predict returns a DataFrame with columns = classes_ (control, treatment1, treatment2, treatment3). In R we use `uplift_rf_multi` with `n_trees = 1` to get one tree per treatment arm and the same output structure.
+
+```{r single-tree}
+# Python: clf = UpliftTreeClassifier(control_name='control'); clf.fit(...); p = clf.predict(...)
+clf <- uplift_rf_multi(
+  as.matrix(df_train[, x_names]),
+  df_train$treatment_group_key,
+  df_train$conversion,
+  control_name = "control",
+  n_trees = 1,
+  min_node_size = 100,
+  max_depth = 4
+)
+p <- predict(clf, as.matrix(df_test[, x_names]), full_output = TRUE)
+# DataFrame with columns = control, treatment1, treatment2, treatment3 (like Python clf.classes_)
+df_res_tree <- p[, c("control", clf$treatment_names), drop = FALSE]
+head(df_res_tree, 5)
+```
+
+#### Uplift random forest (UpliftRandomForestClassifier)
+
+ In R we use `uplift_rf_multi` with `n_trees = >1` to get multiple trees per treatment arm and the same output structure.
+
+
+```{r uplift-rf}
+# Python: uplift_model = UpliftRandomForestClassifier(control_name='control')
+uplift_model <- uplift_rf_multi(
+  as.matrix(df_train[, x_names]),
+  df_train$treatment_group_key,
+  df_train$conversion,
+  control_name = "control",
+  n_trees = 10,
+  min_node_size = 50,
+  max_depth = 4
+)
+X_test <- as.matrix(df_test[, x_names])
+# full_output=TRUE: control, treatment1, treatment2, treatment3, recommended_treatment, delta_*, max_delta
+df_res <- predict(uplift_model, X_test, full_output = TRUE)
+cat("Shape:", nrow(df_res), "x", ncol(df_res), "\n")
+head(df_res)
+```
+
+```{r y-pred}
+# Python: y_pred = uplift_model.predict(df_test[x_names].values) -> shape (n_sample, n_treatment) excluding control
+y_pred <- predict(uplift_model, X_test)
+dim(y_pred)
+head(y_pred)
+```
+
+```{r result-matrix}
+# Python: result = pd.DataFrame(y_pred, columns=uplift_model.classes_[1:])
+# Put the predictions in a DataFrame; columns = treatment names (excluding control)
+result <- as.data.frame(y_pred)
+names(result) <- uplift_model$treatment_names
+head(result)
+```
+
+### Create the uplift curve
+
+The performance of the model can be evaluated with the help of the uplift curve.
+
+#### Create a synthetic population
+
+The uplift curve is calculated on a synthetic population that consists of those that were in the control group and those who happened to be in the treatment group recommended by the model. We use the synthetic population to calculate the *actual* treatment effect within *predicted* treatment effect quantiles. Because the data is randomized, we have a roughly equal number of treatment and control observations in the predicted quantiles and there is no self selection to treatment groups.
+
+```{r best-treatment}
+# If all deltas are negative, assign to control; otherwise assign to the treatment
+# with the highest delta
+uplift_cols <- uplift_model$treatment_names
+best_treatment <- ifelse(
+  apply(result[uplift_cols], 1, function(r) all(r < 0)),
+  "control",
+  uplift_cols[apply(result[uplift_cols], 1, which.max)]
+)
+
+# Create indicator variables for whether a unit happened to have the
+# recommended treatment or was in the control group
+actual_is_best <- as.integer(df_test$treatment_group_key == best_treatment)
+actual_is_control <- as.integer(df_test$treatment_group_key == "control")
+```
+
+```{r synthetic}
+synthetic <- (actual_is_best == 1) | (actual_is_control == 1)
+synth <- result[synthetic, , drop = FALSE]
+```
+
+#### Calculate the observed treatment effect per predicted treatment effect quantile
+
+We use the observed treatment effect to calculate the uplift curve, which answers the question: how much of the total cumulative uplift could we have captured by targeting a subset of the population sorted according to the predicted uplift, from highest to lowest?
+
+CausalML has the `plot_gain()` function which calculates the uplift curve given a DataFrame containing the treatment assignment, observed outcome and the predicted treatment effect.
+
+```{r auuc-metrics}
+# synth.assign(is_treated=..., conversion=..., uplift_tree=synth.max(axis=1)).drop(columns=...)
+auuc_metrics <- synth
+auuc_metrics$is_treated <- 1 - actual_is_control[synthetic]
+auuc_metrics$conversion <- df_test$conversion[synthetic]
+auuc_metrics$uplift_tree <- apply(synth, 1, max)
+auuc_metrics <- auuc_metrics[, c("is_treated", "conversion", "uplift_tree")]
+head(auuc_metrics)
+```
+
+```{r plot-gain}
+#| figure.width: 6
+#| figure.height: 5
+plot_gain(auuc_metrics, outcome_col = "conversion", treatment_col = "is_treated")
+```
+
+### Binary subset (control vs treatment1) for tree visualization and KL forest
+
+The sections below follow the one-control/one-treatment setup from the [Python uplift tree visualization](https://causalml.readthedocs.io/en/latest/examples/uplift_tree_visualization.html) example. We restrict `df` to `control` and `treatment1`, then split into training and test matrices (column names are required for SHAP).
+
+```{r binary-uplift-data}
+set.seed(111)
+df_bin <- df[df$treatment_group_key %in% c("control", "treatment1"), ]
+df_bin$w_bin <- as.integer(df_bin$treatment_group_key != "control")
+X_all <- as.matrix(df_bin[, x_names])
+colnames(X_all) <- x_names
+y_all <- df_bin$conversion
+w_all <- df_bin$w_bin
+idx_bin <- sample(nrow(X_all), size = floor(0.8 * nrow(X_all)))
+X_train <- X_all[idx_bin, , drop = FALSE]
+y_train <- y_all[idx_bin]
+w_train <- w_all[idx_bin]
+X_test <- X_all[-idx_bin, , drop = FALSE]
+y_test <- y_all[-idx_bin]
+w_test <- w_all[-idx_bin]
+X <- X_all
+y <- y_all
+w <- w_all
+```
+
+### Print uplift tree as a string
+
+```{r tree-string}
+uplift_model_bin <- uplift_rf_kl(
+  X_train, w_train, y_train,
+  n_trees = 1,
+  min_node_size = 200,
+  min_samples_treatment = 50,
+  max_depth = 4,
+  n_reg = 100
+)
+uplift_tree_fitted <- uplift_model_bin$trees[[1]]
+x_names_fit <- uplift_model_bin$X_names
+cat(uplift_tree_string(uplift_tree_fitted, x_names_fit))
+```
+
+### Read the tree
+
+- **First line**: node split condition (e.g. `feature_k >= value`).
+- **Impurity**: value of the loss function used for splitting (e.g. KL).
+- **total_sample / group_sample**: sample size in the node (and by treatment group when applicable).
+- **Uplift score**: treatment effect between treatment and control at that node (at leaves, shown as `tau` in R).
+- **Uplift p_value**: in Python the plot can show p_value for the treatment effect; R leaves show `[tau=..., n=...]`.
+- **Validation uplift score**: when validation data is “filled” in the tree, this reflects the uplift based on validation data. In Python, `uplift_model.fill(X=df_test, ...)` updates node statistics; in R we compare mean predicted CATE on train vs test (see next subsection).
+
+### Plot the uplift tree
+
+Edges are drawn with **arrows** from each split to its children (aligned with [Python CausalML's graphviz style](https://causalml.readthedocs.io/en/latest/examples/uplift_tree_visualization.html)).
+
+```{r tree-plot}
+#| fig.width: 12
+#| fig.height: 12
+uplift_tree_plot(uplift_tree_fitted, x_names_fit, main = "Uplift tree (KL, one control + one treatment)")
+```
+
+Optional: use [rpart.plot](http://www.milbo.org/rpart-plot/index.html) for a different layout:
+
+```{r tree-plot-rpart, eval=FALSE}
+# If rpart and rpart.plot are installed:
+# uplift_tree_plot(uplift_tree_fitted, x_names_fit, main = "Uplift tree (rpart.plot)", use_rpart_plot = TRUE)
+```
+
+### Visualize validation tree: one control + one treatment
+
+In the Python notebook, the trained tree is filled with the testing dataset so that the **validation uplift score** appears in the tree nodes. In R there is no `fill()` method; we evaluate the same model on the test set and compare mean predicted CATE to check consistency (e.g. overfitting).
+
+```{r validation}
+pred_train <- predict(uplift_model_bin, X_train)
+pred_test <- predict(uplift_model_bin, X_test)
+cat("Mean predicted CATE — train:", round(mean(pred_train), 4), " test:", round(mean(pred_test), 4), "\n")
+```
+
+## One control + one treatment: tree in random forest
+
+Train an uplift **random forest**, then visualize **one** tree (e.g. the first, index 0 in Python / `trees[[1]]` in R). Python: `UpliftRandomForestClassifier(n_estimators=5, max_depth=5, min_samples_leaf=200, min_samples_treatment=50, n_reg=100, evaluationFunction='KL', control_name='control')`.
+
+```{r rf-train}
+uplift_rf <- uplift_rf_kl(
+  X_train, w_train, y_train,
+  n_trees = 5,
+  min_node_size = 200,
+  min_samples_treatment = 50,
+  max_depth = 5,
+  n_reg = 100
+)
+```
+
+### Print and plot one tree in the forest
+
+Specify a tree in the random forest (Python: `uplift_model.uplift_forest[0]`; R: `uplift_rf$trees[[1]]`).
+
+```{r rf-tree-string}
+uplift_tree_one <- uplift_rf$trees[[1]]
+cat(uplift_tree_string(uplift_tree_one, uplift_rf$X_names))
+```
+
+```{r rf-tree-plot}
+#| fig.width: 8
+#| fig.height: 8
+uplift_tree_plot(uplift_tree_one, uplift_rf$X_names, main = "First tree in uplift random forest (KL)")
+```
+
+### Fill the tree with validation data
+
+In Python, `uplift_tree.fill(X=df_test, ...)` updates node statistics with the test set; the plot then shows validation uplift score in the nodes. In R we evaluate predictions on the test set and compare mean CATE on train vs test (as in the single-tree validation subsection above).
+
+### Forest visualization: plot multiple trees in a grid
+
+Visualize several trees from the same forest (R equivalent of plotting `uplift_forest[0]`, `uplift_forest[1]`, ... in Python):
+
+```{r forest-plot}
+#| fig.width: 12
+#| fig.height: 12
+uplift_forest_plot(uplift_rf, which_trees = 1:4, main_prefix = "Tree ")
+```
+
+Optional: color leaves by uplift (tau):
+
+```{r forest-plot-colored}
+#| fig.width: 12
+#| fig.height: 12
+uplift_forest_plot(uplift_rf, which_trees = 1:4, color_leaves_by_tau = TRUE, main_prefix = "Tree ")
+```
+
+## One control + multiple treatments
+
+As in the [Python example](https://causalml.readthedocs.io/en/latest/examples/uplift_tree_visualization.html), we use the full dataset with control and multiple treatments. The uplift score at each node represents the **best uplift among all treatment effects** (Python: "The uplift score represents the best uplift score among all treatment effects").
+
+```{r multi-data}
+# Data generation (Python: make_uplift_classification() with default 4 groups)
+out_multi <- make_uplift_classification(
+  treatment_name = c("control", "treatment1", "treatment2", "treatment3"),
+  y_name = "conversion",
+  n_samples = 4000,
+  n_classification_features = 10,
+  n_classification_informative = 5,
+  n_uplift_increase_dict = list(treatment1 = 5, treatment2 = 5, treatment3 = 5),
+  n_uplift_decrease_dict = list(treatment1 = 3, treatment2 = 3, treatment3 = 3),
+  delta_uplift_increase_dict = list(treatment1 = 0.1, treatment2 = 0.15, treatment3 = 0.2),
+  delta_uplift_decrease_dict = list(treatment1 = -0.1, treatment2 = -0.1, treatment3 = -0.1),
+  random_seed = 111
+)
+df_multi <- out_multi$data
+X_names_multi <- out_multi$X_names
+```
+
+Look at the conversion rate and sample size in each group (Python: `pivot_table(values='conversion', index='treatment_group_key', aggfunc=[np.mean, np.size], margins=True)`):
+
+```{r multi-pivot}
+agg_multi <- aggregate(conversion ~ treatment_group_key, data = df_multi, FUN = function(z) c(mean = mean(z), size = length(z)))
+agg_multi <- do.call(data.frame, agg_multi)
+names(agg_multi) <- c("treatment_group_key", "mean", "size")
+agg_multi <- rbind(agg_multi, data.frame(treatment_group_key = "All", mean = mean(df_multi$conversion), size = nrow(df_multi)))
+print(agg_multi)
+```
+
+Split and train uplift tree (Python: `UpliftTreeClassifier(max_depth=3, min_samples_leaf=200, min_samples_treatment=50, n_reg=100, evaluationFunction='KL', control_name='control')`). In R we use control vs any treatment (binary) for the tree; for full multi-treatment trees use `uplift_rf_multi()`.
+
+```{r multi-split}
+set.seed(111)
+idx_m <- sample(nrow(df_multi), size = floor(0.8 * nrow(df_multi)))
+df_multi$w_multi <- as.integer(df_multi$treatment_group_key != "control")
+X_multi <- as.matrix(df_multi[, X_names_multi])
+y_multi <- df_multi$conversion
+w_multi <- df_multi$w_multi
+```
+
+```{r multi-train}
+uplift_model_multi <- uplift_rf_kl(
+  X_multi[idx_m, ], w_multi[idx_m], y_multi[idx_m],
+  n_trees = 1,
+  min_node_size = 200,
+  min_samples_treatment = 50,
+  max_depth = 3,
+  n_reg = 100
+)
+tree_multi <- uplift_model_multi$trees[[1]]
+```
+
+### Plot uplift tree (multiple treatments)
+
+The uplift score at each node represents the best uplift among all treatment effects (as in the Python example).
+
+```{r multi-tree-plot}
+#| fig.width: 8
+#| fig.height: 8
+uplift_tree_plot(tree_multi, uplift_model_multi$X_names, main = "Uplift tree (one control + multiple treatments)")
+```
+
+### Predicted CATE distribution (forest)
+
+As an extra visualization, fit a forest and plot the distribution of predicted CATE across units.
+
+```{r forest-cate}
+uf <- uplift_rf_kl(X, w, y, n_trees = 5, min_node_size = 20, max_depth = 4)
+pred_cate <- predict(uf, X)
+```
+
+```{r plot-cate}
+#| fig.width: 12
+#| fig.height: 12
+hist(pred_cate, breaks = 30, main = "Uplift RF (KL): predicted CATE", xlab = "CATE", col = "steelblue", border = NA)
+abline(v = mean(pred_cate), lty = 2, col = "red")
+legend("topright", legend = sprintf("Mean = %.3f", mean(pred_cate)), lty = 2, col = "red", bty = "n")
+```
+
+### Kernel SHAP values for predicted uplift (CATE)
+
+We explain the predicted treatment effects $\hat{\tau}(X)$ from the **binary KL uplift random forest** (`uplift_rf`) on a reasonably sized subset of the training data (e.g., 200–500 rows) — the full sample can be slow.
+
+```{r}
+#| label: compute-shap-uplift
+set.seed(2026)
+
+n_explain <- min(400L, nrow(X_train))
+bg_size <- min(300L, nrow(X_train))
+X_explain <- X_train[seq_len(n_explain), , drop = FALSE]
+bg_idx <- sample.int(nrow(X_train), bg_size)
+bg_X <- X_train[bg_idx, , drop = FALSE]
+
+pred_fun <- function(object, newdata) {
+  as.vector(predict(object, newdata))
+}
+
+shap_ksh <- kernelshap(
+  object   = uplift_rf,
+  X        = X_explain,
+  bg_X     = bg_X,
+  pred_fun = pred_fun,
+  bg_w     = NULL,
+  verbose  = FALSE
+)
+
+shp_uplift <- shapviz(shap_ksh, X = X_explain)
+```
+
+#### SHAP summary plot (beeswarm + importance)
+
+This shows which covariates drive heterogeneity in predicted uplift the most, and in which direction.
+
+```{r}
+#| label: shap-importance-beeswarm-uplift
+#| fig.width: 7
+#| fig.height: 5.5
+
+sv_importance(shp_uplift, kind = "beeswarm")
+sv_importance(shp_uplift, show_numbers = TRUE)
+```
+
+#### SHAP dependence plots (main effects)
+
+Explore how individual covariates relate to the estimated uplift.
+
+```{r}
+#| label: shap-dependence-uplift
+#| fig.width: 8
+#| fig.height: 6
+
+important_vars <- x_names[seq_len(min(4L, length(x_names)))]
+
+sv_dependence(shp_uplift, v = important_vars, share_y = TRUE)
+```
+
+Single covariate with a color interaction:
+
+```{r}
+#| label: shap-dependence-single-uplift
+if (length(x_names) >= 2) {
+  sv_dependence(shp_uplift, v = x_names[[2]], color_var = x_names[[1]])
+}
+```
+
+#### Waterfall / force plot for a single observation
+
+Illustrates why a specific profile has high or low estimated uplift.
+
+```{r}
+#| label: shap-waterfall-single-uplift
+#| fig.width: 7
+#| fig.height: 4.5
+
+preds_explain <- pred_fun(uplift_rf, X_explain)
+row_id_max <- which.max(preds_explain)
+
+sv_waterfall(shp_uplift, row_id = row_id_max) +
+  ggplot2::ggtitle("SHAP waterfall — highest estimated uplift (CATE) in explain set")
+
+sv_force(shp_uplift, row_id = row_id_max)
+```
+
+#### Optional: explain a few test rows
+
+```{r}
+#| label: shap-test-set-uplift
+n_te <- min(10L, nrow(X_test))
+shap_test <- kernelshap(
+  uplift_rf,
+  X        = X_test[seq_len(n_te), , drop = FALSE],
+  bg_X     = bg_X,
+  pred_fun = pred_fun,
+  verbose  = FALSE
+)
+
+shp_test <- shapviz(shap_test, X = X_test[seq_len(n_te), , drop = FALSE])
+
+sv_importance(shp_test, kind = "beeswarm")
+```
+
+#### Interpretation notes
+
+- **Positive SHAP** → the feature value pushes the predicted uplift (CATE) **up**; **negative SHAP** pushes it **down**.
+- Here we explain **heterogeneity in** $\hat{\tau}(X)$ from the uplift forest, not the raw conversion outcome.
+- Beeswarm plots can reveal nonlinear patterns and interactions the forest encodes.
+- For faster or tree-specific explainers, packages such as **treeshap** target **ranger**; **kernelshap** is model-agnostic and works with `uplift_rf_kl` predictions.
+
+
+## Summary and Conclusion
+
+In this notebook, we demonstrated the use of uplift trees and forests in R to estimate and interpret individual-level treatment effects, using both synthetic and real-world datasets. We showed how to fit uplift models with the `RCausalML` package, make predictions, and visualize heterogeneity in treatment effects through uplift curves. Explainable AI tools such as kernel SHAP and shapviz were leveraged to further illuminate which features drive heterogeneity in model-predicted uplift (CATE), providing actionable insights into both feature importance and individualized impact.
+
+Uplift models empower practitioners to identify the subpopulations most likely to benefit from an intervention, supporting optimized targeting strategies in fields like marketing, medicine, and social sciences. Kernel SHAP explanations help open the "black box" of ensemble models, revealing main effects and interactions learned by the trees.
+
+Overall, uplift trees and forests, combined with explainable ML techniques, form a powerful toolkit for personalized treatment effect estimation and data-driven decision-making in causal inference applications.
+
+
+
+## References
+
+- [Uplift Trees Example with Synthetic Data (Python CausalML)](https://causalml.readthedocs.io/en/latest/examples/uplift_trees_with_synthetic_data.html)
+- Gutierrez & Gérardy (2017), [Causal inference and uplift modelling: A review of the literature](http://proceedings.mlr.press/v67/gutierrez17a/gutierrez17a.pdf)

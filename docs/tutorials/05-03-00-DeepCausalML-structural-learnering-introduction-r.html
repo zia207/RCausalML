@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>deepcausalml-structural-learnering-introduction-r – RCausalML Tutorials</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.html" rel="next">
+<link href="./05-02-07-DeepCausalML-causal-encoding-generative-EGN-r.html" rel="prev">
+<link href="./../pkgdown/favicon/favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-18b75cba24d26cf7305a21ba5b02d9c1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-a87dae114faf5bb458284f46209a41b6.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-18b75cba24d26cf7305a21ba5b02d9c1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- RCausalML pkgdown tutorial head -->
+<link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<link href="../extra.css" rel="stylesheet">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light rcausalml-tutorial"><script id="quarto-html-before-body" type="application/javascript">
+<!-- RCausalML pkgdown tutorial navbar -->
+<a href="#quarto-document-content" class="visually-hidden-focusable">Skip to contents</a>
+<nav class="navbar navbar-expand-lg fixed-top bg-light" aria-label="Site navigation"><div class="container">
+    <a class="navbar-brand me-2" href="../index.html">RCausalML</a>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rcausalml-navbar" aria-controls="rcausalml-navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div id="rcausalml-navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="../articles/RCausalML-intro.html">Get Started</a></li>
+        <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+        <li class="active nav-item"><a class="nav-link" href="index.html">Tutorials</a></li>
+        <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
+        <li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/" aria-label="Python CausalML docs"><span class="fa fa-book fa-lg"></span></a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="rcausalml-navbar-spacer" aria-hidden="true"></div>
+
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">RCausalML Tutorials</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="./00-scientific-terminology-glossary.html" aria-current="page"> 
+<span class="menu-text">Glossary</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tree-based" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Tree-Based</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-tree-based">    
+        <li>
+    <a class="dropdown-item" href="./01-00-casual-tree-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-01-causal-tree-r.html">
+ <span class="dropdown-text">Causal Tree</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-02-causal-forest-r.html">
+ <span class="dropdown-text">Causal Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-03-causal-survival-forest-r.html">
+ <span class="dropdown-text">Causal Survival Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-04-instrumental-causal-forest-r.html">
+ <span class="dropdown-text">Instrumental Causal Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-05-multi-arm-causal-forest-r.html">
+ <span class="dropdown-text">Multi-Arm Causal Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-06-causal-xgboost-r.html">
+ <span class="dropdown-text">Causal XGBoost</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-07-instrumental-causal-xgboost-r.html">
+ <span class="dropdown-text">Instrumental Causal XGBoost</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./01-08-multi-arm-causal-boost-r.html">
+ <span class="dropdown-text">Multi-Arm Causal Boost</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-meta-learners" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Meta-Learners</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-meta-learners">    
+        <li>
+    <a class="dropdown-item" href="./02-00-meta-learners-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-01-meta-learners-binary-treatments-r.html">
+ <span class="dropdown-text">Binary Treatments</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-02-meta-learners-multiple-discrete-treatment-r.html">
+ <span class="dropdown-text">Multiple Discrete Treatments</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-03-meta-learners-continuous-treatment-r.html">
+ <span class="dropdown-text">Continuous Treatments</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-04-tmle-model-r.html">
+ <span class="dropdown-text">TMLE</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-05-meta-learners-domain-adaptation-learner-r.html">
+ <span class="dropdown-text">Domain Adaptation Learner</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./02-06--meta-learners-doubly-robust-learners-r.html">
+ <span class="dropdown-text">Doubly Robust Learners</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-uplift" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Uplift</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-uplift">    
+        <li>
+    <a class="dropdown-item" href="./03-00-uplift-trees-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./03-01-uplift-trees-classification-r.html">
+ <span class="dropdown-text">Classification</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./03-02-uplift-trees-regression-r.html">
+ <span class="dropdown-text">Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./03-03-uplift-randomForest-r.html">
+ <span class="dropdown-text">Random Forest</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./03-04-uplift-xgboost.html">
+ <span class="dropdown-text">XGBoost</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-double-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Double ML</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-double-ml">    
+        <li>
+    <a class="dropdown-item" href="./04-00-double-ml-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-01-double-ml-from-basics-to-application-r.html">
+ <span class="dropdown-text">Basics to Application</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-02-double-ml- single-multiple-treatment-r.html">
+ <span class="dropdown-text">Single/Multiple Treatment</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-03-double-ml-did-r.html">
+ <span class="dropdown-text">Difference-in-Differences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-04-double-ml-iv-r.html">
+ <span class="dropdown-text">Instrumental Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-05-double-ml-dynamic-ml.html">
+ <span class="dropdown-text">Dynamic Double ML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-06-double-ml-weighted-double-ml.html">
+ <span class="dropdown-text">Weighted Double ML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-07-double-ml-cluster-robust-r.html">
+ <span class="dropdown-text">Cluster Robust</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./04-08-double-ml-ensemble-learners-r.html">
+ <span class="dropdown-text">Ensemble Learners</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-causal-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Causal ML</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-causal-ml">    
+        <li>
+    <a class="dropdown-item" href="./05-00-DeepCausalML-introduction-r.html">
+ <span class="dropdown-text">Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html">
+ <span class="dropdown-text">Treatment Effect Estimators</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html">
+ <span class="dropdown-text">Generative Latent-Variable Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">
+ <span class="dropdown-text">Causal Structural Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./05-04-00-DeepCuasalML-timesseries-introduction-r.html">
+ <span class="dropdown-text">Causal Time Series</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Package</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../reference/index.html"> 
+<span class="menu-text">Reference</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/zia207/RCausalML"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./05-00-DeepCausalML-introduction-r.html">Deep Causal Learning</a></li><li class="breadcrumb-item"><a href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">Causal Structural Learning</a></li><li class="breadcrumb-item"><a href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">Overview</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-center sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="./../logo_RCausalML.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="./../logo_RCausalML.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./00-scientific-terminology-glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Tree-Based Models</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-00-casual-tree-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-01-causal-tree-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal Tree</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-02-causal-forest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-03-causal-survival-forest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal Survival Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-04-instrumental-causal-forest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Instrumental Causal Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-05-multi-arm-causal-forest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multi-Arm Causal Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-06-causal-xgboost-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal XGBoost</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-07-instrumental-causal-xgboost-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Instrumental Causal XGBoost</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-08-multi-arm-causal-boost-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multi-Arm Causal Boost</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Meta-Learners</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-00-meta-learners-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-01-meta-learners-binary-treatments-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Binary Treatments</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-02-meta-learners-multiple-discrete-treatment-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multiple Discrete Treatments</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-03-meta-learners-continuous-treatment-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Continuous Treatments</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-04-tmle-model-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TMLE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-05-meta-learners-domain-adaptation-learner-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain Adaptation Learner</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-06--meta-learners-doubly-robust-learners-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Doubly Robust Learners</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Uplift Trees &amp; Forests</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-00-uplift-trees-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-01-uplift-trees-classification-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classification</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-02-uplift-trees-regression-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Regression</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-03-uplift-randomForest-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Random Forest</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-04-uplift-xgboost.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">XGBoost</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Double / Debiased ML</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-00-double-ml-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-01-double-ml-from-basics-to-application-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basics to Application</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-02-double-ml- single-multiple-treatment-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Single/Multiple Treatment</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-03-double-ml-did-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Difference-in-Differences</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-04-double-ml-iv-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Instrumental Variables</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-05-double-ml-dynamic-ml.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dynamic Double ML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-06-double-ml-weighted-double-ml.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Weighted Double ML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-07-double-ml-cluster-robust-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cluster Robust</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-08-double-ml-ensemble-learners-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ensemble Learners</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Deep Causal Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-00-DeepCausalML-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Treatment Effect Estimators</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-01-DeepCausalML-TARNET-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TARNet</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-02-DeepCausalML-CFRTNet-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CFRNet</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-03-DeepCausalML-DragonNet-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DragonNet</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-01-04-DeepCausalML-GANITE-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GANITE</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">Generative Latent-Variable Models</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CEVAE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-02-DeepCausalML-variational-autoencoder-causalVAE.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CausalVAE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-03-DeepCausalML-identifiable-variational-autoencoders-CausaliVAEs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CausaliVAEs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-04-DeepCausalML-causaldiscrepancyVAE-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CausalDiscrepancyVAE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-05-DeepCausalML-causalGAN-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CausalGAN</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep Structural Causal Models</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-02-07-DeepCausalML-causal-encoding-generative-EGN-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Causal Encoding (EGN)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Causal Structural Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth2 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NOTEARS</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-02-DeepCausalML-dag-structure-learning-graph-neural-networks-DagGNN-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DAG-GNN</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-03-DeepCausalML-gradient-based-neural-learning-GranDag-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GraN-DAG</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-04-DeepCausalML-DAGMA-NoCurl-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DAGMA / DAG-NoCurl</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CASTLE</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false">
+ <span class="menu-text">Causal Time Series</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-9" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-00-DeepCuasalML-timesseries-introduction-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Neural Granger Causality</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-02-DeepCausalML-timeseries-structural-causal-model-SMC-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Structural Causal Models</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-03-DeepCausalML-attension-transformer-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Attention / Transformer</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-04-DeepCausalML-timeseries-RNN-LSTM-causaML-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">RNN / LSTM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-05-DeepCausalML-timeseries-graph-nn-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Graph Neural Networks</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-04-06-DeepCausalML-timeseries-counterfactual-potential-causalML-r.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Counterfactual / Potential Outcomes</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On This Page</h2>
+   
+  <ul>
+  <li><a href="#causal-structural-learning-an-introduction" id="toc-causal-structural-learning-an-introduction" class="nav-link active" data-scroll-target="#causal-structural-learning-an-introduction">5.3 Causal Structural Learning: An Introduction</a>
+  <ul class="collapse">
+  <li><a href="#causal-structural-learning" id="toc-causal-structural-learning" class="nav-link" data-scroll-target="#causal-structural-learning">Causal Structural Learning</a></li>
+  <li><a href="#the-core-object-a-dag" id="toc-the-core-object-a-dag" class="nav-link" data-scroll-target="#the-core-object-a-dag">The Core Object: A DAG</a></li>
+  <li><a href="#what-is-causal-structural-learning" id="toc-what-is-causal-structural-learning" class="nav-link" data-scroll-target="#what-is-causal-structural-learning">What Is Causal Structural Learning?</a></li>
+  <li><a href="#core-concepts" id="toc-core-concepts" class="nav-link" data-scroll-target="#core-concepts">Core Concepts</a></li>
+  <li><a href="#three-algorithm-families" id="toc-three-algorithm-families" class="nav-link" data-scroll-target="#three-algorithm-families">Three Algorithm Families</a>
+  <ul class="collapse">
+  <li><a href="#constraint-based-test-correlations-remove-edges" id="toc-constraint-based-test-correlations-remove-edges" class="nav-link" data-scroll-target="#constraint-based-test-correlations-remove-edges">1. Constraint-Based (test correlations, remove edges)</a></li>
+  <li><a href="#score-based-search-over-graph-space" id="toc-score-based-search-over-graph-space" class="nav-link" data-scroll-target="#score-based-search-over-graph-space">2. Score-Based (search over graph space)</a></li>
+  <li><a href="#fcm-based-asymmetry-based-exploit-functional-form" id="toc-fcm-based-asymmetry-based-exploit-functional-form" class="nav-link" data-scroll-target="#fcm-based-asymmetry-based-exploit-functional-form">3. FCM-Based / Asymmetry-Based (exploit functional form)</a></li>
+  </ul></li>
+  <li><a href="#how-it-all-fits-together" id="toc-how-it-all-fits-together" class="nav-link" data-scroll-target="#how-it-all-fits-together">How It All Fits Together</a></li>
+  <li><a href="#available-tools" id="toc-available-tools" class="nav-link" data-scroll-target="#available-tools">Available Tools</a></li>
+  <li><a href="#why-deep-learning-for-causal-structure-learning" id="toc-why-deep-learning-for-causal-structure-learning" class="nav-link" data-scroll-target="#why-deep-learning-for-causal-structure-learning">Why Deep Learning for Causal Structure Learning?</a></li>
+  <li><a href="#major-model-families" id="toc-major-model-families" class="nav-link" data-scroll-target="#major-model-families">Major Model Families</a>
+  <ul class="collapse">
+  <li><a href="#family-1-continuous-optimization-gradient-based-dag-learning" id="toc-family-1-continuous-optimization-gradient-based-dag-learning" class="nav-link" data-scroll-target="#family-1-continuous-optimization-gradient-based-dag-learning">Family 1 — Continuous Optimization (Gradient-Based DAG Learning)</a></li>
+  <li><a href="#gnn-based-discovery" id="toc-gnn-based-discovery" class="nav-link" data-scroll-target="#gnn-based-discovery">2. GNN-Based Discovery</a></li>
+  <li><a href="#generative-causal-models" id="toc-generative-causal-models" class="nav-link" data-scroll-target="#generative-causal-models">3. Generative Causal Models</a></li>
+  <li><a href="#reinforcement-learning-based-structure-search" id="toc-reinforcement-learning-based-structure-search" class="nav-link" data-scroll-target="#reinforcement-learning-based-structure-search">4. Reinforcement Learning-Based Structure Search</a></li>
+  </ul></li>
+  <li><a href="#comparison-summary" id="toc-comparison-summary" class="nav-link" data-scroll-target="#comparison-summary">Comparison Summary</a></li>
+  <li><a href="#summary-and-conclusion" id="toc-summary-and-conclusion" class="nav-link" data-scroll-target="#summary-and-conclusion">Summary and Conclusion</a>
+  <ul class="collapse">
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/zia207/RCausalML/edit/main/05-03-00-DeepCausalML-structural-learnering-introduction-r.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/zia207/RCausalML/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./05-00-DeepCausalML-introduction-r.html">Deep Causal Learning</a></li><li class="breadcrumb-item"><a href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">Causal Structural Learning</a></li><li class="breadcrumb-item"><a href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">Overview</a></li></ol></nav><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+
+
+
+
+
+<p><img src="Images/05-03-deep-CausalML-structural-learning.png" class="img-fluid"></p>
+<section id="causal-structural-learning-an-introduction" class="level1">
+<h1>5.3 Causal Structural Learning: An Introduction</h1>
+<p>Causal Structural Learning is the foundational layer of any causal machine learning pipeline. It’s the process of learning the causal graph (DAG) directly from data — without being told which variables cause which. This is different from causal inference, which assumes you already know the graph and estimates effect sizes. Structural learning discovers the graph itself.</p>
+<section id="causal-structural-learning" class="level2">
+<h2 class="anchored" data-anchor-id="causal-structural-learning">Causal Structural Learning</h2>
+<p><strong>Causal Structural Learning</strong> (also called <strong>Causal Discovery</strong> or <strong>Structural Causal Model Learning</strong>) is the process of <strong>automatically inferring causal relationships</strong> from data — essentially learning <em>who causes whom</em> without requiring prior knowledge or randomized experiments.</p>
+<blockquote class="blockquote">
+<p>Instead of assuming a causal graph (like in causal inference), Causal Structural Learning <strong>discovers the graph itself</strong> from observational or interventional data.</p>
+</blockquote>
+</section>
+<section id="the-core-object-a-dag" class="level2">
+<h2 class="anchored" data-anchor-id="the-core-object-a-dag">The Core Object: A DAG</h2>
+<p>The output of Causal Structural Learning is typically a <strong>Directed Acyclic Graph (DAG)</strong>:Here’s the visual overview of the core concept, followed by the full explanation:</p>
+<p><img src="Images/dag_explain_causal_structural_learning.png" class="img-fluid" width="583"></p>
+</section>
+<section id="what-is-causal-structural-learning" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-causal-structural-learning">What Is Causal Structural Learning?</h2>
+<p>Causal Structural Learning is the task of <strong>learning the causal graph (DAG)</strong> directly from data — without being told which variables cause which. It answers:</p>
+<blockquote class="blockquote">
+<p><em>“Given data on X₁, X₂, X₃, and Y — who causes whom?”</em></p>
+</blockquote>
+<p>This is different from causal <em>inference</em>, which assumes you already know the graph and estimates effect sizes. Structural learning discovers the graph itself.</p>
+</section>
+<section id="core-concepts" class="level2">
+<h2 class="anchored" data-anchor-id="core-concepts">Core Concepts</h2>
+<p><strong>The output: a DAG</strong> A Directed Acyclic Graph where each node is a variable and each arrow A → B means “A causally influences B.” The “acyclic” constraint means no feedback loops — causes flow in one direction.</p>
+<p><strong>The fundamental challenge</strong> You only observe correlations in data. Many different DAGs can produce the same correlations. This is called the <strong>Markov Equivalence Class</strong> — a set of graphs that are statistically indistinguishable from observational data alone.</p>
+<p><strong>Faithfulness assumption</strong> Most algorithms assume that if a conditional independence holds in the data, it corresponds to a missing edge in the true graph — and vice versa. This is what allows statistical tests to constrain the graph.</p>
+</section>
+<section id="three-algorithm-families" class="level2">
+<h2 class="anchored" data-anchor-id="three-algorithm-families">Three Algorithm Families</h2>
+<section id="constraint-based-test-correlations-remove-edges" class="level3">
+<h3 class="anchored" data-anchor-id="constraint-based-test-correlations-remove-edges">1. Constraint-Based (test correlations, remove edges)</h3>
+<p>The most intuitive family. They work by:</p>
+<ol type="1">
+<li>Start with a fully connected graph</li>
+<li>Run <strong>conditional independence tests</strong> between every pair of variables</li>
+<li>Remove edges where variables are independent given some conditioning set</li>
+<li>Orient remaining edges using <strong>v-structures</strong> (colliders like A → C ← B)</li>
+<li>Apply orientation rules (Meek rules) to orient as many remaining edges as possible</li>
+</ol>
+<p>Key algorithms: <strong>PC algorithm</strong>, <strong>FCI</strong> (handles latent confounders), <strong>RFCI</strong> (robust FCI).</p>
+<p>The output is often a <strong>CPDAG</strong> (Completed Partially Directed DAG) — a graph with some directed and some undirected edges, representing the full Markov equivalence class.</p>
+</section>
+<section id="score-based-search-over-graph-space" class="level3">
+<h3 class="anchored" data-anchor-id="score-based-search-over-graph-space">2. Score-Based (search over graph space)</h3>
+<p>Instead of testing independence, these algorithms assign a <strong>score</strong> to each candidate graph and search for the highest-scoring one.</p>
+<p>Common scores: - <strong>BIC / BDeu</strong> — penalize complexity to avoid overfitting - <strong>Log-likelihood</strong> — how well the graph explains the data</p>
+<p>The search problem is NP-hard (exponential graph space), so practical algorithms use greedy strategies: - <strong>GES (Greedy Equivalence Search)</strong> — two-phase: add edges that improve score, then remove those that don’t - <strong>NOTEARS</strong> — reformulates the DAG search as a continuous optimization problem using a smooth acyclicity constraint, making it solvable with gradient descent - <strong>DAG-GNN</strong> — learns graph structure end-to-end with neural networks</p>
+</section>
+<section id="fcm-based-asymmetry-based-exploit-functional-form" class="level3">
+<h3 class="anchored" data-anchor-id="fcm-based-asymmetry-based-exploit-functional-form">3. FCM-Based / Asymmetry-Based (exploit functional form)</h3>
+<p>These are the most powerful for <strong>full orientation</strong> (not just Markov equivalence). They exploit the fact that cause and effect have an <strong>asymmetric relationship</strong> in the functional form of the data.</p>
+<p>The key insight: if X → Y, then the residuals of regressing Y on X are independent of X. But if you reverse it (Y → X), the residuals won’t be independent. This asymmetry reveals direction.</p>
+<p>Key algorithms: - <strong>LiNGAM</strong> — assumes linear relationships with <strong>non-Gaussian noise</strong>. The non-Gaussianity breaks the equivalence class and allows full graph orientation - <strong>ANM (Additive Noise Model)</strong> — Y = f(X) + noise, tests for independence of residuals - <strong>PNL (Post-Nonlinear model)</strong> — generalization of ANM for more complex functional forms</p>
+</section>
+</section>
+<section id="how-it-all-fits-together" class="level2">
+<h2 class="anchored" data-anchor-id="how-it-all-fits-together">How It All Fits Together</h2>
+<pre><code>Observational Data
+       ↓
+  [ Statistical Tests / Score / Functional Asymmetry ]
+       ↓
+  Markov Equivalence Class  ←→  Partially Directed Graph
+       ↓ (with extra assumptions or interventional data)
+  Fully Oriented Causal DAG
+       ↓
+  Policy Learning / Causal Inference / Intervention Design</code></pre>
+<p>The identified DAG then feeds directly into policy learning — knowing the causal structure tells you which variables are valid adjustment sets, which are confounders, and which interventions are identifiable. This is why structural learning is the foundational first step for any serious causal ML pipeline.</p>
+</section>
+<section id="available-tools" class="level2">
+<h2 class="anchored" data-anchor-id="available-tools">Available Tools</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Algorithm</th>
+<th>Package</th>
+<th>Language</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>PC, FCI, GES</td>
+<td><code>causal-learn</code></td>
+<td>Python</td>
+</tr>
+<tr class="even">
+<td>LiNGAM family</td>
+<td><code>lingam</code></td>
+<td>Python</td>
+</tr>
+<tr class="odd">
+<td>NOTEARS, DAGMA</td>
+<td><code>notears</code>, <code>dagma</code></td>
+<td>Python</td>
+</tr>
+<tr class="even">
+<td>GRF-based discovery</td>
+<td><code>grf</code></td>
+<td>R</td>
+</tr>
+<tr class="odd">
+<td>Full pipeline</td>
+<td><code>DoWhy</code>, <code>pyWhy</code></td>
+<td>Python</td>
+</tr>
+<tr class="even">
+<td>Tetrad suite</td>
+<td><code>py-tetrad</code></td>
+<td>Python/Java</td>
+</tr>
+</tbody>
+</table>
+<p>Causal Structural Learning is the <strong>prerequisite layer</strong> beneath everything else — policy learning, treatment effect estimation, and counterfactual reasoning all assume a known or learned causal graph to be valid.</p>
+</section>
+<section id="why-deep-learning-for-causal-structure-learning" class="level2">
+<h2 class="anchored" data-anchor-id="why-deep-learning-for-causal-structure-learning">Why Deep Learning for Causal Structure Learning?</h2>
+<p>The three core strengths of deep learning for causal learning are: strong representational capabilities for unstructured data, strong fitting ability to approximate complex functions, and the capacity to model data generation mechanisms — for example, adversarial learning implicitly generates counterfactuals (GANs), while disentanglement mechanisms explicitly model the process via variational autoencoders (VAEs).</p>
+<p>Traditional deep learning models rely on learning from extensive data but may inadvertently capture spurious correlations, leading to models that lack interpretability and robustness. Causal deep learning replaces the correlation model with a stable and interpretable causal model to mitigate this.</p>
+</section>
+<section id="major-model-families" class="level2">
+<h2 class="anchored" data-anchor-id="major-model-families">Major Model Families</h2>
+<p><img src="Websites/R_Website/Causal_Inference_R/Cursor_R/RCausalML/inst/notebooks/causal_structural_learning.png" class="img-fluid" width="543"></p>
+<section id="family-1-continuous-optimization-gradient-based-dag-learning" class="level3">
+<h3 class="anchored" data-anchor-id="family-1-continuous-optimization-gradient-based-dag-learning">Family 1 — Continuous Optimization (Gradient-Based DAG Learning)</h3>
+<p>The foundational breakthrough in this family came from reframing the combinatorial DAG search as a smooth, differentiable optimization problem.</p>
+<p><strong>NOTEARS</strong> (NeurIPS 2018) was the pioneering model here. The key insight is an algebraic acyclicity constraint: a matrix W represents a DAG if and only if <code>tr(e^(W⊙W)) - d = 0</code>. This smooth constraint lets you optimize over graph structure with standard gradient descent. NOTEARS formulates the problem into a continuous optimization framework with an acyclicity constraint to learn DAGs, allowing the utilization of deep generative models for causal structure learning. However, NOTEARS has been shown to lack scale-invariance — it identifies a parsimonious DAG that explains residual variance, which makes it unsuitable for identifying truly causal relationships from dimensional quantities without standardization.</p>
+<p><strong>NOTEARS-MLP</strong> extends the original by replacing the linear SEM with multilayer perceptrons, handling nonlinear relationships.</p>
+<p><strong>GraN-DAG</strong> (ICLR 2020) takes this further. GraN-DAG relies on the proper training of neural networks with a stochastic gradient method that scales well with both sample size and number of parameters. Unlike DAG-GNN, which uses strong parameter sharing between conditional densities, GraN-DAG learns fully independent conditional distributions per node.</p>
+<p><strong>DAGMA</strong> and <strong>DAG-NoCurl</strong> are more recent refinements. DAG-NoCurl is developed based on graph Hodge theory, which shows that a DAG can be decomposed into curl-free, divergence-free, and harmonic components — the curl-free component being an acyclic graph — providing a more efficient parameterization of the DAG space.</p>
+<p><strong>CASTLE</strong> (NeurIPS 2020) from the van der Schaar Lab uses causal structure as a regularizer during supervised learning, jointly learning the graph and the prediction model. CASTLE incorporates structural equations to significantly reduce the hypothesis space of a model, using causal structure as an inductive bias rather than just standard regularization.</p>
+</section>
+<section id="gnn-based-discovery" class="level3">
+<h3 class="anchored" data-anchor-id="gnn-based-discovery">2. GNN-Based Discovery</h3>
+<p>These models treat the causal graph itself as a graph and use GNNs to learn edge existence probabilities.</p>
+<p><strong>DAG-GNN</strong> (ICML 2019) is the most prominent. DAG-GNN generalizes NOTEARS by considering nonlinearity in structural equation models using a variational autoencoder with encoder and decoder parameterized as neural networks, where a latent vector Z replaces the noise term of linear SEMs and can have arbitrary dimensionality.</p>
+<p><strong>GAE (Graph Autoencoder)</strong> framework improves on DAG-GNN. GAE improves training speed and performance over DAG-GNN for both linear and nonlinear synthetic datasets.</p>
+<p><strong>NRI (Neural Relational Inference)</strong> learns interaction graphs from trajectories of dynamical systems without supervision over the graph structure — useful when observing time-series of interacting agents.</p>
+<p><strong>DiBS</strong> takes a Bayesian approach, maintaining a distribution over possible DAGs rather than committing to a single graph. Unlike DAG-GNN and NOTEARS which optimize a single structure per instance, probabilistic GNN-based methods predict a probability distribution over DAGs directly from edge representations in a single forward pass, enabling uncertainty quantification and generalization across datasets.</p>
+<p>In the medical field, GNN-based causal models like CiGNN use spatiotemporal GNNs for applications such as continuous blood pressure estimation, first establishing a causal graph between physiological variables, then learning from it. In neuroscience, the DCRNN model uses GNNs with convolutional and recurrent networks for inference of causal relations in brain networks.</p>
+</section>
+<section id="generative-causal-models" class="level3">
+<h3 class="anchored" data-anchor-id="generative-causal-models">3. Generative Causal Models</h3>
+<p>These combine deep generative frameworks (VAEs, GANs) with causal structure to model the full data-generating process.</p>
+<p><strong>CEVAE</strong> (Causal Effect VAE) uses a variational autoencoder to jointly infer latent confounders and causal effects. It models: latent Z → treatment T, latent Z → outcome Y, handling unmeasured confounding that standard models cannot.</p>
+<p><strong>CausalGAN</strong> learns causal implicit generative models using adversarial training. CausalGAN learns causal implicit generative models via adversarial training, enabling sampling from interventional and counterfactual distributions. Recent extensions include <strong>FeDCM</strong> for federated settings and modular deep causal generative models for high-dimensional causal inference.</p>
+<p><strong>CGNN (Causal Generative Neural Networks)</strong> and <strong>SAM (Structural Agnostic Modeling)</strong> both use adversarial losses to learn conditional neural generators for each variable. SAM learns conditional neural network generators using adversarial losses but does not enforce acyclicity, while CGNN requires an initial skeleton to learn from multivariate data.</p>
+<p>A recent architecture published in Nature Machine Intelligence (2025) combines convolutional and graph neural networks within a causal risk framework, demonstrating effectiveness under high dimensionality, noise, and data limitations — particularly for large-scale biological applications with thousands of variables.</p>
+</section>
+<section id="reinforcement-learning-based-structure-search" class="level3">
+<h3 class="anchored" data-anchor-id="reinforcement-learning-based-structure-search">4. Reinforcement Learning-Based Structure Search</h3>
+<p>Rather than gradient descent, these methods use RL agents to search the combinatorial space of DAGs.</p>
+<p><strong>RL-BIC</strong> trains an RL agent (typically using actor-critic or policy gradient) where the reward is the BIC score of a candidate graph. The agent learns to construct edges one at a time, building up the DAG incrementally.</p>
+<p><strong>CORL / CURL</strong> learn causal ordering via RL — first finding the topological order of nodes, then orienting edges within that order. This decomposes the hard joint search into two easier sub-problems.</p>
+<p>These RL methods are especially useful when the search space is very large and gradient-based approaches get stuck in poor local minima.</p>
+</section>
+</section>
+<section id="comparison-summary" class="level2">
+<h2 class="anchored" data-anchor-id="comparison-summary">Comparison Summary</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Model</th>
+<th>Architecture</th>
+<th>Handles nonlinearity</th>
+<th>Scalability</th>
+<th>Key strength</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>NOTEARS</td>
+<td>MLP + smooth constraint</td>
+<td>Partially</td>
+<td>Medium</td>
+<td>First differentiable DAG method</td>
+</tr>
+<tr class="even">
+<td>GraN-DAG</td>
+<td>Neural conditionals</td>
+<td>Yes</td>
+<td>Medium</td>
+<td>Flexible per-node models</td>
+</tr>
+<tr class="odd">
+<td>DAGMA</td>
+<td>Log-det acyclicity</td>
+<td>Yes</td>
+<td>High</td>
+<td>More stable optimization</td>
+</tr>
+<tr class="even">
+<td>DAG-GNN</td>
+<td>VAE + GNN</td>
+<td>Yes</td>
+<td>Medium</td>
+<td>Vector-valued variables</td>
+</tr>
+<tr class="odd">
+<td>DiBS</td>
+<td>GNN + Bayesian</td>
+<td>Yes</td>
+<td>Medium</td>
+<td>Uncertainty over graphs</td>
+</tr>
+<tr class="even">
+<td>CEVAE</td>
+<td>VAE</td>
+<td>Yes</td>
+<td>Medium</td>
+<td>Latent confounders</td>
+</tr>
+<tr class="odd">
+<td>CausalGAN</td>
+<td>GAN</td>
+<td>Yes</td>
+<td>Low-Med</td>
+<td>Interventional sampling</td>
+</tr>
+<tr class="even">
+<td>CASTLE</td>
+<td>Regularized DNN</td>
+<td>Yes</td>
+<td>High</td>
+<td>Joint supervised + causal</td>
+</tr>
+<tr class="odd">
+<td>RL-BIC</td>
+<td>RL agent</td>
+<td>Yes</td>
+<td>Low</td>
+<td>Avoids local minima</td>
+</tr>
+</tbody>
+</table>
+<p>Causal deep learning operates along two main axes: the structural scale — concerning the links between variables — and the parametric scale — concerning the shape of the functions that model those links — with time as a third special dimension given that causes precede effects. Together, these four families cover that full landscape, from lightweight differentiable optimization to rich generative and Bayesian approaches.</p>
+</section>
+<section id="summary-and-conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusion">Summary and Conclusion</h2>
+<p>Deep learning has revolutionized causal structure learning by enabling flexible, scalable, and powerful methods to discover causal graphs directly from data. From continuous optimization techniques that reframe DAG search as a differentiable problem, to graph neural networks that learn edge probabilities, to generative models that capture the full data-generating process, and reinforcement learning approaches that navigate the combinatorial search space — deep learning has provided a rich toolkit for causal discovery. These methods have been applied across domains, from healthcare to neuroscience, demonstrating their ability to uncover complex causal relationships in high-dimensional, noisy data. As the field continues to evolve, we can expect even more sophisticated models that further bridge the gap between correlation and causation, ultimately enabling more robust and interpretable machine learning systems.</p>
+<section id="references" class="level3">
+<h3 class="anchored" data-anchor-id="references">References</h3>
+<p>Bello, K., Aragam, B., &amp; Ravikumar, P. (2022). DAGMA: Learning DAGs via M-matrices and a log-determinant acyclicity characterization. In <em>Advances in Neural Information Processing Systems (NeurIPS)</em>. https://arxiv.org/abs/2209.08037</p>
+<p>Kocaoglu, M., Snyder, C., Dimakis, A. G., &amp; Vishwanath, S. (2018). CausalGAN: Learning causal implicit generative models with adversarial training. In <em>International Conference on Learning Representations (ICLR)</em>. https://arxiv.org/abs/1709.02023</p>
+<p>Kyono, T., Zhang, Y., &amp; van der Schaar, M. (2020). CASTLE: Regularization via auxiliary causal graph discovery. In <em>Advances in Neural Information Processing Systems (NeurIPS)</em>. https://arxiv.org/abs/2009.13180</p>
+<p>Lachapelle, S., Brouillard, P., Deleu, T., &amp; Lacoste-Julien, S. (2020). Gradient-based neural DAG learning. In <em>International Conference on Learning Representations (ICLR)</em>. https://arxiv.org/abs/1906.02226</p>
+<p>Louizos, C., Shalit, U., Mooij, J., Sontag, D., Zemel, R., &amp; Welling, M. (2017). Causal effect inference with deep latent-variable models. In <em>Advances in Neural Information Processing Systems (NeurIPS)</em>. https://arxiv.org/abs/1705.08821</p>
+<p>Yu, Y., Chen, J., Gao, T., &amp; Yu, M. (2019). DAG-GNN: DAG structure learning with graph neural networks. In <em>Proceedings of the 36th International Conference on Machine Learning (ICML)</em> (pp.&nbsp;7154–7163). https://proceedings.mlr.press/v97/yu19a.html</p>
+<p>Zheng, X., Aragam, B., Ravikumar, P., &amp; Xing, E. P. (2018). DAGs with NO TEARS: Continuous optimization for structure learning. In <em>Advances in Neural Information Processing Systems (NeurIPS)</em>. https://arxiv.org/abs/1803.01422</p>
+<p>|</p>
+
+
+<!-- -->
+
+</section>
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/zia207\.github\.io\/RCausalML\/tutorials");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./05-02-07-DeepCausalML-causal-encoding-generative-EGN-r.html" class="pagination-link" aria-label="Causal Encoding (EGN)">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Causal Encoding (EGN)</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.html" class="pagination-link" aria-label="NOTEARS">
+        <span class="nav-page-text">NOTEARS</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="al">![](Images/05-03-deep-CausalML-structural-learning.png)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu"># 5.3 Causal Structural Learning: An Introduction</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>Causal Structural Learning is the foundational layer of any causal machine learning pipeline. It’s the process of learning the causal graph (DAG) directly from data — without being told which variables cause which. This is different from causal inference, which assumes you already know the graph and estimates effect sizes. Structural learning discovers the graph itself.</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Causal Structural Learning</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>**Causal Structural Learning** (also called **Causal Discovery** or **Structural Causal Model Learning**) is the process of **automatically inferring causal relationships** from data — essentially learning *who causes whom* without requiring prior knowledge or randomized experiments.</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Instead of assuming a causal graph (like in causal inference), Causal Structural Learning **discovers the graph itself** from observational or interventional data.</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Core Object: A DAG</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>The output of Causal Structural Learning is typically a **Directed Acyclic Graph (DAG)**:Here's the visual overview of the core concept, followed by the full explanation:</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="al">![](Images/dag_explain_causal_structural_learning.png)</span>{width="583"}</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="fu">## What Is Causal Structural Learning?</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>Causal Structural Learning is the task of **learning the causal graph (DAG)** directly from data — without being told which variables cause which. It answers:</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; *"Given data on X₁, X₂, X₃, and Y — who causes whom?"*</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>This is different from causal *inference*, which assumes you already know the graph and estimates effect sizes. Structural learning discovers the graph itself.</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="fu">## Core Concepts</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>**The output: a DAG** A Directed Acyclic Graph where each node is a variable and each arrow A → B means "A causally influences B." The "acyclic" constraint means no feedback loops — causes flow in one direction.</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>**The fundamental challenge** You only observe correlations in data. Many different DAGs can produce the same correlations. This is called the **Markov Equivalence Class** — a set of graphs that are statistically indistinguishable from observational data alone.</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>**Faithfulness assumption** Most algorithms assume that if a conditional independence holds in the data, it corresponds to a missing edge in the true graph — and vice versa. This is what allows statistical tests to constrain the graph.</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="fu">## Three Algorithm Families</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1. Constraint-Based (test correlations, remove edges)</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>The most intuitive family. They work by:</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>Start with a fully connected graph</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>Run **conditional independence tests** between every pair of variables</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span>Remove edges where variables are independent given some conditioning set</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="ss">4.  </span>Orient remaining edges using **v-structures** (colliders like A → C ← B)</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="ss">5.  </span>Apply orientation rules (Meek rules) to orient as many remaining edges as possible</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>Key algorithms: **PC algorithm**, **FCI** (handles latent confounders), **RFCI** (robust FCI).</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>The output is often a **CPDAG** (Completed Partially Directed DAG) — a graph with some directed and some undirected edges, representing the full Markov equivalence class.</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. Score-Based (search over graph space)</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>Instead of testing independence, these algorithms assign a **score** to each candidate graph and search for the highest-scoring one.</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>Common scores: - **BIC / BDeu** — penalize complexity to avoid overfitting - **Log-likelihood** — how well the graph explains the data</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>The search problem is NP-hard (exponential graph space), so practical algorithms use greedy strategies: - **GES (Greedy Equivalence Search)** — two-phase: add edges that improve score, then remove those that don't - **NOTEARS** — reformulates the DAG search as a continuous optimization problem using a smooth acyclicity constraint, making it solvable with gradient descent - **DAG-GNN** — learns graph structure end-to-end with neural networks</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="fu">### 3. FCM-Based / Asymmetry-Based (exploit functional form)</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>These are the most powerful for **full orientation** (not just Markov equivalence). They exploit the fact that cause and effect have an **asymmetric relationship** in the functional form of the data.</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>The key insight: if X → Y, then the residuals of regressing Y on X are independent of X. But if you reverse it (Y → X), the residuals won't be independent. This asymmetry reveals direction.</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>Key algorithms: - **LiNGAM** — assumes linear relationships with **non-Gaussian noise**. The non-Gaussianity breaks the equivalence class and allows full graph orientation - **ANM (Additive Noise Model)** — Y = f(X) + noise, tests for independence of residuals - **PNL (Post-Nonlinear model)** — generalization of ANM for more complex functional forms</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="fu">## How It All Fits Together</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="in">```         </span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="in">Observational Data</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="in">       ↓</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="in">  [ Statistical Tests / Score / Functional Asymmetry ]</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="in">       ↓</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="in">  Markov Equivalence Class  ←→  Partially Directed Graph</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="in">       ↓ (with extra assumptions or interventional data)</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="in">  Fully Oriented Causal DAG</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="in">       ↓</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="in">  Policy Learning / Causal Inference / Intervention Design</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>The identified DAG then feeds directly into policy learning — knowing the causal structure tells you which variables are valid adjustment sets, which are confounders, and which interventions are identifiable. This is why structural learning is the foundational first step for any serious causal ML pipeline.</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="fu">## Available Tools</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Algorithm           <span class="pp">|</span> Package            <span class="pp">|</span> Language    <span class="pp">|</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------------------|--------------------|-------------|</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> PC, FCI, GES        <span class="pp">|</span> <span class="in">`causal-learn`</span>     <span class="pp">|</span> Python      <span class="pp">|</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> LiNGAM family       <span class="pp">|</span> <span class="in">`lingam`</span>           <span class="pp">|</span> Python      <span class="pp">|</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> NOTEARS, DAGMA      <span class="pp">|</span> <span class="in">`notears`</span>, <span class="in">`dagma`</span> <span class="pp">|</span> Python      <span class="pp">|</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> GRF-based discovery <span class="pp">|</span> <span class="in">`grf`</span>              <span class="pp">|</span> R           <span class="pp">|</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Full pipeline       <span class="pp">|</span> <span class="in">`DoWhy`</span>, <span class="in">`pyWhy`</span>   <span class="pp">|</span> Python      <span class="pp">|</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Tetrad suite        <span class="pp">|</span> <span class="in">`py-tetrad`</span>        <span class="pp">|</span> Python/Java <span class="pp">|</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>Causal Structural Learning is the **prerequisite layer** beneath everything else — policy learning, treatment effect estimation, and counterfactual reasoning all assume a known or learned causal graph to be valid.</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why Deep Learning for Causal Structure Learning?</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>The three core strengths of deep learning for causal learning are: strong representational capabilities for unstructured data, strong fitting ability to approximate complex functions, and the capacity to model data generation mechanisms — for example, adversarial learning implicitly generates counterfactuals (GANs), while disentanglement mechanisms explicitly model the process via variational autoencoders (VAEs).</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>Traditional deep learning models rely on learning from extensive data but may inadvertently capture spurious correlations, leading to models that lack interpretability and robustness. Causal deep learning replaces the correlation model with a stable and interpretable causal model to mitigate this.</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="fu">## Major Model Families</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="al">![](Websites/R_Website/Causal_Inference_R/Cursor_R/RCausalML/inst/notebooks/causal_structural_learning.png)</span>{width="543"}</span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="fu">### Family 1 — Continuous Optimization (Gradient-Based DAG Learning)</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>The foundational breakthrough in this family came from reframing the combinatorial DAG search as a smooth, differentiable optimization problem.</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>**NOTEARS** (NeurIPS 2018) was the pioneering model here. The key insight is an algebraic acyclicity constraint: a matrix W represents a DAG if and only if <span class="in">`tr(e^(W⊙W)) - d = 0`</span>. This smooth constraint lets you optimize over graph structure with standard gradient descent. NOTEARS formulates the problem into a continuous optimization framework with an acyclicity constraint to learn DAGs, allowing the utilization of deep generative models for causal structure learning. However, NOTEARS has been shown to lack scale-invariance — it identifies a parsimonious DAG that explains residual variance, which makes it unsuitable for identifying truly causal relationships from dimensional quantities without standardization.</span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>**NOTEARS-MLP** extends the original by replacing the linear SEM with multilayer perceptrons, handling nonlinear relationships.</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>**GraN-DAG** (ICLR 2020) takes this further. GraN-DAG relies on the proper training of neural networks with a stochastic gradient method that scales well with both sample size and number of parameters. Unlike DAG-GNN, which uses strong parameter sharing between conditional densities, GraN-DAG learns fully independent conditional distributions per node.</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>**DAGMA** and **DAG-NoCurl** are more recent refinements. DAG-NoCurl is developed based on graph Hodge theory, which shows that a DAG can be decomposed into curl-free, divergence-free, and harmonic components — the curl-free component being an acyclic graph — providing a more efficient parameterization of the DAG space.</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>**CASTLE** (NeurIPS 2020) from the van der Schaar Lab uses causal structure as a regularizer during supervised learning, jointly learning the graph and the prediction model. CASTLE incorporates structural equations to significantly reduce the hypothesis space of a model, using causal structure as an inductive bias rather than just standard regularization.</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. GNN-Based Discovery</span></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>These models treat the causal graph itself as a graph and use GNNs to learn edge existence probabilities.</span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a>**DAG-GNN** (ICML 2019) is the most prominent. DAG-GNN generalizes NOTEARS by considering nonlinearity in structural equation models using a variational autoencoder with encoder and decoder parameterized as neural networks, where a latent vector Z replaces the noise term of linear SEMs and can have arbitrary dimensionality.</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>**GAE (Graph Autoencoder)** framework improves on DAG-GNN. GAE improves training speed and performance over DAG-GNN for both linear and nonlinear synthetic datasets.</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>**NRI (Neural Relational Inference)** learns interaction graphs from trajectories of dynamical systems without supervision over the graph structure — useful when observing time-series of interacting agents.</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>**DiBS** takes a Bayesian approach, maintaining a distribution over possible DAGs rather than committing to a single graph. Unlike DAG-GNN and NOTEARS which optimize a single structure per instance, probabilistic GNN-based methods predict a probability distribution over DAGs directly from edge representations in a single forward pass, enabling uncertainty quantification and generalization across datasets.</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>In the medical field, GNN-based causal models like CiGNN use spatiotemporal GNNs for applications such as continuous blood pressure estimation, first establishing a causal graph between physiological variables, then learning from it. In neuroscience, the DCRNN model uses GNNs with convolutional and recurrent networks for inference of causal relations in brain networks.</span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a><span class="fu">### 3. Generative Causal Models</span></span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>These combine deep generative frameworks (VAEs, GANs) with causal structure to model the full data-generating process.</span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>**CEVAE** (Causal Effect VAE) uses a variational autoencoder to jointly infer latent confounders and causal effects. It models: latent Z → treatment T, latent Z → outcome Y, handling unmeasured confounding that standard models cannot.</span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>**CausalGAN** learns causal implicit generative models using adversarial training. CausalGAN learns causal implicit generative models via adversarial training, enabling sampling from interventional and counterfactual distributions. Recent extensions include **FeDCM** for federated settings and modular deep causal generative models for high-dimensional causal inference.</span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a>**CGNN (Causal Generative Neural Networks)** and **SAM (Structural Agnostic Modeling)** both use adversarial losses to learn conditional neural generators for each variable. SAM learns conditional neural network generators using adversarial losses but does not enforce acyclicity, while CGNN requires an initial skeleton to learn from multivariate data.</span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>A recent architecture published in Nature Machine Intelligence (2025) combines convolutional and graph neural networks within a causal risk framework, demonstrating effectiveness under high dimensionality, noise, and data limitations — particularly for large-scale biological applications with thousands of variables.</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a><span class="fu">### 4. Reinforcement Learning-Based Structure Search</span></span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>Rather than gradient descent, these methods use RL agents to search the combinatorial space of DAGs.</span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>**RL-BIC** trains an RL agent (typically using actor-critic or policy gradient) where the reward is the BIC score of a candidate graph. The agent learns to construct edges one at a time, building up the DAG incrementally.</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>**CORL / CURL** learn causal ordering via RL — first finding the topological order of nodes, then orienting edges within that order. This decomposes the hard joint search into two easier sub-problems.</span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>These RL methods are especially useful when the search space is very large and gradient-based approaches get stuck in poor local minima.</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a><span class="fu">## Comparison Summary</span></span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Model <span class="pp">|</span> Architecture <span class="pp">|</span> Handles nonlinearity <span class="pp">|</span> Scalability <span class="pp">|</span> Key strength <span class="pp">|</span></span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------------|---------------|---------------|---------------|---------------|</span></span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> NOTEARS <span class="pp">|</span> MLP + smooth constraint <span class="pp">|</span> Partially <span class="pp">|</span> Medium <span class="pp">|</span> First differentiable DAG method <span class="pp">|</span></span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> GraN-DAG <span class="pp">|</span> Neural conditionals <span class="pp">|</span> Yes <span class="pp">|</span> Medium <span class="pp">|</span> Flexible per-node models <span class="pp">|</span></span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> DAGMA <span class="pp">|</span> Log-det acyclicity <span class="pp">|</span> Yes <span class="pp">|</span> High <span class="pp">|</span> More stable optimization <span class="pp">|</span></span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> DAG-GNN <span class="pp">|</span> VAE + GNN <span class="pp">|</span> Yes <span class="pp">|</span> Medium <span class="pp">|</span> Vector-valued variables <span class="pp">|</span></span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> DiBS <span class="pp">|</span> GNN + Bayesian <span class="pp">|</span> Yes <span class="pp">|</span> Medium <span class="pp">|</span> Uncertainty over graphs <span class="pp">|</span></span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> CEVAE <span class="pp">|</span> VAE <span class="pp">|</span> Yes <span class="pp">|</span> Medium <span class="pp">|</span> Latent confounders <span class="pp">|</span></span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> CausalGAN <span class="pp">|</span> GAN <span class="pp">|</span> Yes <span class="pp">|</span> Low-Med <span class="pp">|</span> Interventional sampling <span class="pp">|</span></span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> CASTLE <span class="pp">|</span> Regularized DNN <span class="pp">|</span> Yes <span class="pp">|</span> High <span class="pp">|</span> Joint supervised + causal <span class="pp">|</span></span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> RL-BIC <span class="pp">|</span> RL agent <span class="pp">|</span> Yes <span class="pp">|</span> Low <span class="pp">|</span> Avoids local minima <span class="pp">|</span></span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a>Causal deep learning operates along two main axes: the structural scale — concerning the links between variables — and the parametric scale — concerning the shape of the functions that model those links — with time as a third special dimension given that causes precede effects. Together, these four families cover that full landscape, from lightweight differentiable optimization to rich generative and Bayesian approaches.</span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary and Conclusion</span></span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>Deep learning has revolutionized causal structure learning by enabling flexible, scalable, and powerful methods to discover causal graphs directly from data. From continuous optimization techniques that reframe DAG search as a differentiable problem, to graph neural networks that learn edge probabilities, to generative models that capture the full data-generating process, and reinforcement learning approaches that navigate the combinatorial search space — deep learning has provided a rich toolkit for causal discovery. These methods have been applied across domains, from healthcare to neuroscience, demonstrating their ability to uncover complex causal relationships in high-dimensional, noisy data. As the field continues to evolve, we can expect even more sophisticated models that further bridge the gap between correlation and causation, ultimately enabling more robust and interpretable machine learning systems.</span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a><span class="fu">### References</span></span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a>Bello, K., Aragam, B., &amp; Ravikumar, P. (2022). DAGMA: Learning DAGs via M-matrices and a log-determinant acyclicity characterization. In *Advances in Neural Information Processing Systems (NeurIPS)*. https://arxiv.org/abs/2209.08037</span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>Kocaoglu, M., Snyder, C., Dimakis, A. G., &amp; Vishwanath, S. (2018). CausalGAN: Learning causal implicit generative models with adversarial training. In *International Conference on Learning Representations (ICLR)*. https://arxiv.org/abs/1709.02023</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>Kyono, T., Zhang, Y., &amp; van der Schaar, M. (2020). CASTLE: Regularization via auxiliary causal graph discovery. In *Advances in Neural Information Processing Systems (NeurIPS)*. https://arxiv.org/abs/2009.13180</span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a>Lachapelle, S., Brouillard, P., Deleu, T., &amp; Lacoste-Julien, S. (2020). Gradient-based neural DAG learning. In *International Conference on Learning Representations (ICLR)*. https://arxiv.org/abs/1906.02226</span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a>Louizos, C., Shalit, U., Mooij, J., Sontag, D., Zemel, R., &amp; Welling, M. (2017). Causal effect inference with deep latent-variable models. In *Advances in Neural Information Processing Systems (NeurIPS)*. https://arxiv.org/abs/1705.08821</span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>Yu, Y., Chen, J., Gao, T., &amp; Yu, M. (2019). DAG-GNN: DAG structure learning with graph neural networks. In *Proceedings of the 36th International Conference on Machine Learning (ICML)* (pp. 7154–7163). https://proceedings.mlr.press/v97/yu19a.html</span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>Zheng, X., Aragam, B., Ravikumar, P., &amp; Xing, E. P. (2018). DAGs with NO TEARS: Continuous optimization for structure learning. In *Advances in Neural Information Processing Systems (NeurIPS)*. https://arxiv.org/abs/1803.01422</span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a> <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2026 RCausalML Tutorials</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/zia207/RCausalML/edit/main/05-03-00-DeepCausalML-structural-learnering-introduction-r.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/zia207/RCausalML/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item">
+    <a class="nav-link" href="https://quarto.org">
+<p>Built with Quarto</p>
+</a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

@@ -1,0 +1,1226 @@
+## Scientific Terminology for Beginners
+
+This quick glossary explains common scientific and causal-inference terms used in this notebook.
+
+### 1) Causal Effect
+
+- **Explanation**: The change in outcome caused by a treatment (not just correlated with it).
+- **Example**: If a policy increases the average test score by 5 points, the causal effect is +5.
+
+### 2) Treatment
+
+- **Explanation**: The intervention, policy, or exposure whose effect we want to estimate.
+- **Example**: In this notebook, `repeal = 1` means a state received the policy treatment.
+
+### 3) Outcome
+
+- **Explanation**: The measured result affected by treatment.
+- **Example**: `lnr` (logged gonorrhea rate) is the outcome variable.
+
+### 4) Covariate
+
+- **Explanation**: A background variable that may influence treatment assignment and/or outcome.
+- **Example**: Income, poverty, and age are covariates in the abortion dataset.
+
+### 5) Heterogeneous Treatment Effect
+
+- **Explanation**: The treatment effect is not the same for everyone; it varies by subgroup.
+- **Example**: A policy may have a stronger effect for younger people than older people.
+
+### 6) CATE (Conditional Average Treatment Effect)
+
+- **Explanation**: The average treatment effect for a specific subgroup defined by covariates.
+- **Example**: CATE for teens with low income might be +0.12, while high income might be +0.03.
+
+### 7) Confounding
+
+- **Explanation**: A third variable affects both treatment and outcome, creating biased estimates.
+- **Example**: If poorer states are more likely to adopt a policy and also have higher disease rates, poverty can confound the estimate.
+
+### 8) Overfitting
+
+- **Explanation**: A model learns noise in training data and performs poorly on new data.
+- **Example**: A very deep tree with tiny leaves fits training data well but gives unstable causal effects on test data.
+
+### 9) Honest Estimation
+
+- **Explanation**: Use one part of data to choose splits and another part to estimate leaf effects.
+- **Example**: Train structure on 50% of data, then estimate treatment effects on the other 50%.
+
+### 10) Pruning
+
+- **Explanation**: Removing weak branches to simplify the tree and improve generalization.
+- **Example**: After cross-validation, branches that do not reduce error are cut off.
+
+### 11) Common Support (Overlap)
+
+- **Explanation**: Treated and control units should both exist across covariate ranges.
+- **Example**: If all high-income states are treated and none are control, causal comparison is weak there.
+
+### 12) Permutation Test
+
+- **Explanation**: A nonparametric test that shuffles treatment labels to build a null distribution.
+- **Example**: If observed CATE variance is much larger than shuffled-data variance, heterogeneity is likely real.
+
+
+### 1) Causal Effect
+
+- **Explanation**: The change in an outcome caused by treatment.
+- **Example**: A tutoring program increases average test scores by 5 points.
+
+### 2) CATE (Conditional Average Treatment Effect)
+
+- **Explanation**: The treatment effect for a subgroup defined by covariates.
+- **Example**: The tutoring effect may be larger for students with lower baseline scores.
+
+### 3) Covariate
+
+- **Explanation**: A background variable used to explain effect heterogeneity.
+- **Example**: Age, income, and education are covariates.
+
+### 4) Confounding
+
+- **Explanation**: A variable influences both treatment and outcome and can bias estimates.
+- **Example**: Motivation can affect both program participation and exam results.
+
+### 5) Honest Estimation
+
+- **Explanation**: Use different samples for split selection and effect estimation.
+- **Example**: One subsample builds tree structure, another computes leaf-level effects.
+
+### 6) Overlap
+
+- **Explanation**: Treated and control observations exist for similar covariate values.
+- **Example**: Both treated and untreated patients are present at each risk level.
+
+### 7) Heterogeneous Treatment Effect
+
+- **Explanation**: Treatment effects vary across individuals or groups.
+- **Example**: A drug may work better for older patients than younger patients.
+
+### 8) Variable Importance
+
+- **Explanation**: A ranking of which features most influence estimated treatment-effect variation.
+- **Example**: Income and age may appear as top drivers of CATE differences.
+
+### 1) Survival Outcome
+
+- **Explanation**: An outcome measured as time until an event occurs.
+- **Example**: Time from treatment start to relapse.
+
+### 2) Right-Censoring
+
+- **Explanation**: The event is not observed for some individuals during follow-up.
+- **Example**: A patient leaves the study before the event occurs.
+
+### 3) RMST (Restricted Mean Survival Time)
+
+- **Explanation**: Average event-free time up to a fixed horizon.
+- **Example**: Average number of event-free months in the first 24 months.
+
+### 4) CATE
+
+- **Explanation**: The treatment effect for individuals with similar covariate profiles.
+- **Example**: Treatment may improve survival more for younger patients.
+
+### 5) IPCW
+
+- **Explanation**: A weighting method that adjusts for censoring.
+- **Example**: Individuals likely to be censored receive larger weights.
+
+### 6) Honest Estimation
+
+- **Explanation**: Separate data are used for split choice and effect estimation.
+- **Example**: One split sample selects nodes; another estimates survival effects in leaves.
+
+### 7) Heterogeneous Treatment Effects
+
+- **Explanation**: The treatment effect differs across subgroups.
+- **Example**: Benefit may be larger for severe baseline disease than mild disease.
+
+### 8) Time Horizon
+
+- **Explanation**: A fixed time point used to summarize survival effects.
+- **Example**: Compare survival probability at 12 months.
+
+
+## Scientific Terminology for Beginners
+
+This glossary introduces key scientific terms used in this notebook with simple examples.
+
+### 1) Instrument (IV)
+
+- **Explanation**: A variable that changes treatment assignment but affects the outcome only through treatment.
+- **Example**: Distance to a training center influences participation but not wages directly.
+
+### 2) Endogeneity
+
+- **Explanation**: Treatment is correlated with unobserved factors that also affect the outcome.
+- **Example**: More motivated people may both choose treatment and earn higher income.
+
+### 3) LATE
+
+- **Explanation**: Treatment effect for compliers affected by the instrument.
+- **Example**: Effect of training among people who attend only when encouraged.
+
+### 4) Compliers
+
+- **Explanation**: Individuals whose treatment behavior changes because of the instrument.
+- **Example**: People who take a course only if they receive a voucher.
+
+### 5) Exogeneity
+
+- **Explanation**: The instrument is independent of unmeasured outcome determinants.
+- **Example**: Random encouragement assignment is exogenous.
+
+### 6) Exclusion Restriction
+
+- **Explanation**: The instrument has no direct effect on the outcome.
+- **Example**: Voucher affects income only through training participation.
+
+### 7) Heterogeneous Effects
+
+- **Explanation**: Effects differ across covariate-defined subgroups.
+- **Example**: Program gains are larger for younger participants.
+
+### 8) Honest Splitting
+
+- **Explanation**: Use separate data for tree splitting and treatment-effect estimation.
+- **Example**: Half-sample defines leaves, remaining sample estimates IV effects.
+
+
+Scientific Terminology for Beginners
+
+This glossary introduces key scientific terms used in this notebook with simple examples.
+
+### 1) Treatment Arm
+
+- **Explanation**: One treatment category in a multi-treatment study.
+- **Example**: `control`, `drug A`, and `drug B` are three treatment arms.
+
+### 2) Multi-Outcome
+
+- **Explanation**: Modeling more than one outcome variable at the same time.
+- **Example**: Estimating effects on both blood pressure and heart rate.
+
+### 3) Counterfactual
+
+- **Explanation**: The outcome that would have happened under a different treatment arm.
+- **Example**: For a patient given `drug A`, the untreated outcome is counterfactual.
+
+### 4) Contrast
+
+- **Explanation**: Difference in effects between two treatment arms.
+- **Example**: Effect of `drug B` minus effect of `control`.
+
+### 5) Covariate Profile
+
+- **Explanation**: The set of characteristics for one unit.
+- **Example**: Age 45, female, high baseline risk.
+
+### 6) Propensity Score
+
+- **Explanation**: Probability of receiving each treatment arm given covariates.
+- **Example**: A patient has 0.2 probability of arm A and 0.6 probability of arm B.
+
+### 7) Heterogeneity
+
+- **Explanation**: Treatment effects vary across units or subgroups.
+- **Example**: Arm A works better for older patients than younger patients.
+
+### 8) Joint Estimation
+
+- **Explanation**: Estimating related outcomes/treatments together to share information.
+- **Example**: A model uses both outcomes to improve precision for each outcome effect.
+
+
+## Scientific Terminology for Beginners
+
+This glossary introduces key scientific terms used in this notebook with simple examples.
+
+### 1) Potential Outcomes
+
+- **Explanation**: Outcomes a unit would have under treatment and under control.
+- **Example**: A person has one potential wage with training and another without training.
+
+### 2) ITE
+
+- **Explanation**: Individual Treatment Effect for one unit.
+- **Example**: Predicted gain for one patient is +2.1 units.
+
+### 3) CATE
+
+- **Explanation**: Average treatment effect for units sharing similar covariates.
+- **Example**: Average gain among high-risk patients is +1.3.
+
+### 4) Boosting
+
+- **Explanation**: Sequentially adding trees to reduce residual error.
+- **Example**: Each new tree corrects mistakes made by earlier trees.
+
+### 5) Masked Loss
+
+- **Explanation**: Loss is computed only for the factual treatment head.
+- **Example**: Treated rows update only the treated-output head.
+
+### 6) Counterfactual Prediction
+
+- **Explanation**: Predicted outcome under the unobserved treatment state.
+- **Example**: For a treated unit, the predicted control outcome is counterfactual.
+
+### 7) Ignorability
+
+- **Explanation**: Given covariates, treatment assignment is as good as random.
+- **Example**: After adjusting for age and health, treatment choice is unconfounded.
+
+### 8) Overlap
+
+- **Explanation**: Every covariate region has both treated and control observations.
+- **Example**: Across risk levels, both treatment groups are represented.
+
+## Scientific Terminology for Beginners
+
+This glossary introduces key scientific terms used in this notebook with simple examples.
+
+### 1) Instrumental Variable (IV)
+
+- **Explanation**: A variable that affects treatment but has no direct path to outcome.
+- **Example**: Distance to college affects education but not wages directly.
+
+### 2) Endogenous Treatment
+
+- **Explanation**: Treatment is correlated with unobserved factors affecting outcome.
+- **Example**: Ability influences both years of education and wages.
+
+### 3) Residualization
+
+- **Explanation**: Removing the part explained by covariates from Y, W, and Z.
+- **Example**: Use `Y - E[Y|X]` before final causal estimation.
+
+### 4) Cross-Fitting
+
+- **Explanation**: Train nuisance models on one fold and predict on another fold.
+- **Example**: Five-fold cross-fitting avoids using the same rows for fit and prediction.
+
+### 5) Nuisance Functions
+
+- **Explanation**: Auxiliary models such as `E[Y|X]`, `E[W|X]`, and `E[Z|X]`.
+- **Example**: XGBoost estimates these functions before the IV forest stage.
+
+### 6) LATE
+
+- **Explanation**: Local average treatment effect identified by the instrument.
+- **Example**: Return to education for people whose schooling changes due to college proximity.
+
+### 7) Weak Instrument
+
+- **Explanation**: Instrument has little predictive power for treatment.
+- **Example**: Very small first-stage F-statistic signals weak IV strength.
+
+### 8) Heterogeneous LATE
+
+- **Explanation**: LATE varies across covariate-defined subgroups.
+- **Example**: Education returns differ by region or parental education.
+
+
+### 1) Multi-Arm Treatment
+
+- **Explanation**: A study with more than two treatment options.
+- **Example**: `placebo`, `A`, and `B` are three arms.
+
+### 2) Baseline Arm
+
+- **Explanation**: Reference treatment used for effect comparisons.
+- **Example**: Compare each active arm against `placebo`.
+
+### 3) Outcome Model
+
+- **Explanation**: A model that predicts expected outcome within each treatment arm.
+- **Example**: One boosted model estimates outcomes for arm `A`.
+
+### 4) Treatment Contrast
+
+- **Explanation**: Difference in predicted outcomes between two arms.
+- **Example**: `tau_A-control(x) = mu_A(x) - mu_control(x)`.
+
+### 5) Propensity Score
+
+- **Explanation**: Probability of receiving each treatment arm given covariates.
+- **Example**: A subject has probabilities (0.3, 0.5, 0.2) across three arms.
+
+### 6) AIPW
+
+- **Explanation**: A doubly robust estimator that combines outcome and propensity models.
+- **Example**: ATE remains consistent if either model is correctly specified.
+
+### 7) SHAP Values
+
+- **Explanation**: Feature attributions explaining how variables affect predictions.
+- **Example**: Age contributes +0.4 to the predicted treatment contrast.
+
+### 8) Heterogeneous Treatment Effects
+
+- **Explanation**: Effects vary across subgroups with different covariates.
+- **Example**: Arm B helps severe cases more than mild cases.
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+
+## Scientific Terminology for Beginners
+
+This quick glossary explains the core scientific terms used in this notebook in plain language.
+
+### 1) Potential Outcomes
+
+- **Meaning**: For each person, imagine two possible worlds: one where they receive treatment and one where they do not.
+- **Example**: If a patient gets a drug, one potential outcome is their recovery with the drug, and another potential outcome is their recovery without the drug.
+
+### 2) Treatment Effect
+
+- **Meaning**: The difference between outcome with treatment and outcome without treatment.
+- **Example**: If expected blood pressure decreases by 8 points with treatment and 3 points without treatment, the treatment effect is 5 points.
+
+### 3) CATE (Conditional Average Treatment Effect)
+
+- **Meaning**: The average treatment effect for a specific subgroup with features \(X\) (for example, age group or risk profile).
+- **Example**: The treatment may work better for younger patients than older patients; each subgroup has its own CATE.
+
+### 4) Confounding
+
+- **Meaning**: A third factor affects both treatment assignment and the outcome, creating misleading associations.
+- **Example**: Sicker patients may be more likely to receive treatment and also more likely to have poor outcomes, even if treatment helps.
+
+### 5) Propensity Score
+
+- **Meaning**: The probability of receiving treatment given covariates \(X\): \(P(T=1\mid X)\).
+- **Example**: If two patients have similar age, health history, and baseline risk, they should have similar propensity scores.
+
+### 6) Counterfactual
+
+- **Meaning**: The unobserved outcome for the treatment status the person did not receive.
+- **Example**: For a treated person, we observe treatment outcome but not what would have happened under control; that missing value is counterfactual.
+
+### 7) Overlap (Positivity)
+
+- **Meaning**: For each covariate profile, there is a non-zero chance of both treatment and control.
+- **Example**: If a subgroup always receives treatment and never control, causal comparison for that subgroup is unreliable.
+
+### 8) Nuisance Models
+
+- **Meaning**: Helper models (like outcome models or propensity models) used to estimate the final causal quantity.
+- **Example**: In DR- or R-learning, we first model \(E[Y\mid X,T]\) and \(P(T\mid X)\), then combine them to estimate CATE.
+
+### 9) Cross-Fitting
+
+- **Meaning**: A sample-splitting strategy where one part of data fits nuisance models and another part estimates treatment effects.
+- **Example**: Train propensity/outcome models on fold A and estimate pseudo-outcomes on fold B, then rotate folds.
+
+### 10) Doubly Robust Estimation
+
+- **Meaning**: An estimator is consistent if either the outcome model or the propensity model is correctly specified.
+- **Example**: Even if the propensity model is imperfect, a correctly specified outcome model can still yield valid effect estimates (and vice versa).
+
+## Scientific Terminology for Beginners
+
+Before fitting uplift classifiers, it helps to know the core terminology.
+
+- **Classification outcome**: A binary target such as 0/1, no purchase/purchase, or no click/click.
+- **Treatment assignment**: Indicator of who received the intervention (for example, `control` vs `treatment1`).
+- **Potential outcomes**: The two hypothetical outcomes for each person: one if treated, one if not treated.
+- **Individual Treatment Effect (ITE)**: Difference between those two potential outcomes for one person.
+- **CATE (Conditional Average Treatment Effect)**: Average treatment effect for people with similar features $X$.
+- **Uplift curve / AUUC**: Evaluation tools that measure how well the model ranks people by true incremental impact.
+
+
+# Scientific Terminology for Beginners
+
+In regression uplift, outcomes are continuous rather than binary. These terms are used throughout the notebook.
+
+- **Continuous outcome**: A numeric target such as revenue, time, cost, or test score.
+- **Treatment effect**: Difference in expected outcome between treated and control groups.
+- **CATE**: $\tau(x)=\mathbb{E}[Y\mid T=1,X=x]-\mathbb{E}[Y\mid T=0,X=x]$, the expected effect for a profile $x$.
+- **T-learner**: A method that fits separate outcome models for treatment and control, then subtracts predictions.
+- **Interaction tree**: A tree that finds subgroups where treatment effects differ significantly.
+- **Gain curve**: A ranking diagnostic that shows cumulative benefit when targeting high-predicted-uplift units first.
+
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Dynamic treatment effect | Treatment effect that changes over time. | "A job program has small effects at 3 months, larger at 12 months." |
+| Lag | A past value used to explain current outcomes. | "Use last month's sales to predict this month's sales." |
+| Panel data | Repeated observations of the same units over time. | "Monthly income records for the same households." |
+| State dependence | Current outcome depends on previous outcome states. | "Unemployment today depends on unemployment last quarter." |
+| Time-varying confounder | A confounder that changes over time and affects treatment/outcome. | "Health status changes yearly and influences both treatment and costs." |
+| Sequential ignorability | At each time point, treatment is as-if random after conditioning on history. | "Given past covariates and outcomes, treatment timing is unconfounded." |
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Sample weight | Importance assigned to each observation in estimation. | "Underrepresented groups get larger weights in the analysis." |
+| Inverse Probability Weighting (IPW) | Reweights data by inverse treatment probability to balance groups. | "If treatment probability is 0.2, that treated unit gets weight 1/0.2=5." |
+| Weighted ATE | Average treatment effect computed with observation weights. | "Population-representative effect using survey weights." |
+| Covariate balance | Similar distribution of covariates across treatment groups after weighting. | "Age and income look comparable after reweighting." |
+| Stabilized weights | Modified IPW weights to reduce variance from extreme values. | "Use bounded weights to avoid one observation dominating results." |
+| Positivity | Every covariate profile has a non-zero chance of each treatment level. | "For all X values, both treated and control cases exist." |
+
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Clustered data | Observations grouped in units where errors may be correlated. | "Students nested within schools." |
+| Cluster-robust standard errors | Standard errors adjusted for within-cluster correlation. | "Do not treat students in same school as independent." |
+| Intra-cluster correlation (ICC) | Similarity of observations within the same cluster. | "People in same village have similar outcomes." |
+| Effective sample size | Independent information amount after accounting for clustering. | "1,000 rows may behave like only 400 independent units." |
+| Design effect | Variance inflation caused by clustered sampling. | "Ignoring clustering gives confidence intervals that are too narrow." |
+| Multiway clustering | Robust errors allowing correlation across multiple cluster dimensions. | "Cluster by firm and by year at the same time." |
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Ensemble learner | Combines multiple models to improve prediction robustness. | "Average random forest and boosting predictions." |
+| Stacking | Learns optimal combination weights for base learners. | "Meta-model learns how much to trust each algorithm." |
+| Bias-variance tradeoff | Balance between underfitting and overfitting error. | "Simple model has high bias; complex model may have high variance." |
+| Hyperparameter tuning | Searching model settings that improve performance. | "Choose tree depth and learning rate by cross-validation." |
+| Out-of-fold prediction | Prediction for each row from models not trained on that row. | "Row i is predicted by folds where i was held out." |
+| Metalearner | The model that combines outputs of base learners. | "Linear regression on predictions from RF, XGBoost, and Lasso." |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|------------------------|------------------------|------------------------|
+| Covariate | An input feature used to describe each unit. | Patient age, blood pressure, and prior diagnosis before treatment. |
+| Confounder | A variable that affects both treatment choice and outcome. | Older patients are more likely to get intensive care and also have worse outcomes. |
+| Counterfactual | The unobserved outcome under the treatment not received. | For a treated patient, what would recovery have been under no treatment? |
+| Propensity score | Probability of receiving treatment given covariates. | A model estimates `P(T=1|X)=0.72` for one individual. |
+| ITE (Individual Treatment Effect) | Estimated effect for one specific individual. | Predicted gain of `+3` points for patient A if treated. |
+| ATE (Average Treatment Effect) | Mean treatment effect across the population. | Across all patients, treatment improves outcome by `+1.2` on average. |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|------------------------|------------------------|------------------------|
+| Potential outcomes | The two possible outcomes each person could have under treatment or control. | One patient could recover in 5 days with treatment, 8 days without it. |
+| Factual outcome | The outcome actually observed in the real world. | If the patient received treatment, only the treated recovery time is factual. |
+| Counterfactual outcome | The unobserved alternative outcome under the other treatment state. | We do not observe how that treated patient would have done untreated. |
+| Treatment effect | Difference between potential outcomes. | `Y(1)-Y(0)=3` means treatment improves outcome by 3 units. |
+| Selection bias | Systematic difference between treated and control groups. | Sicker patients are more likely to receive treatment, biasing naive comparisons. |
+| Representation learning | Learning compressed features useful for prediction and balancing groups. | TARNet learns shared hidden features before treatment-specific heads. |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|------------------------|------------------------|------------------------|
+| Shared representation | Common hidden features learned from covariates for all samples. | A neural layer encodes age, income, and history into 32 latent features. |
+| Treatment-specific head | Separate prediction branch for each treatment level. | One head predicts `Y(0)`, another predicts `Y(1)`. |
+| ITE | Individual treatment effect per person. | For one user, model predicts `Y(1)=0.8` and `Y(0)=0.5`, so ITE=`0.3`. |
+| CATE | Average treatment effect within a subgroup or feature profile. | Average effect among users older than 60. |
+| Overlap | Presence of both treated and control examples across covariate space. | In each risk band, some patients are treated and some are not. |
+| Permutation importance | Feature relevance measured by prediction change after shuffling a feature. | Shuffling `age` causes large ITE prediction drop, so age is important. |
+
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| IPM (Integral Probability Metric) | Distance between treated and control representation distributions. | MMD is an IPM used to make hidden features look similar across groups. |
+| MMD | Kernel-based measure of distribution mismatch. | If treated and control embeddings differ, MMD is high and gets penalized. |
+| Balancing representation | Hidden space where treatment groups are statistically closer. | After training, treated and control points overlap more in latent space. |
+| Factual loss | Error on observed outcomes only. | Compare predicted `Y` with actual `Y` for each sample's observed treatment. |
+| Counterfactual generalization | Ability to predict missing potential outcomes well. | Model estimates untreated outcome for treated units with low error. |
+| Regularization | Additional penalty to improve robustness/generalization. | CFRNet adds MMD penalty on top of prediction loss. |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Propensity model | A model for treatment assignment probability `P(T=1|X)`. | DragonNet has a dedicated head predicting treatment probability. |
+| Targeted regularization | Loss term encouraging outcome predictions consistent with causal targets. | Training includes an extra term linked to treatment propensity estimates. |
+| Sufficiency assumption | Idea that a compact representation can retain all causal information. | Hidden layer captures confounders needed for both treatment and outcome. |
+| Calibration | Agreement between predicted probabilities and observed frequencies. | Among samples with predicted 0.7 treatment probability, around 70% are treated. |
+| Doubly robust intuition | Combining outcome and propensity modeling to reduce bias risk. | Even if one model is imperfect, the combined approach can still perform well. |
+| Uplift | Predicted improvement from treatment for a unit. | Marketing model predicts a customer's purchase chance rises by 5% if targeted. |
+
+
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Generator | Network that creates synthetic outputs to mimic real outcomes. | GANITE generator produces plausible counterfactual outcomes. |
+| Discriminator | Network that tries to distinguish real from generated samples. | It learns to detect whether an outcome is observed or imputed. |
+| Adversarial training | Joint training where generator and discriminator compete. | Generator improves by fooling discriminator over many iterations. |
+| Imputation | Filling in missing values, here missing counterfactual outcomes. | For treated units, GANITE imputes their unobserved control outcomes. |
+| Potential outcomes distribution | Distribution of `Y(0)` and `Y(1)` rather than only means. | Two patients can have same ATE but different uncertainty spread. |
+| PEHE | Root mean squared error of individual treatment effect estimates. | Lower PEHE means predicted ITEs are closer to true ITEs. |
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|------------------------|------------------------|------------------------|
+| Latent variable | Hidden factor not directly measured but inferred from data. | A latent health-risk score inferred from many lab measurements. |
+| Generative model | Model that describes how data are produced from hidden causes. | Decoder maps latent `z` to observed covariates and outcomes. |
+| Encoder | Network mapping observed inputs into latent representation. | VAE encoder transforms patient features into latent vector `z`. |
+| Decoder | Network reconstructing observed data from latent representation. | Decoder predicts original features from `z`. |
+| Identifiability | Whether true causal quantities are uniquely recoverable from data assumptions. | Two different latent models should not explain data equally well if model is identifiable. |
+| Intervention | Forcing a variable to a chosen value (`do` operation). | Set treatment to 1 for everyone and compare predicted outcomes. |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Proxy confounder | Observed variable that indirectly reflects an unobserved confounder. | A noisy survey score as proxy for true socioeconomic status. |
+| Variational inference | Approximate Bayesian inference using tractable distributions. | CEVAE approximates posterior over latent confounders with neural networks. |
+| ELBO | Optimization target balancing fit and regularization in VAEs. | Training maximizes ELBO instead of exact log-likelihood. |
+| Posterior | Updated belief about hidden variables after seeing data. | `q(z|x,t,y)` estimates likely latent confounders for each record. |
+| KL divergence | Measure of difference between two probability distributions. | Penalizes encoder posterior for drifting too far from prior. |
+| Hidden confounding | Bias caused by unobserved factors affecting treatment and outcome. | Motivation, not in data, affects both therapy uptake and recovery. |
+
+
+## Glossary
+
+| Term | Plain-language explanation | Illustrative example |
+|---|---|---|
+| Proxy confounder | An observed variable that indirectly reflects an unobserved confounder | A noisy survey score used as a proxy for true socioeconomic status |
+| Variational inference | Approximate Bayesian inference using tractable distributions optimized to match the true posterior | CEVAE approximates the posterior over latent confounders with encoder neural networks |
+| ELBO | The evidence lower bound — the optimization target that balances reconstruction fidelity and KL regularization in a VAE | Training maximizes the ELBO rather than the intractable exact log-likelihood |
+| Posterior | Updated belief about hidden variables after observing data | $q(Z \mid X, T, Y)$ estimates the most likely latent confounders for each record |
+| KL divergence | A measure of how far one probability distribution is from another | The KL term penalizes the encoder posterior for drifting too far from the unit Gaussian prior |
+| Hidden confounding | Bias caused by unobserved factors that affect both treatment assignment and the outcome | A patient's underlying motivation, absent from clinical records, influences both whether they seek treatment and whether they recover |
+| ITE | Individual treatment effect — the causal effect for a specific unit | $\hat{\tau}_i = \hat{Y}_i(1) - \hat{Y}_i(0)$: the difference in predicted potential outcomes for person $i$ |
+| ATE | Average treatment effect — the population-level mean of all ITEs | $\mathrm{ATE} = \mathbb{E}[\hat{\tau}_i]$ across all individuals |
+| AUUC | Area under the uplift curve — summarizes targeting performance across all possible intervention thresholds | Higher AUUC means the model ranks individuals with larger treatment effects toward the top |
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| iVAE | VAE variant designed so latent factors can be uniquely identified under assumptions. | Adding auxiliary variables helps separate true latent causes. |
+| Auxiliary variable | Extra observed variable used to improve identifiability. | Environment label or domain indicator used in latent prior. |
+| Nonlinear ICA | Recovering independent latent sources through nonlinear mixing model assumptions. | Signal components can still be separated if conditions are met. |
+| Reconstruction error | Difference between original input and decoder output. | Low reconstruction error means latent code preserves key information. |
+| Latent confounder | Hidden variable influencing both treatment and outcome. | Genetic predisposition affecting medication assignment and outcome risk. |
+| Representation disentanglement | Learning latent dimensions with distinct semantic/causal meaning. | One latent coordinate captures severity while another captures lifestyle. |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Structural causal model (SCM) | System of equations describing how variables cause each other. | `Z2 = f(Z1, noise)` encodes direct causal influence from `Z1` to `Z2`. |
+| DAG constraint | Rule forcing the learned causal graph to have no cycles. | Model penalizes adjacency matrices that imply loops. |
+| Soft intervention | Intervention that changes mechanism/parameters without fully replacing equation. | Increasing treatment tendency rather than forcing treatment deterministically. |
+| Hard intervention | Setting variable to a fixed value regardless of parents. | `do(T=1)` sets treatment to 1 for everyone. |
+| Disentangled latent space | Latent dimensions correspond to separate factors of variation. | One dimension tracks dosage, another tracks baseline severity. |
+| Interventional effect | Outcome change caused by manipulating treatment variable. | Compare predicted `E[Y|do(T=1)]` vs `E[Y|do(T=0)]`. |
+
+## Glossary
+
+| Term | Plain-language explanation | Example in this notebook |
+|---|---|---|
+| Identifiability | A model is identifiable if no two distinct parameter settings produce the same data distribution | Standard VAEs are not identifiable; iVAEs are, given sufficient variation in $u$ |
+| Auxiliary variable $u$ | An observed variable used to condition the prior; provides the "anchors" that break rotational symmetry | One-hot class label; treatment indicator; time period |
+| Conditional prior $p(z \mid u)$ | A prior distribution whose location depends on $u$; replaces the fixed $\mathcal{N}(0,I)$ of the standard VAE | $\mathcal{N}(g(u), I)$ where $g$ is a small neural network |
+| ELBO | Evidence lower bound — the training objective, balancing reconstruction fidelity and KL regularization | $\mathbb{E}[\log p(x \mid z)] - D_{\mathrm{KL}}(q \| p)$ |
+| Reparameterization trick | Expressing a random sample as a deterministic function of parameters plus independent noise, enabling backpropagation | $z = \mu + \sigma \odot \varepsilon$, $\varepsilon \sim \mathcal{N}(0,I)$ |
+| Nonlinear ICA | Independent Component Analysis extended to nonlinear mixing functions; iVAEs provide identifiability guarantees equivalent to those of nonlinear ICA | Recovering true latent factors from sensor measurements mixed nonlinearly |
+| KL divergence | Measures how far the encoder posterior is from the prior; the regularization term in the ELBO | Forces latent codes for each class $u$ to cluster near the prior mean $g(u)$ |
+| Posterior collapse | A failure mode of standard VAEs where the encoder ignores $x$ and the latent code carries no information | Mitigated in iVAEs because the conditional prior anchors each $u$-specific cluster |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Discrepancy loss | Penalty encouraging two distributions to be similar. | MMD term pushes treated and control latent distributions closer. |
+| Domain alignment | Making representations from different groups comparable. | Aligning treated/control latent points before outcome modeling. |
+| Latent regularization | Constraints on hidden variables to avoid overfitting or collapse. | KL and discrepancy terms stabilize latent space learning. |
+| Potential outcome head | Output branch for one treatment potential outcome. | One head predicts `Y(0)` and another predicts `Y(1)`. |
+| Covariate shift | Input distribution changes between groups or splits. | Treated group has older population than control group. |
+| Model diagnostics | Checks to assess if training and causal predictions are reliable. | Inspect PEHE, ATE error, latent plots, and convergence curves. |
+
+## Glossary
+
+| Term | Explanation |
+|---|---|
+| MMD | Maximum Mean Discrepancy — a kernel-based distance between two distributions; zero iff the distributions are identical |
+| RKHS | Reproducing Kernel Hilbert Space — the function space in which MMD computes distributional distances |
+| Virtual intervention | A simulated $\text{do}(X_i = v)$ carried out by modifying a latent dimension and decoding, without changing the real data |
+| PEHE | Precision in Estimation of Heterogeneous Effects — the MSE of individual treatment effect estimates; measures ITE accuracy |
+| Positivity | The assumption that every unit has a non-zero probability of receiving either treatment — violated when propensity scores are near 0 or 1 |
+| Common support | The region of covariate space where both treatment groups are represented; causal inference is only reliable within this region |
+| Propensity score | $P(T=1 \mid X)$ — the probability of treatment given covariates; used to assess overlap and as an inverse-probability weight |
+| ATE bias | Signed difference between predicted and true ATE; distinguishes over- from under-estimation |
+| Calibration | Agreement between predicted and realized outcomes across the full range of predictions, not just at the mean |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|------------------------|------------------------|------------------------|
+| Structural equation | Equation describing how a variable is generated from parents and noise. | `Y = f(T, X, noise)` in the causal graph. |
+| Interventional sample | Sample generated after forcing one variable. | Generate outcomes after setting `T=1` for all units. |
+| Counterfactual query | Question about what would happen to same unit under alternative action. | For this patient, what if treatment had been withheld? |
+| FID proxy | Approximate realism metric comparing generated and real feature distributions. | Lower score indicates synthetic samples look more realistic. |
+| SEM fit | How well structural equations reproduce observed relations. | High `R^2` on structural nodes suggests good mechanism fit. |
+| Causal graph | Directed graph encoding assumed causal relations. | `X -> T -> Y` with additional confounder edges. |
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Abduction | Infer latent/noise variables consistent with an observed sample. | Estimate hidden factors that explain one patient's observed outcome. |
+| Action | Apply intervention in SCM after abduction. | Replace observed treatment with `T=0` in the structural model. |
+| Prediction | Compute resulting counterfactual outcome after intervention. | Predict recovery time under the changed treatment. |
+| AAP pipeline | Abduction-Action-Prediction sequence for counterfactual reasoning. | Standard three-step DSCM counterfactual workflow. |
+| Structural noise | Exogenous randomness in each SCM equation. | Unmeasured biological variability in treatment response. |
+| Potential outcome estimation | Estimating `Y(0)` and `Y(1)` for each sample. | DSCM outputs both outcomes to compute ITE and ATE. |
+
+
+## Glossary
+
+| Term | Explanation |
+|---|---|
+| SCM | Structural Causal Model — a system of equations $X_i := f_i(\mathrm{PA}(X_i), U_i)$ defining causal mechanisms |
+| Exogenous noise $U_i$ | The unmodelled random inputs to each structural equation; personalize the mechanism to a specific individual |
+| DAG | Directed Acyclic Graph — the causal graph constraining which variables can be parents of each node |
+| Abduction | Step 1 of AAP: infer the personalized $U_i$ from factual data; the "fingerprint" of an individual |
+| Action | Step 2 of AAP: apply $\mathrm{do}(X_k = v)$ by removing incoming edges to $X_k$ and holding $U_i$ fixed |
+| Prediction | Step 3 of AAP: propagate the abducted $U_i$ through the intervened mechanisms to generate the counterfactual |
+| PEHE | Precision in Estimation of Heterogeneous Effects — $\sqrt{\mathrm{MSE}(\hat{\tau}_i - \tau_i)}$; measures ITE accuracy |
+| Oracle loss | Soft supervision using known potential outcomes $\mu_0, \mu_1$; only valid on semi-synthetic benchmarks |
+| KL warmup | Gradual annealing of the KL weight $\beta$ from 0 to `max_beta` to prevent posterior collapse early in training |
+| Posterior collapse | Training pathology where the encoder ignores $x$ and the KL term drives $z$ to the prior; KL warmup mitigates this |
+| BGM | Bijective Generation Mechanism — DSCM class with invertible mechanisms; strongest identifiability guarantees |
+| NCM | Neural Causal Model — DSCM class with feedforward (non-invertible) mechanisms |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Latent decomposition | Splitting hidden representation into role-specific parts. | `z = [z_c, z_t, z_y]` for confounder, treatment-only, and outcome-only parts. |
+| Confounding component | Latent subvector affecting both treatment and outcome. | `z_c` enters both treatment and outcome networks. |
+| Instrument-like component | Features affecting treatment but not outcome directly. | `z_t` improves treatment prediction without driving outcomes. |
+| Prognostic component | Features affecting outcome but not treatment assignment. | `z_y` helps outcome prediction regardless of treatment policy. |
+| Disentanglement | Enforcing statistical independence across latent parts. | Mutual-information penalty encourages `z_c ⟂ z_t ⟂ z_y`. |
+| Dose-response | Outcome as a function of continuous treatment level. | Predict blood pressure change for dose values from 0 to 10 mg. |
+
+
+## Glossary
+
+| Term | Explanation |
+|---|---|
+| $z_c$ | Confounder subspace — affects both treatment and outcome; must be adjusted for |
+| $z_t$ | Instrument subspace — affects treatment only; no direct effect on outcome |
+| $z_y$ | Prognostic subspace — affects outcome only; does not cause selection into treatment |
+| Disentanglement | Statistical independence among $z_c$, $z_t$, $z_y$; enforced via adversarial mutual information penalty |
+| Dose-response curve | $\mathbb{E}[Y(t)]$ as a function of a continuous treatment $t \in \mathbb{R}$; the generalization of ATE to non-binary treatments |
+| SDR | Sufficient dimension reduction — finding a low-dimensional function of $x$ that preserves causal effect identification |
+| Adversarial disentanglement | A discriminator trained to detect dependence among latent components; the encoder is trained adversarially to fool it |
+| PEHE | Precision in Estimation of Heterogeneous Effects — $\sqrt{\text{MSE}(\hat{\tau}_i - \tau_i)}$ |
+| CausalBGM | Bayesian successor to CausalEGM that replaces the deterministic encoder with a full posterior, restoring DAG acyclicity and adding uncertainty quantification |
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|------------------------|------------------------|------------------------|
+| Causal discovery | Learning causal graph structure from observational data. | Estimate which variables directly cause others in a dataset. |
+| DAG | Directed acyclic graph with arrows and no feedback cycles. | `X -> T -> Y` with no path returning back to `X`. |
+| Acyclicity | Constraint that prevents directed loops in causal graph. | Model rejects `A -> B -> C -> A`. |
+| Structural learning | Estimating graph edges and directions of causal mechanisms. | Discovering whether `income -> education` or reverse is more plausible. |
+| Score-based method | Chooses graph maximizing fit score with penalties/constraints. | NOTEARS optimizes reconstruction loss plus acyclicity penalty. |
+| Constraint-based method | Uses conditional independence tests to infer edges. | PC algorithm removes edges when variables become conditionally independent. |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|------------------------|------------------------|------------------------|
+| Causal discovery | Learning causal graph structure from observational data. | Estimate which variables directly cause others in a dataset. |
+| DAG | Directed acyclic graph with arrows and no feedback cycles. | `X -> T -> Y` with no path returning back to `X`. |
+| Acyclicity | Constraint that prevents directed loops in causal graph. | Model rejects `A -> B -> C -> A`. |
+| Structural learning | Estimating graph edges and directions of causal mechanisms. | Discovering whether `income -> education` or reverse is more plausible. |
+| Score-based method | Chooses graph maximizing fit score with penalties/constraints. | NOTEARS optimizes reconstruction loss plus acyclicity penalty. |
+| Constraint-based method | Uses conditional independence tests to infer edges. | PC algorithm removes edges when variables become conditionally independent.
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| NOTEARS | Method turning DAG search into smooth continuous optimization. | Learn weighted adjacency matrix by gradient descent. |
+| Adjacency matrix | Matrix encoding graph edges and strengths. | `W[i,j] != 0` means variable `i` is a parent of `j`. |
+| Acyclicity function | Differentiable penalty that is zero only for DAGs. | `h(W)=tr(exp(W∘W))-d` in NOTEARS. |
+| Sparsity penalty | Encourages fewer edges for interpretable graphs. | L1 regularization sets small edge weights to zero. |
+| Thresholding | Converting weighted graph to binary edges using cutoff. | Keep edges with absolute weight above 0.3. |
+| SHD (Structural Hamming Distance) | Number of edge additions/deletions/reversals vs true graph. | Lower SHD means learned graph is closer to ground truth.
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| GraN-DAG | Gradient-based neural approach for nonlinear DAG discovery. | Learn edge structure while fitting neural conditional models. |
+| Additive noise model (ANM) | Assumes each variable is function of parents plus independent noise. | `X3 = f(X1, X2) + e3`, where `e3` is independent error. |
+| Jacobian-based dependency | Uses derivatives to measure how strongly one variable affects another. | Large derivative of `x_j` output wrt `x_i` indicates possible edge `i->j`. |
+| Constraint step | Optimization stage enforcing DAG validity during training. | Periodically increase acyclicity penalty if cycles remain. |
+| Edge pruning | Removing weak edges after training for cleaner graph. | Delete edges with very small learned influence scores. |
+| Identifiability assumptions | Conditions needed to recover true causal directions. | Non-Gaussian noise or ANM assumptions aid direction recovery. |
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|------------------------|------------------------|------------------------|
+| DAGMA | DAG learning method using log-determinant acyclicity characterization. | Optimize sparse weighted graph while enforcing no cycles. |
+| NoCurl penalty | Soft acyclicity regularizer inspired by vector-field curl constraints. | Penalize local rotational patterns that imply cyclic behavior. |
+| Augmented Lagrangian | Optimization strategy combining constraints with adaptive penalties. | Increase penalty coefficient when acyclicity violation persists. |
+| SEM (Structural Equation Model) | Equations linking each variable to parent variables and noise. | Linear SEM predicts each variable from selected parent set. |
+| Graph recovery | Accuracy of reconstructed causal graph vs true graph. | Compare learned edges with ground truth using SHD/F1. |
+| Sparsity pattern | Which edges are present vs absent in adjacency matrix. | Many zeros indicate a sparse, interpretable causal graph. |
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| CASTLE | Method that combines prediction with auxiliary causal graph regularization. | Neural outcome model is trained while graph penalty guides structure. |
+| Auxiliary task | Secondary objective used to improve primary learning goal. | Predicting causal parents helps improve treatment-effect prediction. |
+| Causal regularization | Penalty encouraging parameters to align with causal assumptions. | Loss discourages dependence paths that violate learned DAG constraints. |
+| Parent set | Direct causes of a node in the graph. | For outcome `Y`, parent set may include treatment `T` and confounders. |
+| Structural prior | Prior belief about plausible graph structure. | Assume sparse graph and encode this preference in regularization. |
+| Generalization | Performance on unseen data rather than just training set. | Model keeps good ATE estimates on validation cohort. |
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Granger causality | X causes Y if knowing X's past improves forecasting Y. | Past Energy ETF returns help predict Financials ETF returns. |
+| Group LASSO | Regularisation that zeros out entire groups of weights at once. | All five lagged inputs of Energy are set to zero if Energy doesn't Granger-cause the target. |
+| cMLP | Separate MLP per target variable with group-sparse input layer. | Eight MLPs, one per sector ETF, each reading all other sectors' lagged returns. |
+| cLSTM | Separate LSTM per target with sparse input-weight Granger structure. | Same as cMLP but with memory for sequential dependencies. |
+| EconomySRU | GRU with a learnable causal gate matrix $G_{ij}$. | The model learns which sector pairs actively influence each other's hidden state. |
+| NRI | Graph-VAE that jointly infers edge types and dynamics. | A probabilistic model that puts a probability on each "Energy → Financials" edge. |
+| Causal matrix | $d \times d$ matrix of inferred directed influence strengths. | Row = target, column = source; entry $(i,j)$ indicates how strongly $j$ Granger-causes $i$. |
+| Consensus graph | Average normalised causal matrix across models. | If all four models agree on a strong link, it is more likely to be a real relationship. |
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| SCM (Structural Causal Model) | A mathematical description of how variables cause each other. | $\text{Rain} \rightarrow \text{WetGrass}$ with a structural equation for each. |
+| DAG (Directed Acyclic Graph) | A graph of arrows with no cycles; arrows point from cause to effect. | A flow chart with no loops. |
+| Structural equation | A function that defines one variable as a (possibly nonlinear) function of its causes plus noise. | $Y = f_\theta(X, U)$ where $U$ is unobserved noise. |
+| ELBO (Evidence Lower Bound) | A variational lower bound on the log-likelihood; optimizing it trains VAE-style models. | Training loss for variational encoders. |
+| KL divergence | A measure of how different two probability distributions are. | Penalty that keeps the learned noise close to a standard normal. |
+| Acyclicity constraint $h(A)$ | A differentiable condition that is zero iff the adjacency matrix $A$ encodes a DAG. | Acts like a "no-loop detector" during training. |
+| Soft adjacency | Values in $[0, 1]$ representing edge probabilities during optimization; thresholded to 0/1 after training. | Like a fuzzy graph that gradually becomes crisp. |
+| Intervention / do-operator | Setting a variable to a fixed value and observing downstream effects, bypassing its normal causes. | Giving a patient a drug regardless of their normal prescription pattern. |
+| ATE (Average Treatment Effect) | Mean difference in outcome when an intervention is applied vs. not applied. | Average improvement in recovery rate due to a new treatment. |
+| Augmented Lagrangian | An optimization method that enforces hard constraints (like acyclicity) through penalty terms with adaptive multipliers. | Iteratively increases the "cost" of violating the no-cycle rule. |
+| Lag order $p$ | Number of previous time steps used as predictors. | If $p=5$, today's value depends on the last 5 days. |
+
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Attention mechanism | A learned weighting that tells the model which inputs to focus on most. | Like highlighting important sentences in a textbook. |
+| Causal masking | Restricting attention so each time step only sees past information, not future. | Predicting tomorrow's price using only today's and yesterday's data. |
+| Dilated convolution | A convolution that skips inputs by a factor (dilation), increasing the receptive field exponentially. | Reading every 2nd, then every 4th word to understand context across longer sequences. |
+| Positional encoding | A vector added to each time step's embedding encoding its position in the sequence. | Adding a timestamp to each data point so the model knows temporal order. |
+| Variable Selection Network (VSN) | A learned soft gate that scores how important each input variable is. | Automatically highlighting which financial indicators drive a forecast. |
+| Gated Residual Network (GRN) | A feedforward block with a sigmoid gate and skip connection, stabilizing gradient flow. | A weighted shortcut that decides how much of the transformation to apply. |
+| Causal (attention) matrix | A $d \times d$ matrix whose $(i,j)$ entry reflects how much variable $j$ influences variable $i$ according to learned attention weights. | A table showing "who talks to whom" in a network of variables. |
+| Early stopping | Halting training when validation loss stops improving, preventing overfitting. | Stopping practice when further rehearsal no longer improves performance. |
+| AdamW | Adam optimizer with decoupled weight decay regularization. | Gradient descent that adapts learning rates per parameter and penalizes large weights. |
+| Cosine annealing | A learning-rate schedule that decays the LR following a cosine curve. | Gradually slowing down training as you approach convergence. |
+| Lag / window | Number of past time steps used as input to the model. | Using the last 20 trading days to predict the next day's return. |
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Hidden state $h_t$ | An internal vector that the RNN updates at each step, carrying "memory" of prior inputs. | Like a running mental note of everything you've read in a book so far. |
+| LSTM gates | Learned sigmoid-activated gates (forget, input, output) that control what information to keep or discard. | A spam filter deciding which emails to delete vs. archive vs. read. |
+| Causal mask $G$ | A matrix that zeroes out inputs from variables that should not causally influence a target variable. | A teacher blocking a student from looking at irrelevant notes during a test. |
+| Sparsity penalty | A regularisation term that penalises non-zero off-diagonal mask entries, encouraging simpler graphs. | A penalty for using too many ingredients in a recipe. |
+| Reverse-time attention | Attention applied to the sequence in reverse chronological order, so recent events are processed first. | Reading a mystery novel from the last chapter backwards to find the most recent clues first. |
+| Alpha attention $\alpha_t$ | Scalar weight per timestep, indicating how important that timestep was for the prediction. | Highlighting which day in a week was most predictive of the weekend outcome. |
+| Beta attention $\beta_t$ | Per-feature vector weight at each timestep, indicating which variable mattered at that moment. | At each highlighted day, noting which specific event (weather, news, etc.) drove the outcome. |
+| Regime | A latent system state (e.g., bull vs. bear market) that governs the data-generating process. | A traffic light: red (stop), yellow (caution), green (go) — different rules per state. |
+| Intervention indicator $I_t$ | A binary or continuous signal marking that an external event occurred at timestep $t$. | A flag indicating that a new drug was administered on a given day in a clinical trial. |
+| Regime-conditioned causal matrix | A separate $d \times d$ causal weight matrix per latent regime, averaged by regime probability. | Different influence tables for different market conditions — bull vs. bear. |
+| Early stopping | Halting training when validation loss stops improving, preventing overfitting. | Stopping practice when further rehearsal no longer improves performance. |
+| AdamW | Adam optimizer with decoupled weight decay regularisation. | Gradient descent that adapts learning rates per parameter and penalises large weights. |
+| Cosine annealing | A learning-rate schedule that decays the LR following a cosine curve. | Gradually slowing down training as you approach convergence. |
+| Lag / window | Number of past time steps used as input to the model. | Using the last 20 trading days to predict the next day's return. |
+
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Graph $\mathcal{G}=(\mathcal{V},\mathcal{E})$ | A set of nodes $\mathcal{V}$ (variables) connected by directed edges $\mathcal{E}$ (causal links). | A company org-chart: people are nodes, reporting lines are edges. |
+| Message passing | Each node aggregates information from its neighbours across edges, then updates its own state. | In a phone tree: each person relays a message from their callers before summarising to the boss. |
+| Soft adjacency $A_{ij} \in [0,1]$ | A continuous weight encoding how strongly node $j$ causally influences node $i$. | A water pipe diameter: larger = more flow; zero = pipe is closed. |
+| NOTEARS penalty $h(A)$ | A differentiable function that equals zero if and only if $A$ encodes a DAG; penalises cycles. | A traffic rule that charges a fine proportional to how many circular road loops exist. |
+| DAG (Directed Acyclic Graph) | A graph with directed edges and no cycles — required for causal identification. | A family tree: parents come before children; no person can be their own ancestor. |
+| Sparsity penalty (L1) | A regularisation term that shrinks small edge weights to zero, selecting only important edges. | Like decluttering: keeping only the items used daily and discarding the rest. |
+| EdgeConv layer | Computes messages by combining source, target, and edge-weight features, then aggregates into node updates. | Each pair of friends shares a combined message; each person tallies all messages they receive. |
+| Variational graph $q(G)$ | A probability distribution over graphs, learned to match the observed data. | Instead of drawing one map, you draw a distribution over possible maps with edge confidence scores. |
+| KL divergence to prior | A penalty that keeps the inferred edge probabilities close to a sparse baseline ($p=0.1$). | Penalising a guess that deviates too far from the prior belief that most pairs are unrelated. |
+| Imputation network | A neural network that predicts missing values from observed values and a mask before encoding. | An autocomplete system that fills in blanks in a time series based on surrounding context. |
+| Lag $k$ | How many time steps in the past an input is taken from. | Predicting today's returns using data from $k$ days ago. |
+| AdamW | Adaptive gradient-descent optimizer with decoupled weight decay regularisation. | A GPS navigator that adapts turn-by-turn suggestions while penalising large detours. |
+| Cosine annealing | A learning-rate schedule that decays the LR following a cosine curve, slowing training as convergence nears. | Gradually applying the brakes as you approach a stop sign. |
+
+
+## Scientific Terminology for Beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Potential outcome $Y(t)$ | The outcome a unit would have if assigned treatment $t$, regardless of the actual treatment received. | What your exam score *would have been* had you studied an extra hour. |
+| Counterfactual | The potential outcome under the treatment *not* received. | "What would have happened if..." |
+| ITE (Individual Treatment Effect) | $Y_i(1) - Y_i(0)$: the causal effect for a specific unit. | The extra marks *you* gained from studying the extra hour. |
+| ATE (Average Treatment Effect) | $\mathbb{E}[Y(1) - Y(0)]$: the average ITE across the population. | The average extra marks across all students who studied the extra hour. |
+| Confounding | A variable that affects both treatment assignment and the outcome, creating spurious associations. | Prior GPA affects both study decisions and exam score. |
+| Positivity | Every unit has a non-zero probability of receiving each treatment level. | No student is guaranteed to always study or never study. |
+| Consistency | The potential outcome under the received treatment equals the observed outcome. | If you did study the extra hour, your observed score equals $Y(1)$. |
+| Synthetic control | A weighted combination of control units used to approximate the counterfactual of a treated unit. | Using a weighted average of untreated classmates to estimate your score had you not studied. |
+| Adversarial balancing | Training an encoder to make treatment undetectable from the learned representation, removing selection bias. | Learning a study-habit representation that reveals nothing about whether you studied or not. |
+| G-computation | A sequential procedure for estimating the distribution of outcomes under an intervention treatment strategy. | Simulating future exam scores under a hypothetical "always study" policy using learned models. |
+| Donor pool | The set of control units available to construct the synthetic control counterfactual. | All untreated classmates whose histories can be used to build your counterfactual. |
+| Treatment history $\bar{T}_t$ | The sequence of treatment assignments up to time $t$. | Your study pattern (studied/not) for each day up to the exam. |

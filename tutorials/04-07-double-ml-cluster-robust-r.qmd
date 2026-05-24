@@ -1,0 +1,511 @@
+![](Images/04-double-ml.png)
+
+# 4.7 Cluster Robust Double Machine Learning {.unnumbered}
+
+This tutorial shows how to perform **cluster robust double machine learning (DML)** in R with **RCausalML**’ package. We follow the [DoubleML R Cluster Robust example](https://docs.doubleml.org/stable/examples/R_double_ml_multiway_cluster.html) and implement **one-way** and **two-way** cluster robust DML using **simulated data** from Chiang et al. (2021) and **real-world data** (U.S. automobile demand, BLP 1995). 
+
+
+## Overview
+
+When data are clustered, observations within the same cluster may be correlated, violating the i.i.d. assumption. For example, in a panel dataset, errors may be correlated within individuals over time (one-way clustering), or in a multi-dimensional setting, errors may be correlated within two dimensions (e.g., firms and markets) leading to two-way clustering.
+
+Clustering affects DML in two ways:
+
+1.  **Variance–covariance**: Standard errors, p-values, and confidence intervals must use a cluster robust variance estimator (as in Cameron et al. 2011).
+2.  **Sample splitting**: Standard cross-fitting would put observations from the same cluster in both train and test folds, so errors would be correlated across folds. Chiang et al. (2021) propose splitting by **cluster**: for two-way clustering with $K$ folds per dimension, the data are split into $K^2$ folds so that nuisance functions are estimated on clusters disjoint from those used to evaluate the score.
+
+**Cluster Robust Double Machine Learning (Cluster Robust DML)** is an extension of the standard Double Machine Learning framework designed for data where observations are **not independent**.
+
+In standard DML, it is assumed that every data point (row) is independent and identically distributed (i.i.d.). However, in many real-world datasets, observations are grouped into **clusters** (e.g., students within schools, patients within hospitals, firms within industries, or repeated time periods for the same individual). Within these clusters, errors are correlated.
+
+If you apply standard DML to clustered data, your **standard errors will be underestimated**, leading to invalid confidence intervals and false positives (Type I errors). Cluster Robust DML fixes this by adjusting both the **cross-fitting procedure** and the **variance estimation**.
+
+### Why Is It Needed? (The Problem)
+
+| Scenario | Assumption | Consequence if Ignored |
+| :--- | :--- | :--- |
+| **Standard DML** | Observations are independent (i.i.d.). | Valid inference. |
+| **Clustered Data** | Observations within a group are correlated (e.g., $\text{Cov}(\epsilon_{i}, \epsilon_{j}) \neq 0$ if $i, j$ are in same cluster). | **Standard errors are too small.** <br> You might conclude a treatment effect is significant ($p < 0.05$) when it is actually noise. |
+
+
+###  How It Works
+
+Cluster Robust DML modifies two specific steps of the standard DML algorithm:
+
+####  Clustered Cross-Fitting
+
+In standard DML, you split data into $K$ folds randomly by row. In Cluster Robust DML, **you must split by Cluster ID.**
+
+*   **Standard:** Fold 1 might contain Student A from Classroom 1, and Fold 2 might contain Student B from Classroom 1. This causes **data leakage** because the ML model learns information about Classroom 1 in Fold 1 and predicts on Fold 2.
+*   **Cluster Robust:** All students from Classroom 1 must be in the *same* fold. This ensures that the nuisance models ($\hat{g}, \hat{m}$) are trained on completely independent clusters from the ones they are predicting on.
+
+#### Cluster-Robust Variance Estimation
+
+In the final step, when calculating the standard error for $\theta$, you cannot sum the scores across individual observations. You must **aggregate the scores at the cluster level first**.
+
+1.  Calculate the orthogonal score $\psi_i$ for every observation.
+2.  Sum these scores within each cluster: $\Psi_c = \sum_{i \in \text{cluster } c} \psi_i$.
+3.  Calculate the variance based on the variation between $\Psi_c$ across clusters, not $\psi_i$ across observations.
+
+$$ \hat{\sigma}^2_{cluster} = \frac{1}{C(C-1)} \sum_{c=1}^{C} (\Psi_c - \bar{\Psi})^2 $$
+
+*(Where $C$ is the number of clusters, not observations)*
+
+
+
+### When to Use Cluster Robust DML
+
+You should use this variant whenever your data has a hierarchical or panel structure:
+
+1.  **Panel Data:** Multiple time periods for the same unit (Cluster = Individual ID).
+2.  **Multi-Site Experiments:** Participants nested within locations (Cluster = Site ID).
+3.  **Network Data:** Individuals connected within a network component.
+4.  **Survey Data:** Complex survey designs with stratification or clustering.
+5.  **Difference-in-Differences:** Especially with staggered adoption where units are observed over time (Cluster = Unit ID).
+
+### Advantages
+
+*   **Valid Inference:** Prevents false positives caused by intra-cluster correlation.
+*   **Flexible Nuisance Control:** Still allows you to use ML (XGBoost, RF) to control for high-dimensional confounders within the clusters.
+*   **Easy Implementation:** In the `DoubleML` package, it requires only one additional argument (`cluster_cols`).
+
+### Limitations
+
+*   **Number of Clusters:** You need a sufficient number of **clusters**, not just observations.
+    *   *Rule of Thumb:* If you have 10,000 observations but only 10 clusters, Cluster Robust DML will **not** work well. The asymptotic theory relies on $C \to \infty$ (number of clusters), not $N \to \infty$.
+    *   Generally, you want at least 30–50 clusters for reliable inference.
+*   **Imbalanced Clusters:** If cluster sizes vary wildly (e.g., one cluster has 5 observations, another has 5,000), variance estimation can become unstable.
+*   **Computational Cost:** Clustered cross-fitting can be slightly slower if clusters are large, as the training/test splits are less granular.
+
+## Implementation in R
+
+The **DoubleML** package provides `DoubleMLClusterData`, `DoubleMLPLIV`, and the simulator **`make_pliv_multiway_cluster_CKMS2021()`** for the Chiang et al. (2021) DGP. **RCausalML** implements thin, documented wrappers around the DoubleML data backend in **`R/DMLearner.R`**: **`doubleml_data_from_data_frame()`** (and **`doubleml_data_from_matrix()`**) delegate to `DoubleML::double_ml_data_from_data_frame()` / `double_ml_data_from_matrix()`. This notebook **constructs BLP analysis data with `doubleml_data_from_data_frame()`** so the workflow is explicitly tied to **DMLearner.R**; the simulated CKMS2021 block still calls **DoubleML**’s generator directly (that DGP is not duplicated in RCausalML).
+
+This tutorial covers:
+
+
+| Topic                    | What we cover                                                                       |
+|----------------------|-------------------------------------------------|
+| **Clustered errors**     | Why i.i.d. inference fails; one-way vs. two-way clustering                          |
+| **Cluster robust DML**   | Adjusted variance estimator and cluster-aware sample splitting (Chiang et al. 2021) |
+| **RCausalML `R/DMLearner.R`** | **`doubleml_data_from_data_frame()`** for `DoubleMLClusterData` / `DoubleMLData` from a `data.frame` |
+| **DoubleML**             | `make_pliv_multiway_cluster_CKMS2021()`, `DoubleMLPLIV`, cluster cross-fitting        |
+| **Real data**            | BLP automobile data (hdm): clustering by product and market                         |
+
+## Set Up
+
+### Check and Install Required R Packages
+
+Following R packages are required to run this notebook. If any of these packages are not installed, you can install them using the code below:
+
+`RCausalML`, `DoubleML`, `mlr3`, `mlr3learners`, `hdm`, `ggplot2`, `reshape2`, `gridExtra`, `lgr`
+
+```{r}
+#| label: lst-packages-vector
+#| lst-cap: "Required R package names used throughout the notebook."
+packages <- c(
+  "RCausalML",
+  "DoubleML",
+  "mlr3",
+  "mlr3learners",
+  "hdm",
+  "ggplot2",
+  "reshape2",
+  "gridExtra",
+  "lgr"
+)
+```
+
+### Install Missing Packages
+
+```{r}
+#| label: lst-install-missing-packages
+#| lst-cap: "Optional commands to install missing CRAN/GitHub dependencies (commented by default)."
+#| warning: false
+#| error: false
+# Install missing packages
+# new_packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+# if (length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r}
+#| label: lst-verify-package-installation
+#| lst-cap: "Check that each required package namespace is available."
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load R Packages
+
+```{r}
+#| warning: false
+#| error: false
+# Load packages with suppressed messages
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Check Loaded Packages
+
+```{r}
+#| label: lst-check-loaded-packages
+#| lst-cap: "Confirm which package environments are attached on the search path."
+# Check loaded packages
+cat("Successfully loaded packages:\n")
+print(search()[grepl("package:", search())])
+```
+
+```{r setup-dmlearner}
+#| warning: false
+# RCausalML R/DMLearner.R (doubleml_data_from_*, doubleml_plr, doubleml_pliv, …)
+# When rendering from the package source tree, reload DMLearner.R so edits apply without reinstalling.
+.qmd_dir <- tryCatch({
+  .inp <- knitr::current_input()
+  if (is.null(.inp) || !nzchar(.inp)) stop("no knitr input")
+  dirname(normalizePath(.inp, winslash = "/", mustWork = FALSE))
+}, error = function(e) NA_character_)
+if (!is.na(.qmd_dir) && nzchar(.qmd_dir)) {
+  .pkg_root <- normalizePath(file.path(.qmd_dir, "..", "..", ".."), mustWork = FALSE)
+  .dml_r <- file.path(.pkg_root, "R", "DMLearner.R")
+  if (file.exists(.dml_r)) {
+    sys.source(.dml_r, envir = .GlobalEnv)
+    message("Sourced RCausalML R/DMLearner.R from: ", .dml_r)
+  }
+} else {
+  message("Using RCausalML from library(); DMLearner.R helpers already attached.")
+}
+stopifnot(exists("doubleml_data_from_data_frame", mode = "function"))
+```
+
+## Part 1: Two-Way Cluster Robust DML (Simulated Data)
+
+We use the **partially linear IV (PLIV)** model and data generating process from Chiang et al. (2021). Data are double-indexed: $\{W_{ij}: i=1,\ldots,N,\, j=1,\ldots,M\}$.
+
+**Model:**
+
+$$Y_{ij} = D_{ij} \theta_0 + g_0(X_{ij}) + \varepsilon_{ij}, \quad \mathbb{E}(\varepsilon_{ij} \mid X_{ij}, Z_{ij}) = 0$$
+
+$$Z_{ij} = m_0(X_{ij}) + V_{ij}, \quad \mathbb{E}(V_{ij} \mid X_{ij}) = 0$$
+
+Errors and covariates can be correlated within dimension $i$, within dimension $j$, or both (two-way clustering).
+
+### Simulate Two-Way Cluster Data
+
+DoubleML provides `make_pliv_multiway_cluster_CKMS2021()` to generate data from this DGP. We use the default parameters (e.g. $\theta=1$, $N=M=25$, $p_x=100$).
+
+```{r}
+#| label: sim-twoway-ckms-generate
+
+# Simulation parameters (Chiang et al. 2021, Section 5)
+N <- 25   # clusters, first dimension
+M <- 25   # clusters, second dimension
+dim_X <- 100
+set.seed(3141)
+
+obj_dml_data <- make_pliv_multiway_cluster_CKMS2021(N, M, dim_X)
+```
+
+### Data Backend for Cluster Data
+
+Cluster robust DML uses the **DoubleMLClusterData** backend. Cluster variables are specified at construction (or set later). The object then carries cluster information for both sample splitting and variance estimation.
+
+```{r}
+#| label: sim-twoway-print-backend
+
+# Simulated data is already DoubleMLClusterData with two cluster variables
+print(obj_dml_data)
+```
+
+```{r}
+#| label: sim-twoway-head-cluster-cols
+
+# Cluster variables are in the data
+head(obj_dml_data$data[, c("Y", "D", "Z", "cluster_var_i", "cluster_var_j")])
+```
+
+### Initialize `DoubleMLPLIV` with Cluster Robust Cross-Fitting
+
+We set ML learners for the three nuisances (l, m, r) and use $K=3$ folds per cluster dimension, giving $K^2=9$ folds in total.
+
+```{r}
+#| label: sim-twoway-pliv-init
+
+# ML methods for l, m, r (cross-validated lasso)
+ml_l <- lrn("regr.cv_glmnet", nfolds = 10, s = "lambda.min")
+ml_m <- lrn("regr.cv_glmnet", nfolds = 10, s = "lambda.min")
+ml_r <- lrn("regr.cv_glmnet", nfolds = 10, s = "lambda.min")
+
+dml_pliv_obj <- DoubleMLPLIV$new(obj_dml_data,
+                                 ml_l, ml_m, ml_r,
+                                 n_folds = 3)
+
+print(dml_pliv_obj)
+```
+
+The output shows **No. folds: 9** (i.e. $3^2$) and **Cluster variable(s): cluster_var_i, cluster_var_j**.
+
+### Fit and Cluster Robust Inference
+
+`fit()` uses cluster-based sample splitting; standard errors and confidence intervals are computed with the cluster robust variance estimator from Chiang et al. (2021).
+
+```{r}
+#| label: sim-twoway-pliv-fit-summary
+
+dml_pliv_obj$fit()
+dml_pliv_obj$summary()
+```
+
+The estimate is close to the true $\theta_0 = 1$, and the reported standard errors and p-values are valid under two-way clustering.
+
+## Part 2: One-Way Cluster Robust DML (Simulated Data)
+
+For **one-way clustering**, correlation exists only along one dimension. We use the same DGP but set the second-dimension weights to zero so that only the first cluster variable matters. We then restrict the data backend to a single cluster variable.
+
+### Simulate One-Way Cluster Data
+
+```{r}
+#| label: sim-oneway-ckms-generate
+
+obj_dml_data_oneway <- make_pliv_multiway_cluster_CKMS2021(
+  N, M, dim_X,
+  omega_X = c(0.25, 0),
+  omega_epsilon = c(0.25, 0),
+  omega_v = c(0.25, 0),
+  omega_V = c(0.25, 0)
+)
+```
+
+### Use a Single Cluster Variable
+
+```{r}
+#| label: sim-oneway-set-cluster-cols
+
+obj_dml_data_oneway$cluster_cols <- "cluster_var_i"
+print(obj_dml_data_oneway)
+```
+
+### Fit One-Way Cluster Robust PLIV
+
+With one-way clustering, the number of folds equals $K$ (e.g. 3), not $K^2$.
+
+```{r}
+#| label: sim-oneway-pliv-fit-summary
+
+dml_pliv_oneway <- DoubleMLPLIV$new(obj_dml_data_oneway,
+                                    ml_l, ml_m, ml_r,
+                                    n_folds = 3)
+dml_pliv_oneway$fit()
+dml_pliv_oneway$summary()
+```
+
+
+## Part 3: Real-Data Application (BLP Automobile Data)
+
+We replicate the consumer demand application in Chiang et al. (2021) using the **Berry, Levinsohn, and Pakes (1995)** automobile data from the **hdm** package. The outcome is demand (y), the treatment is log price, and we use instruments and covariates. Observations are clustered by **product** (model.id) and **market** (cdid); we compare **no clustering**, **one-way** (product or market), and **two-way** clustering.
+
+### Load and Prepare BLP Data
+
+```{r}
+#| label: blp-load-prepare
+#| warning: false
+
+data(BLP, package = "hdm")
+blp_data <- BLP$BLP
+blp_data$price <- blp_data$price + 11.761
+blp_data$log_p <- log(blp_data$price)
+```
+
+```{r}
+#| label: blp-head-covariates
+
+x_cols <- c("hpwt", "air", "mpd", "space")
+head(blp_data[x_cols])
+```
+
+### Construct IV and Covariate Matrix
+
+We use the same formula as in the DoubleML documentation to build the design matrix and instruments.
+
+```{r}
+#| label: blp-iv-and-model-matrix
+
+iv_vars <- as.data.frame(hdm:::constructIV(blp_data$firm.id,
+                                           blp_data$cdid,
+                                           blp_data$id,
+                                           blp_data[x_cols]))
+
+formula <- formula(paste0(" ~ -1 + (hpwt + air + mpd + space)^2",
+                         "+ I(hpwt^2)*(air + mpd + space)",
+                         "+ I(air^2)*(hpwt + mpd + space)",
+                         "+ I(mpd^2)*(hpwt + air + space)",
+                         "+ I(space^2)*(hpwt + air + mpd)",
+                         "+ I(space^2) + I(hpwt^3) + I(air^3) + I(mpd^3) + I(space^3)"))
+data_transf <- data.frame(model.matrix(formula, blp_data))
+```
+
+```{r}
+#| label: blp-assemble-dml-df
+
+y_col <- "y"
+d_col <- "log_p"
+cluster_cols <- c("model.id", "cdid")
+all_z_cols <- c("sum.other.hpwt", "sum.other.mpd", "sum.other.space")
+z_col <- all_z_cols[1]
+
+dml_df <- cbind(blp_data[c(y_col, d_col, cluster_cols)],
+                data_transf,
+                iv_vars[all_z_cols])
+```
+
+### Initialize DoubleMLClusterData for Real Data (via `R/DMLearner.R`)
+
+We use **`doubleml_data_from_data_frame()`** from **RCausalML** [`R/DMLearner.R`](../../../R/DMLearner.R), which wraps **`DoubleML::double_ml_data_from_data_frame()`**. Passing **`cluster_cols`** returns a **`DoubleMLClusterData`** object.
+
+```{r}
+#| label: blp-doubleml-cluster-backend
+
+dml_data <- doubleml_data_from_data_frame(
+  dml_df,
+  y_col = y_col,
+  d_cols = d_col,
+  z_cols = z_col,
+  cluster_cols = cluster_cols,
+  x_cols = names(data_transf)
+)
+stopifnot(!is.null(dml_data), inherits(dml_data, "DoubleMLClusterData"))
+print(dml_data)
+```
+
+### Compare Specifications: Zero-, One-, and Two-Way Clustering
+
+We fit the PLIV model under four specifications and store coefficients and standard errors.
+
+```{r}
+#| label: blp-coef-se-initialize
+
+lasso <- lrn("regr.cv_glmnet", nfolds = 10, s = "lambda.min")
+coef_df <- data.frame(matrix(NA_real_, ncol = 4, nrow = 1))
+colnames(coef_df) <- c("zero_way", "one_way_product", "one_way_market", "two_way")
+rownames(coef_df) <- all_z_cols[1]
+se_df <- coef_df
+n_rep <- 10
+```
+
+#### Two-way clustering (product and market)
+
+```{r}
+#| label: blp-fit-two-way-clustering
+
+set.seed(1111)
+dml_data$z_cols <- z_col
+dml_data$cluster_cols <- c("model.id", "cdid")
+dml_pliv <- DoubleMLPLIV$new(dml_data, lasso, lasso, lasso,
+                             n_folds = 2, n_rep = n_rep)
+dml_pliv$fit()
+coef_df[1, 4] <- dml_pliv$coef
+se_df[1, 4] <- dml_pliv$se
+```
+
+#### One-way clustering (product)
+
+```{r}
+#| label: blp-fit-oneway-product
+
+set.seed(2222)
+dml_data$cluster_cols <- "model.id"
+dml_pliv <- DoubleMLPLIV$new(dml_data, lasso, lasso, lasso,
+                             n_folds = 4, n_rep = n_rep)
+dml_pliv$fit()
+coef_df[1, 2] <- dml_pliv$coef
+se_df[1, 2] <- dml_pliv$se
+```
+
+#### One-way clustering (market)
+
+```{r}
+#| label: blp-fit-oneway-market
+
+set.seed(3333)
+dml_data$cluster_cols <- "cdid"
+dml_pliv <- DoubleMLPLIV$new(dml_data, lasso, lasso, lasso,
+                             n_folds = 4, n_rep = n_rep)
+dml_pliv$fit()
+coef_df[1, 3] <- dml_pliv$coef
+se_df[1, 3] <- dml_pliv$se
+```
+
+#### No clustering (standard DoubleMLData)
+
+With **`cluster_cols = NULL`**, **`doubleml_data_from_data_frame()`** builds a standard **`DoubleMLData`** object (same **DMLearner.R** helper).
+
+```{r}
+#| label: blp-fit-zero-way-no-clustering
+
+dml_data_no_cluster <- doubleml_data_from_data_frame(
+  dml_df,
+  y_col = y_col,
+  d_cols = d_col,
+  z_cols = z_col,
+  x_cols = names(data_transf),
+  cluster_cols = NULL
+)
+stopifnot(!is.null(dml_data_no_cluster), inherits(dml_data_no_cluster, "DoubleMLData"))
+set.seed(4444)
+dml_pliv <- DoubleMLPLIV$new(dml_data_no_cluster, lasso, lasso, lasso,
+                             n_folds = 4, n_rep = n_rep)
+dml_pliv$fit()
+coef_df[1, 1] <- dml_pliv$coef
+se_df[1, 1] <- dml_pliv$se
+```
+
+### Application Results
+
+```{r}
+#| label: blp-results-coefficients
+
+coef_df
+```
+
+```{r}
+#| label: blp-results-standard-errors
+
+se_df
+```
+
+Interpretation: the **price coefficient** (effect of log price on demand) is similar across specifications, but **standard errors increase** as we account for clustering. Two-way clustering yields the largest standard errors because we allow correlation both within products and within markets. Inference that ignores clustering would be anti-conservative.
+
+
+## Summary and Conclusion
+
+**Cluster Robust DML** is the "production-ready" version of Double Machine Learning. Since most observational data in economics, social sciences, and environmental studies is clustered (by time, location, or group), **you should default to Cluster Robust DML** whenever a cluster identifier is available. It preserves the causal validity of DML while respecting the dependence structure of your data. This tutorial used **simulated data** from the PLIV multiway cluster DGP (Chiang et al. 2021) and **real data** (BLP automobile demand) to illustrate one-way and two-way cluster robust double machine learning in R, following the [DoubleML R Cluster Robust example](https://docs.doubleml.org/stable/examples/R_double_ml_multiway_cluster.html). **BLP data backends** were built with **RCausalML** **`doubleml_data_from_data_frame()`** from **`R/DMLearner.R`**. This tutorial covered:
+
+
+| Step                   | Description                                                                               |
+|-----------------------|-------------------------------------------------|
+| **Clustered data**     | **`doubleml_data_from_data_frame(..., cluster_cols = ...)`** → `DoubleMLClusterData` (see **`R/DMLearner.R`**) |
+| **Two-way clustering** | Sample splitting uses $K^2$ folds; variance estimator from Chiang et al. (2021)           |
+| **One-way clustering** | Set `cluster_cols` to a single variable; $K$ folds                                        |
+| **No clustering**      | **`doubleml_data_from_data_frame(..., cluster_cols = NULL)`** → `DoubleMLData`            |
+| **Real data**          | BLP data: cluster by product and/or market; cluster robust SEs are larger than non-robust |
+
+
+## Resources
+
+-   Berry, S., Levinsohn, J., & Pakes, A. (1995). Automobile prices in market equilibrium. *Econometrica*, 63(4), 841–890. <https://doi.org/10.2307/2171802>
+-   Cameron, A. C., Gelbach, J. B., & Miller, D. L. (2011). Robust inference with multiway clustering. *Journal of Business & Economic Statistics*, 29(2), 238–249. <https://doi.org/10.1198/jbes.2010.07136>
+
+-   Chiang, H. D., Kato, K., Ma, Y., & Sasaki, Y. (2021). Multiway cluster robust double/debiased machine learning. *Journal of Business & Economic Statistics*. <https://doi.org/10.1080/07350015.2021.1895815>
+
+-   Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., & Robins, J. (2018). Double/debiased machine learning for treatment and structural parameters. *The Econometrics Journal*, 21(1), C1–C68. <https://doi.org/10.1111/ectj.12097>
+
+-   [DoubleML R: Cluster Robust Double Machine Learning](https://docs.doubleml.org/stable/examples/R_double_ml_multiway_cluster.html)
+
+-   [DoubleML User Guide](https://docs.doubleml.org/stable/guide/index.html)
+
+-   RCausalML **`R/DMLearner.R`**: `doubleml_data_from_data_frame()`, `doubleml_data_from_matrix()`, `doubleml_plr`, `doubleml_pliv`, DiD helpers (`doubleml_did_*`), and related DoubleML bridges
+
+-   [hdm package (high-dimensional models)](https://cran.r-project.org/package=hdm)

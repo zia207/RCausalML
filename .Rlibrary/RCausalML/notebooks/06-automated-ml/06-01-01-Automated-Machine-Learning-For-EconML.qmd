@@ -1,0 +1,256 @@
+# Automated Machine Learning For EconML
+
+This is a version of the evaluation for running in the cloud, it has settings that leverage greater access to compute.
+
+## Imports
+
+```{r}
+#| label: setup
+#| include: false
+# Main imports: CausalML (DML, LinearDML, automated_ml), meta-learners
+library(RCausalML)
+# For DML and meta-learners
+library(ranger)
+library(glmnet)
+# For plotting
+library(ggplot2)
+# Optional: for grid-search style tuning
+if (requireNamespace("caret", quietly = TRUE)) {
+  library(caret)
+}
+# Set seed for reproducibility
+set.seed(123)
+```
+
+## AutoML Setup
+
+To begin we will configure our AutoML instance and load environment variable necessary to leverage AutoML.
+
+```{r}
+# R port: use local experiment directory (no Azure ML workspace)
+set_automated_ml_workspace(experiment_dir = tempdir(), create_dir = TRUE)
+```
+
+The first step for using AutoML with double machine learning is to specify the configuration object of your AutoML target. This `EconAutoMLConfig` object specifies the settings of the AutoML session that will be used to develop your model.
+
+```{r}
+# Regression AutoML config (aligned with EconML EconAutoMLConfig)
+automl_config_reg <- EconAutoMLConfig(
+  task = "regression",
+  show_output = TRUE,
+  n_folds = 2L
+)
+
+# Classification AutoML config (for propensity models when needed)
+automl_config_clf <- EconAutoMLConfig(
+  task = "classification",
+  show_output = TRUE,
+  n_folds = 2L
+)
+```
+
+### Grid Search Baseline
+
+In order to evaluate our model against a well performing Random Forest, we use a simple grid-search over a few hyperparameters with cross-validation. In R we use `caret` or a manual CV loop; here we use fixed `ranger` as the baseline learner (equivalent to a single grid point).
+
+```{r}
+# Grid-search style: use ranger with fixed params; for full grid use caret::train
+# or expand.grid over max.depth, min.node.size, etc.
+grid_search_reg <- function() {
+  "ranger"  # DMLearner expects learner name; we use ranger as default
+}
+grid_search_clf <- function() {
+  "ranger"
+}
+```
+
+### Data Generation 
+
+Data-generating process (DGP) is the same as in the Python notebook, with a continuous treatment and outcome, high-dimensional confounders, and a nonlinear effect function. We will binarize the treatment for use with R DMLearner, which expects binary/categorical treatments; this is a common approach for using DML with continuous treatments when the package does not support them directly.
+
+The DGP is described by the following equations:
+
+$$
+T = g(W \cdot \beta) + \eta, \quad \eta \sim \text{Uniform}(-1, 1)
+$$
+$$
+Y = T \cdot \theta + m(W \cdot \beta) + \epsilon, \quad \epsilon \sim \text{Uniform}(-1, 1)
+$$
+$$
+W \sim \text{Normal}(0, I_{n_w}), \quad X \sim \text{Uniform}(0,1)^{n_x}
+$$
+
+where $W$ is a matrix of high-dimensional confounders, $m, g$ can be nonlinear, and $\beta, \gamma$ have high sparsity.
+
+For this DGP,
+
+$$
+\theta(x) = \exp(2 \cdot x_1) \quad \text{(simplified here as } \sin(2\pi x_1)/2 + 0.5 \text{)}
+$$
+$$
+g(x) = \sin^2(x), \quad m(x;\eta,\gamma) = \frac{1}{2\pi} \frac{\sinh(\gamma)}{\cosh(\gamma)-\cos(x-\eta)}
+$$
+
+Let's keep it simple and set $\eta = 0$ and $\gamma = 1$.
+
+### Structural Model for Estimation
+
+The model we are trying to estimate is:
+
+- $t_i = g(w_i \cdot b) + \eta$
+- $y_i = t_i \cdot \theta + m(w_i \cdot b) + \epsilon$
+
+For this example the true value of the causal parameter will be $\theta = 0.5$.
+
+```{r}
+# Treatment effect function
+te <- function(x) {
+  sin(2 * pi * x[1]) / 2 + 0.5
+}
+g <- function(x) {
+  sin(x)^2
+}
+m <- function(x, nu = 0, gamma = 1) {
+  0.5 / pi * sinh(gamma) / (cosh(gamma) - cos(x - nu))
+}
+```
+
+```{r}
+# DGP constants
+n <- 10000
+n_w <- 30
+support_size <- 5
+n_x <- 1
+
+# Outcome support
+support_Y <- sample(seq_len(n_w), size = support_size, replace = FALSE)
+coefs_Y <- runif(support_size, 0, 1)
+epsilon_sample <- function(n) runif(n, -1, 1)
+
+# Treatment support
+support_T <- support_Y
+coefs_T <- runif(support_size, 0, 1)
+eta_sample <- function(n) runif(n, -1, 1)
+
+# Generate controls, covariates, treatments and outcomes
+W <- matrix(rnorm(n * n_w, 0, 1), n, n_w)
+X <- matrix(runif(n * n_x, 0, 1), n, n_x)
+
+# Heterogeneous treatment effects (vectorized)
+TE <- apply(X, 1, te)
+
+# T and Y (continuous)
+T_vec <- g(W[, support_T, drop = FALSE] %*% coefs_T) + eta_sample(n)
+Y <- TE * T_vec + m(W[, support_Y, drop = FALSE] %*% coefs_Y) + epsilon_sample(n)
+
+# R DMLearner expects binary/categorical treatment with control_name (0) in the data.
+# Binarize at median so we have 0/1; CATE then contrasts "high" vs "low" treatment.
+T_bin <- as.integer(T_vec > median(T_vec))
+
+# Train/validation split (80/20)
+idx <- sample.int(n, size = round(0.8 * n))
+Y_train <- Y[idx]
+Y_val <- Y[-idx]
+T_train <- T_bin[idx]
+T_val <- T_bin[-idx]
+X_train <- X[idx, , drop = FALSE]
+X_val <- X[-idx, , drop = FALSE]
+W_train <- W[idx, , drop = FALSE]
+W_val <- W[-idx, , drop = FALSE]
+
+# Combined X for nuisance (effect modifier X + controls W); CATE is function of X only
+X_fit_train <- as.matrix(cbind(X_train, W_train))
+colnames(X_fit_train) <- c(paste0("X", seq_len(n_x)), paste0("W", seq_len(n_w)))
+X_fit_val <- as.matrix(cbind(X_val, W_val))
+colnames(X_fit_val) <- colnames(X_fit_train)
+
+# Test grid for effect (X only); for prediction we need same columns as fit, so use mean W
+W_mean <- colMeans(W_train)
+X_test <- as.matrix(expand.grid(seq(0, 1, by = 0.01)))
+n_test <- nrow(X_test)
+X_test_full <- cbind(X_test, matrix(W_mean, nrow = n_test, ncol = n_w, byrow = TRUE))
+colnames(X_test_full) <- colnames(X_fit_train)
+```
+
+# Train Estimators
+
+We train models in three different ways, and compare their performance.
+
+## Default Setting
+
+```{r}
+# LinearDML with default ranger for nuisance models
+# R DMLearner uses single X matrix; we use cbind(X, W) for nuisance, CATE at mean W
+est_rf <- LinearDML(model_y = "ranger", model_t = "ranger", n_fold = 3L, seed = 123L)
+est_rf <- fit(est_rf, X_fit_train, T_train, Y_train)
+te_pred_rf <- predict(est_rf, X_test_full)
+```
+
+```{r}
+# Grid-search style: same as default here (ranger); in practice use caret tune
+est_cv <- LinearDML(model_y = grid_search_reg(), model_t = grid_search_reg(), n_fold = 3L, seed = 123L)
+est_cv <- fit(est_cv, X_fit_train, T_train, Y_train)
+te_pred_cv <- predict(est_cv, X_test_full)
+```
+
+```{r}
+# AutoML: R DMLearner accepts character learner names; we use EconAutoMLConfig (defined above)
+# for consistency and fit with ranger. For full AutoML nuisance selection, use
+# AutomatedMLModel separately; DMLearner integration would require extending the package.
+est_aml <- LinearDML(model_y = "ranger", model_t = "ranger", n_fold = 3L, seed = 123L)
+est_aml <- fit(est_aml, X_fit_train, T_train, Y_train)
+te_pred_aml <- predict(est_aml, X_test_full)
+```
+
+## Performance Visualization
+
+```{r}
+# True effect on test grid
+expected_te <- apply(X_test, 1, te)
+
+# Plot: True vs predicted CATE
+df_plot <- rbind(
+  data.frame(x = X_test[, 1], effect = expected_te, method = "True effect"),
+  data.frame(x = X_test[, 1], effect = te_pred_rf, method = "DML with RF"),
+  data.frame(x = X_test[, 1], effect = te_pred_cv, method = "DML with Grid Search"),
+  data.frame(x = X_test[, 1], effect = te_pred_aml, method = "DML with AutoML config")
+)
+ggplot(df_plot, aes(x = x, y = effect, colour = method, linetype = method)) +
+  geom_line(linewidth = 0.8) +
+  scale_linetype_manual(values = c("True effect" = "dashed", "DML with RF" = "solid",
+                                  "DML with Grid Search" = "solid", "DML with AutoML config" = "solid")) +
+  labs(y = "Treatment Effect", x = "x", colour = "Method", linetype = "Method") +
+  theme_minimal()
+```
+
+## Using AutomatedMLModel directly
+
+The R package provides `AutomatedMLModel` for auto-selecting nuisance models via CV. You can use it as a standalone model and then plug predictions into a two-step estimator, or use `add_automated_ml()` to convert configs to models for APIs that accept them:
+
+```{r}
+# Create AutomatedMLModel from config (for use in custom pipelines)
+aml_model_y <- AutomatedMLModel(automl_config_reg, experiment_name_prefix = "model_y")
+aml_model_y <- fit(aml_model_y, X_fit_train, Y_train)
+
+# Predict on validation
+yhat_aml <- predict(aml_model_y, X_fit_val)
+head(yhat_aml, 5)
+```
+
+```{r}
+# add_automated_ml: convert list of args; any EconAutoMLConfig becomes AutomatedMLModel
+args <- list(model_y = automl_config_reg, model_t = automl_config_reg)
+args_with_aml <- add_automated_ml(args)
+# Now args_with_aml$model_y and args_with_aml$model_t are AutomatedMLModel instances
+# (DMLearner fit() currently expects character learner names; full integration is future work)
+```
+
+## Summary
+
+This document replicated the EconML Automated ML notebook flow in R using:
+
+- **CausalML**: `LinearDML`, `EconAutoMLConfig`, `set_automated_ml_workspace`, `add_automated_ml`, `AutomatedMLModel`
+- **DGP**: Same data-generating process with $T$, $Y$, $W$, $X$, and heterogeneous effect $\theta(X)$
+- **Estimators**: Default (ranger), grid-search style (ranger), and AutoML config; visualization of true vs predicted CATE
+
+For full AutoML inside DML (i.e. passing `AutomatedMLModel` as `model_y`/`model_t`), the DMLearner would need to accept model objects with `fit(X, y)` and `predict(newdata)` in addition to character names; the R package automated_ml module is ready for that extension.

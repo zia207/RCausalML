@@ -1,24 +1,31 @@
-# Test NOTEARS (R/notears.R)
+# Test NOTEARS (R/causalDeepNet.R)
 # Run from package root: Rscript tests/test-notears.R
 # Quick (skip nonlinear): QUICK=1 Rscript tests/test-notears.R
 
-pkg_root <- if (file.exists("R/notears.R")) "." else
-  if (file.exists("../R/notears.R")) ".." else
-    stop("Run from Causal_ML package root")
+pkg_root <- if (file.exists("DESCRIPTION")) "." else
+  if (file.exists("../DESCRIPTION")) ".." else
+    stop("Run from RCausalML package root")
 
-# Dependencies
+if (!requireNamespace("RCausalML", quietly = TRUE)) {
+  if (requireNamespace("devtools", quietly = TRUE)) {
+    devtools::load_all(pkg_root, quiet = TRUE)
+  } else {
+    stop("Package 'RCausalML' required. Install RCausalML_0.3.0.tar.gz first.")
+  }
+}
+
 if (!requireNamespace("expm", quietly = TRUE)) stop("Package 'expm' required. Install with install.packages('expm').")
 if (!requireNamespace("igraph", quietly = TRUE)) stop("Package 'igraph' required. Install with install.packages('igraph').")
 suppressPackageStartupMessages({
   library(expm)
   library(igraph)
+  library(RCausalML)
 })
-
-source(file.path(pkg_root, "R/notears.R"))
+is_dag <- RCausalML::is_dag
 
 quick <- nzchar(Sys.getenv("QUICK", ""))
 
-message("========== NOTEARS tests (R/notears.R) ==========")
+message("========== NOTEARS tests (R/causalDeepNet.R) ==========")
 message("")
 
 # --- 1. set_random_seed ---

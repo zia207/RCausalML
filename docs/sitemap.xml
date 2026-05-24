@@ -1,4 +1,5 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://zia207.github.io/RCausalML/00-scientific-terminology-glossary.html</loc></url>
 <url><loc>https://zia207.github.io/RCausalML/404.html</loc></url>
 <url><loc>https://zia207.github.io/RCausalML/HELP_RCausalML_0.3.0.html</loc></url>
 <url><loc>https://zia207.github.io/RCausalML/LICENSE-text.html</loc></url>
@@ -347,5 +348,6 @@
 <url><loc>https://zia207.github.io/RCausalML/reference/uplift_tree_string.html</loc></url>
 <url><loc>https://zia207.github.io/RCausalML/reference/uplift_tree_to_rpart.html</loc></url>
 <url><loc>https://zia207.github.io/RCausalML/reference/variable_importance.html</loc></url>
+<url><loc>https://zia207.github.io/RCausalML/tutorials/index.html</loc></url>
 </urlset>
 

@@ -113,6 +113,12 @@ export(
   get_cumlift,
   get_cumgain,
   uplift_rf_multi,
+  uplift_randomForest,
+  uplift_randomForestClassifier,
+  uplift_randomForestRegressor,
+  uplift_xgboost,
+  uplift_xgboostClassifier,
+  uplift_xgboostRegressor,
   one_sided,
   alignment,
   one_sided_att,
@@ -185,6 +191,8 @@ export(
   causal_egm,
   causal_discrepancy_vae,
   dscm,
+  iVAE,
+  elbo_loss,
   ivae,
   TemporalCausalVAE,
   temporal_causal_loss,
@@ -257,7 +265,40 @@ export(
   CounterfactualModel,
   DeepSynthModel,
   CRNModel,
-  GNetModel
+  GNetModel,
+  set_random_seed,
+  is_dag,
+  simulate_dag,
+  simulate_parameter,
+  simulate_linear_sem,
+  simulate_nonlinear_sem,
+  count_accuracy,
+  notears_linear,
+  notears_nonlinear,
+  demo_linear,
+  demo_nonlinear_mlp,
+  demo_nonlinear_sobolev,
+  NotearsMLP,
+  NotearsSobolev,
+  dagmaLinear,
+  dagma,
+  DagmaMLP,
+  castle,
+  get_daggnn_device,
+  preprocess_adj,
+  matrix_poly,
+  DAGGNN,
+  make_daggnn,
+  daggnn_adj,
+  GraNDAG,
+  NormalizationData,
+  NonlinearGauss,
+  NonlinearGaussANM,
+  is_acyclic,
+  compute_constraint,
+  compute_A_phi,
+  neighbors_selection,
+  GraphDAG
 )
 
 S3method(fit, SLearner)
@@ -317,6 +358,10 @@ S3method(print, causal_forest)
 S3method(summary, causal_forest)
 S3method(predict, uplift_rf)
 S3method(predict, uplift_rf_multi)
+S3method(predict, uplift_randomForest)
+S3method(print, uplift_randomForest)
+S3method(predict, uplift_xgboost)
+S3method(print, uplift_xgboost)
 S3method(predict, uplift_tree_ddp)
 S3method(predict, uplift_tree_iddp)
 S3method(predict, interaction_tree)
@@ -339,6 +384,9 @@ S3method(predict, attn_causal_model)
 S3method(predict, rnn_causal_model)
 S3method(predict, gnn_causal_model)
 S3method(predict, counterfactual_model)
+S3method(predict, castle)
+S3method(summary, castle)
+S3method(plot, castle)
 S3method(predict_best_treatment, counterfactual_value_estimator)
 S3method(estimate_ate, SLearner)
 S3method(estimate_ate, TLearner)

@@ -14,9 +14,13 @@ pkg_root <- if (file.exists("R/causalDeepNet.R")) "." else
   if (file.exists("../R/causalDeepNet.R")) ".." else
     stop("Run from RCausalML package root")
 
-lib_paths <- c(file.path(pkg_root, ".Rlibrary"), .libPaths())
-.libPaths(lib_paths)
-suppressPackageStartupMessages(library(RCausalML))
+if (requireNamespace("devtools", quietly = TRUE)) {
+  devtools::load_all(pkg_root, quiet = TRUE)
+} else {
+  lib_paths <- c(file.path(pkg_root, ".Rlibrary"), .libPaths())
+  .libPaths(lib_paths)
+  suppressPackageStartupMessages(library(RCausalML))
+}
 
 message("========== causal_iVAE tests (R/causal_iVAE.R) ==========")
 message("")

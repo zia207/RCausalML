@@ -20,12 +20,20 @@
 rcausalml_predict_numeric <- function(object, newdata) {
   p <- predict(object, newdata = newdata)
   if (is.list(p) && "predictions" %in% names(p)) {
-    return(as.numeric(p[["predictions"]]))
+    p <- as.numeric(p[["predictions"]])
+  } else if (is.list(p) && "pred" %in% names(p)) {
+    p <- as.numeric(p[["pred"]])
+  } else {
+    p <- as.numeric(p)
   }
-  if (is.list(p) && "pred" %in% names(p)) {
-    return(as.numeric(p[["pred"]]))
+  # kernelshap/shapviz require a finite prediction vector; replace any NA/Inf/NaN
+  # with the mean of the finite values (or 0 if all are non-finite)
+  bad <- !is.finite(p)
+  if (any(bad)) {
+    fallback <- if (any(!bad)) mean(p[!bad]) else 0
+    p[bad] <- fallback
   }
-  as.numeric(p)
+  p
 }
 
 #' Compute SHAP values for any RCausalML CATE model

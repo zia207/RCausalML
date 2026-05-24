@@ -1,0 +1,632 @@
+.build_causal_tree      Build one honest causal tree
+.compute_oob_variance   OOB variance estimate (used when newdata =
+                        NULL)
+.compute_variance_ij    Variance estimation for new-data predictions
+                        via grouped IJ
+.estimate_outcome       Compute outcome residuals (Y - E[Y|X])
+.estimate_propensity    Compute propensity scores via logistic
+                        regression or provided values
+.honest_split           Sample split: return indices for two
+                        non-overlapping halves
+.predict_tree           Route a single observation through a tree,
+                        return leaf node
+.resolve_weights        Compute sample weights (uniform if NULL)
+.weighted_var           Variance of a weighted vector
+ATE                     Absolute Error in Average Treatment Effect
+                        (ATE)
+ATE_error               Absolute Error in Average Treatment Effect
+AutomatedMLModel        AutomatedML model: fit and predict using
+                        auto-selected learner
+BoostedIVForest         BoostedIVForest: Boosted causal forest with
+                        instrumental variables
+CXGBoost                C-XGBoost: Boosted causal outcome model with
+                        propensity scoring
+CausalDiscrepancyVAE    Alias for 'causal_discrepancy_vae'
+CausalEGM               Alias for 'causal_egm'
+CausalForestDML         CausalForestDML: first-stage DML + 'grf' causal
+                        forest on residuals (EconML 'CausalForestDML')
+CausalVAE               Build a CausalVAE nn_module instance
+CausalVAE_ATE           Build a CausalVAE model with ATE head
+DMLIVLearner            DML IV with linear CATE (DMLIV, native R)
+DMLearner               DMLearner: Double machine learning (EconML
+                        'econml.dml.DML' family)
+DRLearner               DR-Learner: doubly robust pseudo-outcome with
+                        3-fold cross-fitting (causalml-style)
+DRPolicyForest          DR Policy Forest (EconML-style)
+DRPolicyTree            DR Policy Tree (EconML-style)
+DagmaMLP                DagmaMLP module constructor
+DomainAdaptationLearner
+                        Domain adaptation meta-learner (EconML
+                        'DomainAdaptationLearner')
+DynamicDMLearner        Dynamic Double Machine Learning (panel data,
+                        native R)
+EconAutoMLConfig        Create an EconML-style AutoML config for causal
+                        estimators
+ForestDRLearner         Forest DR-Learner
+KernelDML               KernelDML: DML with random Fourier features
+                        then linear CATE (EconML 'KernelDML')
+LRSRegressor            LRSRegressor: S-Learner with linear regression
+                        (like Python LRSRegressor)
+LinearDML               LinearDML: DML with OLS / stats final stage
+                        (EconML 'LinearDML')
+LinearDRLearner         Linear DR-Learner (econml-style)
+NOTEARS                 NOTEARS: Causal DAG structure learning via
+                        continuous optimization
+NonParamDML             NonParamDML: DML with flexible final regressor
+                        (EconML 'NonParamDML')
+NonParamDMLIVLearner    Nonparametric DML IV (NonParamDMLIV, native R)
+OrthoIVLearner          Orthogonal Double ML with instrumental
+                        variables (OrthoIV)
+PEHE                    Precision in Estimation of Heterogeneous
+                        Effects (PEHE)
+RCausalML-package       RCausalML: Uplift Modeling and Causal Inference
+RLearner                R-Learner: minimize R-loss with cross-fitting.
+                        Aligned with causalml BaseRLearner. With
+                        'treatment_type = "continuous"', uses the
+                        Robinson partial-linear nuisance
+                        m(X)=\mathbb{E}[Y\mid X], e(X)=\mathbb{E}[D\mid
+                        X] and weighted effect regression on
+                        (Y-m)/(D-e) (cf. 'r_learner_continuous' for
+                        dose grids).
+SLearner                S-Learner: single model with treatment as
+                        feature CATE(x) = mu(x,1) - mu(x,0). Aligned
+                        with causalml BaseSLearner. With
+                        'treatment_type = "continuous"', fits one
+                        surface mu(X, D) and predicts mu(X, d_1) -
+                        mu(X, d_0) using 'dose_values' (default: 25th
+                        and 75th percentiles of training D).
+SingleTreeCateInterpreter
+                        Single-tree CATE interpreter
+SingleTreePolicyInterpreter
+                        Single-tree policy interpreter
+SparseLinearDML         SparseLinearDML: DML with Lasso / elastic-net
+                        final (EconML 'SparseLinearDML')
+SparseLinearDRLearner   Sparse Linear DR-Learner (econml-style)
+TCDF_find_causes        Discover potential causes for one target time
+                        series (TCDF)
+TLearner                T-Learner: separate models for control and
+                        treatment (aligned with causalml BaseTLearner)
+                        With 'treatment_type = "continuous"', splits D
+                        at 'dose_split' (default median) into low vs
+                        high and fits the binary T-learner on that
+                        partition.
+TMLELearner             TMLE Learner (Targeted Maximum Likelihood
+                        Estimation). Like causalml TMLELearner.
+TemporalCausalVAE       Temporal Causal VAE (Variational Autoencoder
+                        with Causal Dynamics)
+XGBDRLearner            XGBoost DR-Learner
+XGBDRRegressor          XGBDRRegressor: DR-Learner with XGBoost
+                        (causalml-style; see 'DRLearner')
+XGBRRegressor           XGBRRegressor: R-Learner with XGBoost
+XGBSRegressor           XGBSRegressor: S-Learner with XGBoost
+XGBTRegressor           XGBTRegressor: T-Learner with XGBoost (like
+                        Python XGBTRegressor)
+XGBXRegressor           XGBXRegressor: X-Learner with XGBoost
+XLearner                X-Learner (with propensity weighting). Aligned
+                        with causalml BaseXLearner. With
+                        'treatment_type = "continuous"', dichotomizes D
+                        at 'dose_split' (default median) and fits the
+                        binary X-learner on high vs low dose.
+add_automated_ml        Replace EconAutoMLConfig args with
+                        AutomatedMLModel instances
+alignment               Alignment confounding function (ATE)
+alignment_att           Alignment confounding function for ATT
+average_treatment_effect
+                        Estimate Average Treatment Effect from a causal
+                        forest
+best_linear_projection
+                        Best linear projection of CATE (grf)
+bfs_layout              BFS layout: layers by breadth-first search from
+                        a start node
+bipartite_layout        Bipartite layout: two parallel lines (vertical
+                        or horizontal)
+boosted_iv_forest       Fit a BoostedIVForest and return predictions in
+                        a single call.
+castle                  CASTLE (CAusal STructure LEarning
+                        Regularization)
+causalGAN               CausalGAN (Structural Equation GAN)
+causalStructureML       Causal structure learning (unified API)
+causal_discrepancy_vae
+                        CausalDiscrepancyVAE
+causal_egm              CausalEGM
+causal_forest           Fit a Causal Forest
+causal_forest_confounder
+                        Causal forest with confounders
+causal_inference_tree   Causal Inference Tree (CIT); binary treatment,
+                        continuous or binary outcome. For continuous
+                        outcome, leaf tau = E[Y|T=1] - E[Y|T=0]; split
+                        uses same t-statistic as IT.
+causal_structure_ml_model_descriptions
+                        Short descriptions of causal structure learning
+                        methods
+causal_survival_forest
+                        Causal survival forest (grf)
+causal_tree             Causal Tree (Honest or Adaptive)
+causal_vae              CausalVAE
+causal_vae_opt          Optimized CausalVAE
+causalsens_selection_bias
+                        Selection bias: causalsens over alpha range
+cevae                   CEVAE (Counterfactual Variational Autoencoder)
+cfrnet                  CFRNet — Counterfactual Regression Network
+                        (TARNet + MMD balancing)
+circular_layout         Circular layout: place nodes on a circle
+classification_metrics
+                        Classification metrics (AUC proxy, accuracy) by
+                        treatment group
+coef.LinearDML          Coefficients of the linear CATE model
+                        (LinearDML or SparseLinearDML)
+coef.LinearDRLearner    Coefficient(s) of the linear CATE model
+                        (LinearDRLearner or SparseLinearDRLearner)
+compute_propensity_score
+                        Compute propensity scores (train and optionally
+                        predict)
+count_accuracy          Accuracy metrics: estimated graph vs ground
+                        truth
+counterfactual_unit_selection
+                        Counterfactual Unit Selection: select units to
+                        maximize beta*P(complier|X) +
+                        gamma*P(always-taker|X) +
+                        theta*P(never-taker|X) + delta*P(defier|X).
+                        Requires estimates of P(favourable|X,W=0) and
+                        P(favourable|X,W=1) (e.g. from outcome model).
+                        Complier: favourable iff treated. Always:
+                        favourable either way. Never: never favourable.
+                        Defier: favourable iff not treated.
+counterfactual_value_estimator
+                        Counterfactual value estimator: E[(v - cc_w) *
+                        Y_w - ic_w]
+create_table_one        Create Table One: balance table for treatment
+                        vs control
+dagma                   DAGMA unified interface
+dagmaLinear             DAGMA for linear SEMs
+demo_linear             Demo: linear NOTEARS on synthetic data
+demo_nonlinear_mlp      Demo: nonlinear NOTEARS (MLP) on synthetic data
+demo_nonlinear_sobolev
+                        Demo: nonlinear NOTEARS (Sobolev) on random
+                        data
+doubleml_data_from_data_frame
+                        Build 'DoubleMLData' or 'DoubleMLClusterData'
+                        from a data frame
+doubleml_data_from_matrix
+                        Build 'DoubleMLData' from matrices ('X', 'y',
+                        'd', optional 'z', etc.)
+doubleml_did_eval_preds
+                        Evaluate cross-fitted nuisance predictions for
+                        DoubleML DiD
+doubleml_did_linear     DoubleML DiD wrappers (linear / ranger /
+                        xgboost nuisances)
+doubleml_fetch_401k     401(k) data ('DoubleML' 'fetch_401k')
+doubleml_fetch_bonus    Pennsylvania bonus experiment data ('DoubleML'
+                        'fetch_bonus')
+doubleml_make_pliv_CHS2015
+                        Simulated PLIV data (Chernozhukov, Hansen,
+                        Spindler, 2015)
+doubleml_make_plr_CCDDHNR2018
+                        Simulated PLR data (Chernozhukov et al., 2018
+                        Fig. 1 DGP)
+doubleml_pliv           Partially linear IV DML via 'DoubleML'
+                        ('DoubleMLPLIV')
+doubleml_plr            Fit Partially Linear DML via DoubleML (R) when
+                        available
+doubleml_plr_fit_data   Fit DoubleML PLR from a 'DoubleMLData' object
+                        and mlr3 learners
+doubleml_plr_tune_data
+                        Tune then fit DoubleML PLR (mlr3tuning +
+                        'DoubleMLPLR$tune')
+dragonnet               DragonNet — shared representation and three
+                        heads (torch)
+draw_network            Draw a network (graph) with nodes and edges
+draw_networkx_edges     Draw network edges
+draw_networkx_labels    Draw node labels
+draw_networkx_nodes     Draw network nodes at given positions
+driv_learner            Doubly Robust Instrumental Variable (DRIV)
+                        learner for conditional LATE 3-fold cross-fit:
+                        fit e0(x), e1(x), m0(x), m1(x); then fit tau(X)
+                        minimizing DR IV loss.
+dscm                    Deep Structural Causal Model (DSCM)
+effect                  Effect of treatment change (generic)
+effect.DynamicDMLearner
+                        Effect of treatment change (DynamicDMLearner)
+estimate_ate            Estimate Average Treatment Effect from a fitted
+                        meta-learner or fit-predict
+estimate_ate.DMLearner
+                        Estimate ATE for DMLearner
+estimate_ate.DRLearner
+                        Estimate Average Treatment Effect (ATE) for
+                        DR-Learner
+estimate_ate.DomainAdaptationLearner
+                        Estimate ATE for DomainAdaptationLearner
+estimate_ate.RLearner   Estimate ATE for R-Learner. Like Python
+                        BaseRLearner.estimate_ate (analytical SE).
+estimate_ate.SLearner   Estimate ATE for S-Learner (analytical SE or
+                        bootstrap). Like Python
+                        BaseSLearner.estimate_ate. For LRSRegressor
+                        (learner = "lm") returns OLS coefficient and
+                        confint like Python LRSRegressor.estimate_ate.
+estimate_ate.TLearner   Estimate ATE for T-Learner. Like Python
+                        BaseTLearner.estimate_ate.
+estimate_ate.TMLELearner
+                        Estimate ATE for TMLE Learner. Like Python
+                        TMLELearner.estimate_ate.
+estimate_ate.XLearner   Estimate ATE for X-Learner. Like Python
+                        BaseXLearner.estimate_ate.
+estimate_ate.default    Default ATE estimation dispatcher
+estimate_ate_causalvae_ate
+                        Estimate ATE from CausalVAE_ATE model
+explain_cate            Compute SHAP values for any RCausalML CATE
+                        model
+feature_importances     Feature importances for policy / tree models
+feature_importances.DRPolicyForest
+                        Feature importances (average over trees)
+feature_importances.DRPolicyTree
+                        Feature importances from policy tree (variable
+                        importance from rpart)
+filter_D                Rank features by divergence measure (bin-based
+                        uplift filter)
+filter_F                Rank features by F-statistic of
+                        treatment-feature interaction
+filter_LR               Rank features by likelihood-ratio statistic of
+                        treatment-feature interaction
+fit                     Generic fit for meta-learners
+fit.AutomatedMLModel    Fit AutomatedMLModel: select best learner via
+                        CV and refit on full data
+fit.DMLIVLearner        Fit DMLIVLearner (native R)
+fit.DMLearner           Fit DMLearner — cross-fitting and final stage
+                        (EconML 'DML.fit')
+fit.DRLearner           Fit DR-Learner
+fit.DRPolicyForest      Fit DR Policy Forest
+fit.DRPolicyTree        Fit DR Policy Tree
+fit.DomainAdaptationLearner
+                        Fit a DomainAdaptationLearner model
+fit.DynamicDMLearner    Fit DynamicDMLearner (panel data, native R)
+fit.NonParamDMLIVLearner
+                        Fit NonParamDMLIVLearner (native R)
+fit.OrthoIVLearner      Fit OrthoIVLearner (native R)
+fit.SLearner            Fit S-Learner
+fit.TMLELearner         Fit TMLE learner (stores outcome model; TMLE
+                        step done in estimate_ate)
+fit.policy_learner      Fit the policy learner
+fit_predict             Generic fit_predict for meta-learners
+fit_predict.DMLearner   Fit and predict (DMLearner)
+fit_predict.DRLearner   Fit and predict CATE (DR-learner)
+fit_predict.DomainAdaptationLearner
+                        Fit and predict with DomainAdaptationLearner
+fit_predict.RLearner    Fit and predict R-Learner (like Python
+                        fit_predict)
+fit_predict.SLearner    Fit and predict S-Learner (like Python
+                        fit_predict)
+fit_predict.TLearner    Fit and predict T-Learner (like Python
+                        fit_predict)
+fit_predict.XLearner    Fit and predict X-Learner (like Python
+                        fit_predict)
+fit_predict_cevae       Fit CEVAE and predict ITE (fit_predict)
+fruchterman_reingold_layout
+                        Alias for spring_layout (NetworkX name)
+gain_curve              Gain curve: cumulative sum of true tau
+                        (normalized to 1) when ordered by pred
+ganite                  GANITE — Causal Inference with Generative
+                        Adversarial Nets
+generate_data           Generate synthetic data for CausalVAE examples
+get_cumgain             Get cumulative gain (Python get_cumgain). gain
+                        = lift * index (cumulative gain at each
+                        position).
+get_cumlift             Get cumulative lift (Python get_cumlift).
+                        Average uplift in cumulative population when
+                        sorted by pred descending.
+get_forest_weights      Forest kernel weights (grf)
+get_importance          Feature importance for uplift modeling (filter
+                        methods)
+get_leaf_node           Leaf node for each sample in a grf tree
+get_tree                Get a single tree from a grf forest
+grf_average_treatment_effect
+                        Average treatment effect (grf implementation)
+grf_causal_forest       Causal forest (grf implementation)
+grf_variable_importance
+                        Variable importance for a grf forest
+instrumental_forest     Instrumental forest (grf)
+interaction_tree        Interaction Tree (IT); binary treatment,
+                        continuous or binary outcome. For continuous
+                        outcome, leaf tau = E[Y|T=1] - E[Y|T=0]; split
+                        uses t-statistic on mean difference (Su et
+                        al.).
+intercept               Intercept of the linear CATE model (generic)
+intercept.LinearDML     Intercept of the linear CATE model (LinearDML
+                        or SparseLinearDML)
+intercept.LinearDRLearner
+                        Intercept(s) of the linear CATE model
+                        (LinearDRLearner or SparseLinearDRLearner)
+interpret               Interpret a CATE or policy model with a tree
+                        (generic)
+interpret.SingleTreeCateInterpreter
+                        Interpret a CATE estimator with a single tree
+interpret.SingleTreePolicyInterpreter
+                        Interpret a policy from a CATE estimator with a
+                        single tree
+interventional_elbo_loss
+                        Negative ELBO loss for the Interventional CRL
+                        model
+is_dag                  Check if weighted adjacency matrix W defines a
+                        DAG
+iv_2sls                 Two-stage least squares (2SLS) for causal
+                        effect with instrumental variable First stage:
+                        W ~ Z + X. Second stage: Y ~ W_hat + X.
+ivae                    iVAE (Identifiable Variational Autoencoder)
+kamada_kawai_layout     Kamada-Kawai layout (path-length cost)
+late_iv                 Local Average Treatment Effect (LATE) via IV
+                        LATE = (E[Y|Z=1] - E[Y|Z=0]) / (E[W|Z=1] -
+                        E[W|Z=0])
+list_causaldata_datasets
+                        List causaldata datasets supported for
+                        RCausalML
+load_boosted_iv         Load a BoostedIVForest model from disk.
+load_causaldata         Load a causaldata dataset in RCausalML-ready
+                        form
+load_cxgboost           Load a saved CXGBoost model from disk.
+load_cxgboost_extensions
+                        Load causal boosting extensions from the R
+                        directory
+load_multi_arm_causal_boost
+                        Load a saved MultiArmCausalBoost model
+loss_function           CausalVAE loss function
+make_uplift_classification
+                        Uplift classification dataset
+make_uplift_regression
+                        Uplift regression dataset (continuous outcome)
+match_by_group          Stratified nearest neighbor matching by group
+match_optimizer         Match optimizer: search for best caliper /
+                        pihat / score_cols
+multi_arm_causal_forest
+                        Multi-arm causal forest (grf)
+multipartite_layout     Multipartite (layered) layout
+nearest_neighbor_match
+                        Nearest neighbor propensity score matching
+neuralGrangerML         Alias for 'neural_granger_ml'
+neural_granger_ml       Neural Granger Causality Models for
+                        Multivariate Time Series
+notears_linear          Linear NOTEARS: min L(W;X) + lambda1||W||_1
+                        s.t. h(W)=0
+notears_nonlinear       Nonlinear NOTEARS via Adam then L-BFGS (MLP or
+                        Sobolev)
+one_sided               One-sided confounding function (ATE)
+one_sided_att           One-sided confounding function for ATT
+partial_rsqs_confounding
+                        Map partial R² of a feature to confounding
+                        amount (alpha range)
+plot.castle             Plot CASTLE graph
+plot.grf_tree           Plot grf tree (grf)
+plot.rank_average_treatment_effect
+                        Plot rank_average_treatment_effect (grf)
+plot_gain               Plot gain chart (Python plot_gain). Uses
+                        get_cumgain for observed uplift so curve
+                        matches Python.
+plot_qini               Plot Qini chart: cumulative true treatment
+                        effect vs population fraction (like Python
+                        plot_qini)
+plot_sensitivity        Plot sensitivity analysis (Selection Bias
+                        causalsens output)
+policy_feature_names    Policy feature names (EconML API compatibility)
+policy_learner          Policy Learner: treatment assignment policy
+                        with doubly robust estimator
+predict.AutomatedMLModel
+                        Predict using fitted AutomatedMLModel
+predict.DMLIVLearner    Predict CATE from fitted DMLIVLearner
+predict.DMLearner       Predict CATE from fitted DMLearner
+predict.DRLearner       Predict CATE from DR-Learner
+predict.DRPolicyForest
+                        Predict recommended treatment (DR Policy
+                        Forest) — majority vote
+predict.DRPolicyTree    Predict recommended treatment (DR Policy Tree)
+predict.DomainAdaptationLearner
+                        Predict CATE with a fitted
+                        DomainAdaptationLearner
+predict.DynamicDMLearner
+                        Predict CATE (constant marginal effect) from
+                        fitted DynamicDMLearner
+predict.NonParamDMLIVLearner
+                        Predict CATE from fitted NonParamDMLIVLearner
+predict.OrthoIVLearner
+                        Predict CATE from fitted OrthoIVLearner
+predict.SLearner        Predict CATE from S-Learner
+predict.SingleTreeCateInterpreter
+                        Predict CATE from the interpreted tree
+                        (simplified model)
+predict.SingleTreePolicyInterpreter
+                        Predict recommended treatment from
+                        SingleTreePolicyInterpreter (alias for treat)
+predict.TLearner        Predict CATE from T-Learner
+predict.XLearner        Predict CATE from X-Learner. When p is NULL and
+                        model was fit without p, uses stored propensity
+                        or 0.5.
+predict.castle          Predict outcome from CASTLE
+predict.causalGAN       Predict from CausalGAN
+predict.causal_discrepancy_vae
+                        Predict from CausalDiscrepancyVAE
+predict.causal_egm      Predict from CausalEGM
+predict.causal_forest   Predict treatment effects from a causal forest
+predict.causal_inference_tree
+                        Predict method for causal_inference_tree
+predict.causal_vae      Predict latent codes from CausalVAE
+predict.cevae           Predict ITE from CEVAE (or placeholder)
+predict.cfrnet          Predict CATE from CFRNet
+predict.dragonnet       Predict CATE (and optionally propensity) from
+                        DragonNet
+predict.driv_learner    Predict conditional LATE from DRIV learner
+predict.dscm            Predict from Deep Structural Causal Model
+                        (DSCM)
+predict.ganite          Predict ITE from GANITE
+predict.instrumental_forest
+                        Predict with an instrumental forest (grf)
+predict.interaction_tree
+                        Predict method for interaction_tree
+predict.ivae            Predict latent representation from iVAE
+predict.neural_granger_ml
+                        Predict from neural Granger models
+predict.policy_learner
+                        Predict treatment assignment (0 or 1)
+predict.tarnet          Predict CATE from TARNet
+predict.uplift_rf       Predict CATE (and optionally probabilities)
+                        from uplift_rf object. When full_output=TRUE
+                        and model has tree leaves with p0/p1, returns
+                        data.frame with control, treatment, delta
+                        (Python-style).
+predict.uplift_rf_multi
+                        Predict from uplift_rf_multi. full_output=TRUE
+                        returns Python-style DataFrame.
+predict.uplift_tree_ddp
+                        Predict from single uplift tree (DDP, IDDP, IT,
+                        CIT)
+predict.uplift_tree_iddp
+                        Predict method for uplift_tree_iddp
+predict_best_treatment
+                        Predict best treatment for each unit
+predict_best_treatment.counterfactual_value_estimator
+                        Predict best treatment from value estimator
+predict_proba           Predict probability of treatment assignment
+                        (P(treat))
+predict_proba.AutomatedMLModel
+                        Predict class probabilities using fitted
+                        AutomatedMLModel (classification only)
+predict_proba.DRPolicyForest
+                        Predict probability of recommending each
+                        treatment (DR Policy Forest) Average of tree
+                        probabilities.
+predict_proba.DRPolicyTree
+                        Predict probability of recommending each
+                        treatment (DR Policy Tree)
+predict_proba.policy_learner
+                        Predict probability of treatment assignment
+                        (P(treat))
+predict_value           Predict expected value under each treatment
+                        (policy value)
+predict_value.DRPolicyTree
+                        Predict expected value under each treatment (DR
+                        Policy Tree) Returns the predicted CATE (value
+                        vs control) for each treatment.
+print.causal_forest     Print method for causal_forest
+print_optimization_summary
+                        Print optimization summary for CausalVAE
+                        helpers
+propensity_glm          Logistic regression propensity score
+propensity_glmnet       Elastic net propensity score model (glmnet)
+propensity_model        Propensity model object (abstract interface)
+propensity_model_elastic_net
+                        Elastic net propensity model
+propensity_model_gradient_boosted
+                        Gradient boosted propensity model (XGBoost)
+propensity_model_logistic_regression
+                        Logistic regression propensity model (elastic
+                        net)
+qini_curve              Qini curve: cumulative true treatment effect
+                        when units ordered by predicted CATE
+                        (descending)
+qini_score              Qini score for each model column in a results
+                        data frame (like Python qini_score)
+qini_score_vec          Qini score: area under Qini curve (trapezoidal)
+r_learner_continuous    Generalized R-learner for continuous treatment
+                        (dose-response on a grid)
+random_layout           Random layout: place nodes uniformly at random
+                        in the unit square
+rank_average_treatment_effect
+                        Rank-weighted average treatment effect (grf)
+rank_average_treatment_effect.fit
+                        Rank-weighted average treatment effect fit
+                        (grf)
+rcausalml-datasets      Datasets included with RCausalML
+rcausalml-extra-objects
+                        Additional exported RCausalML objects
+register_boosted_iv_parsnip
+                        Register a parsnip model spec for
+                        BoostedIVForest (tidymodels shim).
+regression_metrics      Regression metrics (MSE, MAE, R2) by treatment
+                        group
+rescale_layout          Rescale layout positions to (-scale, scale) on
+                        all axes
+rescale_layout_dict     Rescale a layout given as named list or matrix
+run_cxgboost_example    Run the built-in CXGBoost demonstration.
+run_example             Run the built-in demonstration example.
+run_multi_arm_causal_boost_example
+                        Run a built-in multi-arm causal boost example
+save_boosted_iv         Save a BoostedIVForest model to disk.
+save_cxgboost           Save a CXGBoost model to disk (standalone
+                        wrapper).
+save_multi_arm_causal_boost
+                        Save a MultiArmCausalBoost model
+sensitivity             Create a sensitivity analysis object
+sensitivity_analysis    Run sensitivity analysis for one or more
+                        methods
+set_automated_ml_workspace
+                        Set configuration for AutomatedML (local
+                        experiments)
+set_random_seed         Set random seed for reproducibility (R and
+                        torch)
+shell_layout            Shell layout: place nodes in concentric circles
+                        (shells)
+simulate_dag            Simulate random DAG with expected number of
+                        edges
+simulate_easy_propensity_difficult_baseline
+                        Synthetic data: easy propensity, difficult
+                        baseline (Setup C)
+simulate_hidden_confounder
+                        Synthetic data: hidden confounder (Louizos et
+                        al.)
+simulate_linear_sem     Simulate samples from linear SEM
+simulate_nonlinear_sem
+                        Simulate samples from nonlinear SEM (mlp, mim;
+                        no GP)
+simulate_nuisance_and_easy_treatment
+                        Synthetic data with difficult nuisance and easy
+                        treatment (Setup A)
+simulate_parameter      Simulate SEM edge weights for a DAG
+simulate_randomized_trial
+                        Synthetic data: randomized trial (Setup B)
+simulate_unrelated_treatment_control
+                        Synthetic data: unrelated treatment and control
+                        (Setup D)
+smd                     Standardized Mean Difference (SMD) of a feature
+                        between treatment and control
+spectral_layout         Spectral layout (eigenvectors of graph
+                        Laplacian)
+spiral_layout           Spiral layout
+split_frequencies       Split frequencies of a grf forest
+spring_layout           Spring layout (Fruchterman-Reingold
+                        force-directed)
+summary.castle          Summarize CASTLE structure
+summary.causal_forest   Summary method for causal_forest
+synthetic_data          Main entry: generate synthetic data by mode
+tarnet                  TARNet — Treatment-Agnostic Representation
+                        Network
+temporal_causal_loss    Total loss for the Temporal Causal VAE
+test_calibration        Test calibration of a grf forest
+train_causalvae         Train CausalVAE from dataloaders
+treat                   Assign treatment from a policy interpreter
+                        (generic)
+treat.SingleTreePolicyInterpreter
+                        Assign treatment using the interpreted policy
+                        tree
+tune_hyperparameters    Tune CausalVAE hyperparameters
+uplift_forest_plot      Plot multiple trees from an uplift forest
+                        (ensemble visualization)
+uplift_rf_chi           Uplift RF with Chi-squared criterion
+uplift_rf_cts           Uplift Random Forest on Contextual Treatment
+                        Selection (CTS) Split criterion: expected value
+                        of best treatment in children vs parent.
+uplift_rf_ed            Uplift RF with Euclidean distance criterion
+uplift_rf_kl            Uplift random forest using KL divergence
+                        splitting criterion
+uplift_rf_multi         Multi-treatment uplift random forest (Python
+                        UpliftRandomForestClassifier-style). Fits one
+                        uplift forest per treatment arm (control vs
+                        treatment_k). predict(..., full_output=TRUE)
+                        returns control/treatment probabilities,
+                        deltas, recommended_treatment, max_delta.
+uplift_tree_ddp         Uplift tree on delta-delta-p (DDP) criterion;
+                        binary outcome only
+uplift_tree_iddp        Uplift tree on IDDP criterion; binary outcome
+                        only
+uplift_tree_plot        Plot an uplift tree (base R), with arrows
+                        connecting each split to its children
+uplift_tree_string      Print uplift tree as a string (for
+                        interpretation and diagnosis)
+uplift_tree_to_rpart    Convert an uplift tree (list) to an rpart
+                        object for use with rpart.plot
+variable_importance     Variable importance from split frequency

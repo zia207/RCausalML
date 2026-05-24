@@ -1,0 +1,6 @@
+# Quarto project for CausalML-R examples
+# Render from package root: quarto render inst/examples/01-meta-learners-synthetic.qmd
+# Or: quarto render inst/examples/*.qmd
+project:
+  type: default
+  output-dir: _site

@@ -1,0 +1,107 @@
+Package: RCausalML
+Type: Package
+Title: RCausalML - Uplift Modeling and Causal Inference with Machine
+        Learning
+Version: 0.3.0
+Date: 2026-05-21
+Author: RCausalML Authors [aut, cre]
+Maintainer: RCausalML Authors <rcausalml@example.com>
+Authors@R: person("RCausalML", "Authors", email = "rcausalml@example.com", role = c("aut", "cre"))
+Description: R port of the Python RCausalML package. Provides uplift modeling and causal
+    inference methods using machine learning. Estimates the Conditional Average Treatment
+    Effect (CATE) from experimental or observational data. Includes meta-learners (S, T, X, R, DR),
+    Double Machine Learning (DML: LinearDML, SparseLinearDML, KernelDML, NonParamDML, CausalForestDML),
+    native R Dynamic DML (panel) and IV learners (OrthoIV, DMLIV, NonParamDMLIV), and optional
+    DoubleML-package bridges in DMLearner.R: partially linear regression (doubleml_plr,
+    doubleml_plr_fit_data, doubleml_plr_tune_data for pipelines / ensembles), partially
+    linear IV (doubleml_pliv), DoubleMLData from data.frame or matrices (doubleml_data_from_*),
+    CHS2015 / CCDDHNR2018 simulators and DoubleML fetch wrappers (doubleml_fetch_401k,
+    doubleml_fetch_bonus), DiD-style DML on first-differenced outcomes (doubleml_did_* with
+    mlr3measures evaluation). Deep torch-based causal nets (CEVAE, DCEVAE via reticulate/torch,
+    DragonNet, TARNet, CFRNet, GANITE, CausalGAN for structural-interventional GAN modeling,
+    CausalEGM with disentangled latent causal factors, Deep Structural Causal Models (DSCM),
+    CausalDiscrepancyVAE with latent MMD balancing, neural Granger-causality time-series
+    models (cMLP, cLSTM, EconomySRU, NRI), and Structural Causal Models (SCMs) with Deep
+    Components — DeepSCM (fixed-graph SCM with variational noise encoders), DECI (Deep
+    End-to-end Causal Inference; jointly learns graph and structural equations with a NOTEARS
+    acyclicity penalty), and DynoTEARS (lagged causal discovery with augmented-Lagrangian DAG
+    constraint) — all live in R/causalDeepNet.R. Graph-recovery utilities evaluate_graph_recovery()
+    and plot_scm_dag() are also provided. Causal XGBoost
+    (R/causalXGBoost.R): two-head DragonNet-style masked-MSE outcome model with propensity
+    ranger, PEHE/ATE evaluation metrics, and save/load support (CXGBoost R6 class).
+    Multi-arm causal boosting (R/multi_arm_causal_boost.R): extends CXGBoost to K >= 2
+    treatment arms with separate outcome models per arm and multiclass propensity
+    (MultiArmCausalBoost R6 class). Interventional Causal Representation Learning
+    (R/interventionalCRL.R): environment-conditioned VAE with analytical KL for binary
+    fingerprint inputs and interventional ELBO loss (InterventionalCRL). Temporal Causal VAE
+    (R/tempoCausalVAE.R): GRU encoder/decoder with learned causal adjacency, NOTEARS DAG
+    penalty, and sparsity regularisation (TemporalCausalVAE, temporal_causal_loss). Temporal
+    Causal Discovery Framework (R/temporalCausaDiscovery.R): depthwise-TCN ADDSTCN architecture
+    (Nauta et al.) for attention-based time-series causal discovery. Also propensity score
+    estimation and matching, synthetic data, uplift trees and forests
+    (R/uplift_trees.R; unified Python-style API in R/uplift_randomForest.R with
+    uplift_randomForest, uplift_randomForestClassifier, and
+    uplift_randomForestRegressor for binary and continuous outcomes; T-learner
+    uplift XGBoost in R/uplift_xgboost.R with uplift_xgboost,
+    uplift_xgboostClassifier, and uplift_xgboostRegressor), policy
+    learning, and instrumental
+    variable (2SLS) methods. DML API aligned with EconML; see also DoubleML (R). Causal DAG
+    discovery is exposed through R/causalStructureML.R: causalStructureML() and
+    causal_structure_ml_model_descriptions() unify NOTEARS, DAG-GNN, and GraN-DAG (in R/causalDeepNet.R).
+    Models (R/causalDeepNet.R): TCDF (Temporal Causal Discovery Framework; Nauta et al.,
+    2019) with stacked causal dilated convolutions and variable-importance attention,
+    CausalTransformer with autoregressive masking and inter-variable cross-attention, and
+    TFT (Temporal Fusion Transformer; Lim et al., 2021) with variable selection networks,
+    LSTM encoder, and interpretable multi-head temporal attention — all exposed via
+    attn_causal_model(), tcdf_model(), causal_transformer_model(), tft_model(), and
+    causal_matrix_attn() with CamelCase aliases (TCDFModel, CausalTransformerModel,
+    TFTModel, attnCausalModel). RNN/LSTM-Based Causal Models (R/causalDeepNet.R):
+    CausalLSTM with a learnable sparse adjacency mask that gates per-variable LSTM inputs
+    (sparsity-regularised, soft or hard thresholding), RETAIN (Choi et al., 2016) with
+    reverse-time dual-channel GRU attention (temporal alpha + variable beta) for
+    interpretable attribution, and Intervention-Aware RNN with a GRU-based regime
+    detector, learned regime embeddings, and an explicit intervention-indicator channel —
+    all exposed via rnn_causal_model(), causal_lstm_model(), retain_model(),
+    intervention_rnn_model(), causal_matrix_rnn(), and CamelCase aliases
+    (CausalLSTMModel, RETAINModel, InterventionRNNModel, rnnCausalModel). Graph Neural
+    Network (GNN) Causal Models (R/causalForest.R): GVAR (Graph Vector Autoregression —
+    lag-specific soft adjacency matrices with L1 sparsity and NOTEARS DAG penalties, two
+    stacked GNN message-passing layers), CausalGNN / CD-GNN (GRU per-variable temporal
+    encoder, bilinear-style graph learner, stacked edge-conditioned GNN layers with
+    single-step GRU node updates and LayerNorm, NOTEARS DAG + sparsity penalties), and
+    CUTS+ (variational Bernoulli graph posterior, joint imputation network for missing
+    data, GRU temporal encoder, edge-conv message passing, MSE + KL-to-sparse-prior +
+    NOTEARS DAG objective) — all exposed via gnn_causal_model(), gvar_model(),
+    causal_gnn_model(), cuts_model(), causal_matrix_gnn(), and CamelCase aliases
+    (GVARModel, CausalGNNModel, CUTSModel, gnnCausalModel). Counterfactual /
+    Potential Outcomes Models (R/causalDeepNet.R): DeepSynth (Neural Synthetic Control —
+    GRU encoder with scaled dot-product attention over donor variables produces a soft
+    synthetic control; factual and counterfactual heads yield ITE estimates), CRN
+    (Counterfactual Recurrent Network — GRU encoder with adversarial treatment-balancing
+    discriminator loss; decoder conditioned on representation and do(T) gives
+    Y-hat(0)/Y-hat(1) and ATE), and G-Net (Deep G-Computation — GRU backbone with
+    covariate transition head and outcome head; counterfactual outcomes computed by
+    sequential substitution of the intervened treatment) — all exposed via
+    counterfactual_model(), deep_synth_model(), crn_model(), gnet_model(),
+    ate_counterfactual(), ite_counterfactual(), predict.counterfactual_model(),
+    and CamelCase aliases (CounterfactualModel, DeepSynthModel, CRNModel, GNetModel).
+    See https://causalml.readthedocs.io/ and https://github.com/uber/causalml for
+    the Python reference.
+License: Apache License 2.0
+URL: https://zia207.github.io/RCausalML/,
+        https://github.com/zia207/RCausalML
+BugReports: https://github.com/zia207/RCausalML/issues
+Depends: R (>= 4.0.0)
+Imports: stats, utils, Matrix, parallel, MASS, glmnet (>= 4.0), ranger
+        (>= 0.12), rpart (>= 4.1), R6, expm, igraph, progress, htetree,
+        rlang, future, future.apply, ggplot2, ggraph, parsnip, coro
+Suggests: xgboost (>= 1.5), grf, DoubleML, mlr3, mlr3learners,
+        mlr3tuning, paradox, mlr3measures, MatchIt, testthat, knitr,
+        rmarkdown, nnet, rpart.plot, torch (>= 0.10), shapr,
+        reticulate, kernelshap, shapviz, causaldata, devtools, reshape2
+Encoding: UTF-8
+VignetteBuilder: knitr
+RoxygenNote: 7.3.3
+NeedsCompilation: no
+Packaged: 2026-05-24 00:20:14 UTC; root
+Built: R 4.6.0; ; 2026-05-24 00:21:48 UTC; unix

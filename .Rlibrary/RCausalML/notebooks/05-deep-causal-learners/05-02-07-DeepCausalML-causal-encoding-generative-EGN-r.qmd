@@ -1,0 +1,449 @@
+# Causal Encoding Generative Modeling (CausalEGM) {.unnumbered}
+
+CausalEGM is a deep learning framework for nonlinear dimension reduction and generative modeling of the dependency among covariate features affecting treatment and response. The core insight is that of those thousands of covariates, only a small structured subset actually matters causally — and that subset can be learned. CausalEGM decomposes the latent space into three disjoint parts: confounders that affect both treatment and outcome, instrument-like features that affect treatment only, and prognostic features that affect outcome only. This structured decomposition allows CausalEGM to identify a minimal latent covariate feature subvector that affects both treatment and outcome, enabling accurate estimation of treatment effects even in high-dimensional settings. 
+
+
+## Overview
+
+All the models we've covered so far (TARNet, CFRNet, CEVAE) work well when the confounder space is **low-dimensional and tractable**. Real observational data — genomics, EHR records, fMRI scans — has **thousands of covariates** `x`. Directly conditioning on all of them causes the *curse of dimensionality*: propensity scores become unreliable, matching breaks down, and neural networks overfit.
+
+CausalEGM is a deep learning framework for nonlinear dimension reduction and generative modeling of the dependency among covariate features affecting treatment and response. The core insight is that of those thousands of covariates, only a **small structured subset** actually matters causally — and that subset can be *learned*.
+
+### The key idea: dependency-aware latent decomposition
+
+The key idea is to partition the latent feature vector into different **independent components** that play different roles in the generative models for treatment and outcome. This partitioning allows identifying a **minimal latent covariate feature subvector** that affects both treatment and outcome.
+
+Concretely, CausalEGM decomposes the latent space `z` into three disjoint parts:
+
+
+z = [ z_c  |  z_t  |  z_y ]
+
+
+| Component | Role |
+|-----------|------|
+| `z_c` | **Confounders** — affect *both* treatment and outcome |
+| `z_t` | **Instrument-like** — affect treatment *only* |
+| `z_y` | **Prognostic** — affect outcome *only*, not treatment |
+
+This is the structural insight that separates CausalEGM from CEVAE. CEVAE infers a single unstructured `z`; CausalEGM forces `z` to be **causally structured** from the start.
+
+### How CausalEGM worksh
+
+1. The bidirectional encoder-decoder
+
+CausalEGM establishes a **bidirectional transformation** between the high-dimensional confounders space and a low-dimensional latent space where the density is known (e.g., multivariate normal distribution). Unlike a standard VAE which only goes `x → z`, CausalEGM learns both directions: `f: x → z` (encoder) and `g: z → x̂` (decoder/generator). This cycle consistency means no information is lost — you can reconstruct `x` from `z`, proving the compression is lossless and faithful.
+
+2. The structured latent decomposition — the real innovation
+
+CausalEGM simultaneously learns to embed the high-dimensional covariates into a low-dimensional latent space, then build generative models for treatment given latent features and for outcome given treatment and latent features. The key idea is to **partition the latent feature vector** into different independent components that play different roles.
+
+The partition is:
+- **`z_c`** (confounders) → fed into *both* the treatment model and outcome models. These are the variables you must adjust for.
+- **`z_t`** (instruments) → fed into the treatment model *only*. Like instrumental variables in econometrics — they shift treatment but have no direct effect on outcomes.
+- **`z_y`** (prognostic) → fed into the outcome models *only*. They predict outcomes regardless of treatment but don't cause selection bias.
+
+This structure is enforced via an **adversarial mutual information penalty** that drives `z_c ⊥ z_t ⊥ z_y` — the three components are statistically independent of each other.
+
+3. The generative models on top of z
+
+With the latent space structured, CausalEGM builds:
+- A **treatment model** `p(t | z_c, z_t)` — analogous to a propensity score, but in compressed latent space
+- Two **outcome heads** `H₀(z_c, z_y)` and `H₁(z_c, z_y)` — conditioned only on the causally relevant subset of `z`, not the full thing
+
+For **continuous treatments**, this generalises cleanly to a dose-response function `H(t, z_c, z_y) → ŷ(t)` where `t ∈ ℝ`. This is something binary-only models (TARNet, CFRNet, CEVAE) cannot do at all.
+
+4. Joint training objective
+
+Everything is trained end-to-end by minimising four losses simultaneously:
+
+| Loss | Purpose |
+|------|---------|
+| `𝓛_recon` | Reconstruction — `‖x − g(f(x))‖²` ensures z encodes all of x |
+| `𝓛_treatment` | Factual treatment prediction from `z_c, z_t` |
+| `𝓛_outcome` | Factual outcome prediction from `z_c, z_y` |
+| `𝓛_KL + 𝓛_indep` | Gaussian prior on z + enforces `z_c ⊥ z_t ⊥ z_y` |
+
+5. Why this beats prior methods
+
+The improvement is substantial when the sample size is large and the covariate is of high dimension. The key advantages over the models we've already seen are:
+
+- **vs CEVAE**: CEVAE infers a single unstructured latent `z` — it doesn't tell you *which parts* of `z` are confounders vs instruments vs prognostic factors. CausalEGM's partition is the causal structure itself, not just a compression.
+- **vs TARNet/CFRNet**: Those operate directly in the high-dimensional `x` space with no compression. MMD balancing in 1000-dimensional space is statistically unreliable.
+- **vs classical SDR**: SDR-based causal inference approaches consider only **linear** dimension reduction, which limits applicability. CausalEGM captures nonlinear relationships.
+- **Continuous treatment**: None of the previous four architectures handle `t ∈ ℝ` natively. CausalEGM directly estimates the full **dose–response curve** `E[Y(t)]` for any `t`.
+
+### The one known limitation
+
+The joint use of an encoder and a generative decoder introduces a structural loop — such circularity violates the acyclicity assumption fundamental to Bayesian networks and causal diagrams. CausalEGM also relies on deterministic functions to establish the mapping between observed data and latent features, which can limit the model's ability to capture and quantify uncertainty. This motivated the successor model **CausalBGM** (2025), which replaces the encoder entirely with a fully Bayesian posterior, restoring a clean DAG structure and adding proper uncertainty quantification.
+
+
+### Packages and function availability
+
+```{r}
+packages <- c(
+  "tidyverse",
+  "RCausalML",
+  "torch",
+  "causaldata",
+  "ForCausality",
+  "mlbench",
+  "gridExtra"
+)
+
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+
+find_project_root <- function(start = getwd()) {
+  cur <- normalizePath(start, winslash = "/", mustWork = TRUE)
+  repeat {
+    if (file.exists(file.path(cur, "DESCRIPTION"))) return(cur)
+    parent <- dirname(cur)
+    if (identical(parent, cur)) return(NULL)
+    cur <- parent
+  }
+}
+
+causal_egm_fn <- NULL
+if (exists("causal_egm", where = asNamespace("RCausalML"), mode = "function")) {
+  causal_egm_fn <- getFromNamespace("causal_egm", "RCausalML")
+} else {
+  root <- find_project_root()
+  if (!is.null(root) && requireNamespace("pkgload", quietly = TRUE)) {
+    pkgload::load_all(root, quiet = TRUE, export_all = FALSE)
+  }
+
+  if (exists("causal_egm", where = asNamespace("RCausalML"), mode = "function")) {
+    causal_egm_fn <- getFromNamespace("causal_egm", "RCausalML")
+  } else if (exists("causal_egm", mode = "function")) {
+    causal_egm_fn <- get("causal_egm", mode = "function")
+  } else {
+    stop(
+      paste(
+        "causal_egm() is unavailable in installed RCausalML and local source fallback failed.",
+        "Install/update RCausalML or install pkgload to enable local source loading."
+      )
+    )
+  }
+}
+```
+
+### Global setup and hyperparameters
+
+```{r}
+run_fast   <- TRUE
+device_use <- NULL
+
+if (requireNamespace("torch", quietly = TRUE)) {
+  device_use <- if (torch::cuda_is_available()) "cuda" else "cpu"
+}
+
+set.seed(42)
+if (requireNamespace("torch", quietly = TRUE)) torch::torch_manual_seed(42)
+
+BATCH_SIZE    <- if (run_fast) 512L  else 256L
+N_EPOCHS      <- if (run_fast)  50L  else 150L
+LR            <- 1e-3
+LR_DISC       <- 5e-4
+WEIGHT_DECAY  <- 1e-4
+HIDDEN_DIM    <- if (run_fast)  64L  else 128L
+DIM_C         <- if (run_fast)   4L  else   8L
+DIM_T         <- if (run_fast)   2L  else   4L
+DIM_Y         <- if (run_fast)   2L  else   4L
+LAMBDA_RECON  <- 1.0
+LAMBDA_TREAT  <- 2.0
+LAMBDA_OUTCOME <- 2.0
+LAMBDA_DISENT <- 0.5
+MAX_GRAD_NORM <- 1.0
+```
+
+### Load IHDP data (with synthetic fallback)
+
+```{r}
+base_url <- "https://raw.githubusercontent.com/uber/causalml/master/docs/examples/data"
+cols     <- c("treatment", "y_factual", "y_cfactual", "mu0", "mu1",
+              paste0("X", 0:24))
+
+chunks <- vector("list", 9L)
+for (i in seq_len(9L)) {
+  url <- sprintf("%s/ihdp_npci_%d.csv", base_url, i)
+  tmp <- tryCatch(read.csv(url, header = FALSE), error = function(e) NULL)
+  if (!is.null(tmp) && nrow(tmp) > 0L) {
+    colnames(tmp) <- cols[seq_len(ncol(tmp))]
+    chunks[[i]]   <- tmp
+  }
+}
+df <- do.call(rbind, Filter(Negate(is.null), chunks))
+
+if (!is.null(df) && nrow(df) > 0L) {
+  replications <- if (run_fast) 2L else 10L
+  df           <- df[rep(seq_len(nrow(df)), replications), ]
+  rownames(df) <- NULL
+  message("Loaded IHDP (all 9 files x ", replications,
+          " replications): ", nrow(df), " x ", ncol(df))
+} else {
+  df <- NULL
+}
+
+if (is.null(df) || nrow(df) == 0L) {
+  d <- tryCatch(
+    synthetic_data(mode = 1, n = 5000, p = 25, sigma = 1.0, adj = 0),
+    error = function(e) synthetic_data(mode = 1, n = 5000, p = 25, sigma = 1.0)
+  )
+  df           <- as.data.frame(d$X)
+  colnames(df) <- paste0("X", 0:(ncol(df) - 1))
+  df$treatment  <- d$w
+  df$y_factual  <- d$y
+  df$y_cfactual <- ifelse(d$w == 1, d$b - 0.5 * d$tau, d$b + 0.5 * d$tau)
+  df$mu0        <- d$b - 0.5 * d$tau
+  df$mu1        <- d$b + 0.5 * d$tau
+  message("Using synthetic fallback: ", nrow(df), " x ", ncol(df))
+}
+```
+
+### Build matrices and split train/test
+
+```{r}
+binfeats <- 7:25
+contfeats <- 1:6
+perm      <- c(binfeats, contfeats)
+xcols     <- paste0("X", 0:24)
+
+X          <- as.matrix(df[, xcols][, perm])
+treatment  <- as.integer(df$treatment)
+y          <- as.numeric(df$y_factual)
+y_cf       <- as.numeric(df$y_cfactual)
+mu0        <- as.numeric(df$mu0)
+mu1        <- as.numeric(df$mu1)
+
+cat("Rows:", nrow(X), "| Covariates:", ncol(X), "\n")
+cat("Treatment prevalence:", round(mean(treatment), 3), "\n")
+
+n         <- nrow(X)
+set.seed(42)
+idx       <- sample.int(n)
+train_n   <- floor(0.8 * n)
+train_idx <- idx[seq_len(train_n)]
+test_idx  <- idx[(train_n + 1L):n]
+
+X_train         <- X[train_idx, , drop = FALSE]
+treatment_train <- treatment[train_idx]
+y_train         <- y[train_idx]
+mu0_train       <- mu0[train_idx]
+mu1_train       <- mu1[train_idx]
+
+X_test         <- X[test_idx, , drop = FALSE]
+treatment_test <- treatment[test_idx]
+y_test         <- y[test_idx]
+mu0_test       <- mu0[test_idx]
+mu1_test       <- mu1[test_idx]
+
+cat("Train size:", nrow(X_train), "| Test size:", nrow(X_test), "\n")
+```
+
+### Feature scaling
+
+```{r}
+preprocess_features <- function(train_x, test_x) {
+  cont_idx <- 20:25
+
+  means <- colMeans(train_x[, cont_idx, drop = FALSE])
+  sds   <- apply(train_x[, cont_idx, drop = FALSE], 2L, sd)
+  sds[sds == 0] <- 1.0
+
+  scale_cols <- function(mat) {
+    sweep(sweep(mat[, cont_idx, drop = FALSE], 2L, means, "-"), 2L, sds, "/")
+  }
+
+  scaled_train             <- train_x
+  scaled_test              <- test_x
+  scaled_train[, cont_idx] <- scale_cols(train_x)
+  scaled_test[, cont_idx]  <- scale_cols(test_x)
+
+  list(train_x = scaled_train, test_x = scaled_test,
+       means = means, sds = sds)
+}
+
+proc           <- preprocess_features(X_train, X_test)
+X_train_scaled <- proc$train_x
+X_test_scaled  <- proc$test_x
+```
+
+### Train CausalEGM
+
+```{r}
+causalegm_fit <- causal_egm_fn(
+  X                  = X_train_scaled,
+  treatment          = treatment_train,
+  y                  = y_train,
+  dim_c              = DIM_C,
+  dim_t              = DIM_T,
+  dim_y              = DIM_Y,
+  hidden_dim         = HIDDEN_DIM,
+  num_epochs         = N_EPOCHS,
+  batch_size         = BATCH_SIZE,
+  learning_rate      = LR,
+  learning_rate_disc = LR_DISC,
+  weight_decay       = WEIGHT_DECAY,
+  lambda_recon       = LAMBDA_RECON,
+  lambda_treat       = LAMBDA_TREAT,
+  lambda_outcome     = LAMBDA_OUTCOME,
+  lambda_disent      = LAMBDA_DISENT,
+  max_grad_norm      = MAX_GRAD_NORM,
+  verbose            = !run_fast,
+  device             = device_use
+)
+
+history <- causalegm_fit$history
+cat("CausalEGM model fitted.\n")
+```
+
+### Evaluate treatment effects
+
+```{r}
+evaluate_causalegm <- function(model, test_x, mu0_true, mu1_true) {
+  mu0_pred <- as.numeric(predict(model, test_x, type = "mu0"))
+  mu1_pred <- as.numeric(predict(model, test_x, type = "mu1"))
+  ite_pred <- tryCatch(
+    as.numeric(predict(model, test_x, type = "ite")),
+    error = function(e) mu1_pred - mu0_pred
+  )
+
+  ite_true <- mu1_true - mu0_true
+  pehe     <- sqrt(mean((ite_pred - ite_true)^2))
+  ate_true <- mean(ite_true)
+  ate_pred <- mean(ite_pred)
+  eps_ate  <- abs(ate_pred - ate_true)
+  rmse_y0  <- sqrt(mean((mu0_pred - mu0_true)^2))
+  rmse_y1  <- sqrt(mean((mu1_pred - mu1_true)^2))
+
+  cat(strrep("-", 45), "\n")
+  cat(sprintf("True ATE      : %.4f\n", ate_true))
+  cat(sprintf("Predicted ATE : %.4f\n", ate_pred))
+  cat(sprintf("eps_ATE       : %.4f\n", eps_ate))
+  cat(sprintf("sqrt(PEHE)    : %.4f\n", pehe))
+  cat(sprintf("RMSE Y(0)     : %.4f\n", rmse_y0))
+  cat(sprintf("RMSE Y(1)     : %.4f\n", rmse_y1))
+  cat(strrep("-", 45), "\n")
+
+  list(
+    pehe     = pehe,     eps_ate  = eps_ate,
+    ite_true = ite_true, ite_pred = ite_pred,
+    mu0_pred = mu0_pred, mu1_pred = mu1_pred,
+    ate_true = ate_true, ate_pred = ate_pred,
+    rmse_y0  = rmse_y0,  rmse_y1  = rmse_y1
+  )
+}
+
+eval_res <- evaluate_causalegm(causalegm_fit, X_test_scaled, mu0_test, mu1_test)
+```
+
+###  Visualize training and effect estimates
+
+```{r}
+#| fig.width: 8
+#| fig. height: 5
+plot_results <- function(history, ite_true, ite_pred, model, train_x, train_t) {
+  n_epochs <- length(history$train)
+  hist_mat <- vapply(
+    history$train,
+    function(h) c(h$loss, h$recon, h$treat, h$outcome, h$disent),
+    numeric(5L)
+  )
+
+  hist_df <- tibble::tibble(
+    epoch   = seq_len(n_epochs),
+    loss    = hist_mat[1L, ],
+    recon   = hist_mat[2L, ],
+    treat   = hist_mat[3L, ],
+    outcome = hist_mat[4L, ],
+    disent  = hist_mat[5L, ]
+  )
+
+  p_loss <- tidyr::pivot_longer(hist_df, -epoch,
+                                names_to  = "metric",
+                                values_to = "value") |>
+    ggplot(aes(epoch, value, color = metric)) +
+    geom_line(alpha = 0.9) +
+    theme_minimal() +
+    labs(title = "Training Loss Curves", x = "Epoch", y = "Loss")
+
+  p_ite <- ggplot(
+    tibble::tibble(ite_true = ite_true, ite_pred = ite_pred),
+    aes(ite_true, ite_pred)
+  ) +
+    geom_point(alpha = 0.45, color = "steelblue") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    theme_minimal() +
+    labs(
+      title = sprintf("ITE Scatter (sqrt(PEHE) = %.3f)",
+                      sqrt(mean((ite_pred - ite_true)^2))),
+      x = "True ITE", y = "Predicted ITE"
+    )
+
+  ps   <- as.numeric(predict(model, train_x, type = "propensity"))
+  p_ps <- ggplot(
+    tibble::tibble(ps = ps, treat = as.factor(train_t)),
+    aes(ps, fill = treat)
+  ) +
+    geom_histogram(position = "identity", bins = 30L, alpha = 0.5) +
+    scale_fill_manual(
+      values = c("0" = "steelblue", "1" = "coral"),
+      labels = c("Control", "Treated")
+    ) +
+    theme_minimal() +
+    labs(title = "Learned Propensity Scores",
+         x = "Propensity score", y = "Count", fill = NULL)
+
+  gridExtra::grid.arrange(p_loss, p_ite, p_ps, nrow = 1L)
+}
+
+plot_results(
+  history    = history,
+  ite_true   = eval_res$ite_true,
+  ite_pred   = eval_res$ite_pred,
+  model      = causalegm_fit,
+  train_x    = X_train_scaled,
+  train_t    = treatment_train
+)
+```
+
+###  Final metrics
+
+```{r}
+cat(strrep("=", 60), "\n")
+cat("CausalEGM Results\n")
+cat(strrep("=", 60), "\n")
+cat(sprintf("True ATE       : %.4f\n", eval_res$ate_true))
+cat(sprintf("Predicted ATE  : %.4f\n", eval_res$ate_pred))
+cat(sprintf("ATE Error      : %.4f\n", eval_res$eps_ate))
+cat(sprintf("PEHE           : %.4f\n", eval_res$pehe))
+cat(sprintf("RMSE Y(0)      : %.4f\n", eval_res$rmse_y0))
+cat(sprintf("RMSE Y(1)      : %.4f\n", eval_res$rmse_y1))
+cat(strrep("=", 60), "\n")
+```
+
+## Summary and conclusion
+
+This tutorial converts the Python CausalEGM notebook into an R-first workflow using `RCausalML`. The same conceptual functions are preserved: IHDP loading, preprocessing, model fitting, treatment-effect estimation, and visualization. The final model estimates both potential outcomes and individual treatment effects, and reports benchmark metrics such as ATE error and PEHE.
+
+## Resources
+
+- [IHDP files used in CausalML examples](https://raw.githubusercontent.com/uber/causalml/master/docs/examples/data/)
+- [CausalML documentation](https://causalml.readthedocs.io/)
+- [RCausalML repository](https://github.com/zia207/RCausalML)
+- [Counterfactual Inference and Learning Systems](https://arxiv.org/abs/2002.04083)
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Latent decomposition | Splitting hidden representation into role-specific parts. | `z = [z_c, z_t, z_y]` for confounder, treatment-only, and outcome-only parts. |
+| Confounding component | Latent subvector affecting both treatment and outcome. | `z_c` enters both treatment and outcome networks. |
+| Instrument-like component | Features affecting treatment but not outcome directly. | `z_t` improves treatment prediction without driving outcomes. |
+| Prognostic component | Features affecting outcome but not treatment assignment. | `z_y` helps outcome prediction regardless of treatment policy. |
+| Disentanglement | Enforcing statistical independence across latent parts. | Mutual-information penalty encourages `z_c ⟂ z_t ⟂ z_y`. |
+| Dose-response | Outcome as a function of continuous treatment level. | Predict blood pressure change for dose values from 0 to 10 mg. |

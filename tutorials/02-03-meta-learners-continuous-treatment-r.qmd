@@ -1,0 +1,1086 @@
+![](Images/02_meta-learners.png)
+
+# 2.3 Meta Learner with Continuous Treatments {#sec-meta-learners-continuous .unnumbered}
+
+Continuous treatments (e.g., dosage levels) often call for a **dose-response function** or a well-defined contrast in $D$, not only a binary CATE. This tutorial covers **RCausalML**’s **`r_learner_continuous()`** for **Conditional Average Dose Response (CADR)** on a dose grid $\tau(d,x)$, and—new in the package—**S-, T-, X-, R-, and DR-learners** with **`treatment_type = "continuous"`** for flexible single-vector summaries when $D$ is continuous.
+
+The notebook has two parts:
+
+- **Part A — Synthetic data:** We study **continuous** $D$ with a known DGP: CADR $\tau(d,x) = \frac{\partial}{\partial d}\mathbb{E}[Y(d)|X=x]$, generalized R-learner (`r_learner_continuous()`), SHAP on a surrogate, and full diagnostics (overlap, balance, calibration).
+
+- **Part B — NMES use case:** We use **`nmes_data`** from **`{causaldrf}`** (1987 NMES): **outcome** `TOTALEXP`, **continuous treatment** `packyears`, and the same covariate set as below. We fit **`r_learner_continuous()`** for the CADR-style curve, then fit **S-, T-, X-, R-, and DR-learners** in two ways: (1) **native continuous** treatment via `treatment_type = "continuous"` (S fits $\mu(X,D)$ and contrasts default quartiles of $D$; T/X split at the sample median of $D$; R uses Robinson-style nuisances; DR uses a continuous DR pseudo-outcome with cross-fitting); (2) **binary** high vs. low pack-years (median split) for a direct discrete contrast and for **permutation SHAP** (`explain_cate()`), which we keep on the binary fits for render time. We also compare **double machine learning** (**`LinearDML`**, **`SparseLinearDML`**, **`CausalForestDML`**) on the same NMES subsample, report **ATE**s and simple **holdout** nuisance metrics, and add **SHAP** for the DML predicted CATE surfaces.
+
+We implement a **generalized R-learner** using cross-fitted outcome and treatment models, residualization, and local linear regression over a dose grid, plus **SHAP** (forest surrogate + permutation SHAP) in Part A.
+
+
+## Overview
+
+When the treatment variable is continuous — such as a drug dosage, an exposure duration, a price, or a policy intensity — the binary and multi-arm frameworks of the preceding sections no longer apply directly. There is no finite set of contrasts to estimate, and the treatment effect cannot be summarized as a difference between two discrete potential outcomes. Instead, the quantity of interest is a **dose-response function** that describes how the expected outcome, and its rate of change, varies jointly with the treatment level $d$ and the covariate vector $x$.
+
+### Estimands
+
+Two complementary estimands are commonly targeted in the continuous treatment setting.
+
+The **Conditional Average Dose Response (CADR)** function characterizes the full outcome surface as a function of dose:
+
+$$\mu(d, x) = \mathbb{E}[Y(d) \mid X = x]$$
+
+and the treatment effect at dose level $d$ relative to a reference dose $d_0$ (often zero or the observed minimum) is:
+
+$$\tau(d, x) = \mu(d, x) - \mu(d_0, x) = \mathbb{E}[Y(d) - Y(d_0) \mid X = x]$$
+
+This is the natural generalization of the binary CATE: rather than a single scalar effect per unit, we obtain a **curve** — one contrast value for each point on a pre-specified dose grid $\mathcal{D} = \{d_1, d_2, \dots, d_m\}$.
+
+The **Marginal Structural Derivative** (or dose-response slope) targets the local rate of change in the outcome with respect to the treatment:
+
+$$\tau'(d, x) = \frac{\partial}{\partial d} \mathbb{E}[Y(d) \mid X = x]$$
+
+This is useful when the practitioner is interested in marginal effects — whether increasing the dose slightly from its current level improves or worsens outcomes — rather than in cumulative contrasts against a baseline. In practice, $\tau'(d, x)$ is often approximated by finite differences on the estimated CADR surface.
+
+Both estimands require identification via a **generalized unconfoundedness** assumption:
+
+$$Y(d) \perp D \mid X \quad \text{for all } d \in \mathcal{D}$$
+
+along with a **positivity** (or overlap) condition requiring that the generalized propensity score $f(d \mid x)$ — the conditional density of treatment given covariates — is bounded away from zero across the support of $D$:
+
+$$f(d \mid x) > 0 \quad \text{for all } (d, x) \text{ in the support}$$
+
+Violations of positivity are more likely and harder to detect in the continuous setting, since the support of $D$ is infinite-dimensional relative to any finite sample. Overlap diagnostics should therefore be conducted carefully, for example by inspecting the distribution of the generalized propensity score across subgroups.
+
+### The Generalized Propensity Score
+
+In the binary setting, the propensity score $e(x) = P(T=1 \mid X=x)$ is a scalar probability. For continuous treatments, it is replaced by the **generalized propensity score (GPS)**:
+
+$$r(d, x) = f_{D \mid X}(d \mid x)$$
+
+the conditional density of receiving dose $d$ given covariates $x$. The GPS plays the same role as the binary propensity score in balancing covariate distributions and enabling doubly robust estimation, but its estimation is substantially more demanding. Common approaches include:
+
+- **Parametric GPS**: Assume $D \mid X \sim \mathcal{N}(\hat{m}(x), \hat{\sigma}^2)$ where $\hat{m}(x)$ is a regression of $D$ on $X$. The GPS is then evaluated as the normal density at the observed dose.
+- **Nonparametric GPS**: Use kernel density estimation or normalizing flows conditioned on $X$ to estimate $f(d \mid x)$ without distributional assumptions.
+- **Residual-based GPS**: In the R-Learner, the GPS enters implicitly through the treatment residual $D - \hat{m}(X)$, avoiding the need to estimate the full conditional density.
+
+Misspecification of the GPS can introduce substantial bias into propensity-weighted and doubly robust estimators, and this risk is heightened in the continuous case relative to binary treatments.
+
+### Adapting Meta-Learner Variants to Continuous Treatments
+
+#### S-Learner
+
+The S-Learner fits a single outcome model $\hat{\mu}(x, d)$ on the full sample, treating the continuous dose $D$ as an additional continuous feature alongside $X$:
+
+$$\hat{\tau}(d, x) = \hat{\mu}(x, d) - \hat{\mu}(x, d_0)$$
+
+The dose-response curve is recovered by evaluating $\hat{\mu}(x, \cdot)$ on the dose grid $\mathcal{D}$ at any covariate value of interest. This is the most straightforward extension and imposes no particular structure on the dose-response shape, relying entirely on the base learner to capture the joint $(X, D)$ surface. Flexible base learners such as gradient boosting or neural networks can represent nonlinear and non-monotone dose-response relationships naturally. The key limitation is the same as in the binary case: if the base learner imposes strong smoothness or regularization in the $D$ direction, the estimated dose-response curve may be overly flat and fail to capture meaningful heterogeneity.
+
+#### T-Learner
+
+The T-Learner generalizes to the continuous setting by **discretizing** the dose into $m$ bins or grid points $\{d_1, \dots, d_m\}$ and fitting a separate outcome model $\hat{\mu}_j(x)$ for each bin $j$:
+
+$$\hat{\tau}(d_j, x) = \hat{\mu}_j(x) - \hat{\mu}_0(x)$$
+
+where $\hat{\mu}_0(x)$ corresponds to the reference dose bin. This approach is intuitive but has significant practical drawbacks. The choice of binning scheme is arbitrary and can meaningfully affect results. Fine grids produce sparse bins, each with few observations, leading to high-variance arm-specific models — essentially the same sparsity problem that affects multi-arm T-Learners, but now potentially at much larger scale. For this reason, the T-Learner is generally the least preferred meta-learner for continuous treatments unless the dose variable is naturally near-discrete in its distribution.
+
+#### X-Learner
+
+The X-Learner can be adapted to continuous treatments by applying the cross-fitting logic **locally** on the dose grid: for each grid point $d_j$, units near $d_j$ and units at the reference dose $d_0$ are selected, and the binary X-Learner pipeline is run on this local subsample using an arm-specific propensity model. The resulting local estimates are then assembled into a dose-response curve. This approach inherits the X-Learner's efficiency advantages under imbalance — which is common in continuous treatment settings where the dose distribution may be concentrated in certain regions — but introduces sensitivity to the bandwidth or neighborhood definition used to select units near each grid point.
+
+#### R-Learner
+
+The R-Learner is particularly well-suited to the continuous treatment setting and is the method implemented in `r_learner_continuous()` in **RCausalML**. It extends Robinson's (1988) partial linear residualization to the continuous case by orthogonalizing both the outcome and the treatment against their respective conditional expectations:
+
+1. Estimate nuisance functions:
+   - $\hat{m}(x) = \mathbb{E}[D \mid X = x]$ (dose regression on covariates)
+   - $\hat{\mu}(x) = \mathbb{E}[Y \mid X = x]$ (outcome regression on covariates, marginalizing over dose)
+
+2. Compute residuals:
+   - Outcome residual: $\tilde{Y}_i = Y_i - \hat{\mu}(X_i)$
+   - Treatment residual: $\tilde{D}_i = D_i - \hat{m}(X_i)$
+
+3. Estimate $\tau(d, x)$ by solving:
+
+$$\min_{\tau} \mathbb{E}\left[ \left( \tilde{Y}_i - \tau(D_i, X_i) \cdot \tilde{D}_i \right)^2 \right]$$
+
+The orthogonalization ensures that errors in the nuisance estimates $\hat{m}(x)$ and $\hat{\mu}(x)$ enter the CATE estimation problem only at second order, providing robustness to moderate nuisance misspecification. Under regularity conditions, the R-Learner achieves near-oracle convergence rates for $\tau(d, x)$ (Nie & Wager, 2021). In `r_learner_continuous()`, the final step is implemented by evaluating the fitted $\hat{\tau}(\cdot, x)$ on the dose grid $\mathcal{D}$, yielding a discretized dose-response curve for each unit or covariate profile.
+
+#### DR-Learner
+
+The DR-Learner generalizes to continuous treatments by constructing **doubly robust pseudo-outcomes** using the generalized propensity score. For a contrast at dose level $d$ versus reference $d_0$, the AIPW-style pseudo-outcome for unit $i$ is:
+
+$$\hat{\phi}_i(d) = \frac{\mathbf{1}[D_i \approx d]}{r(d, X_i)} \left(Y_i - \hat{\mu}(d, X_i)\right) - \frac{\mathbf{1}[D_i \approx d_0]}{r(d_0, X_i)} \left(Y_i - \hat{\mu}(d_0, X_i)\right) + \hat{\mu}(d, X_i) - \hat{\mu}(d_0, X_i)$$
+
+where $r(d, x) = f(d \mid x)$ is the generalized propensity score and the indicator $\mathbf{1}[D_i \approx d]$ selects units with doses in a neighborhood of $d$. Regressing $\hat{\phi}_i(d)$ on $X_i$ for each grid point $d \in \mathcal{D}$ yields the DR-Learner dose-response estimate. The doubly robust property holds pointwise on the grid: at each dose level $d$, the estimate is consistent if either the outcome model $\hat{\mu}(d, x)$ or the GPS $r(d, x)$ is correctly specified. However, the localization step introduces a bandwidth choice, and the pseudo-outcome construction is sensitive to extreme GPS values — a risk that is heightened in the continuous setting because near-zero densities can occur in any region of the dose support.
+
+### Single-Vector Summaries with `treatment_type = "continuous"`
+
+In many applied settings, the practitioner does not need the full dose-response curve. Instead, a **single-vector CATE summary** — one scalar effect estimate per unit — is sufficient, typically representing the effect of moving from the observed dose to a target dose, or the local slope of the dose-response at the observed dose. The meta-learners in **RCausalML** with `treatment_type = "continuous"` are designed for this use case. Rather than evaluating $\hat{\tau}(d, x)$ on a full grid, they return:
+
+$$\hat{\tau}_i = \hat{\tau}(D_i^*, X_i)$$
+
+where $D_i^*$ is a user-specified target dose (e.g., the population mean dose, the maximum tolerated dose, or a policy-relevant threshold). This produces a unit-level treatment effect vector of the same form as in the binary CATE setting, enabling the same downstream analyses — effect heterogeneity visualization, policy targeting, subgroup discovery — without committing to a full dose-response curve estimation.
+
+### Practical Considerations
+
+Continuous treatment settings require additional care relative to binary and multi-arm settings along several dimensions:
+
+- **Dose grid selection**: The resolution of $\mathcal{D}$ involves a bias-variance tradeoff. Fine grids yield smoother curves but thinner local samples; coarser grids are more stable but may obscure nonlinearities. Adaptive grids based on the observed dose distribution are often preferable to uniform spacing.
+- **GPS estimation quality**: The generalized propensity score is harder to estimate well than a binary propensity score, and GPS misspecification propagates into weighted and doubly robust estimators. Residual diagnostics — checking whether $\tilde{D}_i = D_i - \hat{m}(X_i)$ is approximately uncorrelated with $X_i$ after adjustment — are a useful sanity check.
+- **Extrapolation risk**: Unlike binary treatments where predictions are made at $W \in \{0, 1\}$, continuous treatment estimators must extrapolate $\hat{\mu}(d, x)$ to dose values not observed near a given covariate profile. This is particularly problematic at the tails of the dose distribution and in regions of thin overlap.
+- **Monotonicity and shape constraints**: When domain knowledge supports a monotone or concave dose-response relationship, incorporating shape constraints into the base learner can substantially reduce estimation variance at the cost of flexibility.
+
+## Implementation in R 
+
+In R, we use **RCausalML** for `r_learner_continuous()`, **`{causaldrf}`** for **`nmes_data`**, `mlr3` for several diagnostics, **`kernelshap`** and **`shapviz`** for SHAP in Part A (optional), and `ggplot2` for visualization.
+
+## Set Up
+
+### Check and Install Required R Packages 
+
+Following R packages are required to run this notebook. If any of these packages are not installed, you can install them using the code below:
+
+`grf`, `DoubleML`, `ggplot2`, `dplyr`, `mlr3`, `mlr3learners`, `nnet`, `kernelshap`, `shapviz`, `causaldrf`, `knitr`
+
+```{r}
+#| label: lst-packages-vector
+#| lst-cap: "Required R package names used throughout the notebook."
+packages <- c('tidyverse', 
+              'plyr',
+              #'data.table',
+              'RCausalML',
+              'DoubleML',
+              'causaldrf',
+              'grf',
+              'mlr3',
+              'mlr3learners',
+              'nnet',
+              'gridExtra',
+              'kernelshap',
+              'shapviz',
+              'knitr'
+         )
+```
+
+### Install Missing Packages 
+
+```{r}
+#| label: lst-install-missing-packages
+#| lst-cap: "Optional commands to install missing CRAN/GitHub dependencies (commented by default)."
+#| warning: false
+#| error: false
+# Install missing packages
+# new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+# if(length(new_packages)) install.packages(new_packages)
+# remotes::install_github("mlr-org/mlr3learners")
+```
+
+### Verify Installation 
+
+```{r}
+#| label: lst-verify-package-installation
+#| lst-cap: "Check that each required package namespace is available."
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load R Packages
+
+```{r}
+#| warning: false
+#| error: false
+# Load packages with suppressed messages
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Check Loaded Packages 
+
+```{r}
+#| label: lst-check-loaded-packages
+#| lst-cap: "Confirm which package environments are attached on the search path."
+# Check loaded packages
+cat("Successfully loaded packages:\n")
+print(search()[grepl("package:", search())])
+```
+
+## Part A: Meta-learners with synthetic data 
+
+We simulate a **continuous** treatment and a smooth dose–response surface so we can compare estimates to a known benchmark.
+
+### Data Generation for Continuous Treatment 
+
+```{r}
+#| label: lst-generate-continuous-treatment-data
+#| lst-cap: "Simulate continuous treatment, covariates, and outcome from a known dose-response DGP."
+# Continuous Treatment Generator (Dose-Response)
+generate_continuous_treatment_data <- function(n = 5000) {
+  X <- matrix(rnorm(n * 10), nrow = n)
+  colnames(X) <- paste0("X", 1:10)
+  D <- pmax(0, rnorm(n, mean = 2 + 1.5*X[,1] - X[,2], sd = 1.2))
+  mu_0 <- 2*X[,1] - 1.5*X[,2] + X[,4]^2
+  Y <- mu_0 + 0.8*D + 0.5*X[,1]*D - 0.3*X[,2]*D + 0.05*D^2 + rnorm(n, sd = 1.5)
+  data.frame(Y, D, as.data.frame(X))
+}
+df_cont <- generate_continuous_treatment_data(5000)
+```
+
+### Estimand: Conditional Average Dose Response (CADR) {#sec-continuous-cadr-estimand}
+
+For continuous treatment $D$ (e.g., dosage), we estimate:
+
+$$\tau(d, x) = \frac{\partial}{\partial d} \mathbb{E}[Y(d) \mid X = x]$$
+
+This is the **marginal effect** of an infinitesimal dose increase at level $d$ for units with covariates $x$.
+
+### Generalized R-Learner for Continuous Treatments {#sec-continuous-r-learner}
+
+Extends Robinson transformation to continuous treatments using **kernel smoothing**. The implementation lives in **RCausalML** as `r_learner_continuous()` (cross-fitted `ranger` nuisances and local weighted `lm`, matching this notebook’s previous `mlr3` recipe):
+
+```{r}
+#| label: lst-r-learner-continuous-fit
+#| lst-cap: "Fit generalized R-learner on synthetic data and compute population-average curve vs. truth."
+set.seed(123)
+r_cont <- r_learner_continuous(
+  df_cont,
+  covariates = paste0("X", 1:10),
+  dose_grid = seq(0, 6, by = 0.5),
+  learner = "ranger",
+  n_fold = 5L,
+  seed = 123L,
+  num.trees = 800L
+)
+avg_tau <- rowMeans(r_cont$tau_grid)
+dose_grid <- r_cont$dose_grid
+tau_true_avg <- 0.8 + 0.1 * dose_grid
+```
+
+### Average Dose-Response Curve 
+
+```{r}
+#| label: fig-average-dose-response
+#| fig-cap: "Average estimated dose-response (R-learner) versus the true population curve over the dose grid."
+#| fig.width: 7
+#| fig.height: 5
+ggplot(data.frame(dose = dose_grid, 
+                  tau_hat = avg_tau,
+                  tau_true = tau_true_avg),
+       aes(x = dose)) +
+  geom_line(aes(y = tau_hat, color = "Estimated"), size = 1.2) +
+  geom_line(aes(y = tau_true, color = "True"), linetype = "dashed", size = 1.2) +
+  labs(title = "Average Dose-Response Function",
+       subtitle = "R-Learner estimate vs. ground truth (population average)",
+       x = "Dosage Level (D)", 
+       y = "Marginal Effect ∂E[Y(d)|X]/∂d",
+       color = "Curve") +
+  scale_color_manual(values = c("Estimated" = "#56B4E9", "True" = "darkred")) +
+  theme_minimal(base_size = 13)
+```
+
+### Heterogeneous Dose-Response: Effect Modification 
+
+Visualize how dose-response varies by key covariate (X1):
+
+```{r}
+#| label: fig-heterogeneous-dose-response-strata
+#| fig-cap: "Dose-response by low vs. high X1 (estimated vs. true), illustrating effect modification."
+#| fig.width: 7
+#| fig.height: 5
+x1_low_idx <- which(df_cont$X1 < quantile(df_cont$X1, 0.25))
+x1_high_idx <- which(df_cont$X1 > quantile(df_cont$X1, 0.75))
+tau_low <- rowMeans(r_cont$tau_grid[, x1_low_idx])
+tau_high <- rowMeans(r_cont$tau_grid[, x1_high_idx])
+tau_true_low <- 0.465 + 0.1 * dose_grid
+tau_true_high <- 1.135 + 0.1 * dose_grid
+
+df_strata <- data.frame(
+  dose = rep(dose_grid, 4),
+  tau = c(tau_low, tau_high, tau_true_low, tau_true_high),
+  stratum = rep(c("X1 Low (Est)", "X1 High (Est)", 
+                  "X1 Low (True)", "X1 High (True)"), 
+                each = length(dose_grid)),
+  type = rep(c("Estimated", "Estimated", "True", "True"), each = length(dose_grid))
+)
+
+ggplot(df_strata, aes(x = dose, y = tau, color = stratum, linetype = type)) +
+  geom_line(size = 1.1) +
+  labs(title = "Heterogeneous Dose-Response by Covariate Strata",
+       subtitle = "Effect modification: High X1 units benefit more from increased dosage",
+       x = "Dosage Level (D)", 
+       y = "Marginal Effect ∂E[Y(d)|X]/∂d",
+       color = "Stratum", linetype = "Estimate Type") +
+  scale_color_manual(values = c(
+    "X1 Low (Est)" = "#E69F00", "X1 High (Est)" = "#009E73",
+    "X1 Low (True)" = "#E69F00", "X1 High (True)" = "#009E73"
+  )) +
+  theme_minimal(base_size = 13)
+```
+
+### Native S/T/X/R/DR with `treatment_type = "continuous"` (synthetic) 
+
+**RCausalML** now accepts **continuous** `treatment` for `SLearner`, `TLearner`, `XLearner`, `RLearner`, and `DRLearner` via `treatment_type = "continuous"`. This is **not** the same object as **`r_learner_continuous()`** (which returns a **dose grid** $\times$ units surface for CADR): here you get a **single** $\hat{\tau}(X)$ vector per specification (e.g., S-learner contrast $\mu(X,d_1)-\mu(X,d_0)$ at training quartiles of $D$; T/X high-vs-low dose at the median; R-learner Robinson partial effect; DR continuous pseudo-outcome). The chunk below is a minimal sanity check on the same simulated data as above.
+
+```{r}
+#| label: lst-native-continuous-meta-synthetic
+#| lst-cap: "Fit S/T/X/R/DR with treatment_type = continuous on synthetic D (small ranger forests)."
+#| warning: false
+X_syn <- as.matrix(df_cont[, paste0("X", 1:10)])
+D_syn <- df_cont$D
+Y_syn <- df_cont$Y
+set.seed(11L)
+nt_syn <- 200L
+sl_syn_c <- fit(SLearner(learner = "ranger", treatment_type = "continuous"),
+                X_syn, D_syn, Y_syn, num.trees = nt_syn)
+tl_syn_c <- fit(TLearner(learner = "ranger", treatment_type = "continuous"),
+                X_syn, D_syn, Y_syn, num.trees = nt_syn)
+xl_syn_c <- fit(XLearner(learner = "ranger", treatment_type = "continuous"),
+                X_syn, D_syn, Y_syn, num.trees = nt_syn)
+rl_syn_c <- fit(RLearner(learner = "ranger", treatment_type = "continuous", n_fold = 5L),
+                X_syn, D_syn, Y_syn, num.trees = nt_syn)
+dr_syn_c <- fit(DRLearner(learner = "ranger", treatment_type = "continuous", n_fold = 3L),
+                X_syn, D_syn, Y_syn, num.trees = nt_syn)
+te_mean_native <- c(
+  S  = mean(predict(sl_syn_c, X_syn)),
+  T  = mean(predict(tl_syn_c, X_syn)),
+  X  = mean(predict(xl_syn_c, X_syn)),
+  R  = mean(predict(rl_syn_c, X_syn)),
+  DR = mean(predict(dr_syn_c, X_syn))
+)
+print(round(te_mean_native, 3))
+```
+
+### Diagnostics & Validation Protocol 
+
+Diagnostics help ensure that dose-response estimates are not driven by lack of overlap, covariate imbalance, or miscalibration. Below we implement overlap checks, balance assessment before/after weighting, and a CATE calibration plot.
+
+#### Overlap Diagnostics {#sec-continuous-overlap}
+
+For continuous treatments, **overlap** means that the conditional support of $D$ given $X$ has sufficient density across the dose range we care about. We check the marginal distribution of $D$ and the distribution of the conditional expectation $E[D|X]$ (estimated via a regression of $D$ on $X$) to assess common support.
+
+```{r}
+#| label: fig-overlap-diagnostics-synthetic
+#| fig-cap: "Marginal dose density and distribution of estimated E[D|X] by X1 quartile (synthetic data)."
+#| fig.width: 10
+#| fig.height: 5
+# Estimate E[D|X] for overlap diagnostics
+task_d <- TaskRegr$new(id = "d_overlap",
+                       backend = df_cont[, c("D", paste0("X", 1:10))],
+                       target = "D")
+learner_d <- lrn("regr.ranger", num.trees = 500)
+learner_d$train(task_d)
+e_hat_overlap <- learner_d$predict_newdata(df_cont[, paste0("X", 1:10)])$response
+
+df_overlap <- data.frame(
+  D = df_cont$D,
+  e_hat = e_hat_overlap,
+  X1_quartile = cut(df_cont$X1, breaks = quantile(df_cont$X1, 0:4/4),
+                    labels = c("X1 Q1", "X1 Q2", "X1 Q3", "X1 Q4"), include.lowest = TRUE)
+)
+
+p1 <- ggplot(df_overlap, aes(x = D)) +
+  geom_density(fill = "#56B4E9", alpha = 0.6) +
+  labs(title = "Overlap: Marginal Distribution of Dose (D)",
+       x = "Dosage (D)", y = "Density") +
+  theme_minimal(base_size = 12)
+
+p2 <- ggplot(df_overlap, aes(x = e_hat, fill = X1_quartile)) +
+  geom_density(alpha = 0.5, position = "identity") +
+  labs(title = "Overlap: Distribution of E[D|X] by X1 Quartile",
+       x = "E[D|X] (estimated)", y = "Density", fill = "X1 stratum") +
+  theme_minimal(base_size = 12)
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+Interpretation: substantial overlap across covariate strata (e.g., E[D|X] distributions by X1 quartile) supports estimation of dose-response over the observed dose range; narrow or separated supports suggest limited overlap and cautious interpretation.
+
+#### Balance Assessment (Before/After Weighting) 
+
+We stratify units by dose quartiles and assess **standardized mean differences (SMD)** of covariates across strata. We then compute **stabilized inverse probability of treatment weights** (IPTW) for continuous $D$ using a normal approximation: $w_i = f(D_i) / f(D_i|X_i)$, with $f(D|X)$ from $D|X \sim N(\hat{e}(X), \hat{\sigma}^2)$, and reassess balance after weighting.
+
+```{r}
+#| label: fig-balance-smd-synthetic
+#| fig-cap: "Standardized mean differences (Q4 vs. Q1 dose) before and after stabilized IPTW weighting."
+#| fig.width: 7
+#| fig.height: 5
+# Dose strata (quartiles)
+df_cont$dose_stratum <- cut(df_cont$D,
+  breaks = quantile(df_cont$D, 0:4/4),
+  labels = c("Q1", "Q2", "Q3", "Q4"), include.lowest = TRUE)
+
+# SMD before weighting: high (Q4) vs low (Q1) dose
+covs <- paste0("X", 1:10)
+low <- df_cont[df_cont$dose_stratum == "Q1", covs]
+high <- df_cont[df_cont$dose_stratum == "Q4", covs]
+smd_before <- (colMeans(high) - colMeans(low)) / sqrt((apply(high, 2, sd)^2 + apply(low, 2, sd)^2) / 2)
+
+# Weights: stabilized IPTW for continuous D (normal approximation)
+sigma_d <- sd(df_cont$D - e_hat_overlap)
+f_D <- density(df_cont$D, from = min(df_cont$D), to = max(df_cont$D), n = 512)
+f_D_at_D <- approx(f_D$x, f_D$y, xout = df_cont$D, rule = 2)$y
+f_D_given_X <- dnorm(df_cont$D, mean = e_hat_overlap, sd = pmax(sigma_d, 0.1))
+sw <- f_D_at_D / pmax(f_D_given_X, 1e-6)
+sw <- pmin(sw, quantile(sw, 0.99))
+
+# Weighted SMD (Q4 vs Q1)
+df_cont$sw <- sw
+w_low <- df_cont[df_cont$dose_stratum == "Q1", ]
+w_high <- df_cont[df_cont$dose_stratum == "Q4", ]
+for (v in covs) {
+  m_low <- weighted.mean(w_low[[v]], w_low$sw)
+  m_high <- weighted.mean(w_high[[v]], w_high$sw)
+  s_low <- sqrt(weighted.mean((w_low[[v]] - m_low)^2, w_low$sw))
+  s_high <- sqrt(weighted.mean((w_high[[v]] - m_high)^2, w_high$sw))
+  smd_after_v <- (m_high - m_low) / sqrt((s_low^2 + s_high^2) / 2)
+  if (v == covs[1]) smd_after <- setNames(numeric(length(covs)), covs)
+  smd_after[v] <- smd_after_v
+}
+
+balance_df <- data.frame(
+  covariate = rep(covs, 2),
+  SMD = c(smd_before, smd_after),
+  when = rep(c("Before weighting", "After weighting"), each = length(covs))
+)
+
+ggplot(balance_df, aes(x = covariate, y = SMD, fill = when)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  geom_hline(yintercept = c(-0.1, 0.1), linetype = "dashed", color = "gray40") +
+  labs(title = "Balance Assessment: Standardized Mean Difference (Q4 vs Q1 dose)",
+       subtitle = "Covariates should be balanced (|SMD| < 0.1) after weighting",
+       x = "Covariate", y = "SMD", fill = "") +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#### CATE Calibration Plot 
+
+We bin units by their **predicted marginal effect** at a reference dose (median dose) and plot mean predicted effect vs. mean observed outcome (residualized by baseline) in each bin. A well-calibrated estimator should show a positive alignment between predicted effect and realized outcomes.
+
+```{r}
+#| label: fig-cate-calibration-synthetic
+#| fig-cap: "Calibration of predicted marginal effect at median dose vs. mean residualized outcome by quintile."
+#| fig.width: 7
+#| fig.height: 5
+# Reference dose: median
+ref_dose_idx <- which.min(abs(r_cont$dose_grid - median(df_cont$D)))
+tau_at_ref <- r_cont$tau_grid[ref_dose_idx, ]
+
+# Residualized outcome (Y - mu_hat) as proxy for treatment-driven variation
+task_y <- TaskRegr$new(id = "y_cal", backend = df_cont[, c("Y", "D", paste0("X", 1:10))], target = "Y")
+learner_y <- lrn("regr.ranger", num.trees = 500)
+learner_y$train(task_y)
+mu_hat_cal <- learner_y$predict_newdata(df_cont[, c("D", paste0("X", 1:10))])$response
+Y_resid_cal <- df_cont$Y - mu_hat_cal
+
+# Quintiles of predicted tau at reference dose (rank-based bins to handle ties)
+df_cont$tau_hat_ref <- tau_at_ref
+df_cont$Y_resid <- Y_resid_cal
+n_bins <- 5L
+r <- rank(tau_at_ref, ties.method = "first")
+df_cont$tau_bin <- cut(r, breaks = seq(1, nrow(df_cont) + 1, length.out = n_bins + 1), labels = 1:n_bins, include.lowest = TRUE, right = FALSE)
+
+cal_df <- df_cont %>%
+  group_by(tau_bin) %>%
+  summarise(mean_tau_hat = mean(tau_hat_ref), mean_Y_resid = mean(Y_resid), .groups = "drop")
+
+ggplot(cal_df, aes(x = mean_tau_hat, y = mean_Y_resid)) +
+  geom_point(size = 4, color = "#009E73") +
+  geom_smooth(method = "lm", se = TRUE, color = "#56B4E9", linetype = "dashed") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "gray40") +
+  labs(title = "CATE Calibration Plot (at median dose)",
+       subtitle = "Mean predicted marginal effect vs mean residualized outcome by quintile",
+       x = "Mean predicted τ(d,x) in bin", y = "Mean residualized outcome in bin") +
+  theme_minimal(base_size = 13)
+```
+
+### Decision Framework: Which Meta-Learner to Use? 
+
+For **continuous treatments**, the choice of approach depends on data structure and goals:
+
+| Criterion | Recommendation |
+|-----------|----------------|
+| **Target** | Full curve $\tau(d,x)$ on a grid → `r_learner_continuous()`. Single-vector heterogeneous “effects” with continuous $D$ in **RCausalML** → `SLearner` / `TLearner` / `XLearner` / `RLearner` / `DRLearner` with `treatment_type = "continuous"` (see help text for each estimand). |
+| **Overlap** | Ensure sufficient density of $D$ across $X$; trim or restrict to common support if needed. |
+| **Curvature** | If effect is linear in $d$ → local linear R-Learner or parametric DR model; if nonlinear → kernel smoothing, splines, or generalized random forests. |
+| **Bandwidth** | Use cross-validation to choose bandwidth for kernel weights; Silverman-type rules are a starting point. |
+| **Alternatives** | **Generalized random forests** (`grf`) for continuous treatment; **double ML** with series expansion in $d$; **causal BART** with continuous treatment. |
+
+Use the **R-Learner** when you want a debiased, flexible estimator that leverages ML for nuisances and residualization; use **GRF** or **BART** when you prefer a single forest that directly targets the dose-response.
+
+
+## Part B: Use case — NMES (`nmes_data` from `{causaldrf}`) 
+
+**`nmes_data`** comes from the **1987 National Medical Expenditure Survey (NMES)** and is bundled in **`{causaldrf}`** (`data(nmes_data, package = "causaldrf")`). It is widely used for **continuous treatment** / dose-response methods (e.g., Imai & van Dyk, 2004). The extract has **9,708** observations and **12** variables (complete cases in the packaged version).
+
+| Role | Variable | Description |
+|------|-----------|-------------|
+| **Outcome** | `TOTALEXP` | Total annual medical expenditures (USD) |
+| **Treatment** | `packyears` | Pack-years: (cigarettes per day / 20) × years smoked |
+| **Covariates** | `AGESMOKE` | Age when started smoking |
+| | `LASTAGE` | Age at last interview |
+| | `MALE` | Sex (indicator) |
+| | `RACE3` | Race (coded) |
+| | `educate` | Education |
+| | `marital` | Marital status |
+| | `SREGION` | Census region |
+| | `POVSTALB` | Poverty status |
+| | `beltuse` | Seat belt use |
+| | `HSQACCWT` | Sampling weight (include as covariate here for simplicity; full survey inference would use design-based weights) |
+
+Inference is only as credible as **unconfoundedness** and **overlap** over the support of `packyears`.
+
+### Explore treatment and outcome 
+
+```{r}
+#| label: fig-nmes-explore-scatter
+#| fig-cap: "NMES: total medical expenditures vs. pack-years with a LOESS smooth and data structure summary."
+#| fig.width: 8
+#| fig.height: 5
+data(nmes_data, package = "causaldrf")
+str(nmes_data, give.attr = FALSE)
+
+ggplot(nmes_data, aes(x = packyears, y = TOTALEXP)) +
+  geom_point(alpha = 0.06, size = 0.5) +
+  geom_smooth(method = "loess", se = TRUE, linewidth = 0.9, color = "#D55E00") +
+  labs(
+    title = "NMES: total medical expenditures vs pack-years",
+    x = "Pack-years (continuous treatment)",
+    y = "Total annual medical expenditures ($)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+### Prepare analysis data and fit generalized R-learner 
+
+We map **`TOTALEXP` $\to$ `Y`**, **`packyears` $\to$ `D`**, and use the covariates above. The **dose grid** spans the 5th–95th percentiles of `packyears` to limit extrapolation.
+
+```{r}
+#| label: lst-nmes-rlearner-continuous-fit
+#| lst-cap: "Prepare NMES analysis data and fit r_learner_continuous on pack-years with a restricted dose grid."
+#| warning: false
+covs_nmes <- c(
+  "AGESMOKE", "LASTAGE", "MALE", "RACE3", "beltuse", "educate",
+  "marital", "SREGION", "POVSTALB", "HSQACCWT"
+)
+df_nmes <- data.frame(
+  Y = nmes_data$TOTALEXP,
+  D = nmes_data$packyears,
+  nmes_data[, covs_nmes, drop = FALSE],
+  check.names = FALSE
+)
+df_nmes <- df_nmes[stats::complete.cases(df_nmes), , drop = FALSE]
+# Numeric coding for all adjustment variables (avoids GLM propensity errors in DR-learner CV when
+# factor levels differ across folds; ranger also treats these as continuous splits)
+for (vn in covs_nmes) {
+  df_nmes[[vn]] <- suppressWarnings(as.numeric(as.character(df_nmes[[vn]])))
+}
+
+dose_lo <- stats::quantile(df_nmes$D, 0.05)
+dose_hi <- stats::quantile(df_nmes$D, 0.95)
+dose_grid_nmes <- seq(dose_lo, dose_hi, length.out = 14L)
+
+set.seed(789L)
+r_nmes <- r_learner_continuous(
+  df_nmes,
+  outcome = "Y",
+  treatment = "D",
+  covariates = covs_nmes,
+  dose_grid = dose_grid_nmes,
+  learner = "ranger",
+  n_fold = 5L,
+  seed = 789L,
+  num.trees = 400L
+)
+avg_tau_nmes <- rowMeans(r_nmes$tau_grid)
+dose_grid_fit <- r_nmes$dose_grid
+```
+
+### Average estimated local slope vs pack-years (NMES) 
+
+```{r}
+#| label: fig-nmes-avg-tau
+#| fig-cap: "Population-average estimated local slope (row-mean τ̂(d)) over pack-years with a rug of observed D."
+#| fig.width: 7
+#| fig.height: 5
+ggplot(
+  data.frame(dose = dose_grid_fit, tau_hat = avg_tau_nmes),
+  aes(x = dose, y = tau_hat)
+) +
+  geom_line(linewidth = 1.1, color = "#0072B2") +
+  geom_rug(data = data.frame(D = df_nmes$D), aes(x = D), inherit.aes = FALSE, alpha = 0.12) +
+  labs(
+    title = "NMES: population-average estimated local slope (generalized R-learner)",
+    subtitle = "Row-mean τ̂(d) over units; dose grid = 5th–95th percentile of pack-years",
+    x = "Pack-years (d)",
+    y = "Row-mean estimated local slope (averaged over units)"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+### Quick overlap check (continuous treatment) 
+
+We plot the **marginal distribution of** `packyears` and the distribution of **$\hat{E}[D \mid X]$** (random forest) by sex, as a simple overlap diagnostic.
+
+```{r}
+#| label: fig-nmes-overlap-diagnostics
+#| fig-cap: "NMES overlap: marginal density of pack-years and estimated E[D|X] by sex."
+#| fig.width: 8
+#| fig.height: 4
+task_dn <- TaskRegr$new(
+  id = "d_nmes",
+  backend = df_nmes[, c("D", covs_nmes)],
+  target = "D"
+)
+lrn_dn <- lrn("regr.ranger", num.trees = 400L)
+lrn_dn$train(task_dn)
+e_hat_nmes <- lrn_dn$predict_newdata(df_nmes[, covs_nmes])$response
+
+p_d <- ggplot(df_nmes, aes(x = D)) +
+  geom_density(fill = "#56B4E9", alpha = 0.65) +
+  labs(title = "Overlap: marginal density of pack-years",
+       x = "Pack-years (D)", y = "Density") +
+  theme_minimal(base_size = 12)
+
+p_e <- ggplot(
+  data.frame(e_hat = e_hat_nmes, male = factor(df_nmes$MALE, labels = c("Female", "Male"))),
+  aes(x = e_hat, fill = male)
+) +
+  geom_density(alpha = 0.45, position = "identity") +
+  labs(title = "Distribution of estimated E[D|X] by sex",
+       x = "Estimated E[packyears|X]", y = "Density", fill = NULL) +
+  theme_minimal(base_size = 12)
+
+gridExtra::grid.arrange(p_d, p_e, ncol = 2)
+```
+
+### Meta-learners on NMES: continuous `packyears` and binary median split 
+
+For compute time when rendering, we fit meta-learners on a **random subsample** of up to **3,000** rows (the **`r_learner_continuous()`** fit above still uses **all** complete cases).
+
+**1. Native continuous treatment.** Pass **`packyears`** as `treatment` with `treatment_type = "continuous"`. **S-Learner** contrasts predicted outcome at the **25th vs. 75th percentile** of training $D$ (override with `dose_values = c(d0, d1)`). **T- / X-Learner** use the **sample median** of $D$ as high-vs-low split (override with `dose_split`). **R-Learner** uses **Robinson-style** $\mathbb{E}[Y|X]$ and $\mathbb{E}[D|X]$ nuisances. **DR-Learner** uses a **continuous** cross-fitted pseudo-outcome (see package documentation). Covariates **exclude** raw `packyears` so dose enters only through `treatment`.
+
+**2. Binary median split.** For a classic **ATE** of high vs. low exposure and for **SHAP** below, we also fit **binary** learners on
+
+$$W_i = \mathbf{1}\{\texttt{packyears}_i > \mathrm{median}(\texttt{packyears})\}.$$
+
+We still **do not** put raw `packyears` in $X$ when using $W$ (overlap).
+
+```{r}
+#| label: lst-nmes-binary-meta-prep
+#| lst-cap: "Subsample NMES for meta-learners; keep continuous D and binary W = 1{D > median(D)}."
+X_nmes <- as.matrix(df_nmes[, covs_nmes, drop = FALSE])
+colnames(X_nmes) <- covs_nmes
+y_nmes <- df_nmes$Y
+w_high <- as.integer(df_nmes$D > stats::median(df_nmes$D))
+stopifnot(all(w_high %in% c(0L, 1L)))
+# Subsample for S/T/X/R/DR + SHAP (full N makes DR + five permshap runs very slow to render)
+set.seed(4242L)
+n_sub_meta <- min(3000L, nrow(X_nmes))
+idx_sub <- sample.int(nrow(X_nmes), n_sub_meta)
+X_meta <- X_nmes[idx_sub, , drop = FALSE]
+y_meta <- y_nmes[idx_sub]
+d_meta <- df_nmes$D[idx_sub]
+w_meta <- w_high[idx_sub]
+```
+
+```{r}
+#| label: lst-nmes-meta-learners-continuous-fit
+#| lst-cap: "Fit S/T/X/R/DR with treatment_type = continuous on raw pack-years (NMES subsample)."
+#| warning: false
+set.seed(12024L)
+ctrl <- 0L
+nt_m <- 280L
+sl_nmes_c <- SLearner(learner = "ranger", control_name = ctrl, treatment_type = "continuous")
+tl_nmes_c <- TLearner(learner = "ranger", control_name = ctrl, treatment_type = "continuous")
+xl_nmes_c <- XLearner(learner = "ranger", control_name = ctrl, treatment_type = "continuous")
+rl_nmes_c <- RLearner(learner = "ranger", control_name = ctrl, n_fold = 5L, treatment_type = "continuous")
+dr_nmes_c <- DRLearner(learner = "ranger", control_name = ctrl, n_fold = 3L, treatment_type = "continuous")
+
+sl_nmes_c <- fit(sl_nmes_c, X_meta, d_meta, y_meta, num.trees = nt_m)
+tl_nmes_c <- fit(tl_nmes_c, X_meta, d_meta, y_meta, num.trees = nt_m)
+xl_nmes_c <- fit(xl_nmes_c, X_meta, d_meta, y_meta, num.trees = nt_m)
+rl_nmes_c <- fit(rl_nmes_c, X_meta, d_meta, y_meta, num.trees = nt_m)
+dr_nmes_c <- fit(dr_nmes_c, X_meta, d_meta, y_meta, num.trees = nt_m)
+```
+
+```{r}
+#| label: tbl-nmes-meta-continuous-summary
+#| tbl-cap: "NMES subsample: mean predicted score by learner with continuous packyears (native API); estimands differ by learner."
+#| echo: true
+mean_te <- function(fit_obj, X) mean(as.numeric(predict(fit_obj, X)), na.rm = TRUE)
+ate_c_scalar <- function(fit_obj) {
+  a <- estimate_ate(fit_obj, X_meta, d_meta, y_meta, return_ci = FALSE, pretrain = TRUE)$ate
+  as.numeric(a)[1L]
+}
+tbl_cont <- data.frame(
+  learner = c("S", "T", "X", "R", "DR"),
+  mean_predicted_tau = c(
+    mean_te(sl_nmes_c, X_meta),
+    mean_te(tl_nmes_c, X_meta),
+    mean_te(xl_nmes_c, X_meta),
+    mean_te(rl_nmes_c, X_meta),
+    mean_te(dr_nmes_c, X_meta)
+  ),
+  ate_plugin = c(
+    ate_c_scalar(sl_nmes_c),
+    ate_c_scalar(tl_nmes_c),
+    ate_c_scalar(xl_nmes_c),
+    ate_c_scalar(rl_nmes_c),
+    ate_c_scalar(dr_nmes_c)
+  )
+)
+knitr::kable(tbl_cont, digits = 2)
+```
+
+The **mean predicted** column averages $\hat{\tau}(X)$ from `predict()`; **`ate_plugin`** uses `estimate_ate()`’s internal variance formulas (continuous rows use high-vs-low-$D$ logic where applicable). Interpret **S** as a **dose contrast** at training quartiles, **T/X** as **above-median vs. below**, **R** as a **Robinson-type** effect, and **DR** as the **continuous DR** CATE surface aggregated to a mean—comparability across columns is limited.
+
+```{r}
+#| label: lst-nmes-meta-learners-binary-fit
+#| lst-cap: "Fit S-, T-, X-, R-, and DR-learners (ranger) on binary W = high vs. low pack-years."
+#| warning: false
+set.seed(12025L)
+sl_nmes <- SLearner(learner = "ranger", control_name = ctrl)
+tl_nmes <- TLearner(learner = "ranger", control_name = ctrl)
+xl_nmes <- XLearner(learner = "ranger", control_name = ctrl)
+rl_nmes_bin <- RLearner(learner = "ranger", control_name = ctrl, n_fold = 5L)
+dr_nmes <- DRLearner(learner = "ranger", control_name = ctrl, n_fold = 3L)
+
+sl_nmes <- fit(sl_nmes, X_meta, w_meta, y_meta, num.trees = nt_m)
+tl_nmes <- fit(tl_nmes, X_meta, w_meta, y_meta, num.trees = nt_m)
+xl_nmes <- fit(xl_nmes, X_meta, w_meta, y_meta, num.trees = nt_m)
+rl_nmes_bin <- fit(rl_nmes_bin, X_meta, w_meta, y_meta, num.trees = nt_m)
+dr_nmes <- fit(dr_nmes, X_meta, w_meta, y_meta, num.trees = nt_m)
+```
+
+```{r}
+#| label: tbl-nmes-meta-ate
+#| tbl-cap: "Binary W: sample ATE of high vs. low pack-years on TOTALEXP (USD) by meta-learner (n ≤ 3,000 subsample)."
+#| echo: true
+ate_scalar <- function(fit_obj) {
+  a <- estimate_ate(fit_obj, X_meta, w_meta, y_meta, return_ci = FALSE, pretrain = TRUE)$ate
+  as.numeric(a)[1L]
+}
+ate_tbl <- data.frame(
+  learner = c("S", "T", "X", "R", "DR"),
+  ate = c(
+    ate_scalar(sl_nmes),
+    ate_scalar(tl_nmes),
+    ate_scalar(xl_nmes),
+    ate_scalar(rl_nmes_bin),
+    ate_scalar(dr_nmes)
+  )
+)
+knitr::kable(ate_tbl, digits = 2)
+```
+
+### Use case: Double machine learning on NMES (DML) 
+
+We reuse the **same subsample** (`X_meta`, `d_meta` = `packyears`, `y_meta` = `TOTALEXP`) and fit **partially linear DML** with **ranger** nuisances: **`LinearDML`** (OLS final stage on residual interactions), **`SparseLinearDML`** (Lasso final stage), and **`CausalForestDML`** (**`grf::causal_forest`** on residuals). All three target **$\hat{\theta}(X)$** in $\tilde{Y} \approx \tilde{D}\cdot\theta(X)$ with continuous $\tilde{D}$ (see `R/DMLearner.R`). There is **no ground-truth CATE** on NMES, so we compare **(i)** **ATE** with a large-sample normal CI, **(ii)** **holdout RMSE** of the cross-fitted **$\hat{\mathbb{E}}[Y\mid X]$** on a 30% test split (models refit on 70% train only), and **(iii)** **Spearman** correlation between predicted $\hat{\theta}(X)$ on the full subsample (agreement of **rankings** across methods).
+
+```{r}
+#| label: lst-nmes-dml-fit-compare
+#| tbl-cap: "NMES subsample: Double ML variants — ATE, mean |CATE|, and pairwise Spearman correlation of predicted CATE."
+#| warning: false
+set.seed(2026L)
+nt_dml <- 220L
+n_f_dml <- 4L
+if (!requireNamespace("grf", quietly = TRUE)) {
+  dml_lin_nmes <- dml_sparse_nmes <- dml_cf_nmes <- NULL
+  message("Skipping DML comparison: install.packages(\"grf\") for CausalForestDML.")
+} else {
+  dml_lin_nmes <- LinearDML(
+    model_y = "ranger", model_t = "ranger",
+    n_fold = n_f_dml, seed = 20261L
+  )
+  dml_sparse_nmes <- SparseLinearDML(
+    model_y = "ranger", model_t = "ranger",
+    alpha = 0.15, n_fold = n_f_dml, seed = 20262L
+  )
+  dml_cf_nmes <- CausalForestDML(
+    model_y = "ranger", model_t = "ranger",
+    n_fold = n_f_dml, seed = 20263L,
+    num_trees = 800L, min_node_size = 8L
+  )
+  dml_lin_nmes <- fit(dml_lin_nmes, X_meta, d_meta, y_meta, num.trees = nt_dml)
+  dml_sparse_nmes <- fit(dml_sparse_nmes, X_meta, d_meta, y_meta, num.trees = nt_dml)
+  # CausalForestDML: grf::causal_forest already receives num.trees from the constructor; passing num.trees
+  # through ... would duplicate the argument — omit here (ranger nuisances use their defaults).
+  dml_cf_nmes <- fit(dml_cf_nmes, X_meta, d_meta, y_meta)
+
+  ate_lin <- estimate_ate(dml_lin_nmes, X_meta, d_meta, y_meta, return_ci = TRUE, pretrain = TRUE)
+  ate_spr <- estimate_ate(dml_sparse_nmes, X_meta, d_meta, y_meta, return_ci = TRUE, pretrain = TRUE)
+  ate_cf <- estimate_ate(dml_cf_nmes, X_meta, d_meta, y_meta, return_ci = TRUE, pretrain = TRUE)
+
+  tau_l <- as.numeric(predict(dml_lin_nmes, X_meta))
+  tau_s <- as.numeric(predict(dml_sparse_nmes, X_meta))
+  tau_c <- as.numeric(predict(dml_cf_nmes, X_meta))
+  cors <- matrix(NA_real_, 3L, 3L, dimnames = list(c("LinearDML", "SparseLinearDML", "CausalForestDML"),
+                                                    c("LinearDML", "SparseLinearDML", "CausalForestDML")))
+  M <- cbind(tau_l, tau_s, tau_c)
+  n_complete <- sum(complete.cases(M))
+  if (n_complete >= 3L) {
+    for (i in 1:3) for (j in 1:3)
+      cors[i, j] <- suppressWarnings(stats::cor(M[, i], M[, j], method = "spearman", use = "complete.obs"))
+  } else {
+    warning("Fewer than 3 complete rows in predicted CATE matrix; Spearman correlations set to NA.")
+  }
+
+  tbl_dml_main <- data.frame(
+    method = c("LinearDML", "SparseLinearDML", "CausalForestDML"),
+    ATE = c(as.numeric(ate_lin$ate)[1L], as.numeric(ate_spr$ate)[1L], as.numeric(ate_cf$ate)[1L]),
+    CI_low = c(as.numeric(ate_lin$ate_lb)[1L], as.numeric(ate_spr$ate_lb)[1L], as.numeric(ate_cf$ate_lb)[1L]),
+    CI_high = c(as.numeric(ate_lin$ate_ub)[1L], as.numeric(ate_spr$ate_ub)[1L], as.numeric(ate_cf$ate_ub)[1L]),
+    mean_abs_CATE = c(mean(abs(tau_l)), mean(abs(tau_s)), mean(abs(tau_c))),
+    stringsAsFactors = FALSE
+  )
+
+  n_te <- max(30L, floor(0.3 * nrow(X_meta)))
+  ix_te <- sample.int(nrow(X_meta), n_te)
+  ix_tr <- setdiff(seq_len(nrow(X_meta)), ix_te)
+  X_tr <- X_meta[ix_tr, , drop = FALSE]
+  X_te <- X_meta[ix_te, , drop = FALSE]
+  d_tr <- d_meta[ix_tr]
+  d_te <- d_meta[ix_te]
+  y_tr <- y_meta[ix_tr]
+  y_te <- y_meta[ix_te]
+
+  rmse_yhat <- function(est, pass_nt = TRUE) {
+    est_tr <- if (pass_nt) {
+      fit(est, X_tr, d_tr, y_tr, num.trees = nt_dml)
+    } else {
+      fit(est, X_tr, d_tr, y_tr)
+    }
+    comp <- predict(est_tr, X_te, return_components = TRUE, verbose = FALSE)
+    sqrt(mean((y_te - comp$yhat_c)^2, na.rm = TRUE))
+  }
+  # Refit fresh constructors so train-fold fits do not overwrite full-sample objects used for SHAP below
+  tbl_dml_main$RMSE_EY_holdout <- c(
+    rmse_yhat(LinearDML(model_y = "ranger", model_t = "ranger", n_fold = n_f_dml, seed = 3031L), TRUE),
+    rmse_yhat(SparseLinearDML(model_y = "ranger", model_t = "ranger", alpha = 0.15, n_fold = n_f_dml, seed = 3032L), TRUE),
+    rmse_yhat(CausalForestDML(model_y = "ranger", model_t = "ranger", n_fold = n_f_dml, seed = 3033L,
+                              num_trees = 800L, min_node_size = 8L), FALSE)
+  )
+
+  knitr::kable(tbl_dml_main, digits = 2)
+  cat("\nSpearman correlation of predicted CATE (full subsample):\n")
+  knitr::kable(cors, digits = 3)
+}
+```
+
+**Interpretation:** **ATE** rows aggregate $\hat{\theta}(X)$; intervals use the notebook’s default **large-sample** standard error for the mean CATE (not debiased DML inference). **RMSE_EY_holdout** measures how well the **cross-fitted outcome nuisance** predicts **$Y$** out of sample—higher overlap and smoother $\mathbb{E}[Y\mid X]$ often yield lower RMSE. **Spearman** shows whether **heterogeneity rankings** agree across linear, sparse, and forest final stages.
+
+### SHAP for predicted CATE (DML, NMES) 
+
+As in [§ NMES SHAP for meta-learners](#sec-nmes-shap-cate), we attribute **predicted** $\hat{\theta}(X)$ (not necessarily causal structure) using **`explain_cate(..., use_permshap = TRUE)`** and **`shapviz`**, on the **full-subsample** DML fits above.
+
+```{r}
+#| label: fig-nmes-shap-dml-importance
+#| fig-cap: "Mean absolute SHAP values for predicted CATE: LinearDML, SparseLinearDML, and CausalForestDML (NMES subsample)."
+#| warning: false
+#| fig.width: 11
+#| fig.height: 5
+shp_nmes_dml_list <- NULL
+has_ks_dml <- requireNamespace("kernelshap", quietly = TRUE)
+has_sv_dml <- requireNamespace("shapviz", quietly = TRUE)
+if (!is.null(dml_lin_nmes) && has_ks_dml && has_sv_dml) {
+  set.seed(3131L)
+  n_explain_d <- min(20L, nrow(X_meta))
+  n_bg_d <- min(100L, nrow(X_meta))
+  ix_ed <- sample.int(nrow(X_meta), n_explain_d)
+  ix_bd <- sample.int(nrow(X_meta), n_bg_d)
+  X_explain_dml <- as.data.frame(X_meta[ix_ed, , drop = FALSE])
+  bg_X_dml <- as.data.frame(X_meta[ix_bd, , drop = FALSE])
+
+  dml_for_shap <- list(
+    "LinearDML" = dml_lin_nmes,
+    "SparseLinearDML" = dml_sparse_nmes,
+    "CausalForestDML" = dml_cf_nmes
+  )
+  shap_dml_raw <- vector("list", length(dml_for_shap))
+  names(shap_dml_raw) <- names(dml_for_shap)
+  for (i in seq_along(dml_for_shap)) {
+    shap_dml_raw[[i]] <- explain_cate(
+      dml_for_shap[[i]],
+      X = X_explain_dml,
+      bg_X = bg_X_dml,
+      use_permshap = TRUE,
+      verbose = FALSE,
+      exact = FALSE,
+      max_iter = 8L,
+      tol = 0.12
+    )
+  }
+  shp_nmes_dml_list <- lapply(shap_dml_raw, function(ks) shapviz(ks, X = X_explain_dml))
+
+  imp_dml <- dplyr::bind_rows(lapply(names(shp_nmes_dml_list), function(lab) {
+    ks_obj <- shap_dml_raw[[lab]]
+    S_mat <- as.matrix(ks_obj$S)
+    data.frame(
+      feature = colnames(ks_obj$X),
+      mean_abs_shap = colMeans(abs(S_mat)),
+      learner = lab,
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  print(
+    ggplot2::ggplot(imp_dml, ggplot2::aes(x = stats::reorder(factor(feature), mean_abs_shap), y = mean_abs_shap)) +
+      ggplot2::geom_col(fill = "#8F4CB3", width = 0.72) +
+      ggplot2::facet_wrap(~learner, scales = "free_y", ncol = 3L) +
+      ggplot2::coord_flip() +
+      ggplot2::labs(
+        title = "NMES DML: mean |SHAP| for predicted CATE",
+        subtitle = "Continuous packyears; permutation SHAP on a small explain set (predicted θ̂(X), not causal guarantees)",
+        x = NULL,
+        y = "Mean |SHAP|"
+      ) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(strip.text = ggplot2::element_text(face = "bold"))
+  )
+} else if (!is.null(dml_lin_nmes)) {
+  message("Skipping DML SHAP: install.packages(c(\"kernelshap\", \"shapviz\"))")
+}
+```
+
+```{r}
+#| label: fig-nmes-shap-dml-beeswarm
+#| fig-cap: "Beeswarm SHAP for LinearDML predicted CATE on the NMES explain subset."
+#| warning: false
+#| fig.width: 8
+#| fig.height: 6
+if (!is.null(shp_nmes_dml_list) && length(shp_nmes_dml_list) > 0) {
+  print(
+    shapviz::sv_importance(shp_nmes_dml_list[["LinearDML"]], kind = "beeswarm") +
+      ggplot2::ggtitle("LinearDML — beeswarm SHAP (NMES)")
+  )
+}
+```
+
+### SHAP interpretability for predicted CATE (NMES) 
+
+[SHAP](https://github.com/shap/shap) attributes **predicted** $\hat{\tau}(X)$ to covariates. We use **`RCausalML::explain_cate()`** with **`use_permshap = TRUE`**, smaller explain/background samples, and relaxed **`max_iter`** / **`tol`** so the document renders in reasonable time. The **X-Learner** is fit **without** a fixed propensity vector so `predict()` evaluates learned $e(X)$ on any `newdata`, as required when `kernelshap` perturbs features.
+
+We run SHAP for **S-, T-, X-, and R-learners** only: **DR-learner** predictions require multiple cross-fitted surfaces per call, so permutation SHAP at this sample size is prohibitively slow; the **DR row remains in the binary ATE table** above. (You can run `explain_cate()` on **`tl_nmes_c`** or other **continuous** fits similarly if needed; we keep SHAP on **binary** fits here for cost and a single estimand.)
+
+```{r}
+#| label: fig-nmes-shap-meta-importance
+#| fig-cap: "Mean absolute SHAP values for predicted binary CATE by S/T/X/R meta-learner (NMES subsample)."
+#| warning: false
+#| fig.width: 11
+#| fig.height: 10
+has_ks_n <- requireNamespace("kernelshap", quietly = TRUE)
+has_sv_n <- requireNamespace("shapviz", quietly = TRUE)
+shp_nmes_list <- NULL
+X_explain_nmes <- NULL
+if (!has_ks_n || !has_sv_n) {
+  message("Skipping NMES SHAP: install.packages(c(\"kernelshap\", \"shapviz\"))")
+} else {
+  suppressPackageStartupMessages({
+    library(kernelshap)
+    library(shapviz)
+  })
+  set.seed(3030L)
+  n_explain_n <- min(24L, nrow(X_meta))
+  n_bg_n <- min(120L, nrow(X_meta))
+  ix_e <- sample.int(nrow(X_meta), n_explain_n)
+  ix_b <- sample.int(nrow(X_meta), n_bg_n)
+  X_explain_nmes <- as.data.frame(X_meta[ix_e, , drop = FALSE])
+  bg_X_nmes <- as.data.frame(X_meta[ix_b, , drop = FALSE])
+
+  meta_nmes_for_shap <- list(
+    "S (ranger)" = sl_nmes,
+    "T (ranger)" = tl_nmes,
+    "X (ranger)" = xl_nmes,
+    "R (ranger)" = rl_nmes_bin
+  )
+  shap_nmes_raw <- vector("list", length(meta_nmes_for_shap))
+  names(shap_nmes_raw) <- names(meta_nmes_for_shap)
+  for (i in seq_along(meta_nmes_for_shap)) {
+    shap_nmes_raw[[i]] <- explain_cate(
+      meta_nmes_for_shap[[i]],
+      X = X_explain_nmes,
+      bg_X = bg_X_nmes,
+      use_permshap = TRUE,
+      verbose = FALSE,
+      exact = FALSE,
+      max_iter = 8L,
+      tol = 0.12
+    )
+  }
+  shp_nmes_list <- lapply(shap_nmes_raw, function(ks) shapviz(ks, X = X_explain_nmes))
+
+  imp_nmes <- dplyr::bind_rows(lapply(names(shp_nmes_list), function(lab) {
+    ks_obj <- shap_nmes_raw[[lab]]
+    S_mat <- as.matrix(ks_obj$S)
+    data.frame(
+      feature = colnames(ks_obj$X),
+      mean_abs_shap = colMeans(abs(S_mat)),
+      learner = lab,
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  print(
+    ggplot2::ggplot(imp_nmes, ggplot2::aes(x = stats::reorder(factor(feature), mean_abs_shap), y = mean_abs_shap)) +
+      ggplot2::geom_col(fill = "steelblue", width = 0.72) +
+      ggplot2::facet_wrap(~learner, scales = "free_y", ncol = 2) +
+      ggplot2::coord_flip() +
+      ggplot2::labs(
+        title = "NMES: mean |SHAP| for predicted CATE by meta-learner (ranger)",
+        subtitle = "Binary W = 1{packyears > median}; S/T/X/R only (DR omitted for SHAP cost); predicted CATE, not necessarily causal",
+        x = NULL,
+        y = "Mean |SHAP|"
+      ) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(strip.text = ggplot2::element_text(face = "bold"))
+  )
+}
+```
+
+
+### SHAP beeswarm and waterfall for the T-Learner surrogate
+
+```{r}
+#| label: fig-nmes-shap-beeswarm-waterfall
+#| fig-cap: "Beeswarm SHAP for T- and X-learners and a waterfall for the highest predicted T-learner CATE in the explain sample."
+#| warning: false
+#| fig.width: 9
+#| fig.height: 11
+if (!is.null(shp_nmes_list) && length(shp_nmes_list) > 0) {
+  for (lab in c("T (ranger)", "X (ranger)")) {
+    print(shapviz::sv_importance(shp_nmes_list[[lab]], kind = "beeswarm") + ggplot2::ggtitle(lab))
+  }
+  pred_t_n <- as.numeric(predict(tl_nmes, as.matrix(X_explain_nmes)))
+  row_top <- which.max(pred_t_n)
+  print(
+    shapviz::sv_waterfall(shp_nmes_list[["T (ranger)"]], row_id = row_top) +
+      ggplot2::ggtitle("Waterfall SHAP — T-Learner (ranger), highest predicted CATE in explain sample")
+  )
+}
+```
+
+## Summary and Conclusions 
+
+This notebook demonstrated meta-learners for continuous treatments (**Part A**: synthetic $D$ with known CADR; **Part B**: NMES **`nmes_data`** with `TOTALEXP`, `packyears`, and covariates from **`{causaldrf}`**). Key takeaways:
+
+- **CADR**: For continuous treatment $D$, a natural target is $\tau(d,x) = \frac{\partial}{\partial d}\mathbb{E}[Y(d)|X=x]$, the marginal effect of dose at $d$ given $x$, estimated on a **dose grid** by **`r_learner_continuous()`**.
+- **Native continuous meta-learners**: **`SLearner`**, **`TLearner`**, **`XLearner`**, **`RLearner`**, and **`DRLearner`** accept **`treatment_type = "continuous"`** and numeric **`treatment`** (e.g. `packyears`); estimands differ (quartile contrast, median split, Robinson, continuous DR, etc.—see **Details** in each function’s documentation).
+- **R-Learner for continuous (grid)**: Cross-fit outcome and treatment (E[D|X]) models, form residuals, then use local linear regression with kernel weights over a dose grid to estimate $\tau(d,x)$ (or population averages).
+- **Bandwidth**: Silverman-type rule used here; in practice choose via cross-validation. Local linear regression reduces boundary bias vs. kernel averaging.
+- **Heterogeneity**: Stratifying by covariates (e.g., X1) shows how dose-response differs across subgroups; the R-Learner output can be used for subgroup-specific curves.
+- **SHAP**: Because `r_learner_continuous()` returns a dose $\times$ unit surface, we explain **variation in** $\hat{\tau}(d_{\mathrm{ref}}, x)$ across units by permutation SHAP on a **ranger surrogate** of those slopes at a fixed reference dose. Interpret as attribution for **model-estimated** heterogeneity, not as causal Shapley effects for the true DGP.
+- **Diagnostics**: Overlap (distribution of $D$ and $E[D|X]$), balance (SMD before/after stabilized IPTW), and CATE calibration (predicted vs residualized outcome by quintile) support the validity of dose-response estimates.
+- **Decision framework**: Use the R-Learner for debiased, flexible dose-response estimation; consider GRF or causal BART when a single forest or Bayesian approach is preferred. Always check overlap and balance.
+- **NMES (Part B)**: Continuous **`r_learner_continuous()`** curve for **`packyears`**; **S/T/X/R/DR** with **`treatment_type = "continuous"`** on raw **`packyears`** (native API); **binary** median-split **S/T/X/R/DR** for discrete ATE and **SHAP**; **`LinearDML` / `SparseLinearDML` / `CausalForestDML`** on the same subsample with **ATE**, **holdout RMSE** for $\hat{\mathbb{E}}[Y\mid X]$, **Spearman** agreement of predicted CATE, and **permutation SHAP** for $\hat{\theta}(X)$; **`ranger`** in nuisances where used. Interpret under **unconfoundedness**; use survey weights properly in real reporting.
+
+For a **full dose–response surface** on a grid, use **`r_learner_continuous()`** or methods such as **GRF**. For a **single vector** of heterogeneous effects with continuous $D$, use **`treatment_type = "continuous"`** on the standard meta-learners and read each learner’s estimand in the package help. Validate bandwidth and overlap in $D$ given $X$; use SHAP on an explicit target (here, surrogate predictions at $d_{\mathrm{ref}}$ or binary $\hat{\tau}(X)$) when reporting interpretability.
+
+## Resources 
+
+1. Nie & Wager (2021). *Biometrika*: Quasi-oracle estimation (R-Learner theory)  
+2. Kennedy et al. (2017). *JASA*: Nonparametric causal effects of continuous treatments  
+3. Athey & Wager (2019). *arXiv*: Generalized random forests  
+4. Chernozhukov et al. (2018). *Econometrica*: Double/debiased ML  
+5. Imai, K., & van Dyk, D. A. (2004). Causal inference with general treatment regimes. *Journal of the American Statistical Association*, 99(467), 854–866. (NMES / continuous treatment)  
+6. `{causaldrf}`: [https://CRAN.R-project.org/package=causaldrf](https://CRAN.R-project.org/package=causaldrf) — `data("nmes_data", package = "causaldrf")`
+
+
+

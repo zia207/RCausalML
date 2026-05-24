@@ -1,0 +1,740 @@
+![](Images/04-double-ml.png)
+
+# 4.3 DoubleML for Difference-in-Differences: ML-Based Causal Inference in Panel Data {.unnumbered}
+
+This notebook shows how to integrate **DoubleML** with the **did** package in R
+to estimate group-time average treatment effects (ATTs) in
+difference-in-differences models with multiple periods and staggered adoption.
+Following the [DoubleML R DiD example](https://docs.doubleml.org/stable/examples/R_double_ml_did.html),
+we compare default regression-based DiD with **ML-based doubly robust DiD**
+using three nuisance engines — linear, random forest, and XGBoost — on both
+simulated data and the `mpdta` county-level teen employment dataset.
+
+## Overview
+
+**Double Machine Learning for Difference-in-Differences (DML-DiD)** combines the identification credibility of DiD with the flexibility of ML to estimate causal effects in high-dimensional observational panel settings.
+
+The classic two-way fixed effects model assumes:
+
+$$Y_{it} = \alpha_i + \gamma_t + \theta (D_{it} \times Post_t) + \varepsilon_{it}$$
+
+**DML-DiD** extends this by allowing flexible, nonparametric control for high-dimensional confounders $X_{it}$:
+$$\Delta Y_{it} = \theta D_{it} + g(X_{it}) + \zeta_{it}$$
+
+where $\Delta Y_{it} = Y_{it} - Y_{i,t-1}$ is the first-differenced outcome and $g(\cdot)$ is estimated with a cross-fitted ML model rather than a linear parametric form.
+
+### How It Works
+
+| Step | Component | Purpose |
+|------|-----------|---------|
+| **1** | **Nuisance estimation** | Use ML (RF, XGBoost, Lasso) to estimate: <br>• Propensity score: $\hat{g}(X) = P(D=1\|X)$ <br>• Outcome regression: $\hat{\ell}(X) = E[\Delta Y\|D=0,X]$ |
+| **2** | **Cross-fitting** | Split data into $K$ folds; train nuisance models on $K-1$ folds, predict on held-out fold to avoid overfitting [[10]] |
+| **3** | **Neyman-orthogonal score** | Construct debiased score: <br>$$\psi_i = \frac{D_i - \hat{g}(X_i)}{\hat{p}(1-\hat{g}(X_i))} \cdot (\Delta Y_i - \hat{\ell}(X_i))$$ <br>This ensures small errors in $\hat{g}, \hat{\ell}$ have negligible impact on $\hat{\theta}$ [[9]] |
+| **4** | **Final estimation** | $\hat{\theta}_{DML} = \frac{1}{n}\sum_i \psi_i$ with valid standard errors via influence function asymptotics |
+
+### Why Combine DML with DiD?
+
+| Challenge | Traditional DiD | DML-DiD Solution |
+|-----------|---------------|----------------|
+| **High-dimensional controls** | OLS fails when $p \gg n$ | ML handles 100s–1000s of covariates |
+| **Nonlinear confounding** | Linear $g(X)$ may be misspecified | Flexible ML captures complex $g(X)$ |
+| **Regularization bias** | Lasso shrinks coefficients → biased $\theta$ | Neyman orthogonality debiases the final estimate |
+| **Valid inference** | No built-in SEs for ML-adjusted DiD | Asymptotic normality → confidence intervals, p-values |
+
+### Supported Data Structures
+
+DML-DiD accommodates:
+
+- **Two-period DiD**: Classic treatment vs. control, pre/post design
+- **Staggered adoption**: Units treated at different times (group-time ATT) [[19]]
+- **Continuous treatments**: Dose-response DiD using kernel weighting + GPS [[6]]
+- **Repeated cross-sections or balanced panels**
+
+The `DoubleML` package implements these via `DoubleMLPLR`, `DoubleMLIRM`, and custom wrappers for the `did` package [[10]].
+
+### Limitations and Caveats
+
+- **Parallel trends still required.** DML adjusts for *observed* covariates $X$; unobserved time-varying confounders remain a threat to identification.
+- **Sample size.** Cross-fitting requires sufficient observations per fold; small panels may yield unstable nuisance estimates.
+- **Interpretability.** While $\hat{\theta}$ is a valid causal estimate, the ML nuisance functions $g(X)$ and $\ell(X)$ are black boxes.
+- **Implementation complexity.** Requires careful choice of ML hyperparameters and number of cross-fitting folds.
+
+## Implementation in R
+
+The **did** package accepts a custom `est_method` for each internal 2×2 DiD
+cell. By passing a **RCausalML** wrapper as `est_method`, we replace the default
+linear/logistic nuisances with cross-fitted ML while keeping all of **did**'s
+infrastructure for group-time ATTs, aggregation, and inference intact.
+
+| Topic | What we cover |
+|-------|----------------|
+| **Multi-period DiD** | Group-time ATT(g,t) with staggered treatment (Callaway & Sant'Anna 2021) |
+| **Doubly robust DiD** | Sant'Anna & Zhao (2020): ML for outcome and propensity in DiD |
+| **DoubleML + did** | `RCausalML::doubleml_did_linear` / `_rf` / `_xgboost` (DoubleML IRM, score `"ATTE"`) |
+| **Learners** | Defaults: LM + logit; **ranger**; **xgboost** (see `?doubleml_did_linear`) |
+| **Evaluation** | `doubleml_did_eval_*` + `doubleml_did_eval_preds`; compare `aggte` and RMSE across wrappers |
+| **did tools** | `ggdid`, `aggte`, pre-test of parallel trends |
+
+**Key idea**: The {did} package's default estimator is doubly robust and uses (unpenalized) linear and logistic regression. By passing a **custom estimation function** that uses DoubleML internally, we can use flexible ML for the nuisance functions while still using did's infrastructure for group-time effects, aggregation, and inference.
+
+## Set Up
+
+### Check and Install Required R Packages
+
+Following R packages are required to run this notebook. If any of these packages are not installed, you can install them using the code below:
+
+`DoubleML`, `RCausalML`, `did`, `mlr3`, `mlr3learners`, `mlr3measures`, `xgboost`, `tidyverse`, `lgr`
+
+```{r}
+#| label: lst-packages-vector
+#| lst-cap: "Required R package names used throughout the notebook."
+packages <- c(
+  "DoubleML",
+  "RCausalML",
+  "did",
+  "mlr3",
+  "mlr3learners",
+  "mlr3measures",
+  "xgboost",
+  "tidyverse",
+  "lgr"
+)
+```
+
+### Install Missing Packages
+
+```{r}
+#| label: lst-install-missing-packages
+#| lst-cap: "Optional commands to install missing CRAN/GitHub dependencies (commented by default)."
+#| warning: false
+#| error: false
+# Install missing packages
+# new_packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+# if (length(new_packages)) install.packages(new_packages)
+```
+
+### Verify Installation
+
+```{r}
+#| label: lst-verify-package-installation
+#| lst-cap: "Check that each required package namespace is available."
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+```
+
+### Load R Packages
+
+```{r}
+#| warning: false
+#| error: false
+# Load packages with suppressed messages
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+### Check Loaded Packages
+
+```{r}
+#| label: lst-check-loaded-packages
+#| lst-cap: "Confirm which package environments are attached on the search path."
+# Check loaded packages
+cat("Successfully loaded packages:\n")
+print(search()[grepl("package:", search())])
+```
+
+```{r setup-did-helpers}
+#| warning: false
+lgr::get_logger("mlr3")$set_threshold("warn")
+
+#' Adapt RCausalML DoubleML DiD wrappers for did::att_gt
+#'
+#' `att_gt()` passes `i.weights`, `inffunc`, etc. to a custom `est_method`.
+#' The RCausalML helpers only need `y1`, `y0`, `D`, and `covariates`; extra
+#' arguments are ignored here (weights are not used in this notebook).
+as_did_est_method <- function(fn) {
+  function(y1, y0, D, covariates, ...) {
+    fn(y1, y0, D, covariates)
+  }
+}
+
+#' Row-bind `aggte(..., type = "simple")` summaries for several `att_gt` fits
+summarize_dml_wrappers <- function(named_attgt, alp = 0.05) {
+  z <- stats::qnorm(1 - alp / 2)
+  purrr::imap_dfr(named_attgt, function(obj, wrapper) {
+    ag <- did::aggte(obj, type = "simple", na.rm = TRUE)
+    tibble::tibble(
+      wrapper = wrapper,
+      overall_att = ag$overall.att,
+      overall_se = ag$overall.se,
+      z = ag$overall.att / ag$overall.se,
+      ci_low = ag$overall.att - z * ag$overall.se,
+      ci_high = ag$overall.att + z * ag$overall.se
+    )
+  })
+}
+```
+
+## Part A: Simulated Data
+
+We use the introductory example from the **did** package — a simulated dataset
+with 4 time periods and staggered treatment assignment — to benchmark the three
+RCausalML wrappers against the default doubly robust estimator. The DGP is
+close to linear, which makes this a good sanity check: all three wrappers should
+converge on similar ATT estimates.
+
+### Data
+
+The simulation uses `reset.sim()` and `build_sim_dataset()` from the **did** package with dynamic treatment effects (effect size grows with exposure period). Units first treated in period 1 are dropped so we can recover ATT(g,t) for later cohorts only.
+
+```{r sim-build-dataset}
+# Original code from did vignette: https://github.com/bcallaway11/did/blob/master/vignettes/did-basics.Rmd
+time.periods <- 4
+sp <- reset.sim()
+sp$te <- 0
+
+set.seed(1814)
+
+# Add dynamic effects (treatment effect varies by period)
+sp$te.e <- 1:time.periods
+
+# Generate dataset; drops "always-treated" (period 1) units
+dta <- build_sim_dataset(sp)
+
+# Number of observations
+nrow(dta)
+```
+
+
+```{r sim-head-dta}
+head(dta)
+```
+
+The data are in **long format** (one row per unit-period). Key variables:
+
+| Variable | Role |
+|---|---|
+| `G` | First period when the unit is treated (cohort) |
+| `period` | Time period |
+| `Y` | Outcome |
+| `treat` | 1 if the unit is treated in this period |
+| `X` | Covariate used for adjustment |
+| `id`, `cluster` | Unit and cluster identifiers |
+
+### Benchmark: Default did Estimator
+
+By default, **did** estimates group-time ATTs using unpenalized linear regression
+for the outcome nuisance and logistic regression for the propensity. We run this
+first as the reference point.
+
+```{r attgt-default-sim}
+# Estimate group-time average treatment effects with default (regression-based) method
+example_attgt <- att_gt(yname = "Y",
+                        tname = "period",
+                        idname = "id",
+                        gname = "G",
+                        xformla = ~X,
+                        data = dta
+                        )
+
+summary(example_attgt)
+```
+
+The output reports ATT(g,t) for each group-time cell with standard errors and simultaneous confidence bands, along with a pre-test p-value for the parallel trends assumption.
+
+### Replacing Default Nuisances with DoubleML
+
+Sant’Anna and Zhao (2020) establish a doubly robust DiD estimator that is valid
+with flexible nuisance functions. **RCausalML** wraps this for the **did** API:
+each wrapper (i) forms the first difference $\Delta Y = Y_1 - Y_0$, (ii) fits
+**DoubleMLIRM** with score `"ATTE"` using the appropriate **mlr3** learners, and
+(iii) returns `ATT` and `att.inf.func` in the format **did** expects.
+
+| Wrapper | Outcome nuisance `ml_g` | Propensity `ml_m` |
+|---------|-------------------------|-------------------|
+| `doubleml_did_linear` | `regr.lm` | `classif.log_reg` |
+| `doubleml_did_rf` | `regr.ranger` | `classif.ranger` |
+| `doubleml_did_xgboost` | `regr.xgboost` | `classif.xgboost` |
+
+See `?RCausalML::doubleml_did_linear` for arguments (custom learners, `n_folds`, `score`, etc.).
+
+### Run DiD with the Three RCausalML Wrappers
+
+```{r attgt-dml-three-wrappers-sim}
+set.seed(1234)
+example_attgt_dml_linear <- att_gt(
+  yname = "Y",
+  tname = "period",
+  idname = "id",
+  gname = "G",
+  xformla = ~X,
+  data = dta,
+  est_method = as_did_est_method(doubleml_did_linear)
+)
+
+example_attgt_dml_rf <- att_gt(
+  yname = "Y",
+  tname = "period",
+  idname = "id",
+  gname = "G",
+  xformla = ~X,
+  data = dta,
+  est_method = as_did_est_method(doubleml_did_rf)
+)
+
+example_attgt_dml_xgb <- att_gt(
+  yname = "Y",
+  tname = "period",
+  idname = "id",
+  gname = "G",
+  xformla = ~X,
+  data = dta,
+  est_method = as_did_est_method(doubleml_did_xgboost)
+)
+
+summary(example_attgt_dml_linear)
+```
+
+```{r summary-dml-rf-sim}
+summary(example_attgt_dml_rf)
+```
+
+```{r summary-dml-xgb-sim}
+summary(example_attgt_dml_xgb)
+```
+
+For this near-linear DGP, the **linear** wrapper typically tracks the default **did** estimator most closely. Random forest and XGBoost add flexibility but may show modestly larger standard errors in some cells due to the bias–variance trade-off inherent in cross-fitted nonparametric nuisances.
+
+### Compare Wrapper Performance (Part A)
+
+We summarize the overall ATT using `aggte(..., type = "simple")` and measure cell-by-cell agreement between wrappers as the root mean squared difference in $\widehat{\mathrm{ATT}}(g,t)$. Small RMSE indicates the wrappers agree on individual group-time effects, not just the aggregate.
+
+```{r compare-wrappers-part-a}
+cmp_agg_a <- summarize_dml_wrappers(
+  list(linear = example_attgt_dml_linear, rf = example_attgt_dml_rf, xgboost = example_attgt_dml_xgb)
+)
+knitr::kable(cmp_agg_a, digits = 4, caption = "Part A: simple aggregate ATT by nuisance learner wrapper")
+
+gt_mat_a <- tibble::tibble(
+  linear = example_attgt_dml_linear$att,
+  rf = example_attgt_dml_rf$att,
+  xgboost = example_attgt_dml_xgb$att
+)
+
+tibble::tibble(
+  comparison = c("linear vs rf", "linear vs xgboost", "rf vs xgboost"),
+  rmse_att_gt = c(
+    sqrt(mean((gt_mat_a$linear - gt_mat_a$rf)^2, na.rm = TRUE)),
+    sqrt(mean((gt_mat_a$linear - gt_mat_a$xgboost)^2, na.rm = TRUE)),
+    sqrt(mean((gt_mat_a$rf - gt_mat_a$xgboost)^2, na.rm = TRUE))
+  )
+) |>
+  knitr::kable(digits = 5, caption = "Part A: RMSE between group-time ATTs across wrappers")
+```
+
+### Using did's Aggregation and Plotting Tools
+
+Group-time ATTs from any wrapper slot directly into **did**'s infrastructure:
+`ggdid()` for plotting and `aggte()` for aggregation.
+
+### Plot Group-Time Average Treatment Effects
+
+```{r plot-ggdid-dml-linear}
+#| fig-width: 7
+#| fig-height: 4
+ggdid(example_attgt_dml_linear)
+```
+
+### Aggregate Effects
+
+`aggte(..., type = "simple")` collapses the group-time ATTs into a single weighted
+average. The **did** package also supports `type = "dynamic"` (event-study) and
+`type = "group"` (by cohort).
+
+```{r aggte-simple-sim}
+agg.simple <- aggte(example_attgt_dml_linear, type = "simple")
+summary(agg.simple)
+```
+
+### Nuisance Model Diagnostics (Part A)
+
+`doubleml_did_eval_linear`, `doubleml_did_eval_rf`, and `doubleml_did_eval_xgboost`
+are evaluation variants that fit with `store_predictions = TRUE` and attach
+cross-fitted metrics via `doubleml_did_eval_preds`: RMSE of the outcome nuisance
+`ml_g0` on control units and classification accuracy of the propensity `ml_m`.
+
+Because a full `att_gt` call invokes the wrapper on many internal 2×2 slices,
+we evaluate nuisance quality on a single simulated DiD cross-section (one
+covariate, binary treatment, first-differenced outcome) to keep runtime
+manageable.
+
+```{r eval-nuisance-part-a}
+set.seed(99)
+n_ev <- 600
+X_ev <- matrix(stats::rnorm(n_ev), ncol = 1L)
+colnames(X_ev) <- "X1"
+Dev <- stats::rbinom(n_ev, 1L, stats::plogis(0.35 * X_ev[, 1L]))
+delta_ev <- 0.5 * Dev + 0.25 * X_ev[, 1L] + stats::rnorm(n_ev)
+y0_ev <- stats::rnorm(n_ev)
+y1_ev <- y0_ev + delta_ev
+
+ev_lin <- doubleml_did_eval_linear(y1_ev, y0_ev, Dev, X_ev, print_eval = FALSE)
+ev_rf <- doubleml_did_eval_rf(y1_ev, y0_ev, Dev, X_ev, print_eval = FALSE)
+ev_xgb <- doubleml_did_eval_xgboost(y1_ev, y0_ev, Dev, X_ev, print_eval = FALSE)
+
+dplyr::bind_rows(
+  tibble::as_tibble_row(unlist(ev_lin$eval_predictions)) |> dplyr::mutate(wrapper = "linear"),
+  tibble::as_tibble_row(unlist(ev_rf$eval_predictions)) |> dplyr::mutate(wrapper = "rf"),
+  tibble::as_tibble_row(unlist(ev_xgb$eval_predictions)) |> dplyr::mutate(wrapper = "xgboost")
+) |>
+  dplyr::relocate(wrapper) |>
+  knitr::kable(digits = 4, caption = "Part A: illustrative nuisance scores (one simulated DiD slice)")
+
+```
+
+On a linear DGP, `ml_g0` RMSE is typically lowest for the linear wrapper. Flexible methods can still recover similar ATT estimates because Neyman orthogonality limits the propagation of first-stage bias into the final causal estimate.
+
+
+## Part B: Real-World Application — Minimum Wages and Teen Employment (`mpdta`)
+
+Callaway and Sant’Anna (2021) examined the causal impact of **higher state minimum wages** (above the federal level) on **teen employment** across U.S. counties, using data from roughly 2001–2007.
+
+This demonstration uses a cleaned, balanced panel dataset from their study (called `mpdta` in the **did** R package; see the package documentation for details). The data is employed here purely as an example to illustrate key differences between the **DoubleML** and **did** packages. A similar notebook using the same data appears in the **did** package documentation.
+
+Following the original example, we report results under two identification strategies:
+- **Unconditional** parallel trends assumption
+- **Conditional** parallel trends assumption (adjusting for covariates)
+
+For **Double Machine Learning (DML)** DiD we fit **three RCausalML wrappers**—`doubleml_did_linear`, `doubleml_did_rf`, and `doubleml_did_xgboost`—and compare aggregated ATTs, dispersion of group-time estimates, and illustrative nuisance metrics (via `doubleml_did_eval_*`). Small differences versus default **did** are expected because of **cross-fitting** and flexible nuisances.
+
+The **did** package includes the **mpdta** dataset: county-level teen employment (log employment) from 2003–2007, with variation in the timing of minimum-wage increases across states. We use it to illustrate DoubleML for DiD on real data.
+
+### Load and Inspect mpdta
+
+```{r mpdta-load-head}
+data(mpdta, package = "did")
+
+# Variables: countyreal (id), year (time), lemp (outcome), first.treat (cohort), lpop (covariate)
+# first.treat = 0 means never treated; otherwise first period when treated
+head(mpdta)
+```
+
+### Benchmark: Default did Estimator on mpdta
+
+```{r attgt-default-mpdta}
+attgt_mpdta <- att_gt(yname = "lemp",
+                     tname = "year",
+                     idname = "countyreal",
+                     gname = "first.treat",
+                     xformla = ~lpop,
+                     data = mpdta)
+
+summary(attgt_mpdta)
+```
+
+### DoubleML Wrappers on mpdta
+
+```{r attgt-dml-three-wrappers-mpdta}
+set.seed(1234)
+attgt_mpdta_dml_lin <- att_gt(
+  yname = "lemp",
+  tname = "year",
+  idname = "countyreal",
+  gname = "first.treat",
+  xformla = ~lpop,
+  data = mpdta,
+  est_method = as_did_est_method(doubleml_did_linear)
+)
+
+attgt_mpdta_dml_rf <- att_gt(
+  yname = "lemp",
+  tname = "year",
+  idname = "countyreal",
+  gname = "first.treat",
+  xformla = ~lpop,
+  data = mpdta,
+  est_method = as_did_est_method(doubleml_did_rf)
+)
+
+attgt_mpdta_dml_xgb <- att_gt(
+  yname = "lemp",
+  tname = "year",
+  idname = "countyreal",
+  gname = "first.treat",
+  xformla = ~lpop,
+  data = mpdta,
+  est_method = as_did_est_method(doubleml_did_xgboost)
+)
+
+summary(attgt_mpdta_dml_lin)
+```
+
+```{r summary-mpdta-dml-rf}
+summary(attgt_mpdta_dml_rf)
+```
+
+```{r summary-mpdta-dml-xgb}
+summary(attgt_mpdta_dml_xgb)
+```
+
+### Compare Wrapper Performance (Part B)
+
+```{r compare-wrappers-part-b}
+cmp_agg_b <- summarize_dml_wrappers(
+  list(
+    linear = attgt_mpdta_dml_lin,
+    rf = attgt_mpdta_dml_rf,
+    xgboost = attgt_mpdta_dml_xgb
+  )
+)
+knitr::kable(cmp_agg_b, digits = 4, caption = "Part B: simple aggregate ATT by wrapper")
+
+gt_mat_b <- tibble::tibble(
+  linear = attgt_mpdta_dml_lin$att,
+  rf = attgt_mpdta_dml_rf$att,
+  xgboost = attgt_mpdta_dml_xgb$att
+)
+
+tibble::tibble(
+  comparison = c("linear vs rf", "linear vs xgboost", "rf vs xgboost"),
+  rmse_att_gt = c(
+    sqrt(mean((gt_mat_b$linear - gt_mat_b$rf)^2, na.rm = TRUE)),
+    sqrt(mean((gt_mat_b$linear - gt_mat_b$xgboost)^2, na.rm = TRUE)),
+    sqrt(mean((gt_mat_b$rf - gt_mat_b$xgboost)^2, na.rm = TRUE))
+  )
+) |>
+  knitr::kable(digits = 5, caption = "Part B: RMSE between group-time ATTs across wrappers")
+```
+
+### Nuisance Model Diagnostics (Part B)
+
+```{r eval-nuisance-part-b}
+set.seed(100)
+n_ev2 <- 600
+X_ev2 <- cbind(stats::rnorm(n_ev2), stats::rnorm(n_ev2))
+colnames(X_ev2) <- c("x1", "x2")
+D2 <- stats::rbinom(n_ev2, 1L, stats::plogis(0.2 * X_ev2[, 1L] - 0.15 * X_ev2[, 2L]))
+delta2 <- 0.35 * D2 + 0.2 * X_ev2[, 1L] + stats::rnorm(n_ev2)
+y0_2 <- stats::rnorm(n_ev2)
+y1_2 <- y0_2 + delta2
+
+ev2_lin <- doubleml_did_eval_linear(y1_2, y0_2, D2, X_ev2, print_eval = FALSE)
+ev2_rf <- doubleml_did_eval_rf(y1_2, y0_2, D2, X_ev2, print_eval = FALSE)
+ev2_xgb <- doubleml_did_eval_xgboost(y1_2, y0_2, D2, X_ev2, print_eval = FALSE)
+
+dplyr::bind_rows(
+  tibble::as_tibble_row(unlist(ev2_lin$eval_predictions)) |> dplyr::mutate(wrapper = "linear"),
+  tibble::as_tibble_row(unlist(ev2_rf$eval_predictions)) |> dplyr::mutate(wrapper = "rf"),
+  tibble::as_tibble_row(unlist(ev2_xgb$eval_predictions)) |> dplyr::mutate(wrapper = "xgboost")
+) |>
+  dplyr::relocate(wrapper) |>
+  knitr::kable(digits = 4, caption = "Part B: illustrative nuisance scores (two covariates)")
+```
+
+### Aggregate Effect (Reference: Linear Wrapper)
+
+The simple aggregate ATT summarizes the average effect of minimum-wage treatment
+on log teen employment across all group-time cells, using the linear wrapper's
+cross-fitted nuisances.
+
+```{r aggte-simple-mpdta}
+agg_mpdta <- aggte(attgt_mpdta_dml_lin, type = "simple", na.rm = TRUE)
+summary(agg_mpdta)
+```
+
+The aggregate ATT gives a single summary estimate of the minimum-wage effect on log teen employment, averaging across all treated cohort-time cells with covariate adjustment on `lpop`. Compare against `cmp_agg_b` to see how the RF and XGBoost wrappers differ.
+
+### SHAP Analysis
+
+`did::att_gt()` with `doubleml_did_*` wrappers operates on many internal 2×2
+slices and returns group-time ATTs plus influence functions. It does **not**
+expose a single global object with a `predict(object, newdata)` method, so
+`RCausalML::explain_cate()` cannot be applied directly to the `att_gt` fit.
+
+Instead, we illustrate the SHAP workflow on a **single DiD slice**: we fit
+`LinearDML` on the Part B toy sample (`x1`, `x2`, `D2`, and
+$\Delta Y = y_{1} - y_{0}$) and compute permutation SHAP for the predicted
+$\hat{\tau}(X)$. These SHAP values are a **descriptive** summary of CATE
+heterogeneity within that DML model — not the group-time ATTs reported by
+**did**.
+
+To keep runtime manageable, explanation and background rows are subsampled from
+deduplicated covariate rows, using non-overlapping sets where possible to avoid
+leakage. Parallel SHAP via **{future}** is used when the package is available.
+
+#### 1. SHAP estimation
+
+SHAP values explain how each covariate contributes to the individual CATE—e.g. which features make the model believe the first-difference “effect” is larger or smaller for that row. We compute them with **`explain_cate()`**:
+
+- **`X`** — rows you want to explain  
+- **`bg_X`** — background (integration) distribution  
+- Prefer **non-overlapping** explanation vs. background rows when the pool is large enough  
+
+```{r shap-did-check}
+#| message: false
+has_ks <- requireNamespace("kernelshap", quietly = TRUE)
+has_sv <- requireNamespace("shapviz", quietly = TRUE)
+run_shap <- has_ks && has_sv
+if (!run_shap) {
+  message("Skipping SHAP: install.packages(c(\"kernelshap\", \"shapviz\")) to run this section.")
+}
+```
+
+```{r shap-did-estimation-setup}
+#| eval: !expr run_shap
+has_future <- requireNamespace("future", quietly = TRUE)
+if (has_future) {
+  library(future)
+  plan(multisession, workers = max(1L, parallel::detectCores() - 1L))
+}
+
+dy_shap <- as.numeric(y1_2 - y0_2)
+X_df <- as.data.frame(X_ev2)
+X_shap_pool <- X_df[!duplicated(X_df), , drop = FALSE]
+
+set.seed(102)
+ldml_shap <- LinearDML(model_y = "lm", model_t = "lm", n_fold = 5L, seed = 102)
+ldml_shap <- fit(ldml_shap, X_df, D2, dy_shap)
+
+nexplain <- min(80L, nrow(X_shap_pool))
+nbg <- min(50L, nrow(X_shap_pool))
+
+if (nrow(X_shap_pool) > nexplain + nbg) {
+  idxexplain <- sample(nrow(X_shap_pool), nexplain)
+  idxbg <- sample(setdiff(seq_len(nrow(X_shap_pool)), idxexplain), nbg)
+} else {
+  idxexplain <- sample(nrow(X_shap_pool), nexplain)
+  idxbg <- sample(nrow(X_shap_pool), nbg)
+}
+
+Xexplain <- X_shap_pool[idxexplain, , drop = FALSE]
+bg_X_df <- X_shap_pool[idxbg, , drop = FALSE]
+```
+
+```{r shap-did-estimation}
+#| eval: !expr run_shap
+
+fg_prev <- getOption("future.globals.maxSize", default = 500 * 1024^2)
+if (has_future) {
+  options(future.globals.maxSize = max(2 * 1024^3, fg_prev))
+}
+ks_args <- list(
+  object = ldml_shap,
+  X = Xexplain,
+  bg_X = bg_X_df,
+  use_permshap = TRUE,
+  parallel = has_future,
+  verbose = FALSE
+)
+if (has_future) {
+  ks_args$parallel_args <- list(packages = c("RCausalML"))
+}
+ks <- tryCatch(
+  do.call(explain_cate, ks_args),
+  finally = {
+    if (has_future) {
+      future::plan(future::sequential)
+      options(future.globals.maxSize = fg_prev)
+    }
+  }
+)
+```
+
+#### 2. Visualize SHAP Values
+
+**Beeswarm plot** — shows the distribution of SHAP values per feature; large absolute values indicate a stronger influence on the predicted CATE.
+
+```{r shap-did-importance-beeswarm}
+#| fig-width: 6
+#| fig-height: 5
+#| eval: !expr run_shap
+
+shp <- shapviz::shapviz(ks, X = Xexplain)
+shapviz::sv_importance(shp, kind = "beeswarm") +
+  ggplot2::labs(title = "SHAP (beeswarm): predicted CATE, LinearDML on DiD-style slice")
+```
+
+**Bar plot** — average |SHAP| per feature, useful for ranking overall feature importance.
+
+```{r shap-did-importance-bar}
+#| fig-width: 6
+#| fig-height: 5
+#| eval: !expr run_shap
+
+shapviz::sv_importance(shp, show_numbers = TRUE) +
+  ggplot2::labs(title = "SHAP importance (bar): predicted CATE, LinearDML on DiD-style slice")
+```
+
+#### 3. SHAP Dependence Plots
+
+Dependence plots show how each feature drives the predicted treatment effect. Colour encodes a second variable chosen automatically for potential interaction effects.
+
+```{r shap-did-dependence-plots}
+#| fig-width: 8
+#| fig-height: 4
+#| eval: !expr run_shap
+
+xvars <- colnames(shp$X)
+shapviz::sv_dependence(shp, v = xvars, share_y = TRUE)
+```
+
+For this toy DGP, larger **x1** shifts both treatment propensity and $\\Delta Y$; you may see SHAP for **x1** and **x2** align with those roles.
+
+#### 4. SHAP for a Single Prediction
+
+Waterfall and force plots decompose the predicted CATE for one row into its baseline value plus feature contributions, making individual predictions fully transparent.
+
+```{r shap-did-single-prediction}
+#| fig-width: 6
+#| fig-height: 5
+#| eval: !expr run_shap
+
+shapviz::sv_waterfall(shp, row_id = 1)
+shapviz::sv_force(shp, row_id = 1)
+```
+
+#### 5. Subgroup-Specific SHAP (Optional)
+
+Waterfall plot for the observation with the largest `x1` value — illustrates how an individual with high treatment propensity is explained.
+
+```{r shap-did-subgroup-waterfall}
+#| fig-width: 6
+#| fig-height: 5
+#| eval: !expr run_shap
+
+row_show <- if (nrow(shp$X) >= 1L) as.integer(which.max(shp$X$x1)) else 1L
+shapviz::sv_waterfall(shp, row_id = row_show)
+```
+
+## Summary
+
+| Component | What we did |
+|---|---|
+| **Data** | Long-format panel with cohort (`G` / `first.treat`), time, outcome, and covariates |
+| **Benchmark** | Default `att_gt(..., xformla = ~...)` with built-in doubly robust estimator |
+| **DoubleML DiD** | `est_method = as_did_est_method(doubleml_did_*)` — **did** receives `ATT` and `att.inf.func` |
+| **Nuisance learners** | Linear, random forest, XGBoost via `doubleml_did_linear/rf/xgboost` |
+| **Diagnostics** | `aggte(..., type = "simple")`, pairwise ATT RMSE, `doubleml_did_eval_*` nuisance scores |
+| **did tools** | `ggdid()`, `aggte()`, pre-test of parallel trends — all unchanged |
+
+The doubly robust score, combined with Neyman orthogonality and cross-fitting,
+allows flexible ML nuisances without sacrificing valid inference on the ATT. In
+practice, the linear wrapper is often a good starting point; switching to RF or
+XGBoost matters most when the true propensity or outcome surface is substantially
+nonlinear.
+
+
+## Resources
+
+- Callaway, B., & Sant'Anna, P. H. C. (2021). Difference-in-differences with multiple time periods. *Journal of Econometrics*, 225(2), 200–230. <https://doi.org/10.1016/j.jeconom.2020.12.001>
+
+- Sant'Anna, P. H. C., & Zhao, J. (2020). Doubly robust difference-in-differences estimators. *Journal of Econometrics*, 219(1), 101–122. <https://doi.org/10.1016/j.jeconom.2020.06.003>
+
+- Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., & Robins, J. (2018). Double/debiased machine learning for treatment and structural parameters. *The Econometrics Journal*, 21(1), C1–C68. <https://doi.org/10.1111/ectj.12097>
+
+- [DoubleML R: DoubleML for Difference-in-Differences](https://docs.doubleml.org/stable/examples/R_double_ml_did.html)
+
+- [did package (Callaway & Sant'Anna)](https://bcallaway11.github.io/did/)
+
+- [DoubleML User Guide](https://docs.doubleml.org/stable/guide/index.html)

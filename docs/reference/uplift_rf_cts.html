@@ -5,7 +5,7 @@ Split criterion: expected value of best treatment in children vs parent."><meta 
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="default" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">RCausalML</a>
 
@@ -19,30 +19,82 @@ Split criterion: expected value of best treatment in children vs parent."><meta 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/RCausalML-intro.html">Get Started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../tutorials/00-scientific-terminology-glossary.html">Glossary</a></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tutorials" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tutorials</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-tutorials"><li><h6 class="dropdown-header" data-toc-skip>--- Tree-Based Models ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd">Causal Tree Introduction</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd">Causal Tree</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd">Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd">Causal Survival Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd">Instrumental Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd">Multi-Arm Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd">Causal XGBoost</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Meta-Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/02-meta-learners/">Meta-Learners Overview</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Uplift Trees &amp; Forests ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/03-uplift-trees-forests/">Uplift Trees &amp; Forests</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Double / Debiased Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/04-double-debiased-learners/">DML Notebooks</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Deep Causal Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/05-deep-causal-learners/">Deep Causal Notebooks</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Automated ML ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/06-automated-ml/">Automated ML</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tree-based" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tree-Based</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-tree-based"><li><a class="dropdown-item" href="../tutorials/01-00-casual-tree-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="../tutorials/01-01-causal-tree-r.html">Causal Tree</a></li>
+    <li><a class="dropdown-item" href="../tutorials/01-02-causal-forest-r.html">Causal Forest</a></li>
+    <li><a class="dropdown-item" href="../tutorials/01-03-causal-survival-forest-r.html">Causal Survival Forest</a></li>
+    <li><a class="dropdown-item" href="../tutorials/01-04-instrumental-causal-forest-r.html">Instrumental Causal Forest</a></li>
+    <li><a class="dropdown-item" href="../tutorials/01-05-multi-arm-causal-forest-r.html">Multi-Arm Causal Forest</a></li>
+    <li><a class="dropdown-item" href="../tutorials/01-06-causal-xgboost-r.html">Causal XGBoost</a></li>
+    <li><a class="dropdown-item" href="../tutorials/01-07-instrumental-causal-xgboost-r.html">Instrumental Causal XGBoost</a></li>
+    <li><a class="dropdown-item" href="../tutorials/01-08-multi-arm-causal-boost-r.html">Multi-Arm Causal Boost</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-meta-learners" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Meta-Learners</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-meta-learners"><li><a class="dropdown-item" href="../tutorials/02-00-meta-learners-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="../tutorials/02-01-meta-learners-binary-treatments-r.html">Binary Treatments</a></li>
+    <li><a class="dropdown-item" href="../tutorials/02-02-meta-learners-multiple-discrete-treatment-r.html">Multiple Discrete Treatments</a></li>
+    <li><a class="dropdown-item" href="../tutorials/02-03-meta-learners-continuous-treatment-r.html">Continuous Treatments</a></li>
+    <li><a class="dropdown-item" href="../tutorials/02-04-tmle-model-r.html">TMLE</a></li>
+    <li><a class="dropdown-item" href="../tutorials/02-05-meta-learners-domain-adaptation-learner-r.html">Domain Adaptation Learner</a></li>
+    <li><a class="dropdown-item" href="../tutorials/02-06--meta-learners-doubly-robust-learners-r.html">Doubly Robust Learners</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-uplift" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Uplift</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-uplift"><li><a class="dropdown-item" href="../tutorials/03-00-uplift-trees-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="../tutorials/03-01-uplift-trees-classification-r.html">Classification</a></li>
+    <li><a class="dropdown-item" href="../tutorials/03-02-uplift-trees-regression-r.html">Regression</a></li>
+    <li><a class="dropdown-item" href="../tutorials/03-03-uplift-randomForest-r.html">Random Forest</a></li>
+    <li><a class="dropdown-item" href="../tutorials/03-04-uplift-xgboost.html">XGBoost</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-double-ml" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Double ML</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-double-ml"><li><a class="dropdown-item" href="../tutorials/04-00-double-ml-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="../tutorials/04-01-double-ml-from-basics-to-application-r.html">Basics to Application</a></li>
+    <li><a class="dropdown-item" href="../tutorials/04-02-double-ml-%20single-multiple-treatment-r.html">Single/Multiple Treatment</a></li>
+    <li><a class="dropdown-item" href="../tutorials/04-03-double-ml-did-r.html">Difference-in-Differences</a></li>
+    <li><a class="dropdown-item" href="../tutorials/04-04-double-ml-iv-r.html">Instrumental Variables</a></li>
+    <li><a class="dropdown-item" href="../tutorials/04-05-double-ml-dynamic-ml.html">Dynamic Double ML</a></li>
+    <li><a class="dropdown-item" href="../tutorials/04-06-double-ml-weighted-double-ml.html">Weighted Double ML</a></li>
+    <li><a class="dropdown-item" href="../tutorials/04-07-double-ml-cluster-robust-r.html">Cluster Robust</a></li>
+    <li><a class="dropdown-item" href="../tutorials/04-08-double-ml-ensemble-learners-r.html">Ensemble Learners</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-deep-causal-ml" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Deep Causal ML</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-deep-causal-ml"><li><a class="dropdown-item" href="../tutorials/05-00-DeepCausalML-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html">Treatment Effect Estimators</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-01-01-DeepCausalML-TARNET-r.html">TARNet</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-01-02-DeepCausalML-CFRTNet-r.html">CFRNet</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-01-03-DeepCausalML-DragonNet-r.html">DragonNet</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-01-04-DeepCausalML-GANITE-r.html">GANITE</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html">Generative Latent-Variable Models</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.html">CEVAE</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-02-02-DeepCausalML-variational-autoencoder-causalVAE.html">CausalVAE</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-02-03-DeepCausalML-identifiable-variational-autoencoders-CausaliVAEs.html">CausaliVAEs</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-02-04-DeepCausalML-causaldiscrepancyVAE-r.html">CausalDiscrepancyVAE</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-02-05-DeepCausalML-causalGAN-r.html">CausalGAN</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.html">Deep Structural Causal Models</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-02-07-DeepCausalML-causal-encoding-generative-EGN-r.html">Causal Encoding (EGN)</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-03-00-DeepCausalML-structural-learnering-introduction-r.html">Causal Structural Learning</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.html">NOTEARS</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-03-02-DeepCausalML-dag-structure-learning-graph-neural-networks-DagGNN-r.html">DAG-GNN</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-03-03-DeepCausalML-gradient-based-neural-learning-GranDag-r.html">GraN-DAG</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-03-04-DeepCausalML-DAGMA-NoCurl-r.html">DAGMA / DAG-NoCurl</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.html">CASTLE</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-04-00-DeepCuasalML-timesseries-introduction-r.html">Causal Time Series</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.html">Neural Granger Causality</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-04-02-DeepCausalML-timeseries-structural-causal-model-SMC-r.html">Structural Causal Models</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-04-03-DeepCausalML-attension-transformer-r.html">Attention / Transformer</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-04-04-DeepCausalML-timeseries-RNN-LSTM-causaML-r.html">RNN / LSTM</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-04-05-DeepCausalML-timeseries-graph-nn-r.html">Graph Neural Networks</a></li>
+    <li><a class="dropdown-item" href="../tutorials/05-04-06-DeepCausalML-timeseries-counterfactual-potential-causalML-r.html">Counterfactual / Potential Outcomes</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML"><span class="fa fa-github fa-lg"></span></a></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/"><span class="fa fa-book fa-lg"></span></a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/" aria-label="Python CausalML docs"><span class="fa fa-book fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -109,7 +161,7 @@ Split criterion: expected value of best treatment in children vs parent.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by RCausalML Authors.</p>
+  <p>Developed by Zia Ahmed.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -1,0 +1,499 @@
+# Identifiable Variational Autoencoders (iVAEs)
+
+## Overview
+
+Identifiable VAEs (iVAEs) address a key limitation of standard VAEs: the latent variables are not uniquely identifiable, meaning multiple equivalent representations can explain the same data. This lack of identifiability hinders downstream tasks like causal reasoning or disentanglement.
+
+iVAEs introduce auxiliary variables $u$ to condition the prior distribution $p(z|u)$, enabling theoretical guarantees of identifiability under assumptions like exponential family priors and sufficient variation in $u$. This makes the latent $z$ recover the true underlying factors up to permutation or scaling, bridging VAEs with nonlinear Independent Component Analysis (ICA).
+
+## Model Architecture
+
+This architecture represents a significant evolution from the standard VAE. While a standard VAE tries to learn a latent representation $z$ that explains the data $x$, it often suffers from "posterior collapse" or non-identifiability (meaning the model can learn many different, arbitrary ways to represent the same data). The iVAE solves this by introducing an auxiliary variable $u$ (like a label, timestamp, or environment index) to condition the prior distribution.
+
+Let's break down the flow of data in the provided image:
+
+**A. The Inputs**
+
+*   **$x$ (Data):** The raw input (e.g., an image, a sensor reading).
+*   **$u$ (Auxiliary Variable):** In the diagram, this is labeled "One-Hot Task ID". This is the crucial addition. It acts as a "context" or "condition" for the model. For example, if $x$ is an image of a car, $u$ might indicate "daytime" vs. "nighttime".
+
+**B. The Encoder ($q(z|x, u)$)**
+
+*   Unlike a standard VAE which only looks at $x$, this encoder takes **both** $x$ and $u$ as inputs.
+*   It processes them through hidden layers to output the parameters of the approximate posterior distribution:
+    *   $\mu$ (Mean)
+    *   `logvar` (Log Variance)
+*   This creates a distribution $q(z|x, u)$ that is specific to both the data point and its context.
+
+**C. The Conditional Prior ($p(z|u)$)**
+
+*   This is the bottom-center block. In a standard VAE, the prior is a static standard normal distribution $\mathcal{N}(0, I)$.
+*   In the iVAE, the prior is **dynamic**. It depends on $u$.
+*   The diagram shows $u$ feeding into a network that outputs a "Prior Mean" ($\mu_u$). The variance is fixed to unit variance ($I$).
+*   Mathematically, this is $p(z|u) = \mathcal{N}(g(u), I)$, where $g(u)$ is the neural network outputting the mean.
+
+**D. The Reparameterization Trick**
+
+*   To allow gradients to flow through the stochastic sampling process, the model uses the reparameterization trick.
+*   It takes the $\mu$ and `logvar` from the Encoder and combines them with random noise $\epsilon$ (labeled $z$ in the arrow coming up from the bottom, though usually denoted $\epsilon$) to create the latent vector $z$.
+*   $z = \mu + \sigma \odot \epsilon$
+
+**E. The Decoder ($p(x|z)$)**
+
+*   The decoder takes the latent vector $z$ and tries to reconstruct the original data $x$.
+*   Crucially, the decoder **does not** see $u$. It must learn to reconstruct $x$ using *only* the information compressed into $z$. This forces $z$ to contain all the necessary information about $x$ that isn't explained by the structure of the prior alone.
+
+**F. The Loss Functions (The Optimization)**
+
+The diagram shows two loss components being calculated:
+1.  **Reconstruction Loss:** Compares the Decoder's output (`Reconstruction mu_x`) with the original input $x$ (`x_hat`). This ensures the model learns to generate realistic data.
+2.  **KL Divergence:** This is the regularization term.
+    *   **Standard VAE:** Measures distance between $q(z|x)$ and $\mathcal{N}(0, I)$.
+    *   **iVAE (Diagram):** Measures distance between the Encoder's distribution $q(z|x, u)$ and the **Conditional Prior** $p(z|u)$.
+    *   This forces the latent codes for a specific condition $u$ to cluster around the specific mean defined by that condition $u$, rather than just zero.
+
+![iVAE architecture](iVAE_architecture.png)
+
+**The Standard VAE ELBO:**
+
+$$ \mathcal{L}_{VAE} = \mathbb{E}_{q(z|x)} [\log p(x|z)] - D_{KL}(q(z|x) \| \mathcal{N}(0, I)) $$
+*Problem:* The prior $\mathcal{N}(0, I)$ is fixed and uninformative. The model can rotate or scale the latent space arbitrarily without changing the loss, leading to unidentifiable representations.
+
+**The iVAE ELBO:**
+
+$$ \mathcal{L}_{iVAE} = \mathbb{E}_{q(z|x,u)} [\log p(x|z)] - D_{KL}(q(z|x,u) \| p(z|u)) $$
+
+**The Conditional Prior $p(z|u)$:**
+
+The text mentions using an **Exponential Family** distribution. This is a general class of distributions (including Gaussian, Bernoulli, Poisson, etc.) defined as:
+
+$$ p(z_i|u) = \exp(T_i(z_i) \cdot \lambda_i(u) - \log A(\lambda_i(u))) $$
+*   $T_i(z_i)$: Sufficient statistics (for a Gaussian, this is just $z$ and $z^2$).
+*   $\lambda_i(u)$: Natural parameters that change based on the auxiliary variable $u$.
+
+**The Simplification (Gaussian Prior):**
+
+As noted in your text, for practical implementation (and shown in the diagram), we often simplify this to a Gaussian where only the mean shifts based on $u$:
+
+$$ p(z|u) = \mathcal{N}(g(u), I) $$
+Here, $g(u)$ is a neural network (the "Conditional Prior" block in the diagram) that maps the auxiliary variable $u$ to a specific location in latent space.
+
+### Why does this lead to Identifiability?
+
+1.  **Injective Mixing Function ($f$):** The process that turns latent variables $z$ into data $x$ must be reversible (one-to-one). If two different $z$ values produce the exact same $x$, you can never distinguish them.
+2.  **Sufficient Variation in $\lambda(u)$:** The auxiliary variable $u$ must actually change the prior significantly. If $p(z|u)$ is the same for all $u$, the model collapses back to a standard VAE. The "Task IDs" or labels must provide enough distinct "anchors" in the latent space.
+3.  **Independent Mechanisms:** The components of the latent variable $z$ should be statistically independent given $u$.
+
+## Implementation in R
+
+Below are the primary functions and modules in the `CausalML` package relevant for implementing the Causal iVAE, as defined in [`R/causal_iVAE.R`](../../../../R/causal_iVAE.R):
+
+**Key Functions for Causal iVAE (from `R/causal_iVAE.R`):**
+
+- [`elbo_loss`](../../../../R/causal_iVAE.R): Computes the negative Evidence Lower Bound used for iVAE optimization.
+- [`train_ivae`](../../../../R/causal_iVAE.R): Trains the iVAE model on given data.
+- [`evaluate_latent_alignment`](../../../../R/causal_iVAE.R): Measures alignment and identifiability of recovered latent variables.
+- [`estimate_ate_ivae`](../../../../R/causal_iVAE.R): Uses learned iVAE representations to estimate ATE (Average Treatment Effects).
+- [`plot_latent_space`](../../../../R/causal_iVAE.R): Plots the latent space to visualize learned representations.
+- [`print_training_summary`](../../../../R/causal_iVAE.R): Provides a summary of training progress and convergence.
+
+**Model Module:**
+
+- [`iVAE`](../../../../R/causal_iVAE.R): The core iVAE model implemented as an `nn_module` (R/torch).
+  - Encodes \( q(z|x,u) \), decodes \( p(x|z) \), and models the conditional prior \( p(z|u) \).
+- [`iVAEATE`](../../../../R/causal_iVAE.R): Extension for direct estimation of Average Treatment Effects (ATE) using the iVAE architecture.
+
+Refer to [`R/causal_iVAE.R`](../../../../R/causal_iVAE.R) for detailed function definitions and implementation details.
+
+
+All of these are defined in **`R/causalVAE.R`**. In your IDE you can use “Go to definition” on the function name to jump to the exact line.
+
+### Setup
+
+We will use the `torch` package for the implementation. The code below checks for required packages, loads them, and sets up the device for computation.
+
+```{r}
+#| label: setup-packages
+#| message: false
+#| warning: false
+
+# Check and install required packages (minimal set for speed)
+packages <- c("torch", "HDclassif", "tidyverse", "tidyr", 
+              "corrplot", "patchwork", "mlr3", "mlr3tuning", 
+              "paradox", "Matrix", "RCausalML", "Rcpp")
+
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+
+# Load packages with suppressed messages
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+
+### Device Setup
+
+```{r}
+#| label: device-setup
+#| message: false
+
+# Check for GPU availability (torch)
+device <- if (torch::cuda_is_available()) "cuda" else "cpu"
+cat("Using device:", device, "\n")
+set.seed(42)
+torch::torch_manual_seed(42L)
+```
+
+
+## Fit Model with Synthetic Data
+
+### Generate Synthetic Data
+
+```{r}
+#| label: synthetic-data
+#| message: false
+
+set.seed(42)
+
+n_samples_syn  <- 400
+input_dim_syn  <- 13
+n_aux_syn      <- 3
+n_per_class    <- c(floor(n_samples_syn / n_aux_syn),
+                    floor(n_samples_syn / n_aux_syn),
+                    n_samples_syn - 2 * floor(n_samples_syn / n_aux_syn))
+
+class_means <- lapply(0:(n_aux_syn - 1), function(k) {
+  rnorm(input_dim_syn) * 2 + k * 3
+})
+
+X_syn_list <- list()
+y_syn_list <- list()
+
+for (k in 0:(n_aux_syn - 1)) {
+  cov_mat <- diag(input_dim_syn) * 0.5 + 
+    matrix(runif(input_dim_syn^2) * 0.1, input_dim_syn, input_dim_syn)
+  cov_mat <- (cov_mat + t(cov_mat)) / 2
+  
+  n_k <- n_per_class[k + 1]
+  chol_cov <- chol(cov_mat)
+  X_k <- matrix(rnorm(n_k * input_dim_syn), n_k, input_dim_syn) %*% chol_cov +
+    matrix(class_means[[k + 1]], n_k, input_dim_syn, byrow = TRUE)
+  
+  X_syn_list[[k + 1]] <- X_k
+  y_syn_list[[k + 1]] <- rep(k, n_k)
+}
+
+X_syn_raw <- do.call(rbind, X_syn_list)
+y_syn     <- unlist(y_syn_list)
+
+# Standardize
+X_syn_mean <- colMeans(X_syn_raw)
+X_syn_sd   <- apply(X_syn_raw, 2, sd)
+X_syn      <- scale(X_syn_raw, center = X_syn_mean, scale = X_syn_sd)
+X_syn      <- matrix(as.numeric(X_syn), nrow = nrow(X_syn_raw))
+
+# Train/test split (80/20, stratified)
+set.seed(42)
+train_idx <- c()
+test_idx  <- c()
+for (cls in unique(y_syn)) {
+  idx_cls <- which(y_syn == cls)
+  n_test  <- round(0.2 * length(idx_cls))
+  test_samp <- sample(idx_cls, n_test)
+  train_samp <- setdiff(idx_cls, test_samp)
+  train_idx <- c(train_idx, train_samp)
+  test_idx  <- c(test_idx, test_samp)
+}
+
+x_train_syn <- X_syn[train_idx, ]
+x_test_syn  <- X_syn[test_idx, ]
+u_train_syn <- y_syn[train_idx]
+u_test_syn  <- y_syn[test_idx]
+
+cat(sprintf("Synthetic data: %d samples, %d features, %d classes\n",
+            nrow(X_syn), input_dim_syn, n_aux_syn))
+cat(sprintf("Train: %d, Test: %d\n", length(train_idx), length(test_idx)))
+```
+
+### Model Building and Training
+
+```{r}
+#| label: synthetic-training
+#| message: false
+
+# Model dimensions
+latent_dim_syn <- 4
+
+# Instantiate model
+model_syn <- iVAE(
+  input_dim  = input_dim_syn,
+  latent_dim = latent_dim_syn,
+  hidden_dim = 128,
+  n_aux      = n_aux_syn,
+  dropout    = 0.15
+)
+model_syn$to(device = device)
+
+# Optimizer
+optimizer_syn <- optim_adam(model_syn$parameters, lr = 1e-3, weight_decay = 1e-5)
+
+# Training parameters
+epochs_syn       <- 60
+batch_size_syn   <- 32
+train_losses_syn <- numeric(epochs_syn)
+val_losses_syn   <- numeric(epochs_syn)
+
+# Helper: evaluate model
+evaluate_model <- function(model, X, u, batch_size = 64) {
+  model$eval()
+  n <- nrow(X)
+  total_loss <- 0
+  n_batches  <- 0
+  
+  with_no_grad({
+    for (start in seq(1, n, by = batch_size)) {
+      end      <- min(start + batch_size - 1, n)
+      x_batch <- torch_tensor(X[start:end, , drop = FALSE],
+                              dtype = torch_float())$to(device = device)
+      u_batch <- torch_tensor(u[start:end],
+                              dtype = torch_long())$to(device = device)
+      
+      out <- model(x_batch, u_batch)
+      loss <- elbo_loss(x_batch,
+                        out$dec_mu, out$dec_logvar,
+                        out$enc_mu, out$enc_logvar,
+                        out$prior_mu, out$prior_logvar)
+      total_loss <- total_loss + loss$item()
+      n_batches  <- n_batches + 1
+    }
+  })
+  
+  total_loss / n_batches
+}
+
+# Training loop
+n_train    <- nrow(x_train_syn)
+batch_size <- batch_size_syn
+
+for (epoch in seq_len(epochs_syn)) {
+  model_syn$train()
+  
+  # Shuffle training data
+  shuf_idx   <- sample(n_train)
+  train_loss <- 0
+  n_batches  <- 0
+  
+  for (start in seq(1, n_train, by = batch_size)) {
+    end       <- min(start + batch_size - 1, n_train)
+    idx_batch <- shuf_idx[start:end]
+    
+    x_batch <- torch_tensor(x_train_syn[idx_batch, , drop = FALSE],
+                            dtype = torch_float())$to(device = device)
+    u_batch <- torch_tensor(u_train_syn[idx_batch],
+                            dtype = torch_long())$to(device = device)
+    
+    optimizer_syn$zero_grad()
+    out  <- model_syn(x_batch, u_batch)
+    loss <- elbo_loss(x_batch,
+                      out$dec_mu, out$dec_logvar,
+                      out$enc_mu, out$enc_logvar,
+                      out$prior_mu, out$prior_logvar)
+    loss$backward()
+    nn_utils_clip_grad_norm_(model_syn$parameters, max_norm = 5.0)
+    optimizer_syn$step()
+    
+    train_loss <- train_loss + loss$item()
+    n_batches  <- n_batches + 1
+  }
+  
+  train_avg_syn <- train_loss / n_batches
+  val_avg_syn   <- evaluate_model(model_syn, x_test_syn, u_test_syn)
+  
+  train_losses_syn[epoch] <- train_avg_syn
+  val_losses_syn[epoch]   <- val_avg_syn
+  
+  if (epoch == 1 || epoch %% 15 == 0) {
+    cat(sprintf("Synthetic epoch %2d/%d — train loss: %.4f, val loss: %.4f\n",
+                epoch, epochs_syn, train_avg_syn, val_avg_syn))
+  }
+}
+
+cat("Synthetic data fit complete.\n")
+```
+
+### Visualize Training and Validation Loss
+
+```{r}
+#| label: syn-loss-plot
+#| fig.width: 7
+#| fig.height: 4
+
+df_loss_syn <- data.frame(
+  Epoch = seq_len(epochs_syn),
+  Train = train_losses_syn,
+  Val   = val_losses_syn
+)
+
+df_long_syn <- df_loss_syn |>
+  pivot_longer(cols = c(Train, Val), names_to = "Type", values_to = "Loss")
+
+ggplot(df_long_syn, aes(x = Epoch, y = Loss, color = Type)) +
+  geom_line(linewidth = 0.8) +
+  labs(
+    title = "Synthetic (Wine-like) data: training and validation loss",
+    x = "Epoch", y = "ELBO loss (neg.)", color = ""
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "top")
+```
+
+### Reconstruction: Original vs Reconstructed
+
+The iVAE learns to map observations $x$ to a latent code $z$ (via the encoder) and then back to $\hat{x}$ (via the decoder). Good training means $\hat{x} \approx x$.
+
+```{r}
+#| label: syn-reconstruction
+#| fig.width: 10
+#| fig.height: 4
+
+# Get reconstructions on test set
+model_syn$eval()
+
+x_test_tensor_syn <- torch_tensor(x_test_syn, dtype = torch_float())$to(device = device)
+u_test_tensor_syn <- torch_tensor(u_test_syn, dtype = torch_long())$to(device = device)
+
+with_no_grad({
+  enc_out_syn  <- model_syn$encode(x_test_tensor_syn, u_test_tensor_syn)
+  z_syn_test   <- enc_out_syn$mu
+  dec_out_syn  <- model_syn$decode(z_syn_test)
+  x_recon_syn  <- dec_out_syn$mu
+})
+
+x_orig_syn_np   <- as.matrix(x_test_syn)
+x_recon_syn_np  <- as.matrix(x_recon_syn$squeeze(2)$cpu())
+
+# Left: original vs reconstructed scatter (first two features)
+df_orig  <- data.frame(f1 = x_orig_syn_np[,1], f2 = x_orig_syn_np[,2], Type = "Original")
+df_recon <- data.frame(f1 = x_recon_syn_np[,1], f2 = x_recon_syn_np[,2], Type = "Reconstructed")
+df_scatter <- rbind(df_orig, df_recon)
+
+p1 <- ggplot(df_scatter, aes(x = f1, y = f2, color = Type, alpha = Type)) +
+  geom_point(size = 1.5) +
+  scale_alpha_manual(values = c("Original" = 0.9, "Reconstructed" = 0.6)) +
+  scale_color_manual(values = c("Original" = "#1f77b4", "Reconstructed" = "#ff7f0e")) +
+  labs(title = "Test set: Original vs Reconstructed\n(first two features)",
+       x = "Feature 1", y = "Feature 2", color = "", alpha = "") +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "top")
+
+# Right: parity plot
+df_parity <- data.frame(
+  Original      = c(x_orig_syn_np[,1], x_orig_syn_np[,2]),
+  Reconstructed = c(x_recon_syn_np[,1], x_recon_syn_np[,2]),
+  Feature       = rep(c("Feature 1", "Feature 2"), each = nrow(x_orig_syn_np))
+)
+
+lim_range <- range(c(df_parity$Original, df_parity$Reconstructed))
+
+p2 <- ggplot(df_parity, aes(x = Original, y = Reconstructed, color = Feature)) +
+  geom_point(size = 1.5, alpha = 0.6) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black", linewidth = 0.8) +
+  coord_equal(xlim = lim_range, ylim = lim_range) +
+  labs(title = "Parity plot: first two features",
+       x = "Original feature value", y = "Reconstructed feature value", color = "") +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "top")
+
+p1 + p2
+```
+
+### Latent Space: Learned z Colored by Class u (test set)
+
+```{r}
+#| label: syn-latent-space
+#| fig.width: 10
+#| fig.height: 4
+
+z_syn_np   <- as.matrix(z_syn_test$squeeze(2)$cpu())
+u_test_fac <- factor(u_test_syn, labels = paste0("Class ", 0:(n_aux_syn-1)))
+
+df_latent_syn  <- data.frame(z1 = z_syn_np[,1], z2 = z_syn_np[,2], Class = u_test_fac)
+df_input_syn   <- data.frame(f1 = x_orig_syn_np[,1], f2 = x_orig_syn_np[,2], Class = u_test_fac)
+
+p3 <- ggplot(df_latent_syn, aes(x = z1, y = z2, color = Class)) +
+  geom_point(size = 1.5, alpha = 0.7) +
+  labs(title = "Learned latent space (synthetic,\ncolored by class u)",
+       x = "Learned z₁", y = "Learned z₂") +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "top")
+
+p4 <- ggplot(df_input_syn, aes(x = f1, y = f2, color = Class)) +
+  geom_point(size = 1.5, alpha = 0.7) +
+  labs(title = "Input space (synthetic, first 2 features,\ncolored by class u)",
+       x = "Synthetic feature 1", y = "Synthetic feature 2") +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "top")
+
+p3 + p4
+```
+
+### Correlation Heatmap: Learned z vs Input Features (first 5)
+
+```{r}
+#| label: syn-corr-heatmap
+#| fig.width: 7
+#| fig.height: 4
+
+n_show_syn <- min(5, input_dim_syn)
+
+corr_mat_syn <- cor(z_syn_np, x_orig_syn_np[, 1:n_show_syn])
+
+df_corr_syn <- as.data.frame(corr_mat_syn)
+df_corr_syn$z_dim <- paste0("z", 1:nrow(corr_mat_syn))
+
+df_corr_long_syn <- df_corr_syn |>
+  pivot_longer(-z_dim, names_to = "Feature", values_to = "Correlation") |>
+  mutate(
+    z_dim   = factor(z_dim, levels = paste0("z", nrow(corr_mat_syn):1)),
+    Feature = factor(Feature, levels = paste0("V", 1:n_show_syn),
+                     labels = paste0("Feature ", 1:n_show_syn))
+  )
+
+ggplot(df_corr_long_syn, aes(x = Feature, y = z_dim, fill = Correlation)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = sprintf("%.2f", Correlation)), size = 3) +
+  scale_fill_gradient2(low = "#4575b4", mid = "white", high = "#d73027",
+                       midpoint = 0, limits = c(-1, 1)) +
+  labs(
+    title = "Synthetic test set: Correlation of learned latents\nwith input features",
+    x = NULL, y = NULL
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+
+## Summary and Conclusion
+
+Identifiable VAEs (iVAEs) extend standard VAEs to allow for identifiability, enabling reliable estimation of causal effects such as the Average Treatment Effect (ATE). Incorporating auxiliary variables to condition the prior allows iVAEs to learn latent representations that are uniquely recoverable, addressing a key limitation of standard VAEs. This makes iVAEs a powerful tool for causal inference in complex, high-dimensional data. The implementation in R using the `torch` package demonstrates how to train an iVAE on synthetic data, visualize the learned representations, and evaluate reconstruction quality. Future extensions could include applying iVAEs to real-world datasets, exploring different types of auxiliary variables, and integrating with other causal inference methods for more robust effect estimation.
+
+## Resources
+
+- **Original Paper**: Khemakhem et al., "Variational Autoencoders and Nonlinear ICA: A Unifying Framework" (AISTATS 2020).
+- **GitHub Implementations**: [ilkhem/iVAE](https://github.com/ilkhem/iVAE)
+- **Causal Extension**: Xie et al., "Causal Effect Estimation using identifiable Variational AutoEncoder with Latent Confounders and Post-Treatment Variables" (arXiv:2408.07219).
+- **R torch**: [mlverse/torch](https://torch.mlverse.org/)
+- **HDclassif package**: Berge et al., R package for classification with high-dimensional Gaussian mixture models.
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| iVAE | VAE variant designed so latent factors can be uniquely identified under assumptions. | Adding auxiliary variables helps separate true latent causes. |
+| Auxiliary variable | Extra observed variable used to improve identifiability. | Environment label or domain indicator used in latent prior. |
+| Nonlinear ICA | Recovering independent latent sources through nonlinear mixing model assumptions. | Signal components can still be separated if conditions are met. |
+| Reconstruction error | Difference between original input and decoder output. | Low reconstruction error means latent code preserves key information. |
+| Latent confounder | Hidden variable influencing both treatment and outcome. | Genetic predisposition affecting medication assignment and outcome risk. |
+| Representation disentanglement | Learning latent dimensions with distinct semantic/causal meaning. | One latent coordinate captures severity while another captures lifestyle. |

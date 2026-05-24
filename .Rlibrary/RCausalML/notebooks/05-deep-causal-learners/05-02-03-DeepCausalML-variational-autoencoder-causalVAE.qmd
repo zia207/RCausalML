@@ -1,0 +1,593 @@
+# Causal Variational Autoencoder (CausalVAE) 
+
+
+This tutorial provides a detailed guide to implementing and using Causal Variational Autoencoders (CausalVAE) in R, based on the 2021 CVPR paper "CausalVAE: Disentangled Representation Learning via Neural Structural Causal Models" by Yang et al. We'll cover the concepts, an R/torch implementation, and applications including Average Treatment Effect (ATE) prediction. The code uses the `torch` R package. For demonstration, we'll use the Diabetes dataset loaded from local storage.
+
+## Overview
+
+CausalVAE extends $\beta$-VAEs by incorporating a **Structural Causal Model (SCM)** in the latent space to learn causally disentangled representations. Unlike standard VAEs, which assume independent latents, CausalVAE models dependencies via a **Directed Acyclic Graph (DAG)**, allowing interventions and counterfactual reasoning.
+
+**Key features:** - **Exogenous variables (**$\varepsilon$): Independent noise sources. - **Endogenous variables (**$z$): Causally generated from $\varepsilon$ via a neural SCM (e.g., linear with masks). - **Causal layer**: Enforces DAG structure for causal propagation. - **Benefits**: Robust to interventions, enables ATE estimation in causal inference. - **Applications**: Image generation with causal edits (e.g., CelebA faces), reinforcement learning, biomedical data analysis.
+
+The model learns the causal graph jointly with representations, often requiring weak supervision (e.g., partial graph knowledge) for identifiability.
+
+### How It Works
+
+CausalVAE modifies the VAE architecture:
+
+1.  **Encoder**: $q(\varepsilon \mid x)$ — Maps observations $x$ to independent exogenous $\varepsilon \sim \mathcal{N}(\mu, \sigma)$.
+
+2.  **Causal Layer (SCM)**: Transforms $\varepsilon$ to $z$ via $z = f(z, \varepsilon; \theta)$, where $f$ respects a DAG. In the linear case: $$z = (I - A \odot M)^{-1} \varepsilon$$ but practically implemented as masked autoregressive or additive: $z = \varepsilon + (A \odot M) z$.
+
+    -   $A$: Learnable weights.
+    -   $M$: Binary mask for DAG (learned or fixed).
+
+3.  **Decoder**: $p(x \mid z)$ — Reconstructs $x$ from causal $z$.
+
+4.  **Prior**: $p(\varepsilon) = \mathcal{N}(0, I)$.
+
+5.  **Loss**: $\beta$-VAE ELBO plus causal regularizers (DAG penalty, sparsity):
+
+$$\mathcal{L} = \mathbb{E}_{q(\varepsilon|x)} \big[ \log p(x|z) \big] - \beta \, D_{\mathrm{KL}}\big( q(\varepsilon|x) \,\|\, p(\varepsilon) \big) + \gamma \, \big( h(A) + \lambda \|A\|_1 \big)$$
+
+where $h(A)$ is a DAG penalty, e.g. $h(A) = \mathrm{tr}\big(\exp(A \circ A)\big) - d$ (with $d$ the number of latent dimensions).
+
+For **interventions**: set $\mathrm{do}(z_i = \text{value})$ and propagate through the graph.
+
+## Implementation in R
+
+We will use the `RCausalML` package for the implementation CausalVAE in R which defines the model architecture, forward pass, and loss function. We will source this file to access the necessary functions for training and evaluation.
+
+
+**Standalone functions**
+
+-   `generate_data`-synthetic data generation
+-   `estimate_ate_causalvae_ate` - average treatment effect estimation for `CausalVAE_ATE`
+-   `loss_function` - VAE + causal loss
+-   `train_causalvae` - training loop
+-   `tune_hyperparameters`- hyperparameter tuning
+-   `print_optimization_summary`-  optimization summary
+
+**`nn_module` classes**
+
+-   `CausalVAE` - main Causal VAE
+-   `CausalVAE_ATE` -  CausalVAE with ATE outcome head
+
+
+### Setup
+
+We will use the `torch` package for the implementation. The code below checks for required packages, loads them, and sets up the device for computation.
+
+```{r}
+#| label: setup-packages
+#| message: false
+#| warning: false
+
+# Check and install required packages (minimal set for speed)
+packages <- c("torch", "progress", 
+              "ggplot2", "corrplot", 
+              "coro", "RCausalML",
+              "tidyverse")
+
+# Verify installation
+cat("Installed packages:\n")
+print(sapply(packages, requireNamespace, quietly = TRUE))
+
+# Load packages with suppressed messages
+invisible(lapply(packages, function(pkg) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}))
+```
+
+
+### Device Setup
+
+```{r}
+#| label: device-setup
+#| message: false
+
+# Check for GPU availability (torch)
+device <- if (torch::cuda_is_available()) "cuda" else "cpu"
+cat("Using device:", device, "\n")
+set.seed(42)
+torch::torch_manual_seed(42L)
+```
+
+### Data Generation and Processing
+
+We generate synthetic data with 3D latents $z$ following a causal chain: $\varepsilon_1 \to z_1 = \varepsilon_1$ $z_2 = z_1 + \varepsilon_2$ $z_3 = z_2^2 + \varepsilon_3$
+
+Observations $x$ are a nonlinear mix of $z$. For real data, we'll use the Diabetes dataset.
+
+```{r}
+#| label: generate-synthetic-data
+#| echo: true
+
+# OPTIMIZED: Vectorized data generation with pre-allocation
+generate_data  <- function(n_samples = 5000L, latent_dim = 3L) {
+  # Pre-allocate all matrices
+  epsilon_mat  <- matrix(rnorm(n_samples * latent_dim), 
+                        nrow = n_samples, ncol = latent_dim)
+  z_mat  <- matrix(0.0, nrow = n_samples, ncol = latent_dim)
+  x_mat  <- matrix(0.0, nrow = n_samples, ncol = latent_dim)
+  
+  # Vectorized causal generation
+  z_mat[, 1]  <- epsilon_mat[, 1]
+  z_mat[, 2]  <- z_mat[, 1] + epsilon_mat[, 2]
+  z_mat[, 3]  <- z_mat[, 2]^2 + epsilon_mat[, 3]
+  
+  # Vectorized observation generation
+  x_mat[, 1]  <- z_mat[, 1] * z_mat[, 3]
+  x_mat[, 2]  <- sin(z_mat[, 2]) + z_mat[, 1]
+  x_mat[, 3]  <- z_mat[, 3]^2 + rnorm(n_samples, 0, 0.1)
+  
+  list(
+    x = torch_tensor(x_mat, dtype = torch_float(), device = device),
+    z = torch_tensor(z_mat, dtype = torch_float(), device  = device),
+    epsilon = torch_tensor(epsilon_mat, dtype = torch_float(), device = device)
+  )
+}
+
+# Generate synthetic data (reduced from 10000 to 5000 for speed)
+synthetic_data  <- generate_data(n_samples = 5000L)
+x  <- synthetic_data$x
+true_z  <- synthetic_data$z
+true_epsilon  <- synthetic_data$epsilon
+
+# Normalize the data
+normalize_data  <- function(x) {
+  mean_val  <- x$mean(dim = 1L)
+  std_val  <- x$std(dim = 1L)
+  list(
+    x_norm = (x - mean_val) / std_val,
+    mean = mean_val,
+    std = std_val
+  )
+}
+
+norm_result  <- normalize_data(x)
+x_norm  <- norm_result$x_norm
+x_mean  <- norm_result$mean
+x_std  <- norm_result$std
+
+# Data Split
+n_samples  <- nrow(x_norm)
+train_size  <- as.integer(0.8 * n_samples)
+val_size  <- as.integer(0.1 * n_samples)
+
+x_train  <- x_norm[1:train_size, ]
+x_val  <- x_norm[(train_size + 1):(train_size + val_size), ]
+x_test  <- x_norm[(train_size + val_size + 1):n_samples, ]
+
+true_z_train  <- true_z[1:train_size, ]
+true_z_val  <- true_z[(train_size + 1):(train_size + val_size), ]
+true_z_test  <- true_z[(train_size + val_size + 1):n_samples, ]
+
+cat(sprintf( "Train: %d, Val: %d, Test: %d\n ", 
+            nrow(x_train), nrow(x_val), nrow(x_test)))
+```
+
+### Model Building
+
+CausalVAE is a variant of Variational Autoencoder (VAE) where latent variables are structured according to a causal Directed Acyclic Graph (DAG) instead of being standard Gaussian.
+
+Main Components: - **Encoder**: A 2-layer MLP that outputs $\mu$, $\log \sigma^2$ for a Gaussian over noise variables $\varepsilon$ - **Reparameterization**: Sampling: $\varepsilon = \mu + \sigma \cdot \mathcal{N}(0,1)$ - **Causal Layer (SCM over latents)**: Learns a soft adjacency and generates latents via causal relationships - **Decoder**: A 2-layer MLP producing mean and log-variance for $p(x | z)$ - **DAG Penalty**: A matrix-exponential constraint ensures that the learned graph is acyclic
+
+Model Flow: 
+
+$$
+x \rightarrow \text{Encoder} \rightarrow \varepsilon \rightarrow \text{Causal Layer} \rightarrow z \rightarrow \text{Decoder} \rightarrow \text{Reconstruction}
+
+$$
+
+
+The model jointly learns both accurate reconstructions and a causal graph over latent variables.
+
+### Model Initialization and Loss Function
+
+Train with the augmented loss: reconstruction, $\beta \cdot D_{\mathrm{KL}}(q(\varepsilon|x) | p(\varepsilon))$, and $\gamma \big( h(A) + \lambda |M|_1 \big)$.
+
+
+```{r}
+#| label: loss-function
+#| echo: true
+#| warning: false
+
+# This block defines the loss function and sets up the model and optimizer for training the CausalVAE.
+
+# Instantiate the CausalVAE, optimizer, and scheduler
+model <- CausalVAE()$to(device = device)
+optimizer <- optim_adam(model$parameters, lr = 1e-3, weight_decay = 1e-5)
+# Reduce learning rate if validation loss plateaus (for stable convergence)
+scheduler <- lr_reduce_on_plateau(optimizer, mode = "min", factor = 0.5, patience = 15)
+# Number of training epochs
+epochs <- 200L
+
+cat(sprintf("Model: %s\n", class(model)[1]))
+cat(sprintf("Device: %s\n", device))
+cat(sprintf("Epochs: %d (with early stopping)\n", epochs))
+cat(sprintf("LR (init): %.0e\n", 1e-3))
+```
+
+### Training
+
+```{r}
+#| label: training-loop
+#| echo: true
+#| warning: false
+#| message: false
+
+# Training loop for CausalVAE following best practices from the @10-CausalVAE case study
+# See: guidance on debugging, numerical stability, loss tracking, and robust scheduler usage.
+
+train_losses <- numeric(epochs)
+val_losses <- numeric(epochs)
+
+# Hyperparameters tuned for stability (reduces post-valley spikes and divergence)
+learning_rate <- 2e-4         # Conservative LR to avoid overshooting and loss spikes
+min_learning_rate <- 5e-6     # Allow scheduler to anneal very low
+weight_decay <- 1e-5          # Slight increase for regularization
+batch_size <- 128L            # Appropriate for modern GPUs/CPUs
+epochs <- 250L                # Max epochs; early stopping typically stops sooner
+warmup <- 50L                 # Gradual structural penalty introduction
+lr_warmup_epochs <- 10L        # LR warmup so early updates are gentler
+gamma_scale_cap <- 0.35       # Cap structural penalty to avoid post-valley rise
+grad_clip_max <- 0.5         # Tighter gradient clipping for numerical stability
+loss_skip_threshold <- 50.0   # Skip batch if loss exceeds this (avoids explosion)
+
+optimizer <- optim_adam(model$parameters, lr = learning_rate, weight_decay = weight_decay)
+scheduler <- lr_reduce_on_plateau(optimizer, mode = "min", factor = 0.5, patience = 8, min_lr = min_learning_rate)
+
+train_dataset <- torch::tensor_dataset(x_train)
+train_loader  <- torch::dataloader(train_dataset, batch_size = batch_size, shuffle = TRUE)
+
+val_dataset   <- torch::tensor_dataset(x_val)
+val_loader    <- torch::dataloader(val_dataset, batch_size = batch_size, shuffle = FALSE)
+
+if (!requireNamespace("coro", quietly = TRUE)) {
+  stop("package 'coro' is required; install with install.packages('coro')")
+}
+
+best_val_loss <- Inf
+early_stopping_patience <- 10  # Stop soon after val loss stops improving (best model is often near first valley)
+early_stopping_counter <- 0
+
+save_best_model <- function(model, path = ".causalvae_best_model.pt") {
+  torch::torch_save(model$state_dict(), path)
+}
+best_model_path <- tempfile("causalvae_best_", fileext = ".pt")
+
+for (epoch in 1:epochs) {
+  # Learning rate warmup: gentler updates in early epochs (only during warmup; after that scheduler controls LR)
+  if (epoch <= lr_warmup_epochs) {
+    optimizer$param_groups[[1]]$lr <- learning_rate * (epoch / lr_warmup_epochs)
+  }
+
+  # Structural penalty (gamma): gradual, capped to avoid post-valley divergence
+  gamma_scale <- min(gamma_scale_cap, (epoch + 1) / warmup)
+
+  # --- Training Phase ---
+  model$train()
+  epoch_train_loss <- 0.0
+  batch_count <- 0
+
+  train_batches <- coro::collect(train_loader)
+  for (batch in train_batches) {
+    x_batch <- if (is.list(batch)) batch[[1]] else batch
+    x_batch_on_device <- x_batch$to(device = device)
+
+    optimizer$zero_grad()
+
+    forward_out <- model$forward(x_batch_on_device)
+    enc_mu <- forward_out$enc_mu
+    enc_logvar <- forward_out$enc_logvar
+    dec_mu <- forward_out$dec_mu
+    dec_logvar <- forward_out$dec_logvar
+
+    loss <- loss_function(
+      x_batch_on_device, dec_mu, dec_logvar, enc_mu, enc_logvar, model, gamma_scale = gamma_scale
+    )
+
+    loss_val <- loss$item()
+    if (!is.finite(loss_val)) {
+      cat(sprintf("Warning: Loss is %s at epoch %d, skipping batch\n",
+                  ifelse(is.nan(loss_val), "NaN", "Inf"), epoch))
+      next
+    }
+    if (loss_val > loss_skip_threshold) {
+      cat(sprintf("Warning: Loss %.1f > %.1f at epoch %d, skipping batch (numerical stability)\n",
+                  loss_val, loss_skip_threshold, epoch))
+      next
+    }
+
+    loss$backward()
+    tryCatch(
+      nn_utils_clip_grad_norm_(model$parameters, max_norm = grad_clip_max),
+      error = function(e) { optimizer$zero_grad(); cat("Gradient clip error, zeroed grads\n") }
+    )
+    optimizer$step()
+    epoch_train_loss <- epoch_train_loss + loss_val
+    batch_count <- batch_count + 1
+  }
+  
+  train_losses[epoch] <- if (batch_count > 0) epoch_train_loss / batch_count else NA
+  
+  # --- Validation Phase ---
+  model$eval()
+  epoch_val_loss <- 0.0
+  val_batch_count <- 0
+  with_no_grad({
+    val_batches <- coro::collect(val_loader)
+    for (val_batch in val_batches) {
+      x_val_batch <- if (is.list(val_batch)) val_batch[[1]] else val_batch
+      x_val_batch_on_device <- x_val_batch$to(device = device)
+      
+      forward_out <- model$forward(x_val_batch_on_device)
+      enc_mu <- forward_out$enc_mu
+      enc_logvar <- forward_out$enc_logvar
+      dec_mu <- forward_out$dec_mu
+      dec_logvar <- forward_out$dec_logvar
+      
+      loss <- loss_function(
+        x_val_batch_on_device, dec_mu, dec_logvar, enc_mu, enc_logvar, model, gamma_scale = gamma_scale
+      )
+      loss_val <- loss$item()
+      if (is.finite(loss_val)) {
+        epoch_val_loss <- epoch_val_loss + loss_val
+        val_batch_count <- val_batch_count + 1
+      }
+    }
+  })
+  val_losses[epoch] <- if (val_batch_count > 0) epoch_val_loss / val_batch_count else NA
+  
+  # Early stopping and robust LR scheduling
+  vl <- val_losses[epoch]
+  if (!is.finite(vl)) vl <- Inf
+  scheduler$step(vl)
+  
+  if (vl < best_val_loss - 1e-5) {
+    best_val_loss <- vl
+    early_stopping_counter <- 0
+    save_best_model(model, best_model_path)
+  } else {
+    early_stopping_counter <- early_stopping_counter + 1
+  }
+  
+  if (early_stopping_counter >= early_stopping_patience) {
+    cat(sprintf("Early stopping at epoch %d (no improvement for %d epochs)\n", 
+                epoch + 1, early_stopping_patience))
+    break
+  }
+  
+  # Progress logging every 5 epochs and at epoch 1 (so short runs and early stopping are visible)
+  if (epoch == 1 || epoch %% 5 == 0) {
+    lr <- optimizer$param_groups[[1]]$lr
+    cat(sprintf("Epoch %3d, Train: %.4f, Val: %.4f, lr: %.2e, gamma_scale: %.3f\n",
+                epoch, train_losses[epoch], val_losses[epoch], lr, gamma_scale))
+  }
+}
+
+# Number of epochs actually run, for plotting and reporting
+actual_epochs <- epoch
+
+if (file.exists(best_model_path)) {
+  model$load_state_dict(torch::torch_load(best_model_path))
+}
+```
+
+### Visualize Training and Validate Loss
+
+```{r}
+#| label: visualize-training
+#| echo: true
+#| warning: false
+#| fig-width: 6
+#| fig-height: 5
+
+# Plot training and validation loss (only epochs that were actually run;
+# after early stopping, remaining entries are 0 and would show a fake drop to zero)
+library(ggplot2)
+
+epoch_df  <- data.frame(
+  Epoch = 1:actual_epochs,
+  Train_Loss = train_losses[1:actual_epochs],
+  Val_Loss = val_losses[1:actual_epochs]
+)
+
+# Remove rows with NA (e.g. if all batches were skipped in an epoch)
+epoch_df <- epoch_df[!is.na(epoch_df$Train_Loss) & !is.na(epoch_df$Val_Loss), ]
+
+ggplot(epoch_df, aes(x = Epoch)) +
+  geom_line(aes(y = Train_Loss, color  =  "Train Loss "), linewidth = 1.5) +
+  geom_line(aes(y = Val_Loss, color =  "Val Loss "), linewidth = 1.5) +
+  labs(
+    title =  "CausalVAE: Training vs Validation Loss ",
+    x =  "Epoch ",
+    y =  "Loss ",
+    color =  " "
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.title = element_text(size = 12),
+    legend.position =  "best "
+  ) 
+```
+
+### ATE Prediction Validation
+
+For Average Treatment Effect (ATE): assume treatment $T$ acts on $z_1$ (e.g., shift by 1) and outcome $Y$ depends on $z$. We extend the data generation to include $T$ and $Y$, then add an outcome head $\mathbb{E}[Y \mid z, T]$ and estimate ATE as $\mathbb{E}[Y \mid \mathrm{do}(T=1)] - \mathbb{E}[Y \mid \mathrm{do}(T=0)]$.
+
+```{r}
+#| label: ate-data-generation
+#| echo: true
+
+generate_data_with_treatment  <- function(n_samples = 5000L, latent_dim = 3L) {
+  epsilon_mat  <- matrix(rnorm(n_samples * latent_dim), nrow = n_samples, ncol = latent_dim)
+  z_mat  <- matrix(0.0, nrow = n_samples, ncol = latent_dim)
+  z_mat[, 1]  <- epsilon_mat[, 1]
+  z_mat[, 2]  <- z_mat[, 1] + epsilon_mat[, 2]
+  z_mat[, 3]  <- z_mat[, 2]^2 + epsilon_mat[, 3]
+  
+  T_vec  <- rbinom(n_samples, 1, 0.5)
+  Y_vec  <- z_mat[, 3] + T_vec * 0.5 * z_mat[, 2] + rnorm(n_samples, 0, 0.1)
+  
+  x_mat  <- matrix(0.0, nrow = n_samples, ncol = latent_dim)
+  x_mat[, 1]  <- z_mat[, 1] * z_mat[, 3]
+  x_mat[, 2]  <- sin(z_mat[, 2]) + z_mat[, 1]
+  x_mat[, 3]  <- z_mat[, 3]^2 + rnorm(n_samples, 0, 0.1)
+  
+  list(
+    x = torch_tensor(x_mat, dtype = torch_float(), device = device),
+    z = torch_tensor(z_mat, dtype = torch_float(), device = device),
+    epsilon = torch_tensor(epsilon_mat, dtype = torch_float(), device = device),
+    T = torch_tensor(matrix(T_vec, ncol = 1), dtype = torch_float(), device = device),
+    Y = torch_tensor(matrix(Y_vec, ncol = 1), dtype = torch_float(), device = device) 
+  )
+}
+
+ate_data  <- generate_data_with_treatment(n_samples = 5000L)
+x_ate  <- ate_data$x
+z_ate  <- ate_data$z
+T_ate  <- ate_data$T
+Y_ate  <- ate_data$Y
+
+x_ate_norm  <- normalize_data(x_ate)$x_norm
+
+train_size_ate  <- as.integer(0.8 * nrow(x_ate_norm))
+val_size_ate  <- as.integer(0.1 * nrow(x_ate_norm))
+
+x_ate_test  <- x_ate_norm[(train_size_ate + val_size_ate + 1):nrow(x_ate_norm), ]
+z_ate_test  <- z_ate[(train_size_ate + val_size_ate + 1):nrow(z_ate), ]
+T_ate_test  <- T_ate[(train_size_ate + val_size_ate + 1):nrow(T_ate), ]
+Y_ate_test  <- Y_ate[(train_size_ate + val_size_ate + 1):nrow(Y_ate), ]
+
+true_ate  <- (0.5 * z_ate_test[, 2])$mean()$item()
+```
+
+### ATE Prediction
+
+```{r}
+#| label: ate-prediction
+#| echo: true
+#| warning: false
+#| message: false
+
+
+# The following code block trains a CausalVAE_ATE model to predict outcomes (Y) 
+# given features (x) and a treatment indicator (T), as part of an average 
+# treatment effect (ATE) estimation pipeline.
+
+# Prepare training data for ATE prediction:
+#   - x_ate_train: normalized observed features for training.
+#   - T_ate_train: treatment indicator (binary; 0 or 1) for training.
+#   - Y_ate_train: observed outcome based on both z and T for training.
+x_ate_train  <- x_ate_norm[1:train_size_ate, ]
+T_ate_train  <- T_ate[1:train_size_ate, ]
+Y_ate_train  <- Y_ate[1:train_size_ate, ]
+
+# Combine (x, T, Y) into a torch Dataset for efficient batching.
+ate_dataset  <- torch::tensor_dataset(x_ate_train, T_ate_train, Y_ate_train)
+ate_loader  <- torch::dataloader(ate_dataset, batch_size = 256L, shuffle = TRUE)
+
+# Build CausalVAE_ATE for synthetic data (match input/latent_dim as training data).
+model_ate  <- CausalVAE_ATE(
+  input_dim = dim(x_ate_norm)[2],
+  latent_dim = dim(z_ate)[2],
+  hidden_dim = 64L,
+  beta = 1.0,
+  gamma = 1.0,
+  lambda_sparsity = 0.1
+)$to(device = device)
+
+optimizer_ate  <- optim_adam(model_ate$parameters, lr = 1e-3)
+
+for (epoch in 1:100) {
+  model_ate$train()
+  train_batches <- coro::collect(ate_loader)
+
+  for (batch in train_batches) {
+    x_b  <- batch[[1]]$to(device = device)
+    t_b  <- batch[[2]]$to(device = device)
+    y_b  <- batch[[3]]$to(device = device)
+
+    optimizer_ate$zero_grad()
+
+    forward_out  <- model_ate$forward(x_b, t_b)
+    enc_mu  <- forward_out$enc_mu
+    enc_logvar  <- forward_out$enc_logvar
+    dec_mu  <- forward_out$dec_mu
+    dec_logvar  <- forward_out$dec_logvar
+    y_pred  <- forward_out$y_pred
+
+    # Compute the VAE loss (includes reconstruction and KL divergence terms).
+    loss_vae  <- loss_function(x_b, dec_mu, dec_logvar, enc_mu, enc_logvar, model_ate)
+    loss_mse  <- nnf_mse_loss(y_pred, y_b)
+
+    (loss_vae + loss_mse)$backward()
+    tryCatch(nn_utils_clip_grad_norm_(model_ate$parameters, max_norm = 1.0), error = function(e) NULL)
+    optimizer_ate$step()
+  }
+
+  if ((epoch + 1) %% 50 == 0) {
+    cat(sprintf( "Epoch %d, VAE+MSE loss done.\n ", epoch + 1))
+  }
+}
+
+# Function to estimate ATE for CausalVAE_ATE models
+estimate_ate_CausalVAE_ATE <- function(model, n_samples = 500L, treatment_dim = 1L, shift = 1.0, device = "cpu") {
+  model$eval()
+  z_samples <- torch_randn(n_samples, model$latent_dim, device = device)
+  t_ones   <- torch_ones(n_samples, treatment_dim, device = device)
+  t_zeros  <- torch_zeros(n_samples, treatment_dim, device = device)
+
+  # outcome_head is a nn_linear module; call directly with concatenated [z, T]
+  zt1 <- torch_cat(list(z_samples, t_ones),  dim = 2L)
+  zt0 <- torch_cat(list(z_samples, t_zeros), dim = 2L)
+
+  y1 <- as.numeric(model$outcome_head$forward(zt1)$squeeze())
+  y0 <- as.numeric(model$outcome_head$forward(zt0)$squeeze())
+  mean(y1) - mean(y0)
+}
+
+pred_ate  <- estimate_ate_CausalVAE_ATE(model_ate, n_samples = 500L, treatment_dim = 1L, shift = 1.0, device = device)
+cat(sprintf( "Predicted ATE: %.4f, True ATE (approx): %.4f\n ", pred_ate, true_ate))
+
+# Optional package helper:
+# pred_ate_pkg <- estimate_ate_causalvae_ate(model_ate, n_samples = 500L, treatment_dim = 1L, shift = 1.0, device = device)
+```
+
+
+## Summary and Conclusion
+
+CausalVAE combines variational autoencoders with a structural causal model (SCM) in the latent space to learn intervenable, causally disentangled representations. This tutorial provided a full R/torch implementation and workflow:
+
+**Concepts**: Encoder $q(\varepsilon|x)$, causal layer (DAG), decoder $p(x|z)$, and loss with reconstruction, KL, and DAG/sparsity terms.
+
+**Synthetic data**: Data generated from a known causal chain ($z_1 \to z_2 \to z_3$) and nonlinear observations.
+
+**Model and training**: CausalVAE and CausalVAE_ATE (with outcome head), loss function, training loop with warmup and ReduceLROnPlateau.
+
+**ATE estimation**: $\mathrm{ATE} = \mathbb{E}[Y|\mathrm{do}(T=1)] - \mathbb{E}[Y|\mathrm{do}(T=0)]$ via interventions on the causal layer.
+
+**Takeaways**: For production use, add weak supervision (e.g. partial graph knowledge) for better identifiability and scale to images with convolutional encoder/decoder. Remaining challenges include identifiability of the causal graph and the computational cost of DAG penalties. CausalVAE is a step toward causal AI and more robust, intervenable representations for decision-making.
+
+## Resources
+
+-   Original paper: Yang et al., [CausalVAE: Disentangled Representation Learning via Neural Structural Causal Models](https://arxiv.org/abs/2004.08697).
+-   GitHub: [Official implementation](https://github.com/huawei-noah/trustworthyAI/tree/master/research/CausalVAE).
+-   Related: Lippe et al. CausalVAE variants; NOTEARS for DAG learning.
+-   Tutorials: torch R package documentation; Causal inference with CausalML.
+-   Books: "Causal Inference in Statistics" by Pearl for theory.
+
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| Structural causal model (SCM) | System of equations describing how variables cause each other. | `Z2 = f(Z1, noise)` encodes direct causal influence from `Z1` to `Z2`. |
+| DAG constraint | Rule forcing the learned causal graph to have no cycles. | Model penalizes adjacency matrices that imply loops. |
+| Soft intervention | Intervention that changes mechanism/parameters without fully replacing equation. | Increasing treatment tendency rather than forcing treatment deterministically. |
+| Hard intervention | Setting variable to a fixed value regardless of parents. | `do(T=1)` sets treatment to 1 for everyone. |
+| Disentangled latent space | Latent dimensions correspond to separate factors of variation. | One dimension tracks dosage, another tracks baseline severity. |
+| Interventional effect | Outcome change caused by manipulating treatment variable. | Compare predicted `E[Y|do(T=1)]` vs `E[Y|do(T=0)]`. |

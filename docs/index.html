@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>RCausalML — Uplift Modeling and Causal Inference with ML • RCausalML</title>
+<title>RCausalML: Causal Inference with ML • RCausalML</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -16,10 +16,10 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
-<meta property="og:title" content="RCausalML — Uplift Modeling and Causal Inference with ML">
-<meta name="description" content="An R package for uplift modeling and causal inference using machine learning. Estimates CATE from experimental or observational data with meta-learners, double machine learning, neural causal models, causal structure learning, and more.
+<meta property="og:title" content="RCausalML: Causal Inference with ML">
+<meta name="description" content="An R package for causal inference using machine learning. Estimates CATE from experimental or observational data with meta-learners, double machine learning, neural causal models, causal structure learning, and more.
 ">
-<meta property="og:description" content="An R package for uplift modeling and causal inference using machine learning. Estimates CATE from experimental or observational data with meta-learners, double machine learning, neural causal models, causal structure learning, and more.
+<meta property="og:description" content="An R package for causal inference using machine learning. Estimates CATE from experimental or observational data with meta-learners, double machine learning, neural causal models, causal structure learning, and more.
 ">
 <meta property="og:image" content="https://zia207.github.io/RCausalML/logo.png">
 </head>
@@ -27,7 +27,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="default" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="index.html">RCausalML</a>
 
@@ -42,27 +42,87 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/RCausalML-intro.html">Get Started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="tutorials/00-scientific-terminology-glossary.html">Glossary</a></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tutorials" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tutorials</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-tutorials">
-<li><h6 class="dropdown-header" data-toc-skip>--- Tree-Based Models ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd">Causal Tree Introduction</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd">Causal Tree</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd">Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd">Causal Survival Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd">Instrumental Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd">Multi-Arm Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd">Causal XGBoost</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Meta-Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/02-meta-learners/">Meta-Learners Overview</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Uplift Trees &amp; Forests ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/03-uplift-trees-forests/">Uplift Trees &amp; Forests</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Double / Debiased Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/04-double-debiased-learners/">DML Notebooks</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Deep Causal Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/05-deep-causal-learners/">Deep Causal Notebooks</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Automated ML ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/06-automated-ml/">Automated ML</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tree-based" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tree-Based</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-tree-based">
+<li><a class="dropdown-item" href="tutorials/01-00-casual-tree-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-01-causal-tree-r.html">Causal Tree</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-02-causal-forest-r.html">Causal Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-03-causal-survival-forest-r.html">Causal Survival Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-04-instrumental-causal-forest-r.html">Instrumental Causal Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-05-multi-arm-causal-forest-r.html">Multi-Arm Causal Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-06-causal-xgboost-r.html">Causal XGBoost</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-07-instrumental-causal-xgboost-r.html">Instrumental Causal XGBoost</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-08-multi-arm-causal-boost-r.html">Multi-Arm Causal Boost</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-meta-learners" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Meta-Learners</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-meta-learners">
+<li><a class="dropdown-item" href="tutorials/02-00-meta-learners-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-01-meta-learners-binary-treatments-r.html">Binary Treatments</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-02-meta-learners-multiple-discrete-treatment-r.html">Multiple Discrete Treatments</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-03-meta-learners-continuous-treatment-r.html">Continuous Treatments</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-04-tmle-model-r.html">TMLE</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-05-meta-learners-domain-adaptation-learner-r.html">Domain Adaptation Learner</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-06--meta-learners-doubly-robust-learners-r.html">Doubly Robust Learners</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-uplift" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Uplift</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-uplift">
+<li><a class="dropdown-item" href="tutorials/03-00-uplift-trees-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/03-01-uplift-trees-classification-r.html">Classification</a></li>
+    <li><a class="dropdown-item" href="tutorials/03-02-uplift-trees-regression-r.html">Regression</a></li>
+    <li><a class="dropdown-item" href="tutorials/03-03-uplift-randomForest-r.html">Random Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/03-04-uplift-xgboost.html">XGBoost</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-double-ml" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Double ML</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-double-ml">
+<li><a class="dropdown-item" href="tutorials/04-00-double-ml-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-01-double-ml-from-basics-to-application-r.html">Basics to Application</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-02-double-ml-%20single-multiple-treatment-r.html">Single/Multiple Treatment</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-03-double-ml-did-r.html">Difference-in-Differences</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-04-double-ml-iv-r.html">Instrumental Variables</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-05-double-ml-dynamic-ml.html">Dynamic Double ML</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-06-double-ml-weighted-double-ml.html">Weighted Double ML</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-07-double-ml-cluster-robust-r.html">Cluster Robust</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-08-double-ml-ensemble-learners-r.html">Ensemble Learners</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-deep-causal-ml" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Deep Causal ML</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-deep-causal-ml">
+<li><a class="dropdown-item" href="tutorials/05-00-DeepCausalML-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html">Treatment Effect Estimators</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-01-DeepCausalML-TARNET-r.html">TARNet</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-02-DeepCausalML-CFRTNet-r.html">CFRNet</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-03-DeepCausalML-DragonNet-r.html">DragonNet</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-04-DeepCausalML-GANITE-r.html">GANITE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html">Generative Latent-Variable Models</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.html">CEVAE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-02-DeepCausalML-variational-autoencoder-causalVAE.html">CausalVAE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-03-DeepCausalML-identifiable-variational-autoencoders-CausaliVAEs.html">CausaliVAEs</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-04-DeepCausalML-causaldiscrepancyVAE-r.html">CausalDiscrepancyVAE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-05-DeepCausalML-causalGAN-r.html">CausalGAN</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.html">Deep Structural Causal Models</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-07-DeepCausalML-causal-encoding-generative-EGN-r.html">Causal Encoding (EGN)</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-00-DeepCausalML-structural-learnering-introduction-r.html">Causal Structural Learning</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.html">NOTEARS</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-02-DeepCausalML-dag-structure-learning-graph-neural-networks-DagGNN-r.html">DAG-GNN</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-03-DeepCausalML-gradient-based-neural-learning-GranDag-r.html">GraN-DAG</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-04-DeepCausalML-DAGMA-NoCurl-r.html">DAGMA / DAG-NoCurl</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.html">CASTLE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-00-DeepCuasalML-timesseries-introduction-r.html">Causal Time Series</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.html">Neural Granger Causality</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-02-DeepCausalML-timeseries-structural-causal-model-SMC-r.html">Structural Causal Models</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-03-DeepCausalML-attension-transformer-r.html">Attention / Transformer</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-04-DeepCausalML-timeseries-RNN-LSTM-causaML-r.html">RNN / LSTM</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-05-DeepCausalML-timeseries-graph-nn-r.html">Graph Neural Networks</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-06-DeepCausalML-timeseries-counterfactual-potential-causalML-r.html">Counterfactual / Potential Outcomes</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
@@ -77,8 +137,7 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><p><img src="images/logo_RCausalML.png" fig-align="left" width="200"></p>
-<div class="section level1">
+  <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header">
 <img src="logo.png" class="logo" alt=""><h1 id="rcausalml">RCausalML<a class="anchor" aria-label="anchor" href="#rcausalml"></a>
 </h1>
@@ -95,7 +154,7 @@
 </h3>
 <p>Three core modules align with <a href="https://www.microsoft.com/en-us/research/project/econml/" class="external-link">EconML</a>’s API and concepts:</p>
 <ul>
-<li><p><a href="R/DMLearner.R"><strong>R/DMLearner.R</strong></a> — <strong>Double Machine Learning (DML)</strong>: Chernozhukov et al.–style DML with cross-fitting; outcome and treatment are fitted with flexible ML (ranger, glmnet, xgb, lm), then a final stage (linear, sparse linear, kernel, nonparametric, or causal forest) estimates CATE from residuals. Includes <strong>LinearDML</strong>, <strong>SparseLinearDML</strong>, <strong>KernelDML</strong>, <strong>NonParamDML</strong>, <strong>CausalForestDML</strong>, plus native R <strong>DynamicDMLearner</strong> (panel/sequential treatments) and <strong>OrthoIVLearner</strong> / <strong>DMLIVLearner</strong> / <strong>NonParamDMLIVLearner</strong> for DML with instrumental variables. When <strong>DoubleML</strong>, <strong>mlr3</strong>, <strong>mlr3learners</strong>, and <strong>mlr3measures</strong> are installed, <strong>DiD-style DML</strong> on <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mi>y</mi><mo>=</mo><msub><mi>y</mi><mn>1</mn></msub><mo>−</mo><msub><mi>y</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\Delta y = y_1 - y_0</annotation></semantics></math> is available via <strong><code>doubleml_did_linear</code></strong>, <strong><code>doubleml_did_rf</code></strong>, <strong><code>doubleml_did_xgboost</code></strong>, with optional nuisance metrics from <strong><code>doubleml_did_eval_*</code></strong> and <strong><code>doubleml_did_eval_preds</code></strong>; <strong><code>doubleml_plr</code></strong>, <strong><code>doubleml_plr_fit_data</code></strong> (pre-built <strong>DoubleMLData</strong> + any mlr3 learners, including pipelines / ensembles), <strong><code>doubleml_plr_tune_data</code></strong> (with <strong>mlr3tuning</strong>), and <strong><code>doubleml_pliv</code></strong> fit partially linear regression and PLIV through the DoubleML R package; <strong><code>doubleml_data_from_data_frame</code></strong> / <strong><code>doubleml_data_from_matrix</code></strong> build <strong>DoubleMLData</strong>; <strong><code>doubleml_make_plr_CCDDHNR2018</code></strong>, <strong><code>doubleml_make_pliv_CHS2015</code></strong>, <strong><code>doubleml_fetch_401k</code></strong>, and <strong><code>doubleml_fetch_bonus</code></strong> provide example / simulated data aligned with DoubleML.</p></li>
+<li><p><a href="R/DMLearner.R"><strong>R/DMLearner.R</strong></a> — <strong>Double Machine Learning (DML)</strong>: Chernozhukov et al.–style DML with cross-fitting; outcome and treatment are fitted with flexible ML (ranger, glmnet, xgb, lm), then a final stage (linear, sparse linear, kernel, nonparametric, or causal forest) estimates CATE from residuals. Includes <strong>LinearDML</strong>, <strong>SparseLinearDML</strong>, <strong>KernelDML</strong>, <strong>NonParamDML</strong>, <strong>CausalForestDML</strong>, plus native R <strong>DynamicDMLearner</strong> (panel/sequential treatments) and <strong>OrthoIVLearner</strong> / <strong>DMLIVLearner</strong> / <strong>NonParamDMLIVLearner</strong> for DML with instrumental variables. <code>predict.DMLearner</code> is robust to near-degenerate OLS final stages (aliased <code>lm</code> coefficients replaced with zero) and guarantees finite output for all callers including <code><a href="reference/explain_cate.html">explain_cate()</a></code> / <code>kernelshap</code>. When <strong>DoubleML</strong>, <strong>mlr3</strong>, <strong>mlr3learners</strong>, and <strong>mlr3measures</strong> are installed, <strong>DiD-style DML</strong> on <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mi>y</mi><mo>=</mo><msub><mi>y</mi><mn>1</mn></msub><mo>−</mo><msub><mi>y</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\Delta y = y_1 - y_0</annotation></semantics></math> is available via <strong><code>doubleml_did_linear</code></strong>, <strong><code>doubleml_did_rf</code></strong>, <strong><code>doubleml_did_xgboost</code></strong>, with optional nuisance metrics from <strong><code>doubleml_did_eval_*</code></strong> and <strong><code>doubleml_did_eval_preds</code></strong>; <strong><code>doubleml_plr</code></strong>, <strong><code>doubleml_plr_fit_data</code></strong> (pre-built <strong>DoubleMLData</strong> + any mlr3 learners, including pipelines / ensembles), <strong><code>doubleml_plr_tune_data</code></strong> (with <strong>mlr3tuning</strong>), and <strong><code>doubleml_pliv</code></strong> fit partially linear regression and PLIV through the DoubleML R package; <strong><code>doubleml_data_from_data_frame</code></strong> / <strong><code>doubleml_data_from_matrix</code></strong> build <strong>DoubleMLData</strong>; <strong><code>doubleml_make_plr_CCDDHNR2018</code></strong>, <strong><code>doubleml_make_pliv_CHS2015</code></strong>, <strong><code>doubleml_fetch_401k</code></strong>, and <strong><code>doubleml_fetch_bonus</code></strong> provide example / simulated data aligned with DoubleML.</p></li>
 <li><p><a href="R/cate_interpreter.R"><strong>R/cate_interpreter.R</strong></a> — <strong>CATE interpreters</strong>: Single-tree interpretation of any CATE or policy model. <strong>SingleTreeCateInterpreter</strong> fits a regression tree to predicted CATE to summarize effect heterogeneity by covariates; <strong>SingleTreePolicyInterpreter</strong> fits a classification tree that predicts optimal treatment (who to treat) from covariates. API matches EconML’s <code>econml.cate_interpreter</code>.</p></li>
 <li><p><a href="R/policy_learner.R"><strong>R/policy_learner.R</strong></a> — <strong>Policy learning</strong>: Learns a treatment assignment policy to maximize expected outcome (welfare). <strong>policy_learner</strong> implements Athey &amp; Wager (2018) doubly robust weighted classification; <strong>DRPolicyTree</strong> and <strong>DRPolicyForest</strong> provide cross-fitted outcome + policy tree/forest (EconML-style). Supports <code>fit</code>, <code>predict</code>, <code>predict_proba</code>, and (for tree/forest) <code>feature_importances</code> and <code>predict_value</code>.</p></li>
 <li><p><a href="R/automated_ml.R"><strong>R/automated_ml.R</strong></a> — <strong>Automated ML</strong>: Automate model selection for nuisance models (Y, T) in causal estimators. <strong>EconAutoMLConfig</strong> configures constraints (linear-only, sample-weights required) and task (regression/classification). <strong>AutomatedMLModel</strong> selects a learner via cross-validation from the whitelist (lm, glmnet, ranger, rpart), then fits and exposes <code>fit</code>, <code>predict</code>, and <code>predict_proba</code>. Use with <strong>add_automated_ml</strong> to pass configs into meta-learners. Local AutoML (no Azure); API aligned with EconML’s <code>econml.automated_ml</code>.</p></li>
@@ -128,6 +187,17 @@
 <td></td>
 <td>Uplift RF on Contextual Treatment Selection</td>
 <td><code>uplift_rf_cts</code></td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Unified uplift random forest (classification &amp; regression)</td>
+<td>
+<code>uplift_randomForest</code>, <code>uplift_randomForestClassifier</code>, <code>uplift_randomForestRegressor</code> (<a href="R/uplift_randomForest.R">R/uplift_randomForest.R</a>)</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Multi-treatment uplift RF</td>
+<td><code>uplift_rf_multi</code></td>
 </tr>
 <tr class="odd">
 <td></td>
@@ -296,7 +366,7 @@
 <td><strong>Causal structure learning</strong></td>
 <td>NOTEARS (linear, nonlinear), DAG-GNN, GraN-DAG; unified API</td>
 <td>
-<a href="R/notears.R">R/notears.R</a>: <code>notears_linear</code>, <code>notears_nonlinear</code>, <code>simulate_dag</code>, <code>count_accuracy</code>; <a href="R/dag_gnn.r">R/dag_gnn.r</a>: <code>make_daggnn</code>, <code>daggnn_adj</code>; <a href="R/GraN_DAG.R">R/GraN_DAG.R</a>: <code>GraNDAG</code> R6 class, <code>learn()</code>, <code>get_causal_matrix()</code>; <a href="R/causalStructureML.R">R/causalStructureML.R</a>: <code>causalStructureML</code>, <code>causal_structure_ml_model_descriptions</code>
+<a href="R/causalDeepNet.R">R/causalDeepNet.R</a>: <code>notears_linear</code>, <code>notears_nonlinear</code>, <code>simulate_dag</code>, <code>count_accuracy</code>, <code>make_daggnn</code>, <code>daggnn_adj</code>, <code>GraNDAG</code>, <code>GraphDAG</code>; <a href="R/causalStructureML.R">R/causalStructureML.R</a>: <code>causalStructureML</code>, <code>causal_structure_ml_model_descriptions</code>
 </td>
 </tr>
 </tbody>
@@ -377,8 +447,8 @@
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Rtools must be installed and on PATH</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"RCausalML_0.3.0.tar.gz"</span>, repos <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"source"</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Package name:</strong> <code>RCausalML</code> (version 0.2.0). Load with <code><a href="https://github.com/uber/causalml" class="external-link">library(RCausalML)</a></code>.</p>
-<p><strong>Dependencies:</strong> <code>glmnet</code>, <code>ranger</code>, <code>rpart</code>, <code>R6</code>, <code>expm</code>, <code>igraph</code>, <code>htetree</code>. Optional: <code>grf</code>, <code>MatchIt</code>, <code>xgboost</code>, <code>reticulate</code>, <code>devtools</code> (for <code>load_all</code> in standalone test scripts). For <strong>DoubleML</strong> helpers in <a href="R/DMLearner.R">R/DMLearner.R</a> (PLR, PLIV, DiD, <code>DoubleMLData</code> wrappers, simulators / fetch): install <code>DoubleML</code>, <code>mlr3</code>, <code>mlr3learners</code>, and <code>mlr3measures</code>. For <strong>NOTEARS</strong> (<a href="R/notears.R">R/notears.R</a>): <code>expm</code>, <code>igraph</code>; <code>torch</code> for nonlinear NOTEARS (MLP/Sobolev). For <strong>DAG-GNN</strong> (<a href="R/dag_gnn.r">R/dag_gnn.r</a>) and <strong>GraN-DAG</strong> (<a href="R/GraN_DAG.R">R/GraN_DAG.R</a>): <code>torch</code>, <code>R6</code>, <code>expm</code>; <code>ranger</code> and <code>progress</code> optional for GraN-DAG PNS and progress bars. For <strong>causalStructureML</strong> (<a href="R/causalStructureML.R">R/causalStructureML.R</a>): same as NOTEARS / DAG-GNN / GraN-DAG depending on <code>method</code>. For <strong>SHAP / shapviz</strong> (see below): <code>kernelshap</code>, <code>shapviz</code>. For <strong>causalDeepNet</strong> (<a href="R/causalDeepNet.R">R/causalDeepNet.R</a>): <code>torch (&gt;= 0.10)</code> (CEVAE, DragonNet, TARNet, CFRNet, GANITE, CausalGAN, DSCM, CausalDiscrepancyVAE, neural Granger models <code>cMLP</code>, <code>cLSTM</code>, <code>EconomySRU</code>, <code>NRI</code> via <code><a href="reference/neural_granger_ml.html">neural_granger_ml()</a></code>, and SCM Deep Components: <code>deep_scm</code>, <code>deci_model</code>, <code>dynotears</code>); <code>nnet</code> / <code>ranger</code> placeholders where applicable. For <strong>SCM graph utilities</strong> (<code>plot_scm_dag</code>): <code>reshape2</code> (optional, falls back to base graphics). For <strong>tabular DCEVAE</strong> (optional, not exported in this build): R package <code>reticulate</code> and a Python environment with <code>torch</code>, <code>numpy</code>, and <code>tqdm</code> (code under <code>inst/dcevae/DCEVAE_ours/</code>).</p>
+<p><strong>Package name:</strong> <code>RCausalML</code> (version 0.2.0). Load with <code><a href="https://zia207.github.io/RCausalML/">library(RCausalML)</a></code>.</p>
+<p><strong>Dependencies:</strong> <code>glmnet</code>, <code>ranger</code>, <code>rpart</code>, <code>R6</code>, <code>expm</code>, <code>igraph</code>, <code>htetree</code>. Optional: <code>grf</code>, <code>MatchIt</code>, <code>xgboost</code>, <code>reticulate</code>, <code>devtools</code> (for <code>load_all</code> in standalone test scripts). For <strong>DoubleML</strong> helpers in <a href="R/DMLearner.R">R/DMLearner.R</a> (PLR, PLIV, DiD, <code>DoubleMLData</code> wrappers, simulators / fetch): install <code>DoubleML</code>, <code>mlr3</code>, <code>mlr3learners</code>, and <code>mlr3measures</code>. For <strong>NOTEARS</strong> (<a href="R/causalDeepNet.R">R/causalDeepNet.R</a>): <code>expm</code>, <code>igraph</code>; <code>torch</code> for nonlinear NOTEARS (MLP/Sobolev). For <strong>DAG-GNN</strong> and <strong>GraN-DAG</strong> (<a href="R/causalDeepNet.R">R/causalDeepNet.R</a>): <code>torch</code>, <code>R6</code>, <code>expm</code>; <code>ranger</code> and <code>progress</code> optional for GraN-DAG PNS and progress bars. For <strong>causalStructureML</strong> (<a href="R/causalStructureML.R">R/causalStructureML.R</a>): same as NOTEARS / DAG-GNN / GraN-DAG depending on <code>method</code>. For <strong>SHAP / shapviz</strong> (see below): <code>kernelshap</code>, <code>shapviz</code>. For <strong>causalDeepNet</strong> (<a href="R/causalDeepNet.R">R/causalDeepNet.R</a>): <code>torch (&gt;= 0.10)</code> (CEVAE, DragonNet, TARNet, CFRNet, GANITE, CausalGAN, DSCM, CausalDiscrepancyVAE, neural Granger models <code>cMLP</code>, <code>cLSTM</code>, <code>EconomySRU</code>, <code>NRI</code> via <code><a href="reference/neural_granger_ml.html">neural_granger_ml()</a></code>, and SCM Deep Components: <code>deep_scm</code>, <code>deci_model</code>, <code>dynotears</code>); <code>nnet</code> / <code>ranger</code> placeholders where applicable. For <strong>SCM graph utilities</strong> (<code>plot_scm_dag</code>): <code>reshape2</code> (optional, falls back to base graphics). For <strong>tabular DCEVAE</strong> (optional, not exported in this build): R package <code>reticulate</code> and a Python environment with <code>torch</code>, <code>numpy</code>, and <code>tqdm</code> (code under <code>inst/dcevae/DCEVAE_ours/</code>).</p>
 </div>
 <div class="section level3">
 <h3 id="linux-system-libraries-only-if-installs-fail-compiling-packages">Linux system libraries (only if installs fail compiling packages)<a class="anchor" aria-label="anchor" href="#linux-system-libraries-only-if-installs-fail-compiling-packages"></a>
@@ -392,12 +462,12 @@
 <div class="section level2">
 <h2 id="shap--shapviz-integration">SHAP / shapviz integration<a class="anchor" aria-label="anchor" href="#shap--shapviz-integration"></a>
 </h2>
-<p>You can apply <strong>all shapviz functions</strong> (importance, dependence, waterfall, force plots, etc.) to <strong>any RCausalML CATE model</strong> by computing SHAP values with <code>kernelshap</code> and then passing the result to <code>shapviz()</code>.</p>
+<p>You can apply <strong>all shapviz functions</strong> (importance, dependence, waterfall, force plots, etc.) to <strong>any RCausalML CATE model</strong> by computing SHAP values with <code>kernelshap</code> and then passing the result to <code><a href="https://modeloriented.github.io/shapviz/reference/shapviz.html" class="external-link">shapviz()</a></code>.</p>
 <ol style="list-style-type: decimal">
 <li>Install optional packages: <code>install.packages(c("kernelshap", "shapviz"))</code>.</li>
 <li>Use <strong><code>explain_cate(model, X, ...)</code></strong> from RCausalML to get a <code>kernelshap</code> object for your fitted model and feature matrix <code>X</code>.</li>
-<li>Pass that object to <strong><code>shapviz()</code></strong> to build a <code>shapviz</code> object.</li>
-<li>Use any shapviz function: <code>sv_importance()</code>, <code>sv_dependence()</code>, <code>sv_waterfall()</code>, <code>sv_force()</code>, <code>sv_dependence2D()</code>, etc.</li>
+<li>Pass that object to <strong><code><a href="https://modeloriented.github.io/shapviz/reference/shapviz.html" class="external-link">shapviz()</a></code></strong> to build a <code>shapviz</code> object.</li>
+<li>Use any shapviz function: <code><a href="https://modeloriented.github.io/shapviz/reference/sv_importance.html" class="external-link">sv_importance()</a></code>, <code><a href="https://modeloriented.github.io/shapviz/reference/sv_dependence.html" class="external-link">sv_dependence()</a></code>, <code><a href="https://modeloriented.github.io/shapviz/reference/sv_waterfall.html" class="external-link">sv_waterfall()</a></code>, <code><a href="https://modeloriented.github.io/shapviz/reference/sv_force.html" class="external-link">sv_force()</a></code>, <code><a href="https://modeloriented.github.io/shapviz/reference/sv_dependence2D.html" class="external-link">sv_dependence2D()</a></code>, etc.</li>
 </ol>
 <p>Works with meta-learners (S/T/X/R/DR), DML (Linear, SparseLinear, Kernel, NonParam, CausalForest, Dynamic, IV), causal forest, uplift trees/forests, policy learners, CATE interpreters, neural models (CEVAE, DragonNet, TARNet, CFRNet, GANITE, CausalGAN, DSCM, CausalDiscrepancyVAE, neural Granger models through <code><a href="reference/neural_granger_ml.html">neural_granger_ml()</a></code>, DeepSCM / DECI / DynoTEARS via <code>deep_scm()</code> / <code>deci_model()</code> / <code>dynotears()</code>), and other fitters that have <code>predict(object, newdata)</code>. An optional tabular <strong>DCEVAE</strong> bridge (under <code>inst/</code>) uses a specialized <code>predict(fit, r, d, a, y)</code> signature rather than <code>newdata</code> alone when that code path is wired in.</p>
 </div>
@@ -406,7 +476,7 @@
 </h2>
 <p>RCausalML integrates with the <a href="https://github.com/NickCH-K/causaldata" class="external-link"><strong>causaldata</strong></a> R package (Huntington-Klein &amp; Barrett), which provides example datasets from causal inference textbooks (<em>The Effect</em>, <em>Causal Inference: The Mixtape</em>, <em>Causal Inference: What If</em>). Use <strong><code>load_causaldata(name)</code></strong> to load a dataset in RCausalML-ready form (covariates <code>X</code>, treatment <code>w</code>, outcome <code>y</code>, and optionally instrument <code>Z</code>), and <strong><code><a href="reference/list_causaldata_datasets.html">list_causaldata_datasets()</a></code></strong> to see supported names and variable roles.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/list_causaldata_datasets.html">list_causaldata_datasets</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># nsw_mixtape, cps_mixtape, abortion, close_college, ...</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/load_causaldata.html">load_causaldata</a></span><span class="op">(</span><span class="st">"nsw_mixtape"</span><span class="op">)</span></span>
 <span><span class="va">sl</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/SLearner.html">SLearner</a></span><span class="op">(</span>learner <span class="op">=</span> <span class="st">"ranger"</span><span class="op">)</span></span>
@@ -416,7 +486,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"causaldata"</span><span class="op">)</span></span></code></pre></div>
 <p>Install the data package: <code>install.packages("causaldata")</code>. When publishing or reporting results that use these datasets, cite <strong>causaldata</strong> and the original source given in the <code>citation</code> component of the list returned by <code><a href="reference/load_causaldata.html">load_causaldata()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ModelOriented/kernelshap" class="external-link">kernelshap</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ModelOriented/shapviz" class="external-link">shapviz</a></span><span class="op">)</span></span>
 <span></span>
@@ -426,11 +496,11 @@
 <span></span>
 <span><span class="co"># SHAP for CATE; then all shapviz plots</span></span>
 <span><span class="va">ks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explain_cate.html">explain_cate</a></span><span class="op">(</span><span class="va">sl</span>, <span class="va">d</span><span class="op">$</span><span class="va">X</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="op">]</span>, bg_X <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">X</span>, use_permshap <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">shp</span> <span class="op">&lt;-</span> <span class="fu">shapviz</span><span class="op">(</span><span class="va">ks</span><span class="op">)</span></span>
-<span><span class="fu">sv_importance</span><span class="op">(</span><span class="va">shp</span><span class="op">)</span></span>
-<span><span class="fu">sv_dependence</span><span class="op">(</span><span class="va">shp</span>, <span class="st">"X1"</span><span class="op">)</span></span>
-<span><span class="fu">sv_waterfall</span><span class="op">(</span><span class="va">shp</span>, <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu">sv_force</span><span class="op">(</span><span class="va">shp</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">shp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://modeloriented.github.io/shapviz/reference/shapviz.html" class="external-link">shapviz</a></span><span class="op">(</span><span class="va">ks</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://modeloriented.github.io/shapviz/reference/sv_importance.html" class="external-link">sv_importance</a></span><span class="op">(</span><span class="va">shp</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://modeloriented.github.io/shapviz/reference/sv_dependence.html" class="external-link">sv_dependence</a></span><span class="op">(</span><span class="va">shp</span>, <span class="st">"X1"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://modeloriented.github.io/shapviz/reference/sv_waterfall.html" class="external-link">sv_waterfall</a></span><span class="op">(</span><span class="va">shp</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://modeloriented.github.io/shapviz/reference/sv_force.html" class="external-link">sv_force</a></span><span class="op">(</span><span class="va">shp</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p>See <code><a href="reference/explain_cate.html">?explain_cate</a></code> for arguments (<code>n_samples</code>, <code>bg_X</code>, <code>use_permshap</code>, and options passed to <code>kernelshap</code>/<code>permshap</code>).</p>
 </div>
 <div class="section level2">
@@ -443,7 +513,7 @@
 <li>
 <strong>DR-Learner</strong>: same <code>n_cores</code> for bootstrap in <code>fit_predict.DRLearner</code> and <code>estimate_ate.DRLearner</code>.</li>
 <li>
-<strong>Uplift forests</strong> (<code>uplift_rf_kl</code>, <code>uplift_rf_ed</code>, <code>uplift_rf_chi</code>, <code>uplift_rf_cts</code>): tree building runs in parallel, e.g. <code>uplift_rf_kl(X, w, y, n_trees = 100, n_cores = 4)</code>.</li>
+<strong>Uplift forests</strong> (<code>uplift_rf_kl</code>, <code>uplift_rf_ed</code>, <code>uplift_rf_chi</code>, <code>uplift_rf_cts</code>, <code>uplift_randomForest</code>): tree building runs in parallel, e.g. <code>uplift_randomForest(X, w, y, n_estimators = 100, n_cores = 4)</code>.</li>
 </ul>
 <p>Parallelization uses <code><a href="https://rdrr.io/r/parallel/mclapply.html" class="external-link">parallel::mclapply</a></code> (multi-core lapply). On Windows, <code>n_cores &gt; 1</code> is ignored and runs remain sequential.</p>
 </div>
@@ -452,7 +522,7 @@
 </h2>
 <p>Run the quickstart example (see <code>inst/examples/quickstart.R</code>):</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Synthetic data (Nie &amp; Wager 2018 style)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
@@ -509,9 +579,17 @@ Mean CATE (S-Learner): 0.6048919   Mean CATE (T-Learner): 0.5633381</code></pre>
 <h3 id="uplift-forest-and-iv">Uplift forest and IV<a class="anchor" aria-label="anchor" href="#uplift-forest-and-iv"></a>
 </h3>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Uplift random forest (T-learner style)</span></span>
-<span><span class="va">uf</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/uplift_rf_kl.html">uplift_rf_kl</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">w</span>, <span class="va">y</span>, n_trees <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Unified uplift random forest (auto-detects classification vs regression)</span></span>
+<span><span class="va">uf</span> <span class="op">&lt;-</span> <span class="fu">uplift_randomForest</span><span class="op">(</span><span class="va">X</span>, <span class="va">w</span>, <span class="va">y</span>, n_estimators <span class="op">=</span> <span class="fl">100</span>, evaluation_function <span class="op">=</span> <span class="st">"KL"</span><span class="op">)</span></span>
 <span><span class="va">cate_u</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">uf</span>, <span class="va">X</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Or explicitly for binary / continuous outcomes:</span></span>
+<span><span class="co"># uplift_randomForestClassifier(X, w, y, n_estimators = 100)</span></span>
+<span><span class="co"># uplift_randomForestRegressor(X, w, y, n_estimators = 100, evaluation_function = "TLearner")</span></span>
+<span></span>
+<span><span class="co"># Legacy entry points (same underlying tree builders):</span></span>
+<span><span class="co"># uf &lt;- uplift_rf_kl(X, w, y, n_trees = 100)</span></span>
+<span><span class="co"># cate_u &lt;- predict(uf, X)</span></span>
 <span></span>
 <span><span class="co"># 2SLS with instrument Z</span></span>
 <span><span class="co"># iv_fit &lt;- iv_2sls(Y, W, Z, X)</span></span>
@@ -580,7 +658,7 @@ Mean CATE (S-Learner): 0.6048919   Mean CATE (T-Learner): 0.5633381</code></pre>
 <div class="section level2">
 <h2 id="testing-algorithms">Testing Algorithms<a class="anchor" aria-label="anchor" href="#testing-algorithms"></a>
 </h2>
-<p>From the package root you can run the neural-network test (<code>tests/test-neural.R</code> for <a href="R/causalDeepNet.R">R/causalDeepNet.R</a>), the DR-Learner test (<code>tests/test-DRLearner.R</code>), the <strong>DMLearner test</strong> (<code>tests/test-DMLearner.R</code>), the policy learner test (<code>tests/test-policy-learner.R</code>), the <strong>CATE interpreter test</strong> (<code>tests/test-cate-interpreter.R</code>), the <strong>NOTEARS test</strong> (<code>tests/test-notears.R</code>), the <strong>DAG-GNN test</strong> (<code>tests/test-dag_gnn.R</code>), the <strong>GraN-DAG test</strong> (<code>tests/test-GraN_DAG.R</code>), the <strong>causalStructureML test</strong> (<code>tests/test-causalStructureML.R</code> for <a href="R/causalStructureML.R">R/causalStructureML.R</a>), the <strong>automated ML test</strong> (see <a href="#automated-ml-econml-style">Automated ML</a> for inline checks), the uplift trees test (<code>tests/test-uplift-trees.R</code>), and the causal structure learning test (<code>tests/test-causal_structure_learning.R</code>) with synthetic data.</p>
+<p>From the package root you can run the neural-network test (<code>tests/test-neural.R</code> for <a href="R/causalDeepNet.R">R/causalDeepNet.R</a>), the DR-Learner test (<code>tests/test-DRLearner.R</code>), the <strong>DMLearner test</strong> (<code>tests/test-DMLearner.R</code>), the policy learner test (<code>tests/test-policy-learner.R</code>), the <strong>CATE interpreter test</strong> (<code>tests/test-cate-interpreter.R</code>), the <strong>NOTEARS test</strong> (<code>tests/test-notears.R</code>), the <strong>DAG-GNN test</strong> (<code>tests/test-dag_gnn.R</code>), the <strong>GraN-DAG test</strong> (<code>tests/test-GraN_DAG.R</code>), the <strong>causalStructureML test</strong> (<code>tests/test-causalStructureML.R</code> for <a href="R/causalStructureML.R">R/causalStructureML.R</a>), the <strong>automated ML test</strong> (see <a href="#automated-ml-econml-style">Automated ML</a> for inline checks), the uplift trees test (<code>tests/test-uplift-trees.R</code>), the <strong>uplift random forest test</strong> (<code>tests/test-uplift_randomForest.R</code>), and the causal structure learning test (<code>tests/test-causal_structure_learning.R</code>) with synthetic data.</p>
 <p><strong>Table of contents</strong></p>
 <table class="table">
 <colgroup>
@@ -638,15 +716,15 @@ Mean CATE (S-Learner): 0.6048919   Mean CATE (T-Learner): 0.5633381</code></pre>
 </tr>
 <tr class="even">
 <td><a href="#run-notears-test">Run NOTEARS test</a></td>
-<td>Standalone NOTEARS (<a href="R/notears.R">R/notears.R</a>): utilities, linear, nonlinear (MLP), demo_linear</td>
+<td>NOTEARS in <a href="R/causalDeepNet.R">R/causalDeepNet.R</a>: utilities, linear, nonlinear (MLP), demo_linear</td>
 </tr>
 <tr class="odd">
 <td><a href="#run-dag-gnn-test">Run DAG-GNN test</a></td>
-<td>DAG-GNN (<a href="R/dag_gnn.r">R/dag_gnn.r</a>): device, forward, ELBO, make_daggnn, daggnn_adj</td>
+<td>DAG-GNN (<a href="R/causalDeepNet.R">R/causalDeepNet.R</a>): device, forward, ELBO, make_daggnn, daggnn_adj</td>
 </tr>
 <tr class="even">
 <td><a href="#run-gran-dag-test">Run GraN-DAG test</a></td>
-<td>GraN-DAG (<a href="R/GraN_DAG.R">R/GraN_DAG.R</a>): is_acyclic, constraint, NormalizationData, GraNDAG learn</td>
+<td>GraN-DAG (<a href="R/causalDeepNet.R">R/causalDeepNet.R</a>): is_acyclic, constraint, NormalizationData, GraNDAG learn</td>
 </tr>
 <tr class="odd">
 <td><a href="#run-causalstructureml-test">Run causalStructureML test</a></td>
@@ -693,7 +771,7 @@ Mean CATE (S-Learner): 0.6048919   Mean CATE (T-Learner): 0.5633381</code></pre>
 <p><a href="tests/test-uplift-trees.R"><code>tests/test-uplift-trees.R</code></a> runs <strong>uplift trees and forests</strong> (<code>R/uplift_trees.R</code>) on synthetic binary-outcome data from <code><a href="reference/make_uplift_classification.html">make_uplift_classification()</a></code>: single trees (DDP, IDDP, IT, CIT), uplift RF (KL, ED, CTS), and multi-treatment <code><a href="reference/uplift_rf_multi.html">uplift_rf_multi()</a></code>.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Minimal example (from test): synthetic data + single tree + forest</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/make_uplift_classification.html">make_uplift_classification</a></span><span class="op">(</span></span>
 <span>  treatment_name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control"</span>, <span class="st">"treatment1"</span><span class="op">)</span>,</span>
@@ -789,14 +867,20 @@ uplift_rf_multi: fitted OK
 </div>
 </div>
 <div class="section level3">
+<h3 id="run-uplift-random-forest-test">Run uplift random forest test<a class="anchor" aria-label="anchor" href="#run-uplift-random-forest-test"></a>
+</h3>
+<p><a href="tests/test-uplift_randomForest.R"><code>tests/test-uplift_randomForest.R</code></a> exercises <strong><code>uplift_randomForest()</code></strong> (<a href="R/uplift_randomForest.R">R/uplift_randomForest.R</a>): binary classification (KL), multi-arm classification, regression (T-learner), and regression (IT trees).</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-uplift_randomForest.R</span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="run-dr-learner-test">Run DR-Learner test<a class="anchor" aria-label="anchor" href="#run-dr-learner-test"></a>
 </h3>
 <p><a href="tests/test-DRLearner.R"><code>tests/test-DRLearner.R</code></a> exercises all DR-Learner variants in <code>R/DRLearner.R</code> on the same synthetic DGP (X, W, propensity, true CATE non-linear in X1). It runs: <strong>DRLearner</strong> (ranger), <strong>fit_predict</strong> with return_components, <strong>LinearDRLearner</strong>, <strong>SparseLinearDRLearner</strong>, <strong>XGBDRLearner</strong> (if xgboost is installed), <strong>ForestDRLearner</strong>, DRLearner with estimated propensity, and <strong>estimate_ate</strong> with <code>pretrain = TRUE</code>. For linear variants it also checks <strong>coef</strong> and <strong>intercept</strong>.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="co"># Quick run (n=300)</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-DRLearner.R</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a><span class="co"># Full run (n=1000)</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-DRLearner.R</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="co"># Quick run (n=300)</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-DRLearner.R</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a><span class="co"># Full run (n=1000)</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-DRLearner.R</span></code></pre></div>
 <div class="section level4">
 <h4 id="dr-learner-test-results-quick-run-quick1-n300">DR-Learner test results (quick run, <code>QUICK=1</code>, n=300)<a class="anchor" aria-label="anchor" href="#dr-learner-test-results-quick-run-quick1-n300"></a>
 </h4>
@@ -847,16 +931,16 @@ uplift_rf_multi: fitted OK
 <h3 id="run-dmlearner-test">Run DMLearner test<a class="anchor" aria-label="anchor" href="#run-dmlearner-test"></a>
 </h3>
 <p><a href="tests/test-DMLearner.R"><code>tests/test-DMLearner.R</code></a> exercises the <strong>Double Machine Learning</strong> module (<code>R/DMLearner.R</code>): <strong>LinearDML</strong>, <strong>SparseLinearDML</strong>, <strong>KernelDML</strong>, <strong>NonParamDML</strong>, <strong>CausalForestDML</strong> (when <code>grf</code> is installed), base <strong>DMLearner</strong>, <strong>fit_predict</strong> with return_components, <strong>estimate_ate</strong>, and <strong>coef</strong> / <strong>intercept</strong> for linear variants. It also runs <strong>DynamicDMLearner</strong> (panel/sequential treatments) and <strong>OrthoIVLearner</strong>, <strong>DMLIVLearner</strong>, <strong>NonParamDMLIVLearner</strong> (DML with IV), all implemented in native R. Uses the same style of synthetic data (DGP with linear CATE in X1). API aligned with <a href="https://econml.azurewebsites.net/" class="external-link">EconML</a> (Python); optional <a href="https://docs.doubleml.org" class="external-link">DoubleML</a> (R) via <code><a href="reference/doubleml_plr.html">doubleml_plr()</a></code>.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="co"># Quick run (n=300)</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-DMLearner.R</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a><span class="co"># Full run (n=800)</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-DMLearner.R</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="co"># Quick run (n=300)</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-DMLearner.R</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true"></a><span class="co"># Full run (n=800)</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-DMLearner.R</span></code></pre></div>
 <div class="section level4">
 <h4 id="dmlearner-test-minimal-code-example">DMLearner test: minimal code example<a class="anchor" aria-label="anchor" href="#dmlearner-test-minimal-code-example"></a>
 </h4>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">300</span></span>
 <span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="fl">5</span><span class="op">)</span>, <span class="va">n</span>, <span class="fl">5</span><span class="op">)</span></span>
@@ -992,11 +1076,11 @@ All DMLearner variants ran successfully.
 <li>
 <strong>DCEVAE</strong> — Tabular deep counterfactual equivariant VAE (Python implementation under <code>inst/dcevae/DCEVAE_ours/</code>, called via <strong><code>reticulate</code></strong>). Skipped if <strong><code>reticulate</code></strong> is not installed or Python lacks <code>torch</code> / <code>numpy</code> / <code>tqdm</code>.</li>
 </ul>
-<div class="sourceCode" id="cb25"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="co"># Quick run (fewer epochs / iterations)</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-neural.R</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true"></a><span class="co"># Full run</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-neural.R</span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="co"># Quick run (fewer epochs / iterations)</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-neural.R</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a><span class="co"># Full run</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-neural.R</span></code></pre></div>
 <div class="section level4">
 <h4 id="neural-test-n300-fewer-epochs">Neural test (n=300, fewer epochs)<a class="anchor" aria-label="anchor" href="#neural-test-n300-fewer-epochs"></a>
 </h4>
@@ -1086,8 +1170,8 @@ All DMLearner variants ran successfully.
 <strong>TFT</strong> (<code>tft_model</code>) — Temporal Fusion Transformer (Lim et al., 2021): variable-selection networks, LSTM encoder, multi-head temporal attention.</li>
 </ul>
 <p>All three are also available through the unified wrapper <code>attn_causal_model()</code>. Causal graphs (variable-to-variable influence matrices) are extracted with <code>causal_matrix_attn()</code>. Requires <code>torch</code>.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://torch.mlverse.org/docs" class="external-link">torch</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
@@ -1158,8 +1242,8 @@ All DMLearner variants ran successfully.
 <strong>Intervention-Aware RNN</strong> (<code>intervention_rnn_model</code>) — GRU regime detector infers latent system states; learned regime embeddings and an explicit binary/continuous intervention-indicator channel are concatenated to the input before the LSTM forecaster; exposes regime-conditioned causal effect matrices.</li>
 </ul>
 <p>All three are available through the unified wrapper <code>rnn_causal_model()</code>. Causal graphs are extracted with <code>causal_matrix_rnn()</code>. Requires <code>torch</code>.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://torch.mlverse.org/docs" class="external-link">torch</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
@@ -1227,7 +1311,7 @@ All DMLearner variants ran successfully.
 <h3 id="run-policy-learner-test">Run policy learner test<a class="anchor" aria-label="anchor" href="#run-policy-learner-test"></a>
 </h3>
 <p><a href="tests/test-policy-learner.R"><code>tests/test-policy-learner.R</code></a> runs all <strong>policy learners</strong> in <code>R/policy_learner.R</code> on synthetic data from <code>synthetic_data(mode = 1, ...)</code>: (1) <strong>policy_learner</strong> (Athey &amp; Wager: DR score + weighted classifier), (2) <strong>DRPolicyTree</strong> (EconML-style: cross-fitted outcome + policy tree), (3) <strong>DRPolicyForest</strong> (ensemble of policy trees, majority vote). The test compares each model’s policy value and agreement with the oracle rule “treat when τ &gt; 0”.</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-policy-learner.R</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-policy-learner.R</span></code></pre></div>
 <div class="section level4">
 <h4 id="policy-learner-test-results-n800-p6-mode-1">Policy learner test results (n=800, p=6, mode 1)<a class="anchor" aria-label="anchor" href="#policy-learner-test-results-n800-p6-mode-1"></a>
 </h4>
@@ -1266,7 +1350,7 @@ All DMLearner variants ran successfully.
 <h3 id="run-cate-interpreter-test">Run CATE interpreter test<a class="anchor" aria-label="anchor" href="#run-cate-interpreter-test"></a>
 </h3>
 <p><a href="tests/test-cate-interpreter.R"><code>tests/test-cate-interpreter.R</code></a> runs the <strong>CATE interpreters</strong> in <code>R/cate_interpreter.R</code> (EconML-style): (1) <strong>SingleTreeCateInterpreter</strong> — fits a single regression tree to the predicted CATE from any fitted estimator (e.g. SLearner, TLearner) to summarize effect heterogeneity; (2) <strong>SingleTreePolicyInterpreter</strong> — fits a single classification tree over the optimal treatment (control vs treat) from CATE to summarize the policy. The test uses <code>synthetic_data(mode = 1, ...)</code> and checks <code><a href="reference/interpret.html">interpret()</a></code>, <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>, <code><a href="reference/treat.html">treat()</a></code>, <code>node_dict_</code>, <code>policy_value_</code>, and error handling (e.g. <code><a href="reference/treat.html">treat()</a></code> before <code><a href="reference/interpret.html">interpret()</a></code>).</p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-cate-interpreter.R</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-cate-interpreter.R</span></code></pre></div>
 <div class="section level4">
 <h4 id="cate-interpreter-test-n400-p6-mode-1">CATE interpreter test (n=400, p=6, mode 1)<a class="anchor" aria-label="anchor" href="#cate-interpreter-test-n400-p6-mode-1"></a>
 </h4>
@@ -1322,35 +1406,35 @@ All DMLearner variants ran successfully.
 <div class="section level3">
 <h3 id="run-dag-gnn-test">Run DAG-GNN test<a class="anchor" aria-label="anchor" href="#run-dag-gnn-test"></a>
 </h3>
-<p><a href="tests/test-dag_gnn.R"><code>tests/test-dag_gnn.R</code></a> runs the <strong>DAG-GNN</strong> implementation in <a href="R/dag_gnn.r">R/dag_gnn.r</a>. It checks: <strong>get_daggnn_device</strong>, <strong>preprocess_adj</strong> / <strong>matrix_poly</strong>, <strong>DAGGNN</strong> forward pass, <strong>elbo_loss</strong> / <strong>h_func</strong>, <strong>make_daggnn</strong>, and <strong>daggnn_adj</strong>. Requires <strong>torch</strong>.</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-dag_gnn.R</span></code></pre></div>
+<p><a href="tests/test-dag_gnn.R"><code>tests/test-dag_gnn.R</code></a> runs the <strong>DAG-GNN</strong> implementation in <a href="R/causalDeepNet.R">R/causalDeepNet.R</a>. It checks: <strong>get_daggnn_device</strong>, <strong>preprocess_adj</strong> / <strong>matrix_poly</strong>, <strong>DAGGNN</strong> forward pass, <strong>elbo_loss</strong> / <strong>h_func</strong>, <strong>make_daggnn</strong>, and <strong>daggnn_adj</strong>. Requires <strong>torch</strong>.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-dag_gnn.R</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="run-gran-dag-test">Run GraN-DAG test<a class="anchor" aria-label="anchor" href="#run-gran-dag-test"></a>
 </h3>
-<p><a href="tests/test-GraN_DAG.R"><code>tests/test-GraN_DAG.R</code></a> runs the <strong>GraN-DAG</strong> (gradient-based neural DAG learner) implementation in <a href="R/GraN_DAG.R">R/GraN_DAG.R</a>. It checks: <strong>is_acyclic</strong>, <strong>compute_constraint</strong>, <strong>NormalizationData</strong>, <strong>GraNDAG</strong> constructor, and <strong>GraNDAG$learn()</strong> with a short training run. Requires <strong>torch</strong>, <strong>R6</strong>, <strong>expm</strong>; optional <strong>ranger</strong> and <strong>progress</strong> for PNS and progress bars.</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true"></a><span class="co"># Quick run (fewer iterations)</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-GraN_DAG.R</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true"></a></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true"></a><span class="co"># Full run</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-GraN_DAG.R</span></code></pre></div>
+<p><a href="tests/test-GraN_DAG.R"><code>tests/test-GraN_DAG.R</code></a> runs the <strong>GraN-DAG</strong> (gradient-based neural DAG learner) implementation in <a href="R/causalDeepNet.R">R/causalDeepNet.R</a>. It checks: <strong>is_acyclic</strong>, <strong>compute_constraint</strong>, <strong>NormalizationData</strong>, <strong>GraNDAG</strong> constructor, and <strong>GraNDAG$learn()</strong> with a short training run. Requires <strong>torch</strong>, <strong>R6</strong>, <strong>expm</strong>; optional <strong>ranger</strong> and <strong>progress</strong> for PNS and progress bars.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a><span class="co"># Quick run (fewer iterations)</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-GraN_DAG.R</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true"></a><span class="co"># Full run</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-GraN_DAG.R</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="run-causalstructureml-test">Run causalStructureML test<a class="anchor" aria-label="anchor" href="#run-causalstructureml-test"></a>
 </h3>
 <p><a href="tests/test-causalStructureML.R"><code>tests/test-causalStructureML.R</code></a> exercises the <strong>unified causal structure learning API</strong> in <a href="R/causalStructureML.R">R/causalStructureML.R</a>: <strong><code><a href="reference/causal_structure_ml_model_descriptions.html">causal_structure_ml_model_descriptions()</a></code></strong>, <strong><code><a href="reference/causalStructureML.html">causalStructureML()</a></code></strong> with <code>method</code> set to <code>notears_linear</code>, <code>dag_gnn</code>, <code>notears_nonlinear_mlp</code>, <code>notears_nonlinear_sobolev</code>, and <code>grandag</code>, plus <strong>data.frame</strong> input. Uses <strong><code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code></strong>. Requires <strong>expm</strong>, <strong>igraph</strong>, and <strong>torch</strong> (for all methods except <code>notears_linear</code>); install <strong><code>devtools</code></strong> for the test runner.</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-causalStructureML.R</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-causalStructureML.R</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-causalStructureML.R</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-causalStructureML.R</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="run-notears-test">Run NOTEARS test<a class="anchor" aria-label="anchor" href="#run-notears-test"></a>
 </h3>
-<p><a href="tests/test-notears.R"><code>tests/test-notears.R</code></a> runs the <strong>standalone NOTEARS</strong> implementation in <a href="R/notears.R">R/notears.R</a>. It checks: (1) <strong>set_random_seed</strong>, (2) <strong>is_dag</strong>, (3) <strong>simulate_dag</strong> (ER, SF), (4) <strong>simulate_parameter</strong>, (5) <strong>simulate_linear_sem</strong> (gauss, uniform), (6) <strong>count_accuracy</strong>, (7) <strong>notears_linear</strong> (L-BFGS-B + augmented Lagrangian, l2 loss), (8) <strong>demo_linear</strong>, and (9) <strong>notears_nonlinear</strong> with <strong>NotearsMLP</strong> when <strong>torch</strong> is available (Adam + L-BFGS, custom autograd for trace(expm)). Requires <strong>expm</strong> and <strong>igraph</strong>; <strong>torch</strong> is optional for the nonlinear section.</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true"></a><span class="co"># Full run (includes nonlinear if torch installed)</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-notears.R</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true"></a></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true"></a><span class="co"># Quick run (skip nonlinear)</span></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-notears.R</span></code></pre></div>
+<p><a href="tests/test-notears.R"><code>tests/test-notears.R</code></a> runs the <strong>NOTEARS</strong> implementation in <a href="R/causalDeepNet.R">R/causalDeepNet.R</a>. It checks: (1) <strong>set_random_seed</strong>, (2) <strong>is_dag</strong>, (3) <strong>simulate_dag</strong> (ER, SF), (4) <strong>simulate_parameter</strong>, (5) <strong>simulate_linear_sem</strong> (gauss, uniform), (6) <strong>count_accuracy</strong>, (7) <strong>notears_linear</strong> (L-BFGS-B + augmented Lagrangian, l2 loss), (8) <strong>demo_linear</strong>, and (9) <strong>notears_nonlinear</strong> with <strong>NotearsMLP</strong> when <strong>torch</strong> is available (Adam + L-BFGS, custom autograd for trace(expm)). Requires <strong>expm</strong> and <strong>igraph</strong>; <strong>torch</strong> is optional for the nonlinear section.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true"></a><span class="co"># Full run (includes nonlinear if torch installed)</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-notears.R</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true"></a><span class="co"># Quick run (skip nonlinear)</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-notears.R</span></code></pre></div>
 <p>Install <strong>expm</strong> and <strong>igraph</strong> for NOTEARS: <code>install.packages(c("expm", "igraph"))</code>. For nonlinear NOTEARS (MLP/Sobolev), install <strong>torch</strong>: <code>install.packages("torch")</code>.</p>
 </div>
 <div class="section level3">
@@ -1369,11 +1453,11 @@ All DMLearner variants ran successfully.
 <li>
 <strong>notrears with tune</strong> — Optional Optuna (reticulate) hyperparameter tuning when not in <code>QUICK</code> mode; requires <strong>expm</strong> for NOTEARS linear.</li>
 </ul>
-<div class="sourceCode" id="cb34"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true"></a><span class="co"># Quick run (small n, d; no tune)</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-causal_structure_learning.R</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true"></a></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true"></a><span class="co"># Full run (includes optional Optuna tune)</span></span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-causal_structure_learning.R</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true"></a><span class="co"># Quick run (small n, d; no tune)</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true"></a><span class="va">QUICK=</span>1 <span class="ex">Rscript</span> tests/test-causal_structure_learning.R</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true"></a><span class="co"># Full run (includes optional Optuna tune)</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true"></a><span class="ex">Rscript</span> tests/test-causal_structure_learning.R</span></code></pre></div>
 <div class="section level4">
 <h4 id="causal-structure-learning-test-results-n200-d6">Causal structure learning test results (n=200, d=6)<a class="anchor" aria-label="anchor" href="#causal-structure-learning-test-results-n200-d6"></a>
 </h4>
@@ -1445,7 +1529,7 @@ All DMLearner variants ran successfully.
 </h2>
 <p>Example notebooks (<code>.qmd</code>) live under <strong><code>inst/examples/Notebook/</code></strong>, grouped <strong>by topic</strong> in subfolders, and mirror the <a href="https://causalml.readthedocs.io/en/latest/examples.html" class="external-link">Python CausalML examples</a>. Real/semi-synthetic data (e.g. IHDP, card.csv) can be downloaded from <a href="https://github.com/uber/causalml/tree/master/docs/examples/data" class="external-link">causalml/docs/examples/data</a> and placed in <code>inst/examples/data/</code>. See <a href="inst/examples/README.html"><strong>inst/examples/README.md</strong></a> for more detail.</p>
 <p><strong>Topic index:</strong> <a href="inst/examples/Notebook/INDEX.qmd"><strong>inst/examples/Notebook/INDEX.qmd</strong></a> — entry point that lists all notebooks by topic with links. Render from package root:</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true"></a><span class="ex">quarto</span> render inst/examples/Notebook/INDEX.qmd</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true"></a><span class="ex">quarto</span> render inst/examples/Notebook/INDEX.qmd</span></code></pre></div>
 <p><strong>Notebooks by topic</strong> (in <code>inst/examples/Notebook/</code>):</p>
 <table class="table">
 <colgroup>
@@ -1498,8 +1582,8 @@ All DMLearner variants ran successfully.
 </table>
 <p><strong>Case studies</strong> (in <code>inst/examples/Case_study/</code>): customer segmentation and individualized incentive response; uplift classification data generation (<code>make_uplift_classification</code>). See <a href="inst/examples/Case_study/">inst/examples/Case_study/</a> for files.</p>
 <p><strong>Render all notebooks in a topic folder</strong> (from package root), e.g.:</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true"></a><span class="ex">quarto</span> render <span class="st">"inst/examples/Notebook/01-Meta-Learners/*.qmd"</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true"></a><span class="ex">quarto</span> render <span class="st">"inst/examples/Notebook/03-Uplift and causal trees-forests/*.qmd"</span></span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true"></a><span class="ex">quarto</span> render <span class="st">"inst/examples/Notebook/01-Meta-Learners/*.qmd"</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true"></a><span class="ex">quarto</span> render <span class="st">"inst/examples/Notebook/03-Uplift and causal trees-forests/*.qmd"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="acknowledgement">Acknowledgement<a class="anchor" aria-label="anchor" href="#acknowledgement"></a>
@@ -1530,10 +1614,8 @@ All DMLearner variants ran successfully.
 <p>Apache License 2.0</p>
 <hr>
 <p><strong>Contact:</strong> Zia Ahmed, PhD, Upatta Analytics, NY, USA</p>
-<p><img src="images/upatta_logo-01.png" width="200"></p>
 </div>
 </div>
-
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
@@ -1563,7 +1645,7 @@ All DMLearner variants ran successfully.
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>RCausalML Authors <br><small class="roles"> Author, maintainer </small>   </li>
+<li>Zia Ahmed <br><small class="roles"> Author, maintainer </small>   </li>
 </ul>
 </div>
 
@@ -1574,7 +1656,7 @@ All DMLearner variants ran successfully.
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by RCausalML Authors.</p>
+  <p>Developed by Zia Ahmed.</p>
 </div>
 
 <div class="pkgdown-footer-right">

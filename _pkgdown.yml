@@ -10,13 +10,12 @@ template:
 deploy:
   install_metadata: false
 
-llm_docs:
-  include: false
+llm-docs: false
 
 home:
-  title: "RCausalML — Uplift Modeling and Causal Inference with ML"
+  title: "RCausalML: Causal Inference with ML"
   description: >
-    An R package for uplift modeling and causal inference using machine learning.
+    An R package for causal inference using machine learning.
     Estimates CATE from experimental or observational data with meta-learners,
     double machine learning, neural causal models, causal structure learning, and more.
   links:
@@ -28,45 +27,14 @@ home:
       href: https://econml.azurewebsites.net/
 
 navbar:
-  bg: primary
-  type: dark
+  type: default
   left:
     - text: "Get Started"
       href: articles/RCausalML-intro.html
     - text: "Reference"
       href: reference/index.html
     - text: "Tutorials"
-      menu:
-        - text: "--- Tree-Based Models ---"
-        - text: "Causal Tree Introduction"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd"
-        - text: "Causal Tree"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd"
-        - text: "Causal Forest"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd"
-        - text: "Causal Survival Forest"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd"
-        - text: "Instrumental Causal Forest"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd"
-        - text: "Multi-Arm Causal Forest"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd"
-        - text: "Causal XGBoost"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd"
-        - text: "--- Meta-Learners ---"
-        - text: "Meta-Learners Overview"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/02-meta-learners/"
-        - text: "--- Uplift Trees & Forests ---"
-        - text: "Uplift Trees & Forests"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/03-uplift-trees-forests/"
-        - text: "--- Double / Debiased Learners ---"
-        - text: "DML Notebooks"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/04-double-debiased-learners/"
-        - text: "--- Deep Causal Learners ---"
-        - text: "Deep Causal Notebooks"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/05-deep-causal-learners/"
-        - text: "--- Automated ML ---"
-        - text: "Automated ML"
-          href: "https://github.com/zia207/RCausalML/blob/main/inst/notebooks/06-automated-ml/"
+      href: tutorials/index.html
     - text: "News"
       href: news/index.html
   right:

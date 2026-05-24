@@ -1,0 +1,153 @@
+![](Images/02_meta-learners.png)
+
+# 2. Meta-Learners for Treatment Effect Estimation {.unnumbered}
+
+In many real-world settings, a treatment (like a drug, policy, or recommendation) doesn't affect everyone the same way. **Meta-learners** are a family of algorithms designed to estimate *how much* a treatment affects different individuals — a quantity known as the **Conditional Average Treatment Effect (CATE)**:
+
+$$\tau(x) = \mathbb{E}[Y(1) - Y(0) \mid X = x]$$
+
+Here, $Y(1)$ and $Y(0)$ are the outcomes a person would experience *with* and *without* treatment, and $X$ represents their individual characteristics (covariates). Since we can never observe both outcomes for the same person, we need clever estimation strategies.
+
+What makes meta-learners appealing is their flexibility: rather than building specialized causal models from scratch, they *wrap around* any standard machine learning model — random forests, gradient boosting, neural networks — and repurpose it for causal estimation.
+
+> **Key assumption:** All meta-learners require *unconfoundedness* — that once we condition on observed covariates $X$, treatment assignment is effectively random:
+
+$$(Y(1), Y(0)) \perp T \mid X$$
+> This is the causal foundation; meta-learners then estimate *how* effects vary across individuals.
+
+---
+
+## The Five Main Meta-Learners
+
+### S-Learner (Single Model)
+
+**Idea:** Train one model on all the data, including the treatment indicator $T$ as a feature.
+
+$$\hat{\tau}_S(x) = \hat{\mu}(x, 1) - \hat{\mu}(x, 0)$$
+
+The CATE is estimated by predicting outcomes under treatment ($T=1$) and control ($T=0$) for each individual, then taking the difference.
+
+**Pros:** Simple to implement; naturally captures interactions between treatment and covariates.
+
+**Cons:** Tree-based models may effectively ignore $T$ if it has weak predictive power on its own, leading to underestimated treatment effects.
+
+---
+
+### T-Learner (Two Separate Models)
+
+**Idea:** Fit one model for the treated group and another for the control group, then subtract predictions.
+
+$$\hat{\tau}_T(x) = \hat{\mu}_1(x) - \hat{\mu}_0(x)$$
+
+**Pros:** Intuitive; each model focuses entirely on its own group.
+
+**Cons:** Struggles when treatment groups are imbalanced (e.g., 95% control, 5% treated) — the minority-group model is estimated from little data and has high variance.
+
+---
+
+### X-Learner (Cross-Fitted)
+
+**Idea:** An extension of the T-Learner that borrows information across groups to handle imbalance.
+
+**Steps:**
+1. Fit T-Learner models $\hat{\mu}_0$, $\hat{\mu}_1$ as before.
+
+2. Compute *imputed treatment effects* for each individual using the opposite group's model:
+   - For treated units: $D_i^1 = Y_i - \hat{\mu}_0(X_i)$
+   - For control units: $D_i^0 = \hat{\mu}_1(X_i) - Y_i$
+   
+3. Fit models $\hat{\tau}_1$, $\hat{\tau}_0$ on these imputed effects.
+
+4. Combine using the estimated propensity score $g(x) = P(T=1 \mid X=x)$:
+
+$$\hat{\tau}_X(x) = g(x)\,\hat{\tau}_0(x) + (1 - g(x))\,\hat{\tau}_1(x)$$
+
+**Pros:** Highly efficient with imbalanced treatment groups; often outperforms the T-Learner empirically.
+
+**Cons:** Requires an accurate propensity score model and involves multiple fitting stages.
+
+---
+
+### R-Learner (Residual-on-Residual)
+
+**Idea:** Based on Robinson's (1988) transformation — partial out the effect of $X$ on both the outcome and treatment, then regress the residuals against each other.
+
+**Steps:**
+
+1. Estimate nuisance functions:
+   - $\hat{m}(x) = \mathbb{E}[Y \mid X=x]$ (expected outcome)
+   - $\hat{e}(x) = P(T=1 \mid X=x)$ (propensity score)
+   
+2. Compute residuals: $\tilde{Y}_i = Y_i - \hat{m}(X_i)$ and $\tilde{T}_i = T_i - \hat{e}(X_i)$
+
+3. Estimate $\tau(x)$ by solving:
+
+$$\min_{\tau} \mathbb{E}\!\left[\left(\tilde{Y} - \tau(X)\,\tilde{T}\right)^2\right]$$
+
+**Pros:** *Orthogonal* estimation — errors in the nuisance models don't directly bias $\hat{\tau}$. Achieves strong theoretical guarantees (Nie & Wager, 2021).
+
+**Cons:** More complex to implement; requires reasonably good nuisance estimates.
+
+---
+
+### DR-Learner (Doubly Robust)
+
+**Idea:** Combine outcome modeling and propensity scores so that the estimator is consistent if *either* component is correctly specified — not necessarily both.
+
+**Steps:**
+
+1. Estimate $\hat{\mu}_0(x)$, $\hat{\mu}_1(x)$, and $\hat{e}(x)$ on one data split.
+
+2. Compute augmented inverse propensity weighting (AIPW) pseudo-outcomes on held-out data:
+
+$$\hat{\phi}_i = \underbrace{\hat{\mu}_1(X_i) - \hat{\mu}_0(X_i)}_{\text{outcome model}} + \underbrace{\frac{T_i(Y_i - \hat{\mu}_1(X_i))}{\hat{e}(X_i)} - \frac{(1-T_i)(Y_i - \hat{\mu}_0(X_i))}{1 - \hat{e}(X_i)}}_{\text{bias correction}}$$
+
+
+3. Regress $\hat{\phi}_i$ on $X_i$ to get $\hat{\tau}_{DR}(x)$.
+
+**Pros:** Doubly robust — remains consistent even with one misspecified component. Comes with formal inference guarantees (asymptotic normality).
+
+**Cons:** Sensitive to extreme propensity scores (near 0 or 1); requires careful cross-fitting.
+
+---
+
+## Choosing the Right Meta-Learner
+
+| Scenario | Recommended Approach |
+|----------|----------------------|
+| Balanced RCT | S-Learner (simplicity) or X-Learner (efficiency) |
+| Imbalanced treatment groups | X-Learner or R-Learner |
+| Observational data with confounding | R-Learner or DR-Learner |
+| Need for formal statistical inference | DR-Learner |
+| Small or subtle treatment effects | S-Learner |
+
+---
+
+## Extensions: Beyond Binary Treatment
+
+The CATE framework generalizes naturally to other treatment types:
+
+| Treatment Type | Example | Target Estimand |
+|----------------|---------|-----------------|
+| **Binary** $T \in \{0,1\}$ | Drug vs. placebo | $\tau(x) = \mathbb{E}[Y(1)-Y(0)\mid X=x]$ |
+| **Multi-valued** $T \in \{0,\ldots,K\}$ | Dosage levels | $\tau_k(x) = \mathbb{E}[Y(k)-Y(0)\mid X=x]$ |
+| **Continuous** $T \in \mathbb{R}$ | Drug dosage (mg) | $\tau(t,x) = \frac{\partial}{\partial t}\mathbb{E}[Y(t)\mid X=x]$ |
+
+---
+
+## Summary
+
+Meta-learners offer a practical, modular approach to estimating heterogeneous treatment effects. Their core appeal is that they repurpose familiar ML tools for causal questions — no specialized architecture required. The tradeoffs are straightforward: simpler learners (S, T) work well in clean settings, while more sophisticated ones (X, R, DR) handle imbalance, confounding, and inference needs.
+
+## Resources
+
+- Künzel et al. (2019), *PNAS* — original meta-learner framework
+
+- Nie & Wager (2021), *Biometrika* — R-Learner theory
+
+- Chernozhukov et al. (2018), *Econometrica* — double/debiased ML
+
+
+
+
+

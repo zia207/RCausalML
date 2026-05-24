@@ -139,12 +139,49 @@ invisible(lapply(packages, function(pkg) {
 #| label: setup
 #| include: true
 set.seed(42)
-device_use <- NULL
-if (requireNamespace("torch", quietly = TRUE)) {
-  device_use <- if (torch::cuda_is_available()) "cuda" else "cpu"
-  torch::torch_manual_seed(42)
+run_fast <- Sys.getenv("CAUSALML_FAST_RENDER", "TRUE") == "TRUE"
+
+select_torch_device <- function(min_free_mb = 512L) {
+  if (!requireNamespace("torch", quietly = TRUE)) return("cpu")
+  if (!torch::cuda_is_available()) return("cpu")
+
+  smi_out <- tryCatch(
+    suppressWarnings(system2(
+      "nvidia-smi",
+      args = c("--query-gpu=memory.free", "--format=csv,noheader,nounits"),
+      stdout = TRUE,
+      stderr = FALSE
+    )),
+    error = function(e) character(0)
+  )
+  if (length(smi_out) >= 1L) {
+    free_mb <- suppressWarnings(as.numeric(trimws(smi_out[1L])))
+    if (!is.na(free_mb) && free_mb < min_free_mb) {
+      message(sprintf(
+        "CUDA has ~%d MiB free (< %d MiB required); using CPU.",
+        round(free_mb), min_free_mb
+      ))
+      return("cpu")
+    }
+  }
+
+  ok <- tryCatch({
+    x <- torch::torch_randn(c(32L, 20L, 128L), device = "cuda")
+    torch::nnf_gelu(x)
+    rm(x)
+    torch::cuda_empty_cache()
+    TRUE
+  }, error = function(e) FALSE)
+  if (!ok) {
+    message("CUDA probe failed (likely out of memory); using CPU.")
+    return("cpu")
+  }
+  "cuda"
 }
-cat(sprintf("Using device: %s\n", device_use))
+
+device_use <- if (run_fast) "cpu" else select_torch_device(min_free_mb = 512L)
+if (requireNamespace("torch", quietly = TRUE)) torch::torch_manual_seed(42)
+cat(sprintf("Using device: %s (run_fast=%s)\n", device_use, run_fast))
 ```
 
 ## Data Loading and Preprocessing
@@ -289,18 +326,18 @@ cf_fit <- counterfactual_model(
   out_col    = fin_idx,
   lag        = LAG,
   models     = c("deepsynth", "crn", "gnet"),
-  latent_dim = 32L,
-  rep_dim    = 32L,
-  hidden     = 64L,
+  latent_dim = if (run_fast) 16L else 32L,
+  rep_dim    = if (run_fast) 16L else 32L,
+  hidden     = if (run_fast) 32L else 64L,
   lam_adv    = 0.2,
   dropout    = 0.15,
-  epochs     = 80L,
+  epochs     = if (run_fast) 30L else 80L,
   lr         = 3e-4,
-  patience   = 15L,
-  batch_size = 64L,
+  patience   = if (run_fast) 8L else 15L,
+  batch_size = if (identical(device_use, "cuda")) 32L else 64L,
   val_split  = 0.2,
   device     = device_use,
-  verbose    = TRUE
+  verbose    = !run_fast
 )
 
 cat("\nTraining complete.\n")

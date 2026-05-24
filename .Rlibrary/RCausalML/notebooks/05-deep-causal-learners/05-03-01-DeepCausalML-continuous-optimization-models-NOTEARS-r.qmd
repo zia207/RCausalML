@@ -1,0 +1,735 @@
+# Continuous Optimization Models (NOTEARS)
+
+
+**NOTEARS** ("DAGs with NO TEARS", Zheng et al., NeurIPS 2018) was the first method to make causal structure learning (discovering a Directed Acyclic Graph / DAG from observational data) a **purely continuous, gradient-based optimization problem**.
+
+Instead of searching the combinatorial space of $2^{O(d^2)}$ possible DAGs (intractable for $d \gtrsim 10$ variables), NOTEARS optimizes a real-valued weighted adjacency matrix $\mathbf{W} \in \mathbb{R}^{d \times d}$ directly. It minimizes a score that measures how well $\mathbf{W}$ explains the data while enforcing **acyclicity** via a smooth differentiable constraint and promoting **sparsity** with an $\ell_1$ penalty.
+
+Under the **linear Structural Equation Model (SEM)** assumption: $$\mathbf{X} = \mathbf{X} \mathbf{W} + \mathbf{Z}$$ (where $\mathbf{Z}$ is independent noise, often Gaussian), the method recovers the causal DAG (up to Markov equivalence in some cases) efficiently.
+
+**Key innovation**: The acyclicity function $$h(\mathbf{W}) = \mathrm{tr}(\exp(\mathbf{W} \odot \mathbf{W})) - d = 0$$ is exactly zero **if and only if** the graph of $\mathbf{W}$ is a DAG. Combined with augmented Lagrangian optimization, this turns the NP-hard problem into a tractable non-convex program solvable by L-BFGS or SGD.
+
+NOTEARS is simple (core algorithm $<$ 60 lines), fast on moderate $d$ ($\leq 100$–200), and remains a foundational baseline for all later continuous causal discovery methods (GOLEM, DAG-GNN, GraN-DAG, etc.).
+
+
+##  NOTEARS with {RCausalML}
+
+We will implement the linear and nonlinear NOTEARS variants in R using {RCausalML} package. We will apply these to synthetic data (linear and nonlinear SEMs) and the Sachs dataset, evaluating performance against known ground truth DAGs.
+
+The **RCausalML** package implements NOTEARS (NO TEARS) for causal directed acyclic graph (DAG) structure learning from observational data. NOTEARS treats the discrete acyclicity constraint as a continuous constraint $h(W) = 0$ using the trace of the matrix exponential ($h(W) = \mathrm{tr}(e^{W \odot W}) - d$), so the problem is solved with continuous optimization (e.g. augmented Lagrangian with L-BFGS-B for linear, Adam + L-BFGS for nonlinear).
+
+**Linear NOTEARS**: learns a weighted adjacency matrix $W$ by minimizing a loss (e.g. least squares, logistic, Poisson) plus L1 penalty, subject to $h(W) = 0$. Uses `expm` and L-BFGS-B.
+
+**Nonlinear NOTEARS** (R + **torch**): uses MLP or Sobolev basis models to capture nonlinear relationships; acyclicity is enforced via a differentiable $h(W)$. Requires the **torch** package.
+
+**Main functions:**
+
+- `notears_linear` — Linear NOTEARS: L2/logistic/Poisson loss + L1, augmented Lagrangian.
+- `notears_nonlinear` — Nonlinear NOTEARS with MLP or Sobolev model (Adam then L-BFGS).
+- `NotearsMLP` — Torch module: MLP for nonlinear SEM (when **torch** is installed).
+- `NotearsSobolev` — Torch module: Sobolev basis for nonlinear SEM (when **torch** is installed).
+
+**Utilities and simulation:**
+
+- `is_dag` — Check if a weighted adjacency matrix is a DAG.
+- `simulate_dag` — Simulate random DAG (Erdős–Rényi or scale-free).
+- `simulate_parameter` — Draw edge weights for a DAG.
+- `simulate_linear_sem` — Generate data from a linear SEM (Gaussian, exponential, uniform noise).
+- `simulate_nonlinear_sem` — Generate data from a nonlinear SEM (MLP or MIM).
+- `count_accuracy` — Compare estimated graph to ground truth (FDR, TPR, FPR, SHD, nnz).
+- `set_random_seed` — Set R and torch seeds for reproducibility.
+
+
+**Reference:** Zheng, X., Aragam, B., Ravikumar, P., & Xing, E. P. (2018). DAGs with NO TEARS: Continuous optimization for structure learning. *NeurIPS*. <https://arxiv.org/abs/1803.01422>.
+
+### Setup
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+# Install required packages if not already installed
+required_packages <- c("expm", "igraph", "torch", "tidyverse")
+
+for (pkg in required_packages) {
+  if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
+    install.packages(pkg, repos = "https://cloud.r-project.org")
+    library(pkg, character.only = TRUE)
+  }
+}
+
+# Source the NOTEARS implementation (from package R/)
+pkg_root <- if (file.exists("R/notears.R")) "." else if (file.exists("../../../../R/notears.R")) "../../../../" else stop("Run from package root or notebook directory")
+source(file.path(pkg_root, "R/notears.R"))
+source(file.path(pkg_root, "R/drawing.R"))
+
+# Set random seed for reproducibility
+set_random_seed(42)
+```
+
+### Laod R Packages
+
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+
+library(expm)
+library(igraph)
+library(torch)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Source the NOTEARS implementation files
+# source("notears.R")
+# source("drawing.R")
+
+# Set device: use GPU if available, else fallback to CPU
+if (cuda_is_available()) {
+  device <- torch_device("cuda")
+} else {
+  device <- torch_device("cpu")
+}
+cat("Using device:", as.character(device), "\n")
+```
+
+## Part I: Synthetic Data — Linear NOTEARS
+
+### Data and Data Processing
+
+We use synthetic data from the official utilities (ground-truth DAG known for validation).
+
+```{r}
+#| echo: true
+#| warning: false
+
+#| echo: true
+#| warning: false
+# ── DATASET 1: Linear Gaussian SEM  (d = 20) ─────────────────────────────────
+set_random_seed(42)
+n_lin <- 2000; d_lin <- 20; s0_lin <- 20
+graph_type <- "ER"; sem_type_lin <- "gauss"
+B_true_lin <- simulate_dag(d_lin, s0_lin, graph_type)
+W_true_lin <- simulate_parameter(B_true_lin)
+X_lin      <- simulate_linear_sem(W_true_lin, n_lin, sem_type_lin)
+# Save for reproducibility
+write.csv(X_lin,      "X_linear.csv",      row.names = FALSE)
+write.csv(W_true_lin, "W_true_linear.csv", row.names = FALSE)
+# Center (NOTEARS is scale-sensitive)
+X_lin <- scale(X_lin, center = TRUE, scale = FALSE)
+# 70 / 15 / 15 split
+set.seed(42)
+tr1  <- sample(1:n_lin, floor(0.70 * n_lin))
+tmp1 <- setdiff(1:n_lin, tr1)
+va1  <- sample(tmp1, floor(0.50 * length(tmp1)))
+te1  <- setdiff(tmp1, va1)
+X_lin_train <- X_lin[tr1, ]; X_lin_val <- X_lin[va1, ]; X_lin_test <- X_lin[te1, ]
+cat("Linear SEM    — Train:", dim(X_lin_train),
+    "| Val:", dim(X_lin_val), "| Test:", dim(X_lin_test), "\n")
+```
+
+### Training NOTEARS linear
+
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+W_est_lin <- notears_linear(
+  X           = X_lin_train,
+  lambda1     = 0.1,
+  loss_type   = "l2",
+  max_iter    = 100,
+  h_tol       = 1e-8,
+  rho_max     = 1e+16,
+  w_threshold = 0.3
+)
+cat("Acyclic (linear SEM):", is_dag(W_est_lin), "\n")
+# Validation reconstruction loss: (1/(2n)) ||X_val - X_val W||_F^2
+n_val_lin    <- nrow(X_lin_val)
+val_loss_lin <- 0.5 / n_val_lin * sum((X_lin_val - X_lin_val %*% W_est_lin)^2)
+cat(sprintf("Validation L2 loss (linear model | linear SEM): %.6f\n", val_loss_lin))
+B_est_lin <- (abs(W_est_lin) > 0) * 1
+```
+
+**Hyperparameter tuning tips**: - $\lambda_1 = 0.01$--$0.5$ (cross-validate on SHD if you have ground truth) - $w_{\mathrm{threshold}} = 0.1$--$0.5$ - For very large $d$, use NOTEARS-MLP variant (in `notears.R`).
+
+### CATE Prediction and Validation
+
+NOTEARS learns **structure**, not effects directly. Once you have the DAG, you can: 1. Identify adjustment sets (backdoor criterion). 2. Estimate **Average Treatment Effect (ATE)** or **Conditional Average Treatment Effect (CATE)** using regression / IPW / DoubleML on the adjustment set.
+
+**Synthetic CATE example** (assume variable 0 = treatment $T$, variable 19 = outcome $Y$):
+
+```{r}
+#| echo: true
+#| warning: false
+
+# ── True ATE via structural path sum: (I − W)^{-1}[Y, T] ──────────────────
+I_lin           <- diag(d_lin)
+true_total_lin  <- solve(I_lin - W_true_lin)
+true_ATE_lin    <- true_total_lin[20, 1]   # R is 1-indexed
+cat(sprintf("True ATE (T → Y, linear SEM):  %.4f\n", true_ATE_lin))
+
+# ── Backdoor-adjusted OLS estimate ────────────────────────────────────────
+confounders_idx_lin <- setdiff(1:d_lin, c(1, 20))
+T_tr_lin   <- X_lin_train[, 1]
+Y_tr_lin   <- X_lin_train[, 20]
+C_tr_lin   <- X_lin_train[, confounders_idx_lin]
+
+model_lin  <- lm(Y_tr_lin ~ T_tr_lin + C_tr_lin)
+est_ATE_lin <- coef(model_lin)["T_tr_lin"]
+cat(sprintf("Estimated ATE:  %.4f  (error: %.4f)\n",
+            est_ATE_lin, abs(est_ATE_lin - true_ATE_lin)))
+
+# ── Heterogeneous CATE via interaction model ──────────────────────────────
+X_int_lin       <- model.matrix(~ T_tr_lin * C_tr_lin - 1)
+model_cate_lin  <- lm(Y_tr_lin ~ X_int_lin - 1)
+cat("CATE interaction model fitted. Use predict(model_cate_lin, newdata) on new covariates.\n")
+
+```
+
+**Validation metrics** (with ground truth):
+
+They are standard **evaluation metrics** used when you have a **ground-truth DAG** (B_true: binary adjacency matrix) and a **predicted/estimated DAG** (B_est: binary adjacency matrix learned by the algorithm), and we want to measure how well the predicted graph matches the true causal structure.
+
+-   **fdr** → **False Discovery Rate** Fraction of predicted edges that are **incorrect** (false positives among all positives predicted by the model). Formula: FDR = FP / (TP + FP) → Lower is better (ideally close to 0). High FDR means the model is over-predicting many wrong causal edges (too many spurious links).
+
+-   **tpr** → **True Positive Rate** (also called **Recall** or **Sensitivity** in this setting) Fraction of **true edges** that the model correctly recovered. Formula: TPR = TP / (TP + FN) → Higher is better (ideally close to 1). High TPR means the model finds most of the real causal relationships.
+
+-   **fpr** → **False Positive Rate** Fraction of **non-edges** in the true graph that were incorrectly predicted as edges. Formula: FPR = FP / (FP + TN) → Lower is better (ideally close to 0). High FPR indicates the model is adding many spurious directed edges.
+
+-   **shd** → **Structural Hamming Distance** Total number of edge differences between the predicted graph and the true graph. It counts:
+
+    -   Missing edges (FN)
+    -   Extra edges (FP)
+    -   Reversed edges (one of the most common errors in equivalence-class methods) → Lower is better (0 = perfect recovery). SHD is one of the most commonly reported overall error metrics in causal discovery papers.
+
+-   **nnz** → **Number of Non-Zero entries** (i.e., number of predicted edges) Simply the count of edges in the estimated graph $B_{\mathrm{est}}$ (sum of the binary matrix). → Used to understand the sparsity of the learned graph. You compare it to the true number of edges in $B_{\mathrm{true}}$. If nnz is much higher than the true edge count → likely high FDR/FPR. If much lower → likely low TPR (missing many true edges).
+
+These metrics treat the problem as **directed edge prediction** (binary classification over all possible directed pairs, excluding self-loops). They are especially useful on synthetic benchmarks where you know the ground truth DAG.
+
+If you're seeing these in your notebook run, they tell you exactly how accurate your learned causal graph is compared to the simulation's true structure. Lower SHD + high TPR + low FDR is the sweet spot most papers aim for.
+
+```{r}
+#| echo: true
+#| warning: false
+
+acc_lin_result <- count_accuracy(B_true_lin, B_est_lin)
+print(acc_lin_result)   # list(fdr = , tpr = , fpr = , shd = , nnz = )
+
+```
+
+SHD (Structural Hamming Distance) $< 5$--$10$ is excellent on this scale.
+
+### Visualization
+
+The **Learned Weighted Adjacency Matrix (NOTEARS)** is the main output of the NOTEARS algorithm: a **$d \times d$ matrix $W$** that NOTEARS fits from data and that encodes the estimated causal graph and edge strengths.
+
+It represents
+
+-   **Rows and columns** both index the same set of **d variables** (e.g. the 11 Sachs proteins).
+-   **Entry W\[i, j\]** is the **estimated strength of the directed edge j → i** (from variable j to variable i).
+    -   So column j corresponds to the "cause" and row i to the "effect."
+-   **Zeros** mean "no direct edge" in the estimated DAG; **non‑zeros** are the learned weights (can be positive or negative).
+
+So the matrix is the **weighted adjacency matrix** of the estimated DAG: which edges exist and how strong they are.
+
+NOTEARS **learns** this matrix by:
+
+1.  **Fitting** it so that the linear SEM $\mathbf{X} = \mathbf{X}\mathbf{W} + \mathbf{Z}$ (or a nonlinear variant) fits the data well (e.g. squared reconstruction error).
+2.  **Enforcing** that the graph of $W$ is a **DAG** (no cycles), using the NOTEARS acyclicity constraint.
+3.  **Encouraging sparsity** (many zeros) via an L1 penalty so that only a small set of edges is kept.
+
+So "Learned Weighted Adjacency Matrix (NOTEARS)" = the **estimated DAG in matrix form**, with entries giving the estimated direct effect of one variable on another (edge presence and strength).
+
+The **Learned Causal DAG** is the directed acyclic graph (DAG) that NOTEARS infers from the data. It's the same structure as the learned weighted adjacency matrix, but viewed as a graph instead of a matrix.
+
+```{r}
+#| echo: true
+#| warning: false
+#| fig-width: 8
+#| fig-height: 6
+
+library(reshape2)
+
+# Weighted adjacency matrix heatmap
+W_melt_lin <- melt(W_est_lin)
+colnames(W_melt_lin) <- c("Effect", "Cause", "Weight")
+
+ggplot(W_melt_lin, aes(x = Cause, y = Effect, fill = Weight)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red",
+                       midpoint = 0, limits = c(-1, 1)) +
+  labs(title = "Learned Weighted Adjacency Matrix — Linear SEM (NOTEARS Linear)",
+       x = "Cause (source)", y = "Effect (destination)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+#| echo: true
+#| warning: false
+#| fig-width: 8
+#| fig-height: 6
+
+G_lin <- graph_from_adjacency_matrix(W_est_lin != 0, mode = "directed", weighted = TRUE)
+V(G_lin)$name <- 1:d_lin
+pos_lin <- spring_layout(G_lin, seed = 42)
+
+plot(G_lin,
+     layout             = pos_lin,
+     vertex.color       = "lightblue",
+     vertex.label.color = "black",
+     edge.color         = "gray40",
+     edge.arrow.size    = 0.5,
+     main               = "Learned Causal DAG — Linear Gaussian SEM (NOTEARS Linear)",
+     vertex.size        = 15,
+     vertex.label.cex   = 0.8)
+
+```
+
+## Part 2: NOTEARS Nonlinear (MLP and Sobolev) on Sachs
+
+We now fit three variants on the nonlinear SEM and compare against the known ground-truth DAG B_true_nlin
+
+### Data and Data Prpcessing
+
+```{r}
+
+#| echo: true
+#| warning: false
+
+# ── Nonlinear SEM simulator (re-synthesized for nonlinear NOTEARS models) ───
+# Convention: W[i, j] = weight of directed edge j → i
+#             (row = destination / effect, column = source / cause)
+#
+# sem_type:
+#   "mlp"  – tanh(z)      smooth, bounded nonlinearity
+#   "mim"  – z * sin(z)   multiplicative interaction (non-monotone)
+#   "gp"   – sin(z)       periodic / Gaussian-process-like
+#
+simulate_nonlinear_sem_custom <- function(W, n, sem_type = "mlp", noise_sd = 0.5) {
+  d <- ncol(W)
+
+  # igraph: A[a, b] != 0  =>  edge a -> b
+  # Since W[i, j] != 0  <=>  j -> i, we need A = t(W)
+  g   <- igraph::graph_from_adjacency_matrix((t(W) != 0) * 1L, mode = "directed")
+  ord <- as.integer(igraph::topo_sort(g))   # parents processed before children
+
+  X <- matrix(0.0, nrow = n, ncol = d)
+
+  for (i in ord) {
+    pa <- which(W[i, ] != 0)               # parents of node i
+
+    if (length(pa) == 0L) {
+      X[, i] <- rnorm(n)                   # root node: Gaussian noise only
+    } else {
+      z <- as.vector(X[, pa, drop = FALSE] %*% W[i, pa])   # weighted parent sum
+      X[, i] <- switch(sem_type,
+        mlp = tanh(z)   + rnorm(n, sd = noise_sd),
+        mim = z * sin(z)+ rnorm(n, sd = noise_sd),
+        gp  = sin(z)    + rnorm(n, sd = noise_sd),
+                 z      + rnorm(n)          # fallback: linear
+      )
+    }
+  }
+  X
+}
+
+
+
+# ── DATASET 2: Nonlinear SEM, re-synthesized  (d = 10) ───────────────────────
+# d = 10 keeps NotearsMLP / Sobolev runtimes tractable in a notebook
+set_random_seed(42)
+n_nlin <- 2000; d_nlin <- 10; s0_nlin <- 10
+B_true_nlin <- simulate_dag(d_nlin, s0_nlin, graph_type)
+W_true_nlin <- simulate_parameter(B_true_nlin)
+X_nlin      <- simulate_nonlinear_sem_custom(W_true_nlin, n_nlin, sem_type = "mlp")
+write.csv(X_nlin,      "X_nonlinear.csv",      row.names = FALSE)
+write.csv(W_true_nlin, "W_true_nonlinear.csv", row.names = FALSE)
+X_nlin <- scale(X_nlin, center = TRUE, scale = FALSE)
+set.seed(42)
+tr2  <- sample(1:n_nlin, floor(0.70 * n_nlin))
+tmp2 <- setdiff(1:n_nlin, tr2)
+va2  <- sample(tmp2, floor(0.50 * length(tmp2)))
+te2  <- setdiff(tmp2, va2)
+X_nlin_train <- X_nlin[tr2, ]; X_nlin_val <- X_nlin[va2, ]; X_nlin_test <- X_nlin[te2, ]
+cat("Nonlinear SEM — Train:", dim(X_nlin_train),
+    "| Val:", dim(X_nlin_val), "| Test:", dim(X_nlin_test), "\n")
+```
+
+### Linear NOTEARS — Misspecified Baseline
+
+Fitting a linear model on nonlinear data shows the cost of the linearity assumption.
+
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+
+W_lin_nlin <- notears_linear(
+  X           = X_nlin_train,
+  lambda1     = 0.1,
+  loss_type   = "l2",
+  max_iter    = 100,
+  h_tol       = 1e-8,
+  rho_max     = 1e+16,
+  w_threshold = 0.3
+)
+
+cat("Linear NOTEARS on nonlinear SEM — acyclic:", is_dag(W_lin_nlin), "\n")
+
+n_val_nlin      <- nrow(X_nlin_val)
+val_loss_lin_nl <- 0.5 / n_val_nlin *
+                   sum((X_nlin_val - X_nlin_val %*% W_lin_nlin)^2)
+cat(sprintf("Validation L2 loss (linear model | nonlinear SEM): %.6f\n", val_loss_lin_nl))
+
+B_lin_nlin <- (abs(W_lin_nlin) > 0) * 1
+
+```
+
+### NotearsMLP on Nonlinear Structural Equation Model (SEM)
+
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+
+torch_set_default_dtype(torch_double())
+set_random_seed(42)
+
+model_mlp_nlin <- NotearsMLP(d = d_nlin, hidden = 10, bias = TRUE)
+
+W_mlp_nlin <- notears_nonlinear(
+  model_mlp_nlin, X_nlin_train,
+  lambda1     = 0.01,
+  lambda2     = 0.01,
+  max_iter    = 150L,
+  lbfgs_iter  = 0L,
+  w_threshold = 0.3,
+  lr          = 1e-2,
+  verbose     = FALSE
+)
+
+cat("NotearsMLP on nonlinear SEM — acyclic:", is_dag(W_mlp_nlin), "\n")
+B_mlp_nlin <- (abs(W_mlp_nlin) > 1e-5) * 1
+
+# Training loss curve
+losses_mlp <- attr(W_mlp_nlin, "train_losses")
+if (!is.null(losses_mlp) && length(losses_mlp) > 0) {
+  ggplot(data.frame(Iteration = seq_along(losses_mlp), Loss = losses_mlp),
+         aes(x = Iteration, y = Loss)) +
+    geom_line(color = "steelblue", linewidth = 0.8) +
+    labs(title = "NotearsMLP — Training Loss (Nonlinear SEM)",
+         x = "Iteration", y = "Loss") +
+    theme_minimal()
+}
+
+```
+
+#### NotearsSobolev on Nonlinear SEM
+
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+
+set_random_seed(42)
+
+# k = 4 basis functions per variable (sine-based Sobolev expansion)
+model_sob_nlin <- NotearsSobolev(d = d_nlin, k = 4L)
+
+W_sob_nlin <- notears_nonlinear(
+  model_sob_nlin, X_nlin_train,
+  lambda1     = 0.01,
+  lambda2     = 0.01,
+  max_iter    = 150L,
+  lbfgs_iter  = 0L,
+  w_threshold = 0.3,
+  lr          = 1e-2,
+  verbose     = FALSE
+)
+
+cat("NotearsSobolev on nonlinear SEM — acyclic:", is_dag(W_sob_nlin), "\n")
+B_sob_nlin <- (abs(W_sob_nlin) > 1e-5) * 1
+
+# Training loss curve
+losses_sob <- attr(W_sob_nlin, "train_losses")
+if (!is.null(losses_sob) && length(losses_sob) > 0) {
+  ggplot(data.frame(Iteration = seq_along(losses_sob), Loss = losses_sob),
+         aes(x = Iteration, y = Loss)) +
+    geom_line(color = "darkorange", linewidth = 0.8) +
+    labs(title = "NotearsSobolev — Training Loss (Nonlinear SEM)",
+         x = "Iteration", y = "Loss") +
+    theme_minimal()
+}
+
+```
+
+### Model Comparison
+
+Performance of all models on the nonlinear SEM (d=100, ground truth B_true_nlin known). The linear model on the linear SEM is also shown for reference
+
+```{r}
+#| echo: true
+#| warning: false
+
+# Accuracy helper — returns NULL with a message if graph is not a DAG
+safe_acc <- function(B_true, W_est, B_est, label) {
+  if (!is_dag(W_est)) {
+    cat(sprintf("  %-30s  NOT a DAG — skipping metrics\n", label))
+    return(NULL)
+  }
+  count_accuracy(B_true, B_est)
+}
+
+acc_lin_on_nlin  <- safe_acc(B_true_nlin, W_lin_nlin,  B_lin_nlin,  "Linear NOTEARS (nonlin SEM)")
+acc_mlp_on_nlin  <- safe_acc(B_true_nlin, W_mlp_nlin,  B_mlp_nlin,  "NotearsMLP")
+acc_sob_on_nlin  <- safe_acc(B_true_nlin, W_sob_nlin,  B_sob_nlin,  "NotearsSobolev")
+
+print_row <- function(label, acc) {
+  if (is.null(acc)) {
+    cat(sprintf("  %-34s %7s %7s %7s %5s %5s\n",
+                label, "--", "--", "--", "--", "--"))
+  } else {
+    cat(sprintf("  %-34s %7.4f %7.4f %7.4f %5d %5d\n",
+                label, acc$fdr, acc$tpr, acc$fpr, acc$shd, acc$nnz))
+  }
+}
+
+div <- paste(rep("-", 72), collapse = "")
+cat("\n", div, "\n")
+cat(sprintf("  %-34s %7s %7s %7s %5s %5s\n", "Model", "FDR", "TPR", "FPR", "SHD", "nnz"))
+cat(div, "\n")
+
+# Reference: linear model on its native (linear) SEM
+cat(sprintf("  %-34s %7.4f %7.4f %7.4f %5d %5d   (d=20, linear SEM)\n",
+            "Linear NOTEARS — native SEM *",
+            acc_lin_result$fdr, acc_lin_result$tpr, acc_lin_result$fpr,
+            acc_lin_result$shd, acc_lin_result$nnz))
+cat(div, "\n")
+
+# All three models on nonlinear SEM
+print_row("Linear NOTEARS  (misspecified baseline)", acc_lin_on_nlin)
+print_row("NotearsMLP      (hidden = 10)",           acc_mlp_on_nlin)
+print_row("NotearsSobolev  (k = 4)",                 acc_sob_on_nlin)
+cat(div, "\n")
+cat(sprintf("  True edges in nonlinear SEM graph: %d  |  d = %d\n",
+            sum(B_true_nlin), d_nlin))
+cat("  * different d and SEM — shown for qualitative reference only\n")
+cat("  Lower FDR / FPR / SHD and higher TPR = better\n\n")
+
+```
+
+### ATE Estimation — Nonlinear SEM
+
+We select the best-performing DAG from the nonlinear comparison (prefer MLP if valid), use it to identify the adjustment set (parents of $Y$, i.e. $\mathrm{PA}(Y) \setminus \{T\}$), then estimate the ATE of variable 1 (treatment $T$) on variable 10 (outcome $Y$). A 500-replicate bootstrap gives the 95% CI.
+
+```{r}
+#| echo: true
+#| warning: false
+
+T_idx_nlin <- 1L
+Y_idx_nlin <- d_nlin   # last variable as outcome
+
+# Choose best available DAG for the adjustment set
+if (!is.null(acc_mlp_on_nlin)) {
+  W_best_nlin  <- W_mlp_nlin;  label_best <- "NotearsMLP"
+} else if (!is.null(acc_sob_on_nlin)) {
+  W_best_nlin  <- W_sob_nlin;  label_best <- "NotearsSobolev"
+} else {
+  W_best_nlin  <- W_lin_nlin;  label_best <- "Linear NOTEARS (fallback)"
+}
+cat(sprintf("Adjustment set derived from: %s\n", label_best))
+
+# Adjustment set: parents of Y in the learned graph, PA(Y) \ {T}
+pa_Y_nlin  <- which(abs(W_best_nlin[Y_idx_nlin, ]) > 1e-5)
+conf_nlin  <- setdiff(pa_Y_nlin, T_idx_nlin)
+if (length(conf_nlin) == 0L)
+  conf_nlin <- setdiff(1:d_nlin, c(T_idx_nlin, Y_idx_nlin))  # fallback: all others
+
+T_n <- X_nlin_train[, T_idx_nlin]
+Y_n <- X_nlin_train[, Y_idx_nlin]
+C_n <- X_nlin_train[, conf_nlin, drop = FALSE]
+
+train_nlin_df  <- data.frame(Y = Y_n, T = T_n, C_n)
+rhs_nlin       <- paste(colnames(C_n), collapse = " + ")
+fmla_nlin      <- if (!nzchar(rhs_nlin)) "Y ~ T" else paste("Y ~ T +", rhs_nlin)
+model_ate_nlin <- lm(as.formula(fmla_nlin), data = train_nlin_df)
+ate_nlin       <- coef(model_ate_nlin)["T"]
+
+# Unadjusted comparison (naive regression, no confounders)
+ate_unadj_nlin <- coef(lm(Y_n ~ T_n))["T_n"]
+
+# Bootstrap 95% CI
+set.seed(42); n_boot <- 500
+ate_boot_nlin <- replicate(n_boot, {
+  idx <- sample(nrow(X_nlin_train), replace = TRUE)
+  Tb  <- X_nlin_train[idx, T_idx_nlin]
+  Yb  <- X_nlin_train[idx, Y_idx_nlin]
+  Cb  <- X_nlin_train[idx, conf_nlin, drop = FALSE]
+  bdf <- data.frame(Y = Yb, T = Tb, Cb)
+  rhs_boot <- paste(colnames(Cb), collapse = " + ")
+  fmla_boot <- if (!nzchar(rhs_boot)) "Y ~ T" else paste("Y ~ T +", rhs_boot)
+  coef(lm(as.formula(fmla_boot), data = bdf))["T"]
+})
+ci_lo_nlin <- quantile(ate_boot_nlin, 0.025)
+ci_hi_nlin <- quantile(ate_boot_nlin, 0.975)
+
+# Structural ATE from learned W (linear approximation; exact only for linear SEMs)
+I_nlin <- diag(d_nlin)
+struct_ate_nlin <- tryCatch(
+  solve(I_nlin - W_best_nlin)[Y_idx_nlin, T_idx_nlin],
+  error = function(e) NA_real_
+)
+
+cat(sprintf("\nATE  (T=%d → Y=%d)  on Nonlinear SEM\n", T_idx_nlin, Y_idx_nlin))
+cat(sprintf("  Adjusted estimate   : %+.4f\n",            ate_nlin))
+cat(sprintf("  Unadjusted estimate : %+.4f\n",            ate_unadj_nlin))
+cat(sprintf("  Confounding gap     : %+.4f\n",            ate_nlin - ate_unadj_nlin))
+cat(sprintf("  Bootstrap 95%% CI   : [%.4f, %.4f]\n",    ci_lo_nlin, ci_hi_nlin))
+cat(sprintf("  Structural ATE (W)  : %+.4f  (linear approx.)\n", struct_ate_nlin))
+
+cat("\n--- Validation ---\n")
+if (ci_lo_nlin > 0 || ci_hi_nlin < 0) {
+  cat("CI excludes 0  --> significant effect at 95%.\n")
+} else {
+  cat("CI includes 0  --> no strong evidence of effect.\n")
+}
+if (abs(ate_nlin - ate_unadj_nlin) > 0.05 * abs(ci_hi_nlin - ci_lo_nlin)) {
+  cat("Confounders matter: adjusted and unadjusted estimates differ substantially.\n")
+} else {
+  cat("Limited confounding: adjusted ≈ unadjusted.\n")
+}
+
+```
+
+### Visualization — Nonlinear SEM Models
+
+Side-by-side heatmaps — one panel per model:
+
+```{r}
+#| echo: true
+#| warning: false
+#| fig-width: 14
+#| fig-height: 4
+
+library(gridExtra)
+
+make_heatmap <- function(W, title_str, lim = 1) {
+  df <- reshape2::melt(W)
+  colnames(df) <- c("Effect", "Cause", "Weight")
+  ggplot(df, aes(x = Cause, y = Effect, fill = Weight)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red",
+                         midpoint = 0, limits = c(-lim, lim)) +
+    labs(title = title_str, x = "Cause", y = "Effect") +
+    theme_minimal() +
+    theme(axis.text.x  = element_text(angle = 90, hjust = 1, size = 7),
+          axis.text.y  = element_text(size = 7),
+          plot.title   = element_text(size = 9, face = "bold"))
+}
+
+p1 <- make_heatmap(W_lin_nlin,  "Linear NOTEARS\n(nonlinear SEM baseline)")
+p2 <- make_heatmap(W_mlp_nlin,  "NotearsMLP\n(nonlinear SEM)")
+p3 <- make_heatmap(W_sob_nlin,  "NotearsSobolev  k = 4\n(nonlinear SEM)")
+
+grid.arrange(p1, p2, p3, ncol = 3)
+
+```
+
+### Directed Acyclic Graph (DAG)
+
+```{r}
+#| echo: true
+#| warning: false
+#| fig-width: 16
+#| fig-height: 5
+
+par(mfrow = c(1, 4), mar = c(1, 1, 3, 1))
+
+common_args <- list(
+  vertex.label.color = "black",
+  edge.arrow.size    = 0.5,
+  vertex.size        = 22,
+  vertex.label.cex   = 0.85
+)
+
+# Ground truth
+G_gt <- graph_from_adjacency_matrix(B_true_nlin, mode = "directed")
+V(G_gt)$name <- 1:d_nlin
+do.call(plot, c(list(G_gt, main = "Ground Truth\n(Nonlinear SEM)",
+                     vertex.color = "lightgreen", edge.color = "forestgreen"),
+               common_args))
+
+# Linear NOTEARS (misspecified)
+G_ln <- graph_from_adjacency_matrix(B_lin_nlin, mode = "directed")
+V(G_ln)$name <- 1:d_nlin
+do.call(plot, c(list(G_ln, main = "Linear NOTEARS\n(misspecified baseline)",
+                     vertex.color = "lightblue", edge.color = "gray40"),
+               common_args))
+
+# NotearsMLP
+B_plot_mlp <- if (!is.null(acc_mlp_on_nlin)) B_mlp_nlin else matrix(0L, d_nlin, d_nlin)
+G_mlp <- graph_from_adjacency_matrix(B_plot_mlp, mode = "directed")
+V(G_mlp)$name <- 1:d_nlin
+do.call(plot, c(list(G_mlp, main = "NotearsMLP",
+                     vertex.color = "lightsalmon", edge.color = "tomato3"),
+               common_args))
+
+# NotearsSobolev
+B_plot_sob <- if (!is.null(acc_sob_on_nlin)) B_sob_nlin else matrix(0L, d_nlin, d_nlin)
+G_sob <- graph_from_adjacency_matrix(B_plot_sob, mode = "directed")
+V(G_sob)$name <- 1:d_nlin
+do.call(plot, c(list(G_sob, main = "NotearsSobolev  (k = 4)",
+                     vertex.color = "plum", edge.color = "purple4"),
+               common_args))
+
+par(mfrow = c(1, 1))
+
+```
+
+### Interpretation notes for Part I-B:
+
+Linear NOTEARS on nonlinear data is a deliberately misspecified baseline — it typically shows higher SHD and lower TPR than the native-linear setting, revealing how the linearity assumption costs recovery accuracy.
+
+-   NotearsMLP tends to outperform linear NOTEARS on nonlinear data when $n$ is sufficient ($\geq 500$ per variable), at the cost of longer training.
+
+-   NotearsSobolev is competitive with MLP on smooth / periodic-like nonlinearities (the `tanh` and `sin` SEM types here), because its sine-basis expansion naturally approximates such functions.
+
+-   DAG validity (`is_dag`) must be checked before interpreting structural metrics; augmented Lagrangian may occasionally fail to enforce acyclicity on small nonlinear problems — reduce `lr` or increase `max_iter` if this happens.
+
+## Summary and Conclusion
+
+NOTEARS revolutionized causal discovery by turning an intractable combinatorial search into a clean continuous optimization problem. Its architecture (loss + smooth acyclicity + augmented Lagrangian) is elegant and extensible (nonlinear versions, low-rank, etc.).
+
+**Strengths**: - Extremely simple & fast implementation. - State-of-the-art on linear Gaussian data. - Interpretable weighted edges.
+
+**Limitations & best practices**: - Assumes linearity and no hidden confounders. - Sensitive to scaling/units of variables → always center/standardize carefully or use robust variants. - For nonlinear data, use NOTEARS-MLP (in the same repo) or DAG-GNN / GraN-DAG. - Always validate on synthetic data first; combine with constraint-based methods (PC) for robustness.
+
+With this tutorial you can run end-to-end causal structure learning + downstream effect estimation in $<$ 100 lines of code. Start with synthetic data, move to your domain dataset, and iterate on $\lambda_1$ and $w_{\mathrm{threshold}}$.
+
+## Resources
+
+-   **Original Paper**: [DAGs with NO TEARS (Zheng et al., 2018)](https://arxiv.org/abs/1803.01422)
+-   **Official Code**: [github.com/xunzheng/notears](https://github.com/xunzheng/notears) (the 60-line implementation)
+-   **Extensions**: gCastle (NOTEARS + many variants), CausalNex (NOTEARS + Bayesian networks)
+-   **Further Reading**:
+    -   "Causal Discovery in Python" Medium series (2023–2024)
+    -   GraN-DAG & DAG-GNN papers (for nonlinear)
+    -   Benchmark: Sachs dataset, DREAM challenge networks
+-   **Advanced Libraries**: `gcastle`, `causal-learn` (for PC/GES), `DoWhy` + `EconML` (for effect estimation on learned graphs)
+-   **R Packages**: `expm`, `igraph`, `torch`, `ggplot2`, `causaldata`
+
+## Scientific terminology for beginners
+
+| Term | Simple explanation | Beginner example |
+|---|---|---|
+| NOTEARS | Method turning DAG search into smooth continuous optimization. | Learn weighted adjacency matrix by gradient descent. |
+| Adjacency matrix | Matrix encoding graph edges and strengths. | `W[i,j] != 0` means variable `i` is a parent of `j`. |
+| Acyclicity function | Differentiable penalty that is zero only for DAGs. | `h(W)=tr(exp(W∘W))-d` in NOTEARS. |
+| Sparsity penalty | Encourages fewer edges for interpretable graphs. | L1 regularization sets small edge weights to zero. |
+| Thresholding | Converting weighted graph to binary edges using cutoff. | Keep edges with absolute weight above 0.3. |
+| SHD (Structural Hamming Distance) | Number of edge additions/deletions/reversals vs true graph. | Lower SHD means learned graph is closer to ground truth. |

@@ -3,7 +3,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="default" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="index.html">RCausalML</a>
 
@@ -17,26 +17,78 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="articles/RCausalML-intro.html">Get Started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="tutorials/00-scientific-terminology-glossary.html">Glossary</a></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tutorials" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tutorials</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-tutorials"><li><h6 class="dropdown-header" data-toc-skip>--- Tree-Based Models ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-00-casual-tree-introduction-r.qmd">Causal Tree Introduction</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-01-causal-tree-r.qmd">Causal Tree</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-02-causal-forest-r.qmd">Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-03-causal-survival-forest-r.qmd">Causal Survival Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-04-instrumental-causal-forest-r.qmd">Instrumental Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-05-multi-arm-causal-forest-r.qmd">Multi-Arm Causal Forest</a></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/01-tree-based-Models/01-06-causal-xgboost-r.qmd">Causal XGBoost</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Meta-Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/02-meta-learners/">Meta-Learners Overview</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Uplift Trees &amp; Forests ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/03-uplift-trees-forests/">Uplift Trees &amp; Forests</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Double / Debiased Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/04-double-debiased-learners/">DML Notebooks</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Deep Causal Learners ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/05-deep-causal-learners/">Deep Causal Notebooks</a></li>
-    <li><h6 class="dropdown-header" data-toc-skip>--- Automated ML ---</h6></li>
-    <li><a class="external-link dropdown-item" href="https://github.com/zia207/RCausalML/blob/main/inst/notebooks/06-automated-ml/">Automated ML</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tree-based" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tree-Based</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-tree-based"><li><a class="dropdown-item" href="tutorials/01-00-casual-tree-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-01-causal-tree-r.html">Causal Tree</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-02-causal-forest-r.html">Causal Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-03-causal-survival-forest-r.html">Causal Survival Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-04-instrumental-causal-forest-r.html">Instrumental Causal Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-05-multi-arm-causal-forest-r.html">Multi-Arm Causal Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-06-causal-xgboost-r.html">Causal XGBoost</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-07-instrumental-causal-xgboost-r.html">Instrumental Causal XGBoost</a></li>
+    <li><a class="dropdown-item" href="tutorials/01-08-multi-arm-causal-boost-r.html">Multi-Arm Causal Boost</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-meta-learners" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Meta-Learners</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-meta-learners"><li><a class="dropdown-item" href="tutorials/02-00-meta-learners-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-01-meta-learners-binary-treatments-r.html">Binary Treatments</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-02-meta-learners-multiple-discrete-treatment-r.html">Multiple Discrete Treatments</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-03-meta-learners-continuous-treatment-r.html">Continuous Treatments</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-04-tmle-model-r.html">TMLE</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-05-meta-learners-domain-adaptation-learner-r.html">Domain Adaptation Learner</a></li>
+    <li><a class="dropdown-item" href="tutorials/02-06--meta-learners-doubly-robust-learners-r.html">Doubly Robust Learners</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-uplift" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Uplift</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-uplift"><li><a class="dropdown-item" href="tutorials/03-00-uplift-trees-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/03-01-uplift-trees-classification-r.html">Classification</a></li>
+    <li><a class="dropdown-item" href="tutorials/03-02-uplift-trees-regression-r.html">Regression</a></li>
+    <li><a class="dropdown-item" href="tutorials/03-03-uplift-randomForest-r.html">Random Forest</a></li>
+    <li><a class="dropdown-item" href="tutorials/03-04-uplift-xgboost.html">XGBoost</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-double-ml" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Double ML</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-double-ml"><li><a class="dropdown-item" href="tutorials/04-00-double-ml-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-01-double-ml-from-basics-to-application-r.html">Basics to Application</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-02-double-ml-%20single-multiple-treatment-r.html">Single/Multiple Treatment</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-03-double-ml-did-r.html">Difference-in-Differences</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-04-double-ml-iv-r.html">Instrumental Variables</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-05-double-ml-dynamic-ml.html">Dynamic Double ML</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-06-double-ml-weighted-double-ml.html">Weighted Double ML</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-07-double-ml-cluster-robust-r.html">Cluster Robust</a></li>
+    <li><a class="dropdown-item" href="tutorials/04-08-double-ml-ensemble-learners-r.html">Ensemble Learners</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-deep-causal-ml" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Deep Causal ML</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-deep-causal-ml"><li><a class="dropdown-item" href="tutorials/05-00-DeepCausalML-introduction-r.html">Introduction</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html">Treatment Effect Estimators</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-01-DeepCausalML-TARNET-r.html">TARNet</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-02-DeepCausalML-CFRTNet-r.html">CFRNet</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-03-DeepCausalML-DragonNet-r.html">DragonNet</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-01-04-DeepCausalML-GANITE-r.html">GANITE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html">Generative Latent-Variable Models</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-01-DeepCausalML-counterfactual-variational-autoencoder-CEVAE-r.html">CEVAE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-02-DeepCausalML-variational-autoencoder-causalVAE.html">CausalVAE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-03-DeepCausalML-identifiable-variational-autoencoders-CausaliVAEs.html">CausaliVAEs</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-04-DeepCausalML-causaldiscrepancyVAE-r.html">CausalDiscrepancyVAE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-05-DeepCausalML-causalGAN-r.html">CausalGAN</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.html">Deep Structural Causal Models</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-02-07-DeepCausalML-causal-encoding-generative-EGN-r.html">Causal Encoding (EGN)</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-00-DeepCausalML-structural-learnering-introduction-r.html">Causal Structural Learning</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-01-DeepCausalML-continuous-optimization-models-NOTEARS-r.html">NOTEARS</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-02-DeepCausalML-dag-structure-learning-graph-neural-networks-DagGNN-r.html">DAG-GNN</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-03-DeepCausalML-gradient-based-neural-learning-GranDag-r.html">GraN-DAG</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-04-DeepCausalML-DAGMA-NoCurl-r.html">DAGMA / DAG-NoCurl</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-03-05-DeepCausalML-causal-structural-learning-regularization-CASTLE-r.html">CASTLE</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-00-DeepCuasalML-timesseries-introduction-r.html">Causal Time Series</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-01-DeepCausalML-timeseries-neural-granger-cusuality-r.html">Neural Granger Causality</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-02-DeepCausalML-timeseries-structural-causal-model-SMC-r.html">Structural Causal Models</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-03-DeepCausalML-attension-transformer-r.html">Attention / Transformer</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-04-DeepCausalML-timeseries-RNN-LSTM-causaML-r.html">RNN / LSTM</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-05-DeepCausalML-timeseries-graph-nn-r.html">Graph Neural Networks</a></li>
+    <li><a class="dropdown-item" href="tutorials/05-04-06-DeepCausalML-timeseries-counterfactual-potential-causalML-r.html">Counterfactual / Potential Outcomes</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -201,12 +253,12 @@
 <div class="section level3">
 <h3 id="load">Load<a class="anchor" aria-label="anchor" href="#load"></a></h3>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># If installed to a local library</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"~/.Rlibrary"</span>, <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>   <span class="co"># Ubuntu</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"USERPROFILE"</span><span class="op">)</span>, <span class="st">"R"</span>, <span class="st">"library"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Windows</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span></code></pre></div>
 <hr></div>
 </div>
 <div class="section level2">
@@ -235,7 +287,7 @@
 <div class="section level2">
 <h2 id="3-quick-smoke-test">3. Quick Smoke Test<a class="anchor" aria-label="anchor" href="#3-quick-smoke-test"></a></h2>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/synthetic_data.html">synthetic_data</a></span><span class="op">(</span>mode <span class="op">=</span> <span class="fl">1</span>, n <span class="op">=</span> <span class="fl">400</span>, p <span class="op">=</span> <span class="fl">5</span>, sigma <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">m</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/SLearner.html">SLearner</a></span><span class="op">(</span>learner <span class="op">=</span> <span class="st">"ranger"</span><span class="op">)</span></span>
@@ -754,7 +806,7 @@
 <td>Print descriptions of all supported methods.</td>
 </tr></tbody></table></div>
 <div class="section level3">
-<h3 id="notears-rnotearsr">NOTEARS (<code>R/notears.R</code>)<a class="anchor" aria-label="anchor" href="#notears-rnotearsr"></a></h3>
+<h3 id="notears-rcausaldeepnetr">NOTEARS (<code>R/causalDeepNet.R</code>)<a class="anchor" aria-label="anchor" href="#notears-rcausaldeepnetr"></a></h3>
 <table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr class="header"><th>Function</th>
 <th>Description</th>
 </tr></thead><tbody><tr class="odd"><td><code>NOTEARS(X, lambda, ...)</code></td>
@@ -773,7 +825,7 @@
 <td>Demo: nonlinear NOTEARS (Sobolev).</td>
 </tr></tbody></table></div>
 <div class="section level3">
-<h3 id="dagma-rnotearsr--rcausalstructuremlr">DAGMA (<code>R/notears.R</code> / <code>R/causalStructureML.R</code>)<a class="anchor" aria-label="anchor" href="#dagma-rnotearsr--rcausalstructuremlr"></a></h3>
+<h3 id="dagma-rcausaldeepnetr--rcausalstructuremlr">DAGMA (<code>R/causalDeepNet.R</code> / <code>R/causalStructureML.R</code>)<a class="anchor" aria-label="anchor" href="#dagma-rcausaldeepnetr--rcausalstructuremlr"></a></h3>
 <table class="table"><thead><tr class="header"><th>Function</th>
 <th>Description</th>
 </tr></thead><tbody><tr class="odd"><td><code>dagmaLinear(X, lambda, ...)</code></td>
@@ -1106,7 +1158,7 @@
 <div class="section level3">
 <h3 id="meta-learner-comparison">Meta-Learner Comparison<a class="anchor" aria-label="anchor" href="#meta-learner-comparison"></a></h3>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/synthetic_data.html">synthetic_data</a></span><span class="op">(</span>mode <span class="op">=</span> <span class="fl">2</span>, n <span class="op">=</span> <span class="fl">500</span>, p <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span></span>
@@ -1125,7 +1177,7 @@
 <div class="section level3">
 <h3 id="dml-with-linear-final-stage">DML with Linear Final Stage<a class="anchor" aria-label="anchor" href="#dml-with-linear-final-stage"></a></h3>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/synthetic_data.html">synthetic_data</a></span><span class="op">(</span>mode <span class="op">=</span> <span class="fl">1</span>, n <span class="op">=</span> <span class="fl">600</span>, p <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/LinearDML.html">LinearDML</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit.html">fit</a></span><span class="op">(</span><span class="va">m</span>, <span class="va">d</span><span class="op">$</span><span class="va">X</span>, <span class="va">d</span><span class="op">$</span><span class="va">w</span>, <span class="va">d</span><span class="op">$</span><span class="va">y</span><span class="op">)</span></span>
@@ -1134,17 +1186,17 @@
 <div class="section level3">
 <h3 id="causal-forest--shap">Causal Forest + SHAP<a class="anchor" aria-label="anchor" href="#causal-forest--shap"></a></h3>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ModelOriented/shapviz" class="external-link">shapviz</a></span><span class="op">)</span></span>
 <span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/synthetic_data.html">synthetic_data</a></span><span class="op">(</span>mode <span class="op">=</span> <span class="fl">3</span>, n <span class="op">=</span> <span class="fl">800</span>, p <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="va">cf</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/causal_forest.html">causal_forest</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">X</span>, <span class="va">d</span><span class="op">$</span><span class="va">y</span>, <span class="va">d</span><span class="op">$</span><span class="va">w</span><span class="op">)</span></span>
 <span><span class="va">shp</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/explain_cate.html">explain_cate</a></span><span class="op">(</span><span class="va">cf</span>, <span class="va">d</span><span class="op">$</span><span class="va">X</span>, bg <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">X</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, <span class="op">]</span><span class="op">)</span></span>
-<span><span class="fu">sv_importance</span><span class="op">(</span><span class="va">shp</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://modeloriented.github.io/shapviz/reference/sv_importance.html" class="external-link">sv_importance</a></span><span class="op">(</span><span class="va">shp</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="doubleml-bridge">DoubleML Bridge<a class="anchor" aria-label="anchor" href="#doubleml-bridge"></a></h3>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/doubleml_fetch_401k.html">doubleml_fetch_401k</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">fit</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/doubleml_plr.html">doubleml_plr</a></span><span class="op">(</span><span class="va">data</span>, ml_l <span class="op">=</span> <span class="st">"ranger"</span>, ml_m <span class="op">=</span> <span class="st">"ranger"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
@@ -1152,7 +1204,7 @@
 <div class="section level3">
 <h3 id="causal-xgboost">Causal XGBoost<a class="anchor" aria-label="anchor" href="#causal-xgboost"></a></h3>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/dmlc/xgboost" class="external-link">xgboost</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">300</span>; <span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
@@ -1167,7 +1219,7 @@
 <div class="section level3">
 <h3 id="multi-arm-causal-boosting">Multi-Arm Causal Boosting<a class="anchor" aria-label="anchor" href="#multi-arm-causal-boosting"></a></h3>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">200</span>; <span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">4</span></span>
 <span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span></span>
@@ -1183,7 +1235,7 @@
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"torch"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://torch.mlverse.org/docs" class="external-link">torch</a></span><span class="op">)</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span>  <span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/TemporalCausalVAE.html">TemporalCausalVAE</a></span><span class="op">(</span>obs_dim <span class="op">=</span> <span class="fl">3L</span>, latent_dim <span class="op">=</span> <span class="fl">3L</span>, hidden_dim <span class="op">=</span> <span class="fl">64L</span><span class="op">)</span></span>
 <span>  <span class="va">x_seq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://torch.mlverse.org/docs/reference/torch_randn.html" class="external-link">torch_randn</a></span><span class="op">(</span><span class="fl">8L</span>, <span class="fl">10L</span>, <span class="fl">3L</span><span class="op">)</span></span>
 <span>  <span class="va">out</span>   <span class="op">&lt;-</span> <span class="fu">model</span><span class="op">(</span><span class="va">x_seq</span><span class="op">)</span></span>
@@ -1193,7 +1245,7 @@
 <div class="section level3">
 <h3 id="notears-structure-learning">NOTEARS Structure Learning<a class="anchor" aria-label="anchor" href="#notears-structure-learning"></a></h3>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uber/causalml" class="external-link">RCausalML</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://zia207.github.io/RCausalML/">RCausalML</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/generate_data.html">generate_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, sem_type <span class="op">=</span> <span class="st">"linear-gauss"</span>, d <span class="op">=</span> <span class="fl">5</span>, graph_type <span class="op">=</span> <span class="st">"ER"</span><span class="op">)</span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/causalStructureML.html">causalStructureML</a></span><span class="op">(</span><span class="va">dat</span><span class="op">$</span><span class="va">X</span>, method <span class="op">=</span> <span class="st">"notears_linear"</span><span class="op">)</span></span>
@@ -1309,7 +1361,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by RCausalML Authors.</p>
+  <p>Developed by Zia Ahmed.</p>
 </div>
 
 <div class="pkgdown-footer-right">

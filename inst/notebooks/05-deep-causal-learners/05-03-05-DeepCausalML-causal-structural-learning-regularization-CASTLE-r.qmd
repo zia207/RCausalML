@@ -100,7 +100,6 @@ We use {RCuasalML}s `CASTLE` implementation (torch-based when available, else a 
 #| warning: false
 packages <- c(
   'tidyverse',
-  'plyr',
   'RCausalML',
   'causaldata',
   'torch',
@@ -152,8 +151,11 @@ device_use <- NULL
 if (requireNamespace("torch", quietly = TRUE)) {
   device_use <- if (torch::cuda_is_available()) "cuda" else "cpu"
 }
-set.seed(42)
-torch_manual_seed(42)
+SEED <- 42L
+set.seed(SEED)
+if (requireNamespace("torch", quietly = TRUE)) {
+  torch::torch_manual_seed(SEED)
+}
 ```
 
 
@@ -166,14 +168,6 @@ The next cell defines **`Z_train`**, **`Z_test`** (needed for **`Z_test_t`** in 
 
 
 ```{r}
-SEED <- 42L
-set.seed(SEED)
-torch_manual_seed(SEED)
-if (cuda_is_available()) torch_cuda_manual_seed_all(SEED)
-
-device <- if (cuda_is_available()) "cuda" else "cpu"
-cat(sprintf("Using device: %s\n", device))
-
 build_causal_matrix <- function(x, t, y, subsample = 5000L, seed = SEED) {
   set.seed(seed)
   Z <- cbind(x, t, y)
@@ -437,7 +431,7 @@ if (nrow(edge_df) == 0) {
   g_dag <- dagitty(dagitty_text)
 
   ggdag(g_dag, use_labels = "name", layout = "stress") +
-    geom_dag_nodes(aes(fill = name %in% highlight_vars), color = "black", shape = 21, size = 10) +
+    geom_dag_node(aes(fill = name %in% highlight_vars), color = "black", shape = 21, size = 10) +
     geom_dag_text(repel = TRUE, size = 3) +
     scale_fill_manual(values = c("TRUE" = "gold", "FALSE" = "lightblue"), guide = "none") +
     labs(title = "CASTLE-style graph on IHDP (adaptive tau or top-|A| fallback)") +
@@ -527,8 +521,8 @@ estimate_ate_adjustment <- function(W, names, trx, trt, try_, tex, tpy, model_na
   idx_t <- which(trt == 1)
   idx_c <- which(trt == 0)
 
-  fit1 <- lm(try_ ~ ., data = as.data.frame(trx[idx_t, par, drop = FALSE]))
-  fit0 <- lm(try_ ~ ., data = as.data.frame(trx[idx_c, par, drop = FALSE]))
+  fit1 <- lm(try_[idx_t] ~ ., data = as.data.frame(trx[idx_t, par, drop = FALSE]))
+  fit0 <- lm(try_[idx_c] ~ ., data = as.data.frame(trx[idx_c, par, drop = FALSE]))
   m1 <- predict(fit1, newdata = as.data.frame(tex[, par, drop = FALSE]))
   m0 <- predict(fit0, newdata = as.data.frame(tex[, par, drop = FALSE]))
 

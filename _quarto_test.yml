@@ -1,0 +1,149 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "index.qmd"
+    - "about.qmd"
+    - "references.qmd"
+    - "chapters/*.qmd"
+
+website:
+  title: "Machine Learning in Python"
+  description: "A comprehensive tutorial from beginner to advanced — all algorithms implemented from scratch"
+  favicon: images/favicon.png
+  site-url: https://zia207.github.io/ML-python
+  repo-url: https://github.com/zia207/ML-python
+  repo-actions: [edit, issue]
+
+  navbar:
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Beginner"
+        menu:
+          - text: "Ch 00 · Prerequisites"
+            href: chapters/chapter-00-prerequisites.qmd
+          - text: "Ch 01 · Intro to ML"
+            href: chapters/chapter-01-intro-to-ml.qmd
+          - text: "Ch 02 · Linear Regression"
+            href: chapters/chapter-02-linear-regression.qmd
+          - text: "Ch 03 · Logistic Regression"
+            href: chapters/chapter-03-logistic-regression.qmd
+          - text: "Ch 04 · K-Nearest Neighbors"
+            href: chapters/chapter-04-knn.qmd
+          - text: "Ch 05 · Naive Bayes"
+            href: chapters/chapter-05-naive-bayes.qmd
+      - text: "Intermediate"
+        menu:
+          - text: "Ch 06 · Decision Trees"
+            href: chapters/chapter-06-decision-trees.qmd
+          - text: "Ch 07 · Support Vector Machines"
+            href: chapters/chapter-07-svm.qmd
+          - text: "Ch 08 · Ensemble Methods"
+            href: chapters/chapter-08-ensemble-methods.qmd
+          - text: "Ch 12 · K-Means Clustering"
+            href: chapters/chapter-12-kmeans.qmd
+          - text: "Ch 13 · PCA"
+            href: chapters/chapter-13-pca.qmd
+      - text: "Advanced"
+        menu:
+          - text: "Ch 09 · Neural Networks (MLP)"
+            href: chapters/chapter-09-neural-networks.qmd
+          - text: "Ch 10 · Convolutional Neural Networks"
+            href: chapters/chapter-10-cnn.qmd
+          - text: "Ch 11 · Recurrent Neural Networks"
+            href: chapters/chapter-11-rnn.qmd
+          - text: "Ch 14 · Reinforcement Learning"
+            href: chapters/chapter-14-reinforcement-learning.qmd
+      - text: "Evaluation"
+        href: chapters/chapter-15-model-evaluation.qmd
+    right:
+      - text: "References"
+        href: references.qmd
+      - text: "About"
+        href: about.qmd
+      - icon: github
+        href: https://github.com/zia207/ML-python
+        aria-label: GitHub
+
+  sidebar:
+    style: "docked"
+    search: true
+    collapse-level: 1
+    contents:
+      - text: "🏠 Home"
+        href: index.qmd
+      - section: "🟢 Beginner"
+        contents:
+          - text: "Ch 00 · Prerequisites & Setup"
+            href: chapters/chapter-00-prerequisites.qmd
+          - text: "Ch 01 · Introduction to ML"
+            href: chapters/chapter-01-intro-to-ml.qmd
+          - text: "Ch 02 · Linear Regression"
+            href: chapters/chapter-02-linear-regression.qmd
+          - text: "Ch 03 · Logistic Regression"
+            href: chapters/chapter-03-logistic-regression.qmd
+          - text: "Ch 04 · K-Nearest Neighbors"
+            href: chapters/chapter-04-knn.qmd
+          - text: "Ch 05 · Naive Bayes"
+            href: chapters/chapter-05-naive-bayes.qmd
+      - section: "🟡 Intermediate"
+        contents:
+          - text: "Ch 06 · Decision Trees"
+            href: chapters/chapter-06-decision-trees.qmd
+          - text: "Ch 07 · Support Vector Machines"
+            href: chapters/chapter-07-svm.qmd
+          - text: "Ch 08 · Ensemble Methods"
+            href: chapters/chapter-08-ensemble-methods.qmd
+          - text: "Ch 12 · K-Means Clustering"
+            href: chapters/chapter-12-kmeans.qmd
+          - text: "Ch 13 · PCA"
+            href: chapters/chapter-13-pca.qmd
+      - section: "🔴 Advanced"
+        contents:
+          - text: "Ch 09 · Neural Networks (MLP)"
+            href: chapters/chapter-09-neural-networks.qmd
+          - text: "Ch 10 · Convolutional Neural Networks"
+            href: chapters/chapter-10-cnn.qmd
+          - text: "Ch 11 · Recurrent Neural Networks"
+            href: chapters/chapter-11-rnn.qmd
+          - text: "Ch 14 · Reinforcement Learning"
+            href: chapters/chapter-14-reinforcement-learning.qmd
+      - section: "📊 Best Practices"
+        contents:
+          - text: "Ch 15 · Model Evaluation"
+            href: chapters/chapter-15-model-evaluation.qmd
+
+  page-footer:
+    left: "© 2026 Machine Learning in Python Tutorial"
+    right:
+      - text: "Built with Quarto"
+        href: https://quarto.org
+
+  page-navigation: true
+  back-to-top-navigation: true
+
+format:
+  html:
+    theme:
+      light: [flatly, styles/custom.scss]
+      dark:  [darkly,  styles/custom.scss]
+    highlight-style: github
+    code-fold: true
+    code-tools: true
+    code-copy: true
+    code-link: true
+    toc: true
+    toc-depth: 3
+    toc-title: "On This Page"
+    number-sections: false
+    smooth-scroll: true
+    fig-align: center
+    df-print: paged
+    css: styles/custom.css
+
+execute:
+  echo: true
+  warning: false
+  message: false
+  freeze: auto
