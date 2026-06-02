@@ -25,6 +25,8 @@ home:
       href: https://causalml.readthedocs.io/en/latest/
     - text: EconML Reference
       href: https://econml.azurewebsites.net/
+  sidebar:
+    structure: [links, license, community, citation, authors, dev]
 
 navbar:
   type: default
