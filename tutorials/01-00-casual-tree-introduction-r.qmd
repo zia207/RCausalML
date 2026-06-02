@@ -201,13 +201,13 @@ Key steps and innovations:
     -   Trees are grown using the splitting sample to decide where to partition (which variables and cut-points to use).
     -   The estimation sample is used only to estimate the treatment effect *within each leaf* (avoiding overfitting/bias that would occur if the same data were used for both).
 2.  **Special splitting criterion** (not variance reduction as in standard random forests):
-    -   The algorithm seeks splits that maximize heterogeneity in treatment effects (i.e., it tries to find subgroups where τ(x) differs as much as possible).
+    -   The algorithm seeks splits that maximize heterogeneity in treatment effects (i.e., it tries to find subgroups where $\tau(x)$ differs as much as possible).
     -   It typically maximizes a score based on the variance of estimated treatment effects across child nodes (or a related criterion like the causal tree splitting rule from Athey & Imbens).
     -   In practice, many implementations use an approximate score derived from doubly robust / orthogonalized scores (e.g., based on residuals after partialling out nuisance functions like outcome regression and propensity scores).
 3.  **Adaptive neighborhood weighting** (instead of simple leaf averaging):
     -   Each tree defines an adaptive neighborhood around a point x (the observations that fall into the same leaf as x).
-    -   The full forest creates a smooth, adaptive weighting function αᵢ(x): how much weight each training observation i receives when predicting τ(x).
-    -   The final τ̂(x) is a weighted average of "pseudo-outcomes" (often doubly robust scores or transformed residuals that isolate the treatment effect) using these forest weights.
+    -   The full forest creates a smooth, adaptive weighting function $\alpha_i(x)$: how much weight each training observation $i$ receives when predicting $\tau(x)$.
+    -   The final $\hat{\tau}(x)$ is a weighted average of "pseudo-outcomes" (often doubly robust scores or transformed residuals that isolate the treatment effect) using these forest weights.
 4.  **Doubly robust / orthogonalization** (in modern implementations):
     -   To reduce bias from model misspecification, the method often uses "scores" that are orthogonal to nuisance parameters (e.g., Robinson-style residuals or AIPW scores).
     -   This makes the estimator robust to errors in estimating the baseline outcome function or propensity score.

@@ -25,9 +25,9 @@ The two most common IPM choices used with CFRNet are:
 
 The training loss becomes:
 
-> **L = L_factual + λ · IPM( Φ(X)\|t=1, Φ(X)\|t=0 )**
+$$\mathcal{L} = \mathcal{L}_{\text{factual}} + \lambda \cdot \text{IPM}\!\left(\Phi(X)\mid t=1,\; \Phi(X)\mid t=0\right)$$
 
-where `L_factual` is the standard prediction loss (MSE on observed outcomes), and `λ` is a hyperparameter controlling how aggressively to enforce distributional balance.
+where $\mathcal{L}_{\text{factual}}$ is the standard prediction loss (MSE on observed outcomes), and $\lambda$ is a hyperparameter controlling how aggressively to enforce distributional balance.
 
 ### Diagram 2 — Why Balancing Matters (the Selection Bias Problem)
 
@@ -39,13 +39,13 @@ This is the intuition behind *why* the IPM penalty is needed. Without it, the re
 
 **Step 1 — Forward pass through Φ.** All patients (both treated and control) are passed through the shared representation network to produce Φ(x). This produces two clouds of points in representation space — one for each treatment group.
 
-**Step 2 — Outcome prediction.** Each patient's representation Φ(x) is passed through their respective head (h₀ or h₁, depending on which treatment they actually received) to produce a factual outcome prediction. The factual MSE loss is computed here.
+**Step 2 — Outcome prediction.** Each patient's representation $\Phi(x)$ is passed through their respective head ($h_0$ or $h_1$, depending on which treatment they actually received) to produce a factual outcome prediction. The factual MSE loss is computed here.
 
 **Step 3 — IPM computation.** The IPM distance between the *distribution* of { Φ(x) : t=0 } and { Φ(x) : t=1 } is computed. A large IPM means the treated and control patients live in different regions of representation space — that's selection bias baked into Φ.
 
-**Step 4 — Combined loss + backprop.** The total loss `L_factual + λ · IPM` is backpropagated. The IPM term forces the shared network to "push" the two distributions toward each other, so that factual and counterfactual predictions extrapolate to the same region of feature space.
+**Step 4 — Combined loss + backprop.** The total loss $\mathcal{L}_{\text{factual}} + \lambda \cdot \text{IPM}$ is backpropagated. The IPM term forces the shared network to "push" the two distributions toward each other, so that factual and counterfactual predictions extrapolate to the same region of feature space.
 
-**Step 5 — ITE at inference.** For any new patient x, pass through Φ once, then both heads, and subtract: `ITE(x) = h₁(Φ(x)) − h₀(Φ(x))`.
+**Step 5 — ITE at inference.** For any new patient $x$, pass through $\Phi$ once, then both heads, and subtract: $\text{ITE}(x) = h_1(\Phi(x)) - h_0(\Phi(x))$.
 
 ### CFRNet vs TARNet — The Key Difference
 

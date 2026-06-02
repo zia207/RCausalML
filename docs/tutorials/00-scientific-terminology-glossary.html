@@ -117,33 +117,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <link href="../extra.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
 </head>
 
-<body class="nav-sidebar docked nav-fixed quarto-light rcausalml-tutorial"><script id="quarto-html-before-body" type="application/javascript">
-<!-- RCausalML pkgdown tutorial navbar -->
-<a href="#quarto-document-content" class="visually-hidden-focusable">Skip to contents</a>
-<nav class="navbar navbar-expand-lg fixed-top bg-light" aria-label="Site navigation"><div class="container">
-    <a class="navbar-brand me-2" href="../index.html">RCausalML</a>
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rcausalml-navbar" aria-controls="rcausalml-navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div id="rcausalml-navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="../articles/RCausalML-intro.html">Get Started</a></li>
-        <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-        <li class="active nav-item"><a class="nav-link" href="index.html">Tutorials</a></li>
-        <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
-      </ul>
-      <ul class="navbar-nav">
-        <li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
-        <li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/" aria-label="Python CausalML docs"><span class="fa fa-book fa-lg"></span></a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-<div class="rcausalml-navbar-spacer" aria-hidden="true"></div>
-
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
     const toggleBodyColorMode = (bsSheetEl) => {
       const mode = bsSheetEl.getAttribute("data-mode");
       const bodyEl = window.document.querySelector("body");
@@ -321,187 +329,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
-            <ul class="navbar-nav navbar-nav-scroll me-auto">
-  <li class="nav-item">
-    <a class="nav-link active" href="./00-scientific-terminology-glossary.html" aria-current="page"> 
-<span class="menu-text">Glossary</span></a>
-  </li>  
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tree-based" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Tree-Based</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-tree-based">    
-        <li>
-    <a class="dropdown-item" href="./01-00-casual-tree-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-01-causal-tree-r.html">
- <span class="dropdown-text">Causal Tree</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-02-causal-forest-r.html">
- <span class="dropdown-text">Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-03-causal-survival-forest-r.html">
- <span class="dropdown-text">Causal Survival Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-04-instrumental-causal-forest-r.html">
- <span class="dropdown-text">Instrumental Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-05-multi-arm-causal-forest-r.html">
- <span class="dropdown-text">Multi-Arm Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-06-causal-xgboost-r.html">
- <span class="dropdown-text">Causal XGBoost</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-07-instrumental-causal-xgboost-r.html">
- <span class="dropdown-text">Instrumental Causal XGBoost</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-08-multi-arm-causal-boost-r.html">
- <span class="dropdown-text">Multi-Arm Causal Boost</span></a>
-  </li>  
-    </ul>
-  </li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-meta-learners" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Meta-Learners</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-meta-learners">    
-        <li>
-    <a class="dropdown-item" href="./02-00-meta-learners-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-01-meta-learners-binary-treatments-r.html">
- <span class="dropdown-text">Binary Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-02-meta-learners-multiple-discrete-treatment-r.html">
- <span class="dropdown-text">Multiple Discrete Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-03-meta-learners-continuous-treatment-r.html">
- <span class="dropdown-text">Continuous Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-04-tmle-model-r.html">
- <span class="dropdown-text">TMLE</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-05-meta-learners-domain-adaptation-learner-r.html">
- <span class="dropdown-text">Domain Adaptation Learner</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-06--meta-learners-doubly-robust-learners-r.html">
- <span class="dropdown-text">Doubly Robust Learners</span></a>
-  </li>  
-    </ul>
-  </li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-uplift" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Uplift</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-uplift">    
-        <li>
-    <a class="dropdown-item" href="./03-00-uplift-trees-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-01-uplift-trees-classification-r.html">
- <span class="dropdown-text">Classification</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-02-uplift-trees-regression-r.html">
- <span class="dropdown-text">Regression</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-03-uplift-randomForest-r.html">
- <span class="dropdown-text">Random Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-04-uplift-xgboost.html">
- <span class="dropdown-text">XGBoost</span></a>
-  </li>  
-    </ul>
-  </li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-double-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Double ML</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-double-ml">    
-        <li>
-    <a class="dropdown-item" href="./04-00-double-ml-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-01-double-ml-from-basics-to-application-r.html">
- <span class="dropdown-text">Basics to Application</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-02-double-ml- single-multiple-treatment-r.html">
- <span class="dropdown-text">Single/Multiple Treatment</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-03-double-ml-did-r.html">
- <span class="dropdown-text">Difference-in-Differences</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-04-double-ml-iv-r.html">
- <span class="dropdown-text">Instrumental Variables</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-05-double-ml-dynamic-ml.html">
- <span class="dropdown-text">Dynamic Double ML</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-06-double-ml-weighted-double-ml.html">
- <span class="dropdown-text">Weighted Double ML</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-07-double-ml-cluster-robust-r.html">
- <span class="dropdown-text">Cluster Robust</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-08-double-ml-ensemble-learners-r.html">
- <span class="dropdown-text">Ensemble Learners</span></a>
-  </li>  
-    </ul>
-  </li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-causal-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Deep Causal ML</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-causal-ml">    
-        <li>
-    <a class="dropdown-item" href="./05-00-DeepCausalML-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html">
- <span class="dropdown-text">Treatment Effect Estimators</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html">
- <span class="dropdown-text">Generative Latent-Variable Models</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">
- <span class="dropdown-text">Causal Structural Learning</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-04-00-DeepCuasalML-timesseries-introduction-r.html">
- <span class="dropdown-text">Causal Time Series</span></a>
-  </li>  
-    </ul>
-  </li>
-</ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
     <a class="nav-link" href="./../index.html"> 
@@ -1267,7 +1094,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="anm-additive-noise-model" class="level3">
 <h3 class="anchored" data-anchor-id="anm-additive-noise-model">ANM (Additive Noise Model)</h3>
 <p>An assumption that each variable equals some function of its causes plus an independent noise term. This helps recover causal directions from data.</p>
-<p><em>Example:</em> <code>X₃ = f(X₁, X₂) + ε₃</code>, where ε₃ is random noise independent of X₁ and X₂.</p>
+<p><em>Example:</em> <span class="math inline">\(X_3 = f(X_1, X_2) + \varepsilon_3\)</span>, where <span class="math inline">\(\varepsilon_3\)</span> is random noise independent of <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span>.</p>
 <hr>
 </section>
 <section id="ate-average-treatment-effect" class="level3">
@@ -1351,7 +1178,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="causal-graph-dag" class="level3">
 <h3 class="anchored" data-anchor-id="causal-graph-dag">Causal Graph (DAG)</h3>
 <p>A diagram with arrows showing which variables directly cause which others. Directed Acyclic Graph means arrows only go one way and there are no loops.</p>
-<p><em>Example:</em> <code>X → T → Y</code> means X influences treatment T, which influences outcome Y.</p>
+<p><em>Example:</em> <span class="math inline">\(X \to T \to Y\)</span> means X influences treatment T, which influences outcome Y.</p>
 <hr>
 </section>
 <section id="causal-masking" class="level3">
@@ -1441,7 +1268,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="contrast-treatment-contrast" class="level3">
 <h3 class="anchored" data-anchor-id="contrast-treatment-contrast">Contrast (Treatment Contrast)</h3>
 <p>The difference in predicted outcomes between two treatment arms.</p>
-<p><em>Example:</em> <code>τ(x) = μ_A(x) - μ_control(x)</code> is the contrast between Drug A and the control for a patient with features x.</p>
+<p><em>Example:</em> <span class="math inline">\(\tau(x) = \mu_A(x) - \mu_{\text{control}}(x)\)</span> is the contrast between Drug A and the control for a patient with features <span class="math inline">\(x\)</span>.</p>
 <hr>
 </section>
 <section id="cosine-annealing" class="level3">
@@ -1629,8 +1456,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="h">H</h2>
 <section id="hard-intervention" class="level3">
 <h3 class="anchored" data-anchor-id="hard-intervention">Hard Intervention</h3>
-<p>Setting a variable to a specific fixed value regardless of what its normal causes say — the <code>do()</code> operator in causal calculus.</p>
-<p><em>Example:</em> <code>do(T=1)</code> forces everyone to receive treatment, even those who would normally not qualify.</p>
+<p>Setting a variable to a specific fixed value regardless of what its normal causes say — the <span class="math inline">\(\text{do}(\cdot)\)</span> operator in causal calculus.</p>
+<p><em>Example:</em> <span class="math inline">\(\text{do}(T=1)\)</span> forces everyone to receive treatment, even those who would normally not qualify.</p>
 <hr>
 </section>
 <section id="heterogeneous-treatment-effect-hte" class="level3">
@@ -1705,7 +1532,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="ite-individual-treatment-effect" class="level3">
 <h3 class="anchored" data-anchor-id="ite-individual-treatment-effect">ITE (Individual Treatment Effect)</h3>
 <p>The causal effect of treatment for one specific person: their potential outcome under treatment minus their potential outcome under control.</p>
-<p><em>Example:</em> For patient A, <code>ITE = Y(1) - Y(0) = 8 - 5 = +3 days</code> of faster recovery.</p>
+<p><em>Example:</em> For patient A, <span class="math inline">\(\text{ITE} = Y(1) - Y(0) = 8 - 5 = +3\)</span> days of faster recovery.</p>
 <hr>
 </section>
 <section id="ivae-identifiable-variational-autoencoder" class="level3">
@@ -1876,7 +1703,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="posterior" class="level3">
 <h3 class="anchored" data-anchor-id="posterior">Posterior</h3>
 <p>The updated probability distribution over hidden variables <em>after</em> observing data — combining prior belief with evidence.</p>
-<p><em>Example:</em> <code>q(z|x, t, y)</code> is the estimated distribution over likely latent confounders for one specific patient record.</p>
+<p><em>Example:</em> <span class="math inline">\(q(z \mid x, t, y)\)</span> is the estimated distribution over likely latent confounders for one specific patient record.</p>
 <hr>
 </section>
 <section id="posterior-collapse" class="level3">
@@ -1893,7 +1720,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="propensity-score" class="level3">
 <h3 class="anchored" data-anchor-id="propensity-score">Propensity Score</h3>
-<p>The probability of receiving treatment given a unit’s observed covariates: <code>P(T=1 | X)</code>.</p>
+<p>The probability of receiving treatment given a unit’s observed covariates: <span class="math inline">\(P(T=1 \mid X)\)</span>.</p>
 <p><em>Example:</em> Two patients with similar age, health history, and baseline risk should have similar propensity scores. A score of 0.7 means a 70% predicted chance of treatment.</p>
 <hr>
 </section>
@@ -1927,7 +1754,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="residualization" class="level3">
 <h3 class="anchored" data-anchor-id="residualization">Residualization</h3>
 <p>Subtracting the part of a variable that is predictable from covariates, leaving only the residual variation unexplained by controls.</p>
-<p><em>Example:</em> In double ML, compute <code>Ỹ = Y - E[Y|X]</code> and <code>T̃ = T - E[T|X]</code>, then regress <code>Ỹ</code> on <code>T̃</code> to estimate the causal effect.</p>
+<p><em>Example:</em> In double ML, compute <span class="math inline">\(\tilde{Y} = Y - \mathbb{E}[Y \mid X]\)</span> and <span class="math inline">\(\tilde{T} = T - \mathbb{E}[T \mid X]\)</span>, then regress <span class="math inline">\(\tilde{Y}\)</span> on <span class="math inline">\(\tilde{T}\)</span> to estimate the causal effect.</p>
 <hr>
 </section>
 <section id="right-censoring" class="level3">
@@ -1954,7 +1781,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="scm-structural-causal-model" class="level3">
 <h3 class="anchored" data-anchor-id="scm-structural-causal-model">SCM (Structural Causal Model)</h3>
 <p>A system of equations — one per variable — that describes exactly how each variable is generated from its causes plus random noise. Enables intervention and counterfactual reasoning.</p>
-<p><em>Example:</em> <code>Y = f(T, X, U_Y)</code> where U_Y is unobserved noise. Changing T while holding U_Y fixed gives the causal effect.</p>
+<p><em>Example:</em> <span class="math inline">\(Y = f(T, X, U_Y)\)</span> where <span class="math inline">\(U_Y\)</span> is unobserved noise. Changing <span class="math inline">\(T\)</span> while holding <span class="math inline">\(U_Y\)</span> fixed gives the causal effect.</p>
 <hr>
 </section>
 <section id="score-based-method-causal-discovery" class="level3">
@@ -1983,7 +1810,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="soft-intervention" class="level3">
 <h3 class="anchored" data-anchor-id="soft-intervention">Soft Intervention</h3>
-<p>An intervention that <em>changes</em> the parameters or mechanism of a structural equation rather than forcing a fixed value — a weaker form of intervention than <code>do()</code>.</p>
+<p>An intervention that <em>changes</em> the parameters or mechanism of a structural equation rather than forcing a fixed value — a weaker form of intervention than <span class="math inline">\(\text{do}(\cdot)\)</span>.</p>
 <p><em>Example:</em> Increasing someone’s probability of seeking treatment rather than forcing them to receive it.</p>
 <hr>
 </section>
@@ -2008,7 +1835,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="structural-equation" class="level3">
 <h3 class="anchored" data-anchor-id="structural-equation">Structural Equation</h3>
 <p>A mathematical equation defining how one variable is generated from its parent causes and exogenous noise.</p>
-<p><em>Example:</em> <code>Y = f(T, X, ε_Y)</code> where ε_Y is random noise — changing T while holding ε_Y fixed gives the causal effect of T on Y.</p>
+<p><em>Example:</em> <span class="math inline">\(Y = f(T, X, \varepsilon_Y)\)</span> where <span class="math inline">\(\varepsilon_Y\)</span> is random noise — changing <span class="math inline">\(T\)</span> while holding <span class="math inline">\(\varepsilon_Y\)</span> fixed gives the causal effect of <span class="math inline">\(T\)</span> on <span class="math inline">\(Y\)</span>.</p>
 <hr>
 </section>
 <section id="structural-learning" class="level3">
@@ -2667,7 +2494,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>An assumption that each variable equals some function of its causes plus an independent noise term. This helps recover causal directions from data.</span>
 <span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>*Example:* <span class="in">`X₃ = f(X₁, X₂) + ε₃`</span>, where ε₃ is random noise independent of X₁ and X₂.</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>*Example:* $X_3 = f(X_1, X_2) + \varepsilon_3$, where $\varepsilon_3$ is random noise independent of $X_1$ and $X_2$.</span>
 <span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
@@ -2775,7 +2602,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>A diagram with arrows showing which variables directly cause which others. Directed Acyclic Graph means arrows only go one way and there are no loops.</span>
 <span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>*Example:* <span class="in">`X → T → Y`</span> means X influences treatment T, which influences outcome Y.</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>*Example:* $X \to T \to Y$ means X influences treatment T, which influences outcome Y.</span>
 <span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a></span>
@@ -2895,7 +2722,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a>The difference in predicted outcomes between two treatment arms.</span>
 <span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>*Example:* <span class="in">`τ(x) = μ_A(x) - μ_control(x)`</span> is the contrast between Drug A and the control for a patient with features x.</span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>*Example:* $\tau(x) = \mu_A(x) - \mu_{\text{control}}(x)$ is the contrast between Drug A and the control for a patient with features $x$.</span>
 <span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a></span>
@@ -3135,9 +2962,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-528"><a href="#cb1-528" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-529"><a href="#cb1-529" aria-hidden="true" tabindex="-1"></a><span class="fu">### Hard Intervention</span></span>
 <span id="cb1-530"><a href="#cb1-530" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-531"><a href="#cb1-531" aria-hidden="true" tabindex="-1"></a>Setting a variable to a specific fixed value regardless of what its normal causes say — the <span class="in">`do()`</span> operator in causal calculus.</span>
+<span id="cb1-531"><a href="#cb1-531" aria-hidden="true" tabindex="-1"></a>Setting a variable to a specific fixed value regardless of what its normal causes say — the $\text{do}(\cdot)$ operator in causal calculus.</span>
 <span id="cb1-532"><a href="#cb1-532" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-533"><a href="#cb1-533" aria-hidden="true" tabindex="-1"></a>*Example:* <span class="in">`do(T=1)`</span> forces everyone to receive treatment, even those who would normally not qualify.</span>
+<span id="cb1-533"><a href="#cb1-533" aria-hidden="true" tabindex="-1"></a>*Example:* $\text{do}(T=1)$ forces everyone to receive treatment, even those who would normally not qualify.</span>
 <span id="cb1-534"><a href="#cb1-534" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-535"><a href="#cb1-535" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-536"><a href="#cb1-536" aria-hidden="true" tabindex="-1"></a></span>
@@ -3235,7 +3062,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-628"><a href="#cb1-628" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-629"><a href="#cb1-629" aria-hidden="true" tabindex="-1"></a>The causal effect of treatment for one specific person: their potential outcome under treatment minus their potential outcome under control.</span>
 <span id="cb1-630"><a href="#cb1-630" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-631"><a href="#cb1-631" aria-hidden="true" tabindex="-1"></a>*Example:* For patient A, <span class="in">`ITE = Y(1) - Y(0) = 8 - 5 = +3 days`</span> of faster recovery.</span>
+<span id="cb1-631"><a href="#cb1-631" aria-hidden="true" tabindex="-1"></a>*Example:* For patient A, $\text{ITE} = Y(1) - Y(0) = 8 - 5 = +3$ days of faster recovery.</span>
 <span id="cb1-632"><a href="#cb1-632" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-633"><a href="#cb1-633" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-634"><a href="#cb1-634" aria-hidden="true" tabindex="-1"></a></span>
@@ -3449,7 +3276,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-842"><a href="#cb1-842" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-843"><a href="#cb1-843" aria-hidden="true" tabindex="-1"></a>The updated probability distribution over hidden variables *after* observing data — combining prior belief with evidence.</span>
 <span id="cb1-844"><a href="#cb1-844" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-845"><a href="#cb1-845" aria-hidden="true" tabindex="-1"></a>*Example:* <span class="in">`q(z|x, t, y)`</span> is the estimated distribution over likely latent confounders for one specific patient record.</span>
+<span id="cb1-845"><a href="#cb1-845" aria-hidden="true" tabindex="-1"></a>*Example:* $q(z \mid x, t, y)$ is the estimated distribution over likely latent confounders for one specific patient record.</span>
 <span id="cb1-846"><a href="#cb1-846" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-847"><a href="#cb1-847" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-848"><a href="#cb1-848" aria-hidden="true" tabindex="-1"></a></span>
@@ -3471,7 +3298,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-864"><a href="#cb1-864" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-865"><a href="#cb1-865" aria-hidden="true" tabindex="-1"></a><span class="fu">### Propensity Score</span></span>
 <span id="cb1-866"><a href="#cb1-866" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-867"><a href="#cb1-867" aria-hidden="true" tabindex="-1"></a>The probability of receiving treatment given a unit's observed covariates: <span class="in">`P(T=1 | X)`</span>.</span>
+<span id="cb1-867"><a href="#cb1-867" aria-hidden="true" tabindex="-1"></a>The probability of receiving treatment given a unit's observed covariates: $P(T=1 \mid X)$.</span>
 <span id="cb1-868"><a href="#cb1-868" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-869"><a href="#cb1-869" aria-hidden="true" tabindex="-1"></a>*Example:* Two patients with similar age, health history, and baseline risk should have similar propensity scores. A score of 0.7 means a 70% predicted chance of treatment.</span>
 <span id="cb1-870"><a href="#cb1-870" aria-hidden="true" tabindex="-1"></a></span>
@@ -3515,7 +3342,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-908"><a href="#cb1-908" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-909"><a href="#cb1-909" aria-hidden="true" tabindex="-1"></a>Subtracting the part of a variable that is predictable from covariates, leaving only the residual variation unexplained by controls.</span>
 <span id="cb1-910"><a href="#cb1-910" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-911"><a href="#cb1-911" aria-hidden="true" tabindex="-1"></a>*Example:* In double ML, compute <span class="in">`Ỹ = Y - E[Y|X]`</span> and <span class="in">`T̃ = T - E[T|X]`</span>, then regress <span class="in">`Ỹ`</span> on <span class="in">`T̃`</span> to estimate the causal effect.</span>
+<span id="cb1-911"><a href="#cb1-911" aria-hidden="true" tabindex="-1"></a>*Example:* In double ML, compute $\tilde{Y} = Y - \mathbb{E}<span class="co">[</span><span class="ot">Y \mid X</span><span class="co">]</span>$ and $\tilde{T} = T - \mathbb{E}<span class="co">[</span><span class="ot">T \mid X</span><span class="co">]</span>$, then regress $\tilde{Y}$ on $\tilde{T}$ to estimate the causal effect.</span>
 <span id="cb1-912"><a href="#cb1-912" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-913"><a href="#cb1-913" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-914"><a href="#cb1-914" aria-hidden="true" tabindex="-1"></a></span>
@@ -3549,7 +3376,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-942"><a href="#cb1-942" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-943"><a href="#cb1-943" aria-hidden="true" tabindex="-1"></a>A system of equations — one per variable — that describes exactly how each variable is generated from its causes plus random noise. Enables intervention and counterfactual reasoning.</span>
 <span id="cb1-944"><a href="#cb1-944" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-945"><a href="#cb1-945" aria-hidden="true" tabindex="-1"></a>*Example:* <span class="in">`Y = f(T, X, U_Y)`</span> where U_Y is unobserved noise. Changing T while holding U_Y fixed gives the causal effect.</span>
+<span id="cb1-945"><a href="#cb1-945" aria-hidden="true" tabindex="-1"></a>*Example:* $Y = f(T, X, U_Y)$ where $U_Y$ is unobserved noise. Changing $T$ while holding $U_Y$ fixed gives the causal effect.</span>
 <span id="cb1-946"><a href="#cb1-946" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-947"><a href="#cb1-947" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-948"><a href="#cb1-948" aria-hidden="true" tabindex="-1"></a></span>
@@ -3587,7 +3414,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-980"><a href="#cb1-980" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-981"><a href="#cb1-981" aria-hidden="true" tabindex="-1"></a><span class="fu">### Soft Intervention</span></span>
 <span id="cb1-982"><a href="#cb1-982" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-983"><a href="#cb1-983" aria-hidden="true" tabindex="-1"></a>An intervention that *changes* the parameters or mechanism of a structural equation rather than forcing a fixed value — a weaker form of intervention than <span class="in">`do()`</span>.</span>
+<span id="cb1-983"><a href="#cb1-983" aria-hidden="true" tabindex="-1"></a>An intervention that *changes* the parameters or mechanism of a structural equation rather than forcing a fixed value — a weaker form of intervention than $\text{do}(\cdot)$.</span>
 <span id="cb1-984"><a href="#cb1-984" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-985"><a href="#cb1-985" aria-hidden="true" tabindex="-1"></a>*Example:* Increasing someone's probability of seeking treatment rather than forcing them to receive it.</span>
 <span id="cb1-986"><a href="#cb1-986" aria-hidden="true" tabindex="-1"></a></span>
@@ -3621,7 +3448,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-1014"><a href="#cb1-1014" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-1015"><a href="#cb1-1015" aria-hidden="true" tabindex="-1"></a>A mathematical equation defining how one variable is generated from its parent causes and exogenous noise.</span>
 <span id="cb1-1016"><a href="#cb1-1016" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-1017"><a href="#cb1-1017" aria-hidden="true" tabindex="-1"></a>*Example:* <span class="in">`Y = f(T, X, ε_Y)`</span> where ε_Y is random noise — changing T while holding ε_Y fixed gives the causal effect of T on Y.</span>
+<span id="cb1-1017"><a href="#cb1-1017" aria-hidden="true" tabindex="-1"></a>*Example:* $Y = f(T, X, \varepsilon_Y)$ where $\varepsilon_Y$ is random noise — changing $T$ while holding $\varepsilon_Y$ fixed gives the causal effect of $T$ on $Y$.</span>
 <span id="cb1-1018"><a href="#cb1-1018" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-1019"><a href="#cb1-1019" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
 <span id="cb1-1020"><a href="#cb1-1020" aria-hidden="true" tabindex="-1"></a></span>

@@ -104,40 +104,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script><style>html{ scroll-behavior: smooth; }</style>
-<!-- RCausalML pkgdown tutorial head -->
-<link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<!-- RCausalML pkgdown tutorial head --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <link href="../extra.css" rel="stylesheet">
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script><script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script><link rel="stylesheet" href="styles/custom.css">
 </head>
-<body class="nav-sidebar docked nav-fixed quarto-light rcausalml-tutorial"><script id="quarto-html-before-body" type="application/javascript">
-<!-- RCausalML pkgdown tutorial navbar -->
-<a href="#quarto-document-content" class="visually-hidden-focusable">Skip to contents</a>
-<nav class="navbar navbar-expand-lg fixed-top bg-light" aria-label="Site navigation"><div class="container">
-    <a class="navbar-brand me-2" href="../index.html">RCausalML</a>
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rcausalml-navbar" aria-controls="rcausalml-navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div id="rcausalml-navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="../articles/RCausalML-intro.html">Get Started</a></li>
-        <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-        <li class="active nav-item"><a class="nav-link" href="index.html">Tutorials</a></li>
-        <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
-      </ul>
-      <ul class="navbar-nav">
-        <li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
-        <li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/" aria-label="Python CausalML docs"><span class="fa fa-book fa-lg"></span></a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-<div class="rcausalml-navbar-spacer" aria-hidden="true"></div>
-
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
     const toggleBodyColorMode = (bsSheetEl) => {
       const mode = bsSheetEl.getAttribute("data-mode");
       const bodyEl = window.document.querySelector("body");
@@ -313,188 +315,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
-            <ul class="navbar-nav navbar-nav-scroll me-auto">
-<li class="nav-item">
-    <a class="nav-link active" href="./00-scientific-terminology-glossary.html" aria-current="page"> 
-<span class="menu-text">Glossary</span></a>
-  </li>  
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tree-based" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Tree-Based</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-tree-based">
-<li>
-    <a class="dropdown-item" href="./01-00-casual-tree-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-01-causal-tree-r.html">
- <span class="dropdown-text">Causal Tree</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-02-causal-forest-r.html">
- <span class="dropdown-text">Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-03-causal-survival-forest-r.html">
- <span class="dropdown-text">Causal Survival Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-04-instrumental-causal-forest-r.html">
- <span class="dropdown-text">Instrumental Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-05-multi-arm-causal-forest-r.html">
- <span class="dropdown-text">Multi-Arm Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-06-causal-xgboost-r.html">
- <span class="dropdown-text">Causal XGBoost</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-07-instrumental-causal-xgboost-r.html">
- <span class="dropdown-text">Instrumental Causal XGBoost</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-08-multi-arm-causal-boost-r.html">
- <span class="dropdown-text">Multi-Arm Causal Boost</span></a>
-  </li>  
-    </ul>
-</li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-meta-learners" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Meta-Learners</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-meta-learners">
-<li>
-    <a class="dropdown-item" href="./02-00-meta-learners-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-01-meta-learners-binary-treatments-r.html">
- <span class="dropdown-text">Binary Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-02-meta-learners-multiple-discrete-treatment-r.html">
- <span class="dropdown-text">Multiple Discrete Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-03-meta-learners-continuous-treatment-r.html">
- <span class="dropdown-text">Continuous Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-04-tmle-model-r.html">
- <span class="dropdown-text">TMLE</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-05-meta-learners-domain-adaptation-learner-r.html">
- <span class="dropdown-text">Domain Adaptation Learner</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-06--meta-learners-doubly-robust-learners-r.html">
- <span class="dropdown-text">Doubly Robust Learners</span></a>
-  </li>  
-    </ul>
-</li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-uplift" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Uplift</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-uplift">
-<li>
-    <a class="dropdown-item" href="./03-00-uplift-trees-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-01-uplift-trees-classification-r.html">
- <span class="dropdown-text">Classification</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-02-uplift-trees-regression-r.html">
- <span class="dropdown-text">Regression</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-03-uplift-randomForest-r.html">
- <span class="dropdown-text">Random Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-04-uplift-xgboost.html">
- <span class="dropdown-text">XGBoost</span></a>
-  </li>  
-    </ul>
-</li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-double-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Double ML</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-double-ml">
-<li>
-    <a class="dropdown-item" href="./04-00-double-ml-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-01-double-ml-from-basics-to-application-r.html">
- <span class="dropdown-text">Basics to Application</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-02-double-ml- single-multiple-treatment-r.html">
- <span class="dropdown-text">Single/Multiple Treatment</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-03-double-ml-did-r.html">
- <span class="dropdown-text">Difference-in-Differences</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-04-double-ml-iv-r.html">
- <span class="dropdown-text">Instrumental Variables</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-05-double-ml-dynamic-ml.html">
- <span class="dropdown-text">Dynamic Double ML</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-06-double-ml-weighted-double-ml.html">
- <span class="dropdown-text">Weighted Double ML</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-07-double-ml-cluster-robust-r.html">
- <span class="dropdown-text">Cluster Robust</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-08-double-ml-ensemble-learners-r.html">
- <span class="dropdown-text">Ensemble Learners</span></a>
-  </li>  
-    </ul>
-</li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-causal-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Deep Causal ML</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-causal-ml">
-<li>
-    <a class="dropdown-item" href="./05-00-DeepCausalML-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html">
- <span class="dropdown-text">Treatment Effect Estimators</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html">
- <span class="dropdown-text">Generative Latent-Variable Models</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">
- <span class="dropdown-text">Causal Structural Learning</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-04-00-DeepCuasalML-timesseries-introduction-r.html">
- <span class="dropdown-text">Causal Time Series</span></a>
-  </li>  
-    </ul>
-</li>
-</ul>
-<ul class="navbar-nav navbar-nav-scroll ms-auto">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
 <li class="nav-item">
     <a class="nav-link" href="./../index.html"> 
 <span class="menu-text">Package</span></a>
@@ -1041,19 +862,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <strong>Maximum Mean Discrepancy (MMD)</strong> — compares distributions by their mean embeddings in a reproducing kernel Hilbert space. Computationally simpler.</li>
 </ul>
 <p>The training loss becomes:</p>
-<blockquote class="blockquote">
-<p><strong>L = L_factual + λ · IPM( Φ(X)|t=1, Φ(X)|t=0 )</strong></p>
-</blockquote>
-<p>where <code>L_factual</code> is the standard prediction loss (MSE on observed outcomes), and <code>λ</code> is a hyperparameter controlling how aggressively to enforce distributional balance.</p>
+<p><span class="math display">\[\mathcal{L} = \mathcal{L}_{\text{factual}} + \lambda \cdot \text{IPM}\!\left(\Phi(X)\mid t=1,\; \Phi(X)\mid t=0\right)\]</span></p>
+<p>where <span class="math inline">\(\mathcal{L}_{\text{factual}}\)</span> is the standard prediction loss (MSE on observed outcomes), and <span class="math inline">\(\lambda\)</span> is a hyperparameter controlling how aggressively to enforce distributional balance.</p>
 </section><section id="diagram-2-why-balancing-matters-the-selection-bias-problem" class="level3"><h3 class="anchored" data-anchor-id="diagram-2-why-balancing-matters-the-selection-bias-problem">Diagram 2 — Why Balancing Matters (the Selection Bias Problem)</h3>
 <p>This is the intuition behind <em>why</em> the IPM penalty is needed. Without it, the representation space can encode treatment assignment, making counterfactual estimation unreliable.</p>
 <p><img src="Images/CFRNet-02.png" class="img-fluid" width="528"></p>
 </section><section id="how-cfrnet-works" class="level3"><h3 class="anchored" data-anchor-id="how-cfrnet-works">How CFRNet Works</h3>
 <p><strong>Step 1 — Forward pass through Φ.</strong> All patients (both treated and control) are passed through the shared representation network to produce Φ(x). This produces two clouds of points in representation space — one for each treatment group.</p>
-<p><strong>Step 2 — Outcome prediction.</strong> Each patient’s representation Φ(x) is passed through their respective head (h₀ or h₁, depending on which treatment they actually received) to produce a factual outcome prediction. The factual MSE loss is computed here.</p>
+<p><strong>Step 2 — Outcome prediction.</strong> Each patient’s representation <span class="math inline">\(\Phi(x)\)</span> is passed through their respective head (<span class="math inline">\(h_0\)</span> or <span class="math inline">\(h_1\)</span>, depending on which treatment they actually received) to produce a factual outcome prediction. The factual MSE loss is computed here.</p>
 <p><strong>Step 3 — IPM computation.</strong> The IPM distance between the <em>distribution</em> of { Φ(x) : t=0 } and { Φ(x) : t=1 } is computed. A large IPM means the treated and control patients live in different regions of representation space — that’s selection bias baked into Φ.</p>
-<p><strong>Step 4 — Combined loss + backprop.</strong> The total loss <code>L_factual + λ · IPM</code> is backpropagated. The IPM term forces the shared network to “push” the two distributions toward each other, so that factual and counterfactual predictions extrapolate to the same region of feature space.</p>
-<p><strong>Step 5 — ITE at inference.</strong> For any new patient x, pass through Φ once, then both heads, and subtract: <code>ITE(x) = h₁(Φ(x)) − h₀(Φ(x))</code>.</p>
+<p><strong>Step 4 — Combined loss + backprop.</strong> The total loss <span class="math inline">\(\mathcal{L}_{\text{factual}} + \lambda \cdot \text{IPM}\)</span> is backpropagated. The IPM term forces the shared network to “push” the two distributions toward each other, so that factual and counterfactual predictions extrapolate to the same region of feature space.</p>
+<p><strong>Step 5 — ITE at inference.</strong> For any new patient <span class="math inline">\(x\)</span>, pass through <span class="math inline">\(\Phi\)</span> once, then both heads, and subtract: <span class="math inline">\(\text{ITE}(x) = h_1(\Phi(x)) - h_0(\Phi(x))\)</span>.</p>
 </section><section id="cfrnet-vs-tarnet-the-key-difference" class="level3"><h3 class="anchored" data-anchor-id="cfrnet-vs-tarnet-the-key-difference">CFRNet vs TARNet — The Key Difference</h3>
 <table class="caption-top table">
 <thead><tr class="header">
@@ -1355,15 +1174,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"TARNet ATE (val):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span><span class="op">(</span><span class="va">ate_tarnet</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>TARNet ATE (val): 2275.18 </code></pre>
+<pre><code>TARNet ATE (val): 1370.88 </code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"CFRNet ATE (val):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span><span class="op">(</span><span class="va">ate_cfrnet</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>CFRNet ATE (val): 2427.48 </code></pre>
+<pre><code>CFRNet ATE (val): 2231.81 </code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Naive diff-in-means (val, biased under confounding):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span><span class="op">(</span><span class="va">naive_ate</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>Naive diff-in-means (val, biased under confounding): 1264.63 </code></pre>
+<pre><code>Naive diff-in-means (val, biased under confounding): 2192.97 </code></pre>
 </div>
 </div>
 </section><section id="sec-repr-perm-cate" class="level2"><h2 class="anchored" data-anchor-id="sec-repr-perm-cate">Permutation-based feature importance (TARNet / CFRNet)</h2>
@@ -1968,9 +1787,9 @@ Figure&nbsp;1: Permutation importance for predicted CATE on the validation set: 
 <span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>The training loss becomes:</span>
 <span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; **L = L_factual + λ · IPM( Φ(X)\|t=1, Φ(X)\|t=0 )**</span></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>$$\mathcal{L} = \mathcal{L}_{\text{factual}} + \lambda \cdot \text{IPM}<span class="sc">\!</span>\left(\Phi(X)\mid t=1,\; \Phi(X)\mid t=0\right)$$</span>
 <span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>where <span class="in">`L_factual`</span> is the standard prediction loss (MSE on observed outcomes), and <span class="in">`λ`</span> is a hyperparameter controlling how aggressively to enforce distributional balance.</span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>where $\mathcal{L}_{\text{factual}}$ is the standard prediction loss (MSE on observed outcomes), and $\lambda$ is a hyperparameter controlling how aggressively to enforce distributional balance.</span>
 <span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a><span class="fu">### Diagram 2 — Why Balancing Matters (the Selection Bias Problem)</span></span>
 <span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a></span>
@@ -1982,13 +1801,13 @@ Figure&nbsp;1: Permutation importance for predicted CATE on the validation set: 
 <span id="cb25-39"><a href="#cb25-39" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-40"><a href="#cb25-40" aria-hidden="true" tabindex="-1"></a>**Step 1 — Forward pass through Φ.** All patients (both treated and control) are passed through the shared representation network to produce Φ(x). This produces two clouds of points in representation space — one for each treatment group.</span>
 <span id="cb25-41"><a href="#cb25-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-42"><a href="#cb25-42" aria-hidden="true" tabindex="-1"></a>**Step 2 — Outcome prediction.** Each patient's representation Φ(x) is passed through their respective head (h₀ or h₁, depending on which treatment they actually received) to produce a factual outcome prediction. The factual MSE loss is computed here.</span>
+<span id="cb25-42"><a href="#cb25-42" aria-hidden="true" tabindex="-1"></a>**Step 2 — Outcome prediction.** Each patient's representation $\Phi(x)$ is passed through their respective head ($h_0$ or $h_1$, depending on which treatment they actually received) to produce a factual outcome prediction. The factual MSE loss is computed here.</span>
 <span id="cb25-43"><a href="#cb25-43" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-44"><a href="#cb25-44" aria-hidden="true" tabindex="-1"></a>**Step 3 — IPM computation.** The IPM distance between the *distribution* of { Φ(x) : t=0 } and { Φ(x) : t=1 } is computed. A large IPM means the treated and control patients live in different regions of representation space — that's selection bias baked into Φ.</span>
 <span id="cb25-45"><a href="#cb25-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-46"><a href="#cb25-46" aria-hidden="true" tabindex="-1"></a>**Step 4 — Combined loss + backprop.** The total loss <span class="in">`L_factual + λ · IPM`</span> is backpropagated. The IPM term forces the shared network to "push" the two distributions toward each other, so that factual and counterfactual predictions extrapolate to the same region of feature space.</span>
+<span id="cb25-46"><a href="#cb25-46" aria-hidden="true" tabindex="-1"></a>**Step 4 — Combined loss + backprop.** The total loss $\mathcal{L}_{\text{factual}} + \lambda \cdot \text{IPM}$ is backpropagated. The IPM term forces the shared network to "push" the two distributions toward each other, so that factual and counterfactual predictions extrapolate to the same region of feature space.</span>
 <span id="cb25-47"><a href="#cb25-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-48"><a href="#cb25-48" aria-hidden="true" tabindex="-1"></a>**Step 5 — ITE at inference.** For any new patient x, pass through Φ once, then both heads, and subtract: <span class="in">`ITE(x) = h₁(Φ(x)) − h₀(Φ(x))`</span>.</span>
+<span id="cb25-48"><a href="#cb25-48" aria-hidden="true" tabindex="-1"></a>**Step 5 — ITE at inference.** For any new patient $x$, pass through $\Phi$ once, then both heads, and subtract: $\text{ITE}(x) = h_1(\Phi(x)) - h_0(\Phi(x))$.</span>
 <span id="cb25-49"><a href="#cb25-49" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-50"><a href="#cb25-50" aria-hidden="true" tabindex="-1"></a><span class="fu">### CFRNet vs TARNet — The Key Difference</span></span>
 <span id="cb25-51"><a href="#cb25-51" aria-hidden="true" tabindex="-1"></a></span>

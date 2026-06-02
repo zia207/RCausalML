@@ -104,40 +104,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script><style>html{ scroll-behavior: smooth; }</style>
-<!-- RCausalML pkgdown tutorial head -->
-<link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<!-- RCausalML pkgdown tutorial head --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <link href="../extra.css" rel="stylesheet">
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script><script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script><link rel="stylesheet" href="styles/custom.css">
 </head>
-<body class="nav-sidebar docked nav-fixed quarto-light rcausalml-tutorial"><script id="quarto-html-before-body" type="application/javascript">
-<!-- RCausalML pkgdown tutorial navbar -->
-<a href="#quarto-document-content" class="visually-hidden-focusable">Skip to contents</a>
-<nav class="navbar navbar-expand-lg fixed-top bg-light" aria-label="Site navigation"><div class="container">
-    <a class="navbar-brand me-2" href="../index.html">RCausalML</a>
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rcausalml-navbar" aria-controls="rcausalml-navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div id="rcausalml-navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="../articles/RCausalML-intro.html">Get Started</a></li>
-        <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-        <li class="active nav-item"><a class="nav-link" href="index.html">Tutorials</a></li>
-        <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
-      </ul>
-      <ul class="navbar-nav">
-        <li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
-        <li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/" aria-label="Python CausalML docs"><span class="fa fa-book fa-lg"></span></a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-<div class="rcausalml-navbar-spacer" aria-hidden="true"></div>
-
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
     const toggleBodyColorMode = (bsSheetEl) => {
       const mode = bsSheetEl.getAttribute("data-mode");
       const bodyEl = window.document.querySelector("body");
@@ -313,188 +315,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
-            <ul class="navbar-nav navbar-nav-scroll me-auto">
-<li class="nav-item">
-    <a class="nav-link active" href="./00-scientific-terminology-glossary.html" aria-current="page"> 
-<span class="menu-text">Glossary</span></a>
-  </li>  
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tree-based" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Tree-Based</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-tree-based">
-<li>
-    <a class="dropdown-item" href="./01-00-casual-tree-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-01-causal-tree-r.html">
- <span class="dropdown-text">Causal Tree</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-02-causal-forest-r.html">
- <span class="dropdown-text">Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-03-causal-survival-forest-r.html">
- <span class="dropdown-text">Causal Survival Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-04-instrumental-causal-forest-r.html">
- <span class="dropdown-text">Instrumental Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-05-multi-arm-causal-forest-r.html">
- <span class="dropdown-text">Multi-Arm Causal Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-06-causal-xgboost-r.html">
- <span class="dropdown-text">Causal XGBoost</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-07-instrumental-causal-xgboost-r.html">
- <span class="dropdown-text">Instrumental Causal XGBoost</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./01-08-multi-arm-causal-boost-r.html">
- <span class="dropdown-text">Multi-Arm Causal Boost</span></a>
-  </li>  
-    </ul>
-</li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-meta-learners" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Meta-Learners</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-meta-learners">
-<li>
-    <a class="dropdown-item" href="./02-00-meta-learners-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-01-meta-learners-binary-treatments-r.html">
- <span class="dropdown-text">Binary Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-02-meta-learners-multiple-discrete-treatment-r.html">
- <span class="dropdown-text">Multiple Discrete Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-03-meta-learners-continuous-treatment-r.html">
- <span class="dropdown-text">Continuous Treatments</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-04-tmle-model-r.html">
- <span class="dropdown-text">TMLE</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-05-meta-learners-domain-adaptation-learner-r.html">
- <span class="dropdown-text">Domain Adaptation Learner</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./02-06--meta-learners-doubly-robust-learners-r.html">
- <span class="dropdown-text">Doubly Robust Learners</span></a>
-  </li>  
-    </ul>
-</li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-uplift" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Uplift</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-uplift">
-<li>
-    <a class="dropdown-item" href="./03-00-uplift-trees-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-01-uplift-trees-classification-r.html">
- <span class="dropdown-text">Classification</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-02-uplift-trees-regression-r.html">
- <span class="dropdown-text">Regression</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-03-uplift-randomForest-r.html">
- <span class="dropdown-text">Random Forest</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./03-04-uplift-xgboost.html">
- <span class="dropdown-text">XGBoost</span></a>
-  </li>  
-    </ul>
-</li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-double-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Double ML</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-double-ml">
-<li>
-    <a class="dropdown-item" href="./04-00-double-ml-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-01-double-ml-from-basics-to-application-r.html">
- <span class="dropdown-text">Basics to Application</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-02-double-ml- single-multiple-treatment-r.html">
- <span class="dropdown-text">Single/Multiple Treatment</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-03-double-ml-did-r.html">
- <span class="dropdown-text">Difference-in-Differences</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-04-double-ml-iv-r.html">
- <span class="dropdown-text">Instrumental Variables</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-05-double-ml-dynamic-ml.html">
- <span class="dropdown-text">Dynamic Double ML</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-06-double-ml-weighted-double-ml.html">
- <span class="dropdown-text">Weighted Double ML</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-07-double-ml-cluster-robust-r.html">
- <span class="dropdown-text">Cluster Robust</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./04-08-double-ml-ensemble-learners-r.html">
- <span class="dropdown-text">Ensemble Learners</span></a>
-  </li>  
-    </ul>
-</li>
-  <li class="nav-item dropdown ">
-    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-causal-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
- <span class="menu-text">Deep Causal ML</span>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-causal-ml">
-<li>
-    <a class="dropdown-item" href="./05-00-DeepCausalML-introduction-r.html">
- <span class="dropdown-text">Introduction</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-01-00-DeepCausalML-treatment-effect-estimators-introduction-r.html">
- <span class="dropdown-text">Treatment Effect Estimators</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-02-00-DeepCausalML-generative-latent-variable-causal-models-introduction-r.html">
- <span class="dropdown-text">Generative Latent-Variable Models</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-03-00-DeepCausalML-structural-learnering-introduction-r.html">
- <span class="dropdown-text">Causal Structural Learning</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./05-04-00-DeepCuasalML-timesseries-introduction-r.html">
- <span class="dropdown-text">Causal Time Series</span></a>
-  </li>  
-    </ul>
-</li>
-</ul>
-<ul class="navbar-nav navbar-nav-scroll ms-auto">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
 <li class="nav-item">
     <a class="nav-link" href="./../index.html"> 
 <span class="menu-text">Package</span></a>
@@ -1034,12 +855,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Double Machine Learning (DML) fits outcome and treatment with flexible ML, then uses a linear model to predict outcome residuals from treatment residuals. The <a href="https://github.com/py-why/EconML/blob/main/notebooks/Weighted%20Double%20Machine%20Learning%20Examples.ipynb">EconML Weighted Double ML notebook</a> demonstrates <strong>summarized data</strong>: for each segment (unique covariate profile), the data are summarized into one or two rows with <strong>frequency weights</strong> (<code>freq_weight</code>) and <strong>sample variance</strong> (<code>sample_var</code>). Estimators then use weighted regression for correctness.</p>
 <p>The <strong>RCausalML</strong> R package does not currently support <code>freq_weight</code> or <code>sample_var</code> in <code>fit()</code>. This notebook therefore uses the <strong>raw (unsummarized) data</strong> with the same DGP, so that the workflow (LinearDML, effect by segment, coefficients, polynomial CATE, confidence intervals, CausalForestDML) is directly comparable. When using summarized data in practice, you can either expand the data by repeating rows according to segment counts (approximate weighting) or use EconML in Python with native weighted DML.</p>
 <section id="overview" class="level2"><h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p><strong>Weighted Double Machine Learning (weighted DML)</strong> is an extension of the standard Double/Debiased Machine Learning (DML) framework for causal inference. It enables estimation of <em>weighted</em> average treatment effects (or effects in specific subgroups/populations) while preserving DML’s key advantages: robustness to high-dimensional confounders, flexibility with modern machine learning models for nuisance parameters, and √N-consistency via Neyman orthogonality and cross-fitting.</p>
-<p>Standard DML (Chernozhukov et al., 2018) targets parameters like the average treatment effect (ATE) in partially linear or interactive regression models by “partialling out” confounding via machine learning. Weighted DML simply generalizes this by incorporating a user-specified weight function ω (which can depend on Y, D, X or be data-driven) into the score/estimating equation. This lets you target: - Average Treatment Effect on the Treated (ATTE) - Group Average Treatment Effects (GATEs) or subgroup effects - Effects in specific subpopulations (e.g., compliers in an IV setting, or treated in period 1 for dynamic treatments) - Dynamic/sequential treatment effects with subgroup weighting</p>
+<p><strong>Weighted Double Machine Learning (weighted DML)</strong> is an extension of the standard Double/Debiased Machine Learning (DML) framework for causal inference. It enables estimation of <em>weighted</em> average treatment effects (or effects in specific subgroups/populations) while preserving DML’s key advantages: robustness to high-dimensional confounders, flexibility with modern machine learning models for nuisance parameters, and <span class="math inline">\(\sqrt{N}\)</span>-consistency via Neyman orthogonality and cross-fitting.</p>
+<p>Standard DML (Chernozhukov et al., 2018) targets parameters like the average treatment effect (ATE) in partially linear or interactive regression models by “partialling out” confounding via machine learning. Weighted DML simply generalizes this by incorporating a user-specified weight function <span class="math inline">\(\omega\)</span> (which can depend on <span class="math inline">\(Y, D, X\)</span> or be data-driven) into the score/estimating equation. This lets you target: - Average Treatment Effect on the Treated (ATTE) - Group Average Treatment Effects (GATEs) or subgroup effects - Effects in specific subpopulations (e.g., compliers in an IV setting, or treated in period 1 for dynamic treatments) - Dynamic/sequential treatment effects with subgroup weighting</p>
 <p>It is implemented in libraries like DoubleML (Python/R) and appears in applied papers (e.g., for dynamic treatments or reweighting to compliers).</p>
 <section id="quick-recap-how-standard-dml-works" class="level3"><h3 class="anchored" data-anchor-id="quick-recap-how-standard-dml-works">Quick Recap: How Standard DML Works</h3>
-<p>DML solves a moment condition (score equation) that is <em>orthogonal</em> (insensitive) to estimation errors in “nuisance” functions. This allows ML models (random forests, neural nets, boosted trees, etc.) to estimate nuisances at slower rates (n⁻¹/⁴) while still getting √N-consistent estimates of the causal parameter θ.</p>
-<p>For the <strong>interactive regression model (IRM)</strong> with binary treatment D and outcome Y (controlling for high-dimensional X): - Nuisance functions (estimated via ML with cross-fitting): - m₀(X) = E[D | X] (propensity score) - g₀(d, X) = E[Y | D = d, X] (conditional outcome regressions for d = 0,1) - Orthogonal score for ATE (θ₀ = E[g₀(1,X) − g₀(0,X)]):</p>
+<p>DML solves a moment condition (score equation) that is <em>orthogonal</em> (insensitive) to estimation errors in “nuisance” functions. This allows ML models (random forests, neural nets, boosted trees, etc.) to estimate nuisances at slower rates (<span class="math inline">\(n^{-1/4}\)</span>) while still getting <span class="math inline">\(\sqrt{N}\)</span>-consistent estimates of the causal parameter <span class="math inline">\(\theta\)</span>.</p>
+<p>For the <strong>interactive regression model (IRM)</strong> with binary treatment D and outcome Y (controlling for high-dimensional X): - Nuisance functions (estimated via ML with cross-fitting): - <span class="math inline">\(m_0(X) = E[D \mid X]\)</span> (propensity score) - <span class="math inline">\(g_0(d, X) = E[Y \mid D = d, X]\)</span> (conditional outcome regressions for <span class="math inline">\(d = 0, 1\)</span>) - Orthogonal score for ATE (<span class="math inline">\(\theta_0 = E[g_0(1,X) - g_0(0,X)]\)</span>):</p>
 <p><span class="math display">\[
   \psi(W; \theta, \eta) = \left( g_0(1,X) - g_0(0,X) \right) + \frac{D(Y - g_0(1,X))}{m_0(X)} - \frac{(1-D)(Y - g_0(0,X))}{1-m_0(X)} - \theta
 \]</span></p>
@@ -1051,28 +872,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Split sample into K folds.</li>
 <li>For each fold k: train nuisances on the other K−1 folds, predict on fold k.</li>
 <li>Compute the score on the held-out fold.</li>
-<li>Average scores across all observations → solve for θ̂ (usually via simple averaging or weighted least squares on residuals). This “debiases” the estimator and prevents overfitting bias.</li>
+<li>Average scores across all observations → solve for <span class="math inline">\(\hat{\theta}\)</span> (usually via simple averaging or weighted least squares on residuals). This “debiases” the estimator and prevents overfitting bias.</li>
 </ol>
 </li>
 </ul></section><section id="how-weighted-dml-works" class="level3"><h3 class="anchored" data-anchor-id="how-weighted-dml-works">How Weighted DML Works</h3>
 <p>Weighted DML replaces the target with a <em>weighted</em> version:</p>
 <p><span class="math display">\[
 \theta_0 = \mathbb{E}\left[ \left( g_0(1,X) - g_0(0,X) \right) \omega(Y,D,X) \right]
-\]</span> (or normalized by E[ω] if you want a weighted average). The weight function ω determines the estimand:</p>
+\]</span> (or normalized by <span class="math inline">\(E[\omega]\)</span> if you want a weighted average). The weight function <span class="math inline">\(\omega\)</span> determines the estimand:</p>
 <ul>
-<li>ω = 1 → standard ATE</li>
-<li>ω = D / p(D=1|X) → ATTE (weights treated units by inverse propensity)</li>
-<li>ω = 1{G = k} → GATE for group k</li>
-<li>ω = predicted Pr(complier | X) (from a first-stage ML model) → approximates Local Average Treatment Effect (LATE) for compliers</li>
-<li>For dynamic/sequential treatments: ω incorporates subgroup indicators S (e.g., treated in period 1) and nested propensity/outcome models</li>
+<li>
+<span class="math inline">\(\omega = 1\)</span> → standard ATE</li>
+<li>
+<span class="math inline">\(\omega = D / p(D=1 \mid X)\)</span> → ATTE (weights treated units by inverse propensity)</li>
+<li>
+<span class="math inline">\(\omega = \mathbf{1}\{G = k\}\)</span> → GATE for group <span class="math inline">\(k\)</span>
+</li>
+<li>
+<span class="math inline">\(\omega = \text{predicted } \Pr(\text{complier} \mid X)\)</span> (from a first-stage ML model) → approximates Local Average Treatment Effect (LATE) for compliers</li>
+<li>For dynamic/sequential treatments: <span class="math inline">\(\omega\)</span> incorporates subgroup indicators <span class="math inline">\(S\)</span> (e.g., treated in period 1) and nested propensity/outcome models</li>
 </ul>
-<p>The <strong>score function is multiplied/adjusted by ω</strong> (or its conditional expectation ω̄(X) = E[ω | X] when needed). In DoubleMLIRM, you pass <code>weights</code> (a vector or dictionary) at initialization; the package automatically builds the weighted score and handles cross-fitting.</p>
-<p><strong>Step-by-step procedure</strong> (same cross-fitting spirit as standard DML): 1. <strong>Define the target weights</strong> ω (fixed vector, function of observed data, or predicted via a separate ML step, e.g., random forest for complier probability). 2. <strong>Estimate nuisances</strong> (m₀(X), g₀(d,X)) with ML + cross-fitting (exactly as in standard DML). 3. <strong>Form the weighted orthogonal score</strong> ψ_weighted = ω × (standard score terms) − θ (or the precise formulation for the chosen model). 4. <strong>Solve the empirical moment condition</strong>: average the weighted scores over the sample (or solve a weighted regression on residualized outcomes/treatments). 5. <strong>Inference</strong>: Use the influence function / asymptotic variance from the scores (or bootstrap) to get standard errors and CIs. The estimator remains doubly robust and Neyman-orthogonal.</p>
-<p>For <strong>dynamic/sequential treatments</strong> (multiple periods), the score becomes more nested: it uses sequential propensity scores p_{d_t}(history, X) and nested conditional means μ and ν to avoid modeling the full distribution of time-varying covariates. Weighting by g(X₀) = Pr(S=1 | X₀) then targets subgroup-specific dynamic effects.</p>
+<p>The <strong>score function is multiplied/adjusted by <span class="math inline">\(\omega\)</span></strong> (or its conditional expectation <span class="math inline">\(\bar{\omega}(X) = E[\omega \mid X]\)</span> when needed). In DoubleMLIRM, you pass <code>weights</code> (a vector or dictionary) at initialization; the package automatically builds the weighted score and handles cross-fitting.</p>
+<p><strong>Step-by-step procedure</strong> (same cross-fitting spirit as standard DML): 1. <strong>Define the target weights</strong> <span class="math inline">\(\omega\)</span> (fixed vector, function of observed data, or predicted via a separate ML step, e.g., random forest for complier probability). 2. <strong>Estimate nuisances</strong> (<span class="math inline">\(m_0(X), g_0(d,X)\)</span>) with ML + cross-fitting (exactly as in standard DML). 3. <strong>Form the weighted orthogonal score</strong> <span class="math inline">\(\psi_{\text{weighted}} = \omega \times \text{(standard score terms)} - \theta\)</span> (or the precise formulation for the chosen model). 4. <strong>Solve the empirical moment condition</strong>: average the weighted scores over the sample (or solve a weighted regression on residualized outcomes/treatments). 5. <strong>Inference</strong>: Use the influence function / asymptotic variance from the scores (or bootstrap) to get standard errors and CIs. The estimator remains doubly robust and Neyman-orthogonal.</p>
+<p>For <strong>dynamic/sequential treatments</strong> (multiple periods), the score becomes more nested: it uses sequential propensity scores <span class="math inline">\(p_{d_t}(\text{history}, X)\)</span> and nested conditional means <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\nu\)</span> to avoid modeling the full distribution of time-varying covariates. Weighting by <span class="math inline">\(g(X_0) = \Pr(S=1 \mid X_0)\)</span> then targets subgroup-specific dynamic effects.</p>
 <p><strong>Why it works</strong>:</p>
 <ul>
 <li>
-<strong>Neyman orthogonality</strong> still holds → errors in estimating nuisances or the weights do not affect first-order bias in θ̂.</li>
+<strong>Neyman orthogonality</strong> still holds → errors in estimating nuisances or the weights do not affect first-order bias in <span class="math inline">\(\hat{\theta}\)</span>.</li>
 <li>
 <strong>Cross-fitting</strong> prevents overfitting in both the main model and any ML step used to construct weights.</li>
 <li>
@@ -1906,9 +1732,9 @@ Figure&nbsp;2: CATE and 99% intervals for all segment combinations
 <span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="fu">## Overview</span></span>
 <span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>**Weighted Double Machine Learning (weighted DML)** is an extension of the standard Double/Debiased Machine Learning (DML) framework for causal inference. It enables estimation of *weighted* average treatment effects (or effects in specific subgroups/populations) while preserving DML’s key advantages: robustness to high-dimensional confounders, flexibility with modern machine learning models for nuisance parameters, and √N-consistency via Neyman orthogonality and cross-fitting.</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>**Weighted Double Machine Learning (weighted DML)** is an extension of the standard Double/Debiased Machine Learning (DML) framework for causal inference. It enables estimation of *weighted* average treatment effects (or effects in specific subgroups/populations) while preserving DML’s key advantages: robustness to high-dimensional confounders, flexibility with modern machine learning models for nuisance parameters, and $\sqrt{N}$-consistency via Neyman orthogonality and cross-fitting.</span>
 <span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>Standard DML (Chernozhukov et al., 2018) targets parameters like the average treatment effect (ATE) in partially linear or interactive regression models by “partialling out” confounding via machine learning. Weighted DML simply generalizes this by incorporating a user-specified weight function ω (which can depend on Y, D, X or be data-driven) into the score/estimating equation. This lets you target:</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>Standard DML (Chernozhukov et al., 2018) targets parameters like the average treatment effect (ATE) in partially linear or interactive regression models by “partialling out” confounding via machine learning. Weighted DML simply generalizes this by incorporating a user-specified weight function $\omega$ (which can depend on $Y, D, X$ or be data-driven) into the score/estimating equation. This lets you target:</span>
 <span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Average Treatment Effect on the Treated (ATTE)</span>
 <span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Group Average Treatment Effects (GATEs) or subgroup effects</span>
 <span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Effects in specific subpopulations (e.g., compliers in an IV setting, or treated in period 1 for dynamic treatments)</span>
@@ -1918,13 +1744,13 @@ Figure&nbsp;2: CATE and 99% intervals for all segment combinations
 <span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a><span class="fu">### Quick Recap: How Standard DML Works</span></span>
 <span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>DML solves a moment condition (score equation) that is *orthogonal* (insensitive) to estimation errors in “nuisance” functions. This allows ML models (random forests, neural nets, boosted trees, etc.) to estimate nuisances at slower rates (n⁻¹/⁴) while still getting √N-consistent estimates of the causal parameter θ.</span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>DML solves a moment condition (score equation) that is *orthogonal* (insensitive) to estimation errors in “nuisance” functions. This allows ML models (random forests, neural nets, boosted trees, etc.) to estimate nuisances at slower rates ($n^{-1/4}$) while still getting $\sqrt{N}$-consistent estimates of the causal parameter $\theta$.</span>
 <span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>For the **interactive regression model (IRM)** with binary treatment D and outcome Y (controlling for high-dimensional X):</span>
 <span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Nuisance functions (estimated via ML with cross-fitting):</span>
-<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>m₀(X) = E<span class="co">[</span><span class="ot">D | X</span><span class="co">]</span> (propensity score)</span>
-<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>g₀(d, X) = E<span class="co">[</span><span class="ot">Y | D = d, X</span><span class="co">]</span> (conditional outcome regressions for d = 0,1)</span>
-<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Orthogonal score for ATE (θ₀ = E<span class="co">[</span><span class="ot">g₀(1,X) − g₀(0,X)</span><span class="co">]</span>):</span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>$m_0(X) = E<span class="co">[</span><span class="ot">D \mid X</span><span class="co">]</span>$ (propensity score)</span>
+<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>$g_0(d, X) = E<span class="co">[</span><span class="ot">Y \mid D = d, X</span><span class="co">]</span>$ (conditional outcome regressions for $d = 0, 1$)</span>
+<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Orthogonal score for ATE ($\theta_0 = E<span class="co">[</span><span class="ot">g_0(1,X) - g_0(0,X)</span><span class="co">]</span>$):</span>
 <span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>  \psi(W; \theta, \eta) = \left( g_0(1,X) - g_0(0,X) \right) + \frac{D(Y - g_0(1,X))}{m_0(X)} - \frac{(1-D)(Y - g_0(0,X))}{1-m_0(X)} - \theta</span>
@@ -1937,7 +1763,7 @@ Figure&nbsp;2: CATE and 99% intervals for all segment combinations
 <span id="cb34-40"><a href="#cb34-40" aria-hidden="true" tabindex="-1"></a><span class="ss">  1. </span>Split sample into K folds.</span>
 <span id="cb34-41"><a href="#cb34-41" aria-hidden="true" tabindex="-1"></a><span class="ss">  2. </span>For each fold k: train nuisances on the other K−1 folds, predict on fold k.</span>
 <span id="cb34-42"><a href="#cb34-42" aria-hidden="true" tabindex="-1"></a><span class="ss">  3. </span>Compute the score on the held-out fold.</span>
-<span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a><span class="ss">  4. </span>Average scores across all observations → solve for θ̂ (usually via simple averaging or weighted least squares on residuals).</span>
+<span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a><span class="ss">  4. </span>Average scores across all observations → solve for $\hat{\theta}$ (usually via simple averaging or weighted least squares on residuals).</span>
 <span id="cb34-44"><a href="#cb34-44" aria-hidden="true" tabindex="-1"></a>This “debiases” the estimator and prevents overfitting bias.</span>
 <span id="cb34-45"><a href="#cb34-45" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-46"><a href="#cb34-46" aria-hidden="true" tabindex="-1"></a><span class="fu">### How Weighted DML Works </span></span>
@@ -1947,28 +1773,28 @@ Figure&nbsp;2: CATE and 99% intervals for all segment combinations
 <span id="cb34-50"><a href="#cb34-50" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb34-51"><a href="#cb34-51" aria-hidden="true" tabindex="-1"></a>\theta_0 = \mathbb{E}\left<span class="co">[</span><span class="ot"> \left( g_0(1,X) - g_0(0,X) \right) \omega(Y,D,X) \right</span><span class="co">]</span></span>
 <span id="cb34-52"><a href="#cb34-52" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb34-53"><a href="#cb34-53" aria-hidden="true" tabindex="-1"></a>(or normalized by E<span class="co">[</span><span class="ot">ω</span><span class="co">]</span> if you want a weighted average). The weight function ω determines the estimand:</span>
+<span id="cb34-53"><a href="#cb34-53" aria-hidden="true" tabindex="-1"></a>(or normalized by $E<span class="co">[</span><span class="ot">\omega</span><span class="co">]</span>$ if you want a weighted average). The weight function $\omega$ determines the estimand:</span>
 <span id="cb34-54"><a href="#cb34-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-55"><a href="#cb34-55" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>ω = 1 → standard ATE</span>
-<span id="cb34-56"><a href="#cb34-56" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>ω = D / p(D=1|X) → ATTE (weights treated units by inverse propensity)</span>
-<span id="cb34-57"><a href="#cb34-57" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>ω = 1{G = k} → GATE for group k</span>
-<span id="cb34-58"><a href="#cb34-58" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>ω = predicted Pr(complier | X) (from a first-stage ML model) → approximates Local Average Treatment Effect (LATE) for compliers</span>
-<span id="cb34-59"><a href="#cb34-59" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>For dynamic/sequential treatments: ω incorporates subgroup indicators S (e.g., treated in period 1) and nested propensity/outcome models</span>
+<span id="cb34-55"><a href="#cb34-55" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\omega = 1$ → standard ATE</span>
+<span id="cb34-56"><a href="#cb34-56" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\omega = D / p(D=1 \mid X)$ → ATTE (weights treated units by inverse propensity)</span>
+<span id="cb34-57"><a href="#cb34-57" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\omega = \mathbf{1}<span class="sc">\{</span>G = k<span class="sc">\}</span>$ → GATE for group $k$</span>
+<span id="cb34-58"><a href="#cb34-58" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\omega = \text{predicted } \Pr(\text{complier} \mid X)$ (from a first-stage ML model) → approximates Local Average Treatment Effect (LATE) for compliers</span>
+<span id="cb34-59"><a href="#cb34-59" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>For dynamic/sequential treatments: $\omega$ incorporates subgroup indicators $S$ (e.g., treated in period 1) and nested propensity/outcome models</span>
 <span id="cb34-60"><a href="#cb34-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-61"><a href="#cb34-61" aria-hidden="true" tabindex="-1"></a>The **score function is multiplied/adjusted by ω** (or its conditional expectation ω̄(X) = E<span class="co">[</span><span class="ot">ω | X</span><span class="co">]</span> when needed). In DoubleMLIRM, you pass <span class="in">`weights`</span> (a vector or dictionary) at initialization; the package automatically builds the weighted score and handles cross-fitting.</span>
+<span id="cb34-61"><a href="#cb34-61" aria-hidden="true" tabindex="-1"></a>The **score function is multiplied/adjusted by $\omega$** (or its conditional expectation $\bar{\omega}(X) = E<span class="co">[</span><span class="ot">\omega \mid X</span><span class="co">]</span>$ when needed). In DoubleMLIRM, you pass <span class="in">`weights`</span> (a vector or dictionary) at initialization; the package automatically builds the weighted score and handles cross-fitting.</span>
 <span id="cb34-62"><a href="#cb34-62" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-63"><a href="#cb34-63" aria-hidden="true" tabindex="-1"></a>**Step-by-step procedure** (same cross-fitting spirit as standard DML):</span>
-<span id="cb34-64"><a href="#cb34-64" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Define the target weights** ω (fixed vector, function of observed data, or predicted via a separate ML step, e.g., random forest for complier probability).</span>
-<span id="cb34-65"><a href="#cb34-65" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Estimate nuisances** (m₀(X), g₀(d,X)) with ML + cross-fitting (exactly as in standard DML).</span>
-<span id="cb34-66"><a href="#cb34-66" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Form the weighted orthogonal score** ψ_weighted = ω × (standard score terms) − θ (or the precise formulation for the chosen model).</span>
+<span id="cb34-64"><a href="#cb34-64" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Define the target weights** $\omega$ (fixed vector, function of observed data, or predicted via a separate ML step, e.g., random forest for complier probability).</span>
+<span id="cb34-65"><a href="#cb34-65" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Estimate nuisances** ($m_0(X), g_0(d,X)$) with ML + cross-fitting (exactly as in standard DML).</span>
+<span id="cb34-66"><a href="#cb34-66" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Form the weighted orthogonal score** $\psi_{\text{weighted}} = \omega \times \text{(standard score terms)} - \theta$ (or the precise formulation for the chosen model).</span>
 <span id="cb34-67"><a href="#cb34-67" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Solve the empirical moment condition**: average the weighted scores over the sample (or solve a weighted regression on residualized outcomes/treatments).</span>
 <span id="cb34-68"><a href="#cb34-68" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Inference**: Use the influence function / asymptotic variance from the scores (or bootstrap) to get standard errors and CIs. The estimator remains doubly robust and Neyman-orthogonal.</span>
 <span id="cb34-69"><a href="#cb34-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-70"><a href="#cb34-70" aria-hidden="true" tabindex="-1"></a>For **dynamic/sequential treatments** (multiple periods), the score becomes more nested: it uses sequential propensity scores p_{d_t}(history, X) and nested conditional means μ and ν to avoid modeling the full distribution of time-varying covariates. Weighting by g(X₀) = Pr(S=1 | X₀) then targets subgroup-specific dynamic effects.</span>
+<span id="cb34-70"><a href="#cb34-70" aria-hidden="true" tabindex="-1"></a>For **dynamic/sequential treatments** (multiple periods), the score becomes more nested: it uses sequential propensity scores $p_{d_t}(\text{history}, X)$ and nested conditional means $\mu$ and $\nu$ to avoid modeling the full distribution of time-varying covariates. Weighting by $g(X_0) = \Pr(S=1 \mid X_0)$ then targets subgroup-specific dynamic effects.</span>
 <span id="cb34-71"><a href="#cb34-71" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-72"><a href="#cb34-72" aria-hidden="true" tabindex="-1"></a>**Why it works**:</span>
 <span id="cb34-73"><a href="#cb34-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-74"><a href="#cb34-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Neyman orthogonality** still holds → errors in estimating nuisances or the weights do not affect first-order bias in θ̂.</span>
+<span id="cb34-74"><a href="#cb34-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Neyman orthogonality** still holds → errors in estimating nuisances or the weights do not affect first-order bias in $\hat{\theta}$.</span>
 <span id="cb34-75"><a href="#cb34-75" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Cross-fitting** prevents overfitting in both the main model and any ML step used to construct weights.</span>
 <span id="cb34-76"><a href="#cb34-76" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Double robustness** properties are preserved (or enhanced when weights are inverse-propensity-type).</span>
 <span id="cb34-77"><a href="#cb34-77" aria-hidden="true" tabindex="-1"></a></span>

@@ -20,7 +20,7 @@ The output of Causal Structural Learning is typically a **Directed Acyclic Graph
 
 Causal Structural Learning is the task of **learning the causal graph (DAG)** directly from data — without being told which variables cause which. It answers:
 
-> *"Given data on X₁, X₂, X₃, and Y — who causes whom?"*
+> *"Given data on $X_1, X_2, X_3$, and $Y$ — who causes whom?"*
 
 This is different from causal *inference*, which assumes you already know the graph and estimates effect sizes. Structural learning discovers the graph itself.
 

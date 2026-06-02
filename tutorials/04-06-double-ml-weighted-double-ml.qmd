@@ -9,9 +9,9 @@ The **RCausalML** R package does not currently support `freq_weight` or `sample_
 
 ## Overview
 
-**Weighted Double Machine Learning (weighted DML)** is an extension of the standard Double/Debiased Machine Learning (DML) framework for causal inference. It enables estimation of *weighted* average treatment effects (or effects in specific subgroups/populations) while preserving DML’s key advantages: robustness to high-dimensional confounders, flexibility with modern machine learning models for nuisance parameters, and √N-consistency via Neyman orthogonality and cross-fitting.
+**Weighted Double Machine Learning (weighted DML)** is an extension of the standard Double/Debiased Machine Learning (DML) framework for causal inference. It enables estimation of *weighted* average treatment effects (or effects in specific subgroups/populations) while preserving DML’s key advantages: robustness to high-dimensional confounders, flexibility with modern machine learning models for nuisance parameters, and $\sqrt{N}$-consistency via Neyman orthogonality and cross-fitting.
 
-Standard DML (Chernozhukov et al., 2018) targets parameters like the average treatment effect (ATE) in partially linear or interactive regression models by “partialling out” confounding via machine learning. Weighted DML simply generalizes this by incorporating a user-specified weight function ω (which can depend on Y, D, X or be data-driven) into the score/estimating equation. This lets you target:
+Standard DML (Chernozhukov et al., 2018) targets parameters like the average treatment effect (ATE) in partially linear or interactive regression models by “partialling out” confounding via machine learning. Weighted DML simply generalizes this by incorporating a user-specified weight function $\omega$ (which can depend on $Y, D, X$ or be data-driven) into the score/estimating equation. This lets you target:
 - Average Treatment Effect on the Treated (ATTE)
 - Group Average Treatment Effects (GATEs) or subgroup effects
 - Effects in specific subpopulations (e.g., compliers in an IV setting, or treated in period 1 for dynamic treatments)
@@ -21,13 +21,13 @@ It is implemented in libraries like DoubleML (Python/R) and appears in applied p
 
 ### Quick Recap: How Standard DML Works
 
-DML solves a moment condition (score equation) that is *orthogonal* (insensitive) to estimation errors in “nuisance” functions. This allows ML models (random forests, neural nets, boosted trees, etc.) to estimate nuisances at slower rates (n⁻¹/⁴) while still getting √N-consistent estimates of the causal parameter θ.
+DML solves a moment condition (score equation) that is *orthogonal* (insensitive) to estimation errors in “nuisance” functions. This allows ML models (random forests, neural nets, boosted trees, etc.) to estimate nuisances at slower rates ($n^{-1/4}$) while still getting $\sqrt{N}$-consistent estimates of the causal parameter $\theta$.
 
 For the **interactive regression model (IRM)** with binary treatment D and outcome Y (controlling for high-dimensional X):
 - Nuisance functions (estimated via ML with cross-fitting):
-  - m₀(X) = E[D | X] (propensity score)
-  - g₀(d, X) = E[Y | D = d, X] (conditional outcome regressions for d = 0,1)
-- Orthogonal score for ATE (θ₀ = E[g₀(1,X) − g₀(0,X)]):
+  - $m_0(X) = E[D \mid X]$ (propensity score)
+  - $g_0(d, X) = E[Y \mid D = d, X]$ (conditional outcome regressions for $d = 0, 1$)
+- Orthogonal score for ATE ($\theta_0 = E[g_0(1,X) - g_0(0,X)]$):
 
 $$
   \psi(W; \theta, \eta) = \left( g_0(1,X) - g_0(0,X) \right) + \frac{D(Y - g_0(1,X))}{m_0(X)} - \frac{(1-D)(Y - g_0(0,X))}{1-m_0(X)} - \theta
@@ -40,7 +40,7 @@ $$
   1. Split sample into K folds.
   2. For each fold k: train nuisances on the other K−1 folds, predict on fold k.
   3. Compute the score on the held-out fold.
-  4. Average scores across all observations → solve for θ̂ (usually via simple averaging or weighted least squares on residuals).
+  4. Average scores across all observations → solve for $\hat{\theta}$ (usually via simple averaging or weighted least squares on residuals).
 This “debiases” the estimator and prevents overfitting bias.
 
 ### How Weighted DML Works 
@@ -50,28 +50,28 @@ Weighted DML replaces the target with a *weighted* version:
 $$
 \theta_0 = \mathbb{E}\left[ \left( g_0(1,X) - g_0(0,X) \right) \omega(Y,D,X) \right]
 $$
-(or normalized by E[ω] if you want a weighted average). The weight function ω determines the estimand:
+(or normalized by $E[\omega]$ if you want a weighted average). The weight function $\omega$ determines the estimand:
 
-- ω = 1 → standard ATE
-- ω = D / p(D=1|X) → ATTE (weights treated units by inverse propensity)
-- ω = 1{G = k} → GATE for group k
-- ω = predicted Pr(complier | X) (from a first-stage ML model) → approximates Local Average Treatment Effect (LATE) for compliers
-- For dynamic/sequential treatments: ω incorporates subgroup indicators S (e.g., treated in period 1) and nested propensity/outcome models
+- $\omega = 1$ → standard ATE
+- $\omega = D / p(D=1 \mid X)$ → ATTE (weights treated units by inverse propensity)
+- $\omega = \mathbf{1}\{G = k\}$ → GATE for group $k$
+- $\omega = \text{predicted } \Pr(\text{complier} \mid X)$ (from a first-stage ML model) → approximates Local Average Treatment Effect (LATE) for compliers
+- For dynamic/sequential treatments: $\omega$ incorporates subgroup indicators $S$ (e.g., treated in period 1) and nested propensity/outcome models
 
-The **score function is multiplied/adjusted by ω** (or its conditional expectation ω̄(X) = E[ω | X] when needed). In DoubleMLIRM, you pass `weights` (a vector or dictionary) at initialization; the package automatically builds the weighted score and handles cross-fitting.
+The **score function is multiplied/adjusted by $\omega$** (or its conditional expectation $\bar{\omega}(X) = E[\omega \mid X]$ when needed). In DoubleMLIRM, you pass `weights` (a vector or dictionary) at initialization; the package automatically builds the weighted score and handles cross-fitting.
 
 **Step-by-step procedure** (same cross-fitting spirit as standard DML):
-1. **Define the target weights** ω (fixed vector, function of observed data, or predicted via a separate ML step, e.g., random forest for complier probability).
-2. **Estimate nuisances** (m₀(X), g₀(d,X)) with ML + cross-fitting (exactly as in standard DML).
-3. **Form the weighted orthogonal score** ψ_weighted = ω × (standard score terms) − θ (or the precise formulation for the chosen model).
+1. **Define the target weights** $\omega$ (fixed vector, function of observed data, or predicted via a separate ML step, e.g., random forest for complier probability).
+2. **Estimate nuisances** ($m_0(X), g_0(d,X)$) with ML + cross-fitting (exactly as in standard DML).
+3. **Form the weighted orthogonal score** $\psi_{\text{weighted}} = \omega \times \text{(standard score terms)} - \theta$ (or the precise formulation for the chosen model).
 4. **Solve the empirical moment condition**: average the weighted scores over the sample (or solve a weighted regression on residualized outcomes/treatments).
 5. **Inference**: Use the influence function / asymptotic variance from the scores (or bootstrap) to get standard errors and CIs. The estimator remains doubly robust and Neyman-orthogonal.
 
-For **dynamic/sequential treatments** (multiple periods), the score becomes more nested: it uses sequential propensity scores p_{d_t}(history, X) and nested conditional means μ and ν to avoid modeling the full distribution of time-varying covariates. Weighting by g(X₀) = Pr(S=1 | X₀) then targets subgroup-specific dynamic effects.
+For **dynamic/sequential treatments** (multiple periods), the score becomes more nested: it uses sequential propensity scores $p_{d_t}(\text{history}, X)$ and nested conditional means $\mu$ and $\nu$ to avoid modeling the full distribution of time-varying covariates. Weighting by $g(X_0) = \Pr(S=1 \mid X_0)$ then targets subgroup-specific dynamic effects.
 
 **Why it works**:
 
-- **Neyman orthogonality** still holds → errors in estimating nuisances or the weights do not affect first-order bias in θ̂.
+- **Neyman orthogonality** still holds → errors in estimating nuisances or the weights do not affect first-order bias in $\hat{\theta}$.
 - **Cross-fitting** prevents overfitting in both the main model and any ML step used to construct weights.
 - **Double robustness** properties are preserved (or enhanced when weights are inverse-propensity-type).
 

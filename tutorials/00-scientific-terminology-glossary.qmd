@@ -60,7 +60,7 @@ A doubly robust estimator that combines an outcome regression model and a propen
 
 An assumption that each variable equals some function of its causes plus an independent noise term. This helps recover causal directions from data.
 
-*Example:* `X₃ = f(X₁, X₂) + ε₃`, where ε₃ is random noise independent of X₁ and X₂.
+*Example:* $X_3 = f(X_1, X_2) + \varepsilon_3$, where $\varepsilon_3$ is random noise independent of $X_1$ and $X_2$.
 
 ------------------------------------------------------------------------
 
@@ -168,7 +168,7 @@ The change in an outcome that is *caused by* a treatment — not merely associat
 
 A diagram with arrows showing which variables directly cause which others. Directed Acyclic Graph means arrows only go one way and there are no loops.
 
-*Example:* `X → T → Y` means X influences treatment T, which influences outcome Y.
+*Example:* $X \to T \to Y$ means X influences treatment T, which influences outcome Y.
 
 ------------------------------------------------------------------------
 
@@ -288,7 +288,7 @@ A causal discovery approach that uses statistical independence tests to decide w
 
 The difference in predicted outcomes between two treatment arms.
 
-*Example:* `τ(x) = μ_A(x) - μ_control(x)` is the contrast between Drug A and the control for a patient with features x.
+*Example:* $\tau(x) = \mu_A(x) - \mu_{\text{control}}(x)$ is the contrast between Drug A and the control for a patient with features $x$.
 
 ------------------------------------------------------------------------
 
@@ -528,9 +528,9 @@ A neural network building block with a sigmoid gate and a skip connection, allow
 
 ### Hard Intervention
 
-Setting a variable to a specific fixed value regardless of what its normal causes say — the `do()` operator in causal calculus.
+Setting a variable to a specific fixed value regardless of what its normal causes say — the $\text{do}(\cdot)$ operator in causal calculus.
 
-*Example:* `do(T=1)` forces everyone to receive treatment, even those who would normally not qualify.
+*Example:* $\text{do}(T=1)$ forces everyone to receive treatment, even those who would normally not qualify.
 
 ------------------------------------------------------------------------
 
@@ -628,7 +628,7 @@ A method for survival analysis that reweights observations to correct for the bi
 
 The causal effect of treatment for one specific person: their potential outcome under treatment minus their potential outcome under control.
 
-*Example:* For patient A, `ITE = Y(1) - Y(0) = 8 - 5 = +3 days` of faster recovery.
+*Example:* For patient A, $\text{ITE} = Y(1) - Y(0) = 8 - 5 = +3$ days of faster recovery.
 
 ------------------------------------------------------------------------
 
@@ -842,7 +842,7 @@ A vector added to each time step's representation in a transformer model to enco
 
 The updated probability distribution over hidden variables *after* observing data — combining prior belief with evidence.
 
-*Example:* `q(z|x, t, y)` is the estimated distribution over likely latent confounders for one specific patient record.
+*Example:* $q(z \mid x, t, y)$ is the estimated distribution over likely latent confounders for one specific patient record.
 
 ------------------------------------------------------------------------
 
@@ -864,7 +864,7 @@ The two hypothetical outcomes for each individual — what would happen to them 
 
 ### Propensity Score
 
-The probability of receiving treatment given a unit's observed covariates: `P(T=1 | X)`.
+The probability of receiving treatment given a unit's observed covariates: $P(T=1 \mid X)$.
 
 *Example:* Two patients with similar age, health history, and baseline risk should have similar propensity scores. A score of 0.7 means a 70% predicted chance of treatment.
 
@@ -908,7 +908,7 @@ Learning a compact, useful internal representation (embedding) of raw inputs —
 
 Subtracting the part of a variable that is predictable from covariates, leaving only the residual variation unexplained by controls.
 
-*Example:* In double ML, compute `Ỹ = Y - E[Y|X]` and `T̃ = T - E[T|X]`, then regress `Ỹ` on `T̃` to estimate the causal effect.
+*Example:* In double ML, compute $\tilde{Y} = Y - \mathbb{E}[Y \mid X]$ and $\tilde{T} = T - \mathbb{E}[T \mid X]$, then regress $\tilde{Y}$ on $\tilde{T}$ to estimate the causal effect.
 
 ------------------------------------------------------------------------
 
@@ -942,7 +942,7 @@ A number assigned to each observation reflecting how much it should count in the
 
 A system of equations — one per variable — that describes exactly how each variable is generated from its causes plus random noise. Enables intervention and counterfactual reasoning.
 
-*Example:* `Y = f(T, X, U_Y)` where U_Y is unobserved noise. Changing T while holding U_Y fixed gives the causal effect.
+*Example:* $Y = f(T, X, U_Y)$ where $U_Y$ is unobserved noise. Changing $T$ while holding $U_Y$ fixed gives the causal effect.
 
 ------------------------------------------------------------------------
 
@@ -980,7 +980,7 @@ A method for explaining model predictions by attributing each feature's contribu
 
 ### Soft Intervention
 
-An intervention that *changes* the parameters or mechanism of a structural equation rather than forcing a fixed value — a weaker form of intervention than `do()`.
+An intervention that *changes* the parameters or mechanism of a structural equation rather than forcing a fixed value — a weaker form of intervention than $\text{do}(\cdot)$.
 
 *Example:* Increasing someone's probability of seeking treatment rather than forcing them to receive it.
 
@@ -1014,7 +1014,7 @@ When a unit's current outcome depends on its own past outcomes, not just covaria
 
 A mathematical equation defining how one variable is generated from its parent causes and exogenous noise.
 
-*Example:* `Y = f(T, X, ε_Y)` where ε_Y is random noise — changing T while holding ε_Y fixed gives the causal effect of T on Y.
+*Example:* $Y = f(T, X, \varepsilon_Y)$ where $\varepsilon_Y$ is random noise — changing $T$ while holding $\varepsilon_Y$ fixed gives the causal effect of $T$ on $Y$.
 
 ------------------------------------------------------------------------
 

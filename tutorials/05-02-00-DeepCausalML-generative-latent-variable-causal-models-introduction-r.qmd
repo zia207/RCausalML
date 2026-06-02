@@ -161,9 +161,9 @@ Would you like a deeper dive into any specific pair (e.g., CEVAE vs CausalVAE), 
 
 ### Three Things You Can Do That Regular Models Cannot
 
-**1. Interventional Sampling** — `do(Zₖ = z)` Fix a latent causal factor to a specific value, propagate through the latent DAG, decode to X. This generates data from an interventional distribution P(X \| do(Zₖ = z)) — impossible in a standard VAE.
+**1. Interventional Sampling** — $\text{do}(Z_k = z)$ Fix a latent causal factor to a specific value, propagate through the latent DAG, decode to X. This generates data from an interventional distribution $P(X \mid \text{do}(Z_k = z))$ — impossible in a standard VAE.
 
-**2. Counterfactual Generation** Given an observed individual X, infer their latent Z via the encoder, then ask: *"What would X have looked like if Z₂ had been different?"* This is the Rung 3 of Pearl's causal ladder, and it requires both the encoder (abduction) and the decoder (prediction).
+**2. Counterfactual Generation** Given an observed individual $X$, infer their latent $Z$ via the encoder, then ask: *"What would $X$ have looked like if $Z_2$ had been different?"* This is the Rung 3 of Pearl's causal ladder, and it requires both the encoder (abduction) and the decoder (prediction).
 
 **3. Disentangled, Interpretable Representations** Generative models can be used to learn latent representations that better capture factors of variation — in particular, latent factors that capture causal dependencies. In cell microscopy, for example, each intervention may correspond to CRISPR knockouts or drug administration, where the effects act on latent factors rather than at the individual pixel level.
 

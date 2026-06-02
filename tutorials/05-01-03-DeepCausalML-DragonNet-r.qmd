@@ -29,13 +29,13 @@ In plain terms: *you don't need to capture all of X — you only need to capture
 
 **Step 1 — Shared backbone.** All patients are passed through the shared deep network Φ(x), producing a learned representation. This is structurally identical to TARNet's shared layer, but the training signal it receives is fundamentally different.
 
-**Step 2 — Three-headed output.** The representation feeds three separate heads simultaneously: - `g(Φ(x))` — the propensity head, which outputs a sigmoid probability ê(x) = P̂(T=1 \| x). This is a binary classifier trained on treatment assignment. - `Q₀(Φ(x))` — the control outcome head - `Q₁(Φ(x))` — the treated outcome head
+**Step 2 — Three-headed output.** The representation feeds three separate heads simultaneously: - $g(\Phi(x))$ — the propensity head, which outputs a sigmoid probability $\hat{e}(x) = \hat{P}(T=1 \mid x)$. This is a binary classifier trained on treatment assignment. - $Q_0(\Phi(x))$ — the control outcome head - $Q_1(\Phi(x))$ — the treated outcome head
 
-**Step 3 — Targeted regularization.** This is DragonNet's unique contribution. Rather than just adding a propensity prediction loss on top, DragonNet applies a **targeted regularization** term derived from the theory of targeted maximum likelihood estimation (TMLE). The regularizer nudges the outcome predictions Q₀ and Q₁ toward being doubly robust — meaning that even if either the outcome model or the propensity model is slightly wrong, the final ATE estimate remains consistent.
+**Step 3 — Targeted regularization.** This is DragonNet's unique contribution. Rather than just adding a propensity prediction loss on top, DragonNet applies a **targeted regularization** term derived from the theory of targeted maximum likelihood estimation (TMLE). The regularizer nudges the outcome predictions $Q_0$ and $Q_1$ toward being doubly robust — meaning that even if either the outcome model or the propensity model is slightly wrong, the final ATE estimate remains consistent.
 
 **Step 4 — Joint backpropagation.** The combined loss flows back through all three heads and through the shared backbone simultaneously. Because the propensity head and the outcome heads share Φ, the backbone is forced to learn features that are predictive of *both* treatment assignment and outcomes — and the targeted regularizer ensures these features align with what is causally necessary.
 
-**Step 5 — ITE at inference.** `ITE(x) = Q̂₁(Φ(x)) − Q̂₀(Φ(x))`. The propensity head is discarded — it was only needed during training to shape the representation.
+**Step 5 — ITE at inference.** $\text{ITE}(x) = \hat{Q}_1(\Phi(x)) - \hat{Q}_0(\Phi(x))$. The propensity head is discarded — it was only needed during training to shape the representation.
 
 
 ### The Targeted Regularization Term
@@ -46,7 +46,7 @@ The targeted regularization is the most mathematically novel part. Here is what 
 
 The targeted regularization term is derived from the **doubly-robust (DR) ATE estimator**:
 
- **DR-ATE = E\[ Q̂₁ − Q̂₀ + T(Y − Q̂₁)/ê(x) − (1−T)(Y − Q̂₀)/(1−ê(x)) \]**
+$$\widehat{\text{DR-ATE}} = \mathbb{E}\!\left[\hat{Q}_1 - \hat{Q}_0 + \frac{T(Y - \hat{Q}_1)}{\hat{e}(x)} - \frac{(1-T)(Y - \hat{Q}_0)}{1 - \hat{e}(x)}\right]$$
 
 The two correction terms — the IPW-weighted residuals — penalize the network when its outcome predictions are inconsistent with the propensity score. When these residuals are zero, the model has achieved double robustness. The targeted regularization adds this quantity to the training loss with a small weight, gently steering the backbone toward representations where this consistency holds.
 
@@ -62,7 +62,7 @@ The two correction terms — the IPW-weighted residuals — penalize the network
 | Propensity score head | No | No | Yes |
 | Targeted regularization | No | No | Yes |
 | Doubly-robust ATE | No | No | Yes |
-| Extra hyperparameters | — | λ | α (propensity weight) |
+| Extra hyperparameters | — | $\lambda$ | $\alpha$ (propensity weight) |
 | Theoretical basis | Generalization bounds | IPM bounds | Sufficient representation + TMLE |
 
 The key practical advantage DragonNet has over CFRNet is that **it doesn't need to flatten the entire representation distribution** — it only forces the representation to capture propensity-relevant information, which is a much more surgical and theoretically justified constraint. On benchmarks like IHDP and Jobs, DragonNet consistently matches or outperforms CFRNet, especially in low-data regimes where over-regularization from the IPM can hurt.

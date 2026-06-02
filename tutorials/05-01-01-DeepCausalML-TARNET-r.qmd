@@ -29,12 +29,12 @@ TARNet addresses both through a three-part architecture:
 
 Input covariates **X** (demographics, lab values, etc.) pass through a deep network that produces a learned representation Φ(x). This shared encoder is TARNet's core innovation: it extracts features predictive of outcomes *across all treatment arms*, and by mapping similar patients to similar representations, it works to remove selection bias before treatment-specific prediction begins.
 
-### 2. Treatment-Specific Heads (h₀ and h₁)
+### 2. Treatment-Specific Heads ($h_0$ and $h_1$)
 
 The shared representation feeds into two separate sub-networks — one per treatment arm:
 
--   **h₀(Φ(x))** — predicts the potential outcome under *control* (no treatment)
--   **h₁(Φ(x))** — predicts the potential outcome under *treatment*
+-   **$h_0(\Phi(x))$** — predicts the potential outcome under *control* (no treatment)
+-   **$h_1(\Phi(x))$** — predicts the potential outcome under *treatment*
 
 Each head trains only on observed samples from its respective arm, but both operate on the same learned representation.
 
@@ -42,7 +42,7 @@ Each head trains only on observed samples from its respective arm, but both oper
 
 For any individual, features X pass through the shared encoder once, then through both heads:
 
-> **ITE(x) = ŷ₁ − ŷ₀ = h₁(Φ(x)) − h₀(Φ(x))**
+$$\text{ITE}(x) = \hat{y}_1 - \hat{y}_0 = h_1(\Phi(x)) - h_0(\Phi(x))$$
 
 The result is an individual-level causal estimate: how much better (or worse) *this specific patient* fares with treatment versus without.
 
