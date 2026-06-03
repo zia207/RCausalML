@@ -101,8 +101,6 @@ Traditional deep learning models rely on learning from extensive data but may in
 
 ## Major Model Families
 
-![](Websites/R_Website/Causal_Inference_R/Cursor_R/RCausalML/inst/notebooks/causal_structural_learning.png){width="543"}
-
 ### Family 1 — Continuous Optimization (Gradient-Based DAG Learning)
 
 The foundational breakthrough in this family came from reframing the combinatorial DAG search as a smooth, differentiable optimization problem.

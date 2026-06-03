@@ -57,7 +57,7 @@ These models estimate treatment effects in time series settings — answering "w
 ### Comparison at a Glance
 
 | Model Type | Causal Goal | Graph Needed? | Handles Latent Confounders? | Supports Interventions? |
-|----|----|----|----|----|
+|---------------|---------------|---------------|---------------|---------------|
 | Neural Granger | Variable influence | No | Partially | No |
 | Deep SCM | Full causal model | Yes | Yes (via VAE) | Yes |
 | Causal Transformer | Temporal influence | No | No | Partially |

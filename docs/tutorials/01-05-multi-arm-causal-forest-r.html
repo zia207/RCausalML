@@ -104,40 +104,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script><style>html{ scroll-behavior: smooth; }</style>
-<!-- RCausalML pkgdown tutorial head -->
-<link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<!-- RCausalML pkgdown tutorial head --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <link href="../extra.css" rel="stylesheet">
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script><script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script><link rel="stylesheet" href="styles/custom.css">
 </head>
-<body class="nav-sidebar docked nav-fixed quarto-light rcausalml-tutorial"><script id="quarto-html-before-body" type="application/javascript">
-<!-- RCausalML pkgdown tutorial navbar -->
-<a href="#quarto-document-content" class="visually-hidden-focusable">Skip to contents</a>
-<nav class="navbar navbar-expand-lg fixed-top bg-light" aria-label="Site navigation"><div class="container">
-    <a class="navbar-brand me-2" href="../index.html">RCausalML</a>
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rcausalml-navbar" aria-controls="rcausalml-navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div id="rcausalml-navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="../articles/RCausalML-intro.html">Get Started</a></li>
-        <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-        <li class="active nav-item"><a class="nav-link" href="index.html">Tutorials</a></li>
-        <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
-      </ul>
-      <ul class="navbar-nav">
-        <li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
-        <li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/" aria-label="Python CausalML docs"><span class="fa fa-book fa-lg"></span></a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-<div class="rcausalml-navbar-spacer" aria-hidden="true"></div>
-
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
     const toggleBodyColorMode = (bsSheetEl) => {
       const mode = bsSheetEl.getAttribute("data-mode");
       const bodyEl = window.document.querySelector("body");
@@ -1046,9 +1048,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">ate_log_time</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>             estimate   std.err    contrast outcome
-B - A       0.2370108 0.2058838       B - A     Y.1
-placebo - A 0.3267473 0.1976071 placebo - A     Y.1</code></pre>
+<pre><code>               estimate   std.err    contrast outcome
+B - A        0.11241892 0.2205810       B - A     Y.1
+placebo - A -0.03591748 0.2041759 placebo - A     Y.1</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="st">"Average Treatment Effects for health_status:"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
@@ -1056,9 +1058,9 @@ placebo - A 0.3267473 0.1976071 placebo - A     Y.1</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">ate_health_status</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>                estimate   std.err    contrast outcome
-B - A        0.008270641 0.1062070       B - A     Y.1
-placebo - A -0.144842545 0.1004455 placebo - A     Y.1</code></pre>
+<pre><code>               estimate    std.err    contrast outcome
+B - A        0.01251494 0.11173365       B - A     Y.1
+placebo - A -0.12166467 0.09740852 placebo - A     Y.1</code></pre>
 </div>
 </div>
 </section><section id="plot-variable-importance" class="level3"><h3 class="anchored" data-anchor-id="plot-variable-importance">Plot Variable Importance</h3>
@@ -1240,54 +1242,54 @@ Figure&nbsp;2
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">-0.0330</td>
-<td style="text-align: right;">0.0034</td>
-<td style="text-align: right;">-0.0047</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">0.0411</td>
-<td style="text-align: right;">0.0047</td>
-<td style="text-align: right;">-0.0044</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">-0.0315</td>
-<td style="text-align: right;">-0.0035</td>
-<td style="text-align: right;">0.0004</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">-0.0515</td>
-<td style="text-align: right;">0.0037</td>
-<td style="text-align: right;">0.0019</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">0.0396</td>
-<td style="text-align: right;">-0.0048</td>
-<td style="text-align: right;">0.0003</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">0.0406</td>
-<td style="text-align: right;">0.0049</td>
-<td style="text-align: right;">0.0018</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">0.0409</td>
-<td style="text-align: right;">0.0049</td>
-<td style="text-align: right;">0.0018</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">-0.0015</td>
-<td style="text-align: right;">0.0038</td>
-<td style="text-align: right;">0.0005</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">-0.0015</td>
-<td style="text-align: right;">0.0038</td>
+<td style="text-align: right;">-0.0268</td>
+<td style="text-align: right;">0.0073</td>
 <td style="text-align: right;">0.0005</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">-0.0562</td>
-<td style="text-align: right;">-0.0035</td>
-<td style="text-align: right;">0.0018</td>
+<td style="text-align: right;">0.0275</td>
+<td style="text-align: right;">0.0074</td>
+<td style="text-align: right;">0.0002</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">-0.0270</td>
+<td style="text-align: right;">-0.0079</td>
+<td style="text-align: right;">-0.0022</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">-0.0271</td>
+<td style="text-align: right;">0.0073</td>
+<td style="text-align: right;">0.0008</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.0276</td>
+<td style="text-align: right;">-0.0080</td>
+<td style="text-align: right;">-0.0021</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.0277</td>
+<td style="text-align: right;">0.0074</td>
+<td style="text-align: right;">0.0009</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.0277</td>
+<td style="text-align: right;">0.0074</td>
+<td style="text-align: right;">0.0009</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">-0.0470</td>
+<td style="text-align: right;">0.0072</td>
+<td style="text-align: right;">-0.0023</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">-0.0470</td>
+<td style="text-align: right;">0.0072</td>
+<td style="text-align: right;">-0.0023</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">-0.0259</td>
+<td style="text-align: right;">-0.0078</td>
+<td style="text-align: right;">0.0008</td>
 </tr>
 </tbody>
 </table></section><section id="turn-into-shapviz-objects-and-visualize-panel-display" class="level3"><h3 class="anchored" data-anchor-id="turn-into-shapviz-objects-and-visualize-panel-display">Turn into shapviz objects and visualize (panel display)</h3>

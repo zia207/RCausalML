@@ -12,7 +12,6 @@ Deep causal learning typically spans three main areas: - **Representation**: Neu
 
 A common framework involves a "causal deep learning" paradigm with structural, parametric, and temporal dimensions, allowing partial causal knowledge to guide deep models. For instance, in high-dimensional settings, models might use kernel density estimation (KDE) images fed into CNNs to infer graph edges.
 
-Here's an illustrative diagram of a deep causal learning architecture for structure discovery: FIh. 1 42256_2023_744_Fig2_HTML.png
 
 ### Methods and Approaches
 

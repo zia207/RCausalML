@@ -104,40 +104,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script><style>html{ scroll-behavior: smooth; }</style>
-<!-- RCausalML pkgdown tutorial head -->
-<link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<!-- RCausalML pkgdown tutorial head --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <link href="../extra.css" rel="stylesheet">
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script><script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script><link rel="stylesheet" href="styles/custom.css">
 </head>
-<body class="nav-sidebar docked nav-fixed quarto-light rcausalml-tutorial"><script id="quarto-html-before-body" type="application/javascript">
-<!-- RCausalML pkgdown tutorial navbar -->
-<a href="#quarto-document-content" class="visually-hidden-focusable">Skip to contents</a>
-<nav class="navbar navbar-expand-lg fixed-top bg-light" aria-label="Site navigation"><div class="container">
-    <a class="navbar-brand me-2" href="../index.html">RCausalML</a>
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rcausalml-navbar" aria-controls="rcausalml-navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div id="rcausalml-navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="../articles/RCausalML-intro.html">Get Started</a></li>
-        <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-        <li class="active nav-item"><a class="nav-link" href="index.html">Tutorials</a></li>
-        <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
-      </ul>
-      <ul class="navbar-nav">
-        <li class="nav-item"><a class="external-link nav-link" href="https://github.com/zia207/RCausalML" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
-        <li class="nav-item"><a class="external-link nav-link" href="https://causalml.readthedocs.io/en/latest/" aria-label="Python CausalML docs"><span class="fa fa-book fa-lg"></span></a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-<div class="rcausalml-navbar-spacer" aria-hidden="true"></div>
-
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
     const toggleBodyColorMode = (bsSheetEl) => {
       const mode = bsSheetEl.getAttribute("data-mode");
       const bodyEl = window.document.querySelector("body");
@@ -1209,8 +1211,8 @@ h(W) = \operatorname{tr}\left(e^{W \odot W}\right) - d = 0
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">tail</a></span><span class="op">(</span><span class="va">loss_df</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>    epoch    total      mse sparsity         acyc    recon
-300   300 184.7368 182.7831  0.16404 1.208594e-05 1.789627</code></pre>
+<pre><code>    epoch    total      mse  sparsity         acyc    recon
+300   300 184.7342 182.7681 0.1655907 1.329975e-05 1.800414</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">loss_df</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">epoch</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_line</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">total</span>, color <span class="op">=</span> <span class="st">"Train Loss"</span><span class="op">)</span>, linewidth <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">+</span></span>
@@ -1238,7 +1240,7 @@ h(W) = \operatorname{tr}\left(e^{W \odot W}\right) - d = 0
 <span><span class="va">amean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">off</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"|A| (off-diag): max=%.5f, mean=%.6f\n"</span>, <span class="va">amax</span>, <span class="va">amean</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>|A| (off-diag): max=0.08241, mean=0.015334</code></pre>
+<pre><code>|A| (off-diag): max=0.08303, mean=0.015440</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">A_EDGE_TAU</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">amax</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="fl">1e-4</span>, <span class="fl">0.2</span> <span class="op">*</span> <span class="va">amax</span><span class="op">)</span> <span class="kw">else</span> <span class="fl">0</span></span>
 <span><span class="va">A_thresholded</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span><span class="op">(</span><span class="va">absA</span> <span class="op">&gt;</span> <span class="va">A_EDGE_TAU</span>, <span class="va">A_est</span>, <span class="fl">0</span><span class="op">)</span></span>
@@ -1246,7 +1248,7 @@ h(W) = \operatorname{tr}\left(e^{W \odot W}\right) - d = 0
 <span><span class="va">n_edge</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">A_thresholded</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1e-8</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"Adaptive edge threshold tau=%.5f -&gt; %d directed entries\n"</span>, <span class="va">A_EDGE_TAU</span>, <span class="va">n_edge</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>Adaptive edge threshold tau=0.01648 -&gt; 233 directed entries</code></pre>
+<pre><code>Adaptive edge threshold tau=0.01661 -&gt; 219 directed entries</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Learned (thresholded) adjacency matrix shape:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="va">A_thresholded</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">" x "</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
@@ -1310,33 +1312,33 @@ h(W) = \operatorname{tr}\left(e^{W \odot W}\right) - d = 0
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">importance_df</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
 <pre><code>    variable     score     A_inout      W1_norm rank
-T          T 1.0000000 1.692433376 2.437431e+00    1
-x15      x15 0.7802937 1.558008851 1.560969e+00    2
-x9        x9 0.6911757 1.404265975 1.349069e+00    3
-x7        x7 0.6786001 1.312654105 1.420370e+00    4
-x21      x21 0.6643121 1.135193905 1.607586e+00    5
-x2        x2 0.6242808 1.242877482 1.256571e+00    6
-x6        x6 0.6026408 1.108847419 1.345083e+00    7
-x25      x25 0.5557292 0.896461460 1.423818e+00    8
-x12      x12 0.5464780 0.941785688 1.313114e+00    9
-x10      x10 0.5217712 0.760163162 1.455565e+00   10
-x22      x22 0.5103304 0.600389972 1.631060e+00   11
-x8        x8 0.4942660 0.806044861 1.255069e+00   12
-x23      x23 0.4936112 0.686200915 1.425347e+00   13
-x24      x24 0.4880064 0.532066253 1.621130e+00   14
-x1        x1 0.4784565 0.784232291 1.209573e+00   15
-x4        x4 0.4763736 0.762319083 1.231138e+00   16
-x17      x17 0.4681159 0.770326307 1.179292e+00   17
-x5        x5 0.4670695 0.711136080 1.259867e+00   18
-x20      x20 0.4556798 0.563290997 1.418345e+00   19
-x19      x19 0.4439839 0.581627444 1.334788e+00   20
-x16      x16 0.4347562 0.666484021 1.166977e+00   21
-x13      x13 0.4320884 0.556049977 1.313822e+00   22
-x11      x11 0.4197599 0.587427795 1.208304e+00   23
-x3        x3 0.3881213 0.598498054 1.038046e+00   24
-x18      x18 0.3852168 0.506947694 1.156403e+00   25
-x14      x14 0.3714306 0.582750419 9.794751e-01   26
-y          Y 0.0000000 0.008508842 6.555443e-39   27</code></pre>
+T          T 1.0000000 1.771177528 2.432925e+00    1
+x15      x15 0.7671230 1.579987990 1.563697e+00    2
+x7        x7 0.6830199 1.367969278 1.447134e+00    3
+x9        x9 0.6670760 1.388711617 1.340921e+00    4
+x21      x21 0.6608057 1.168969345 1.613741e+00    5
+x2        x2 0.5948637 1.196537375 1.254823e+00    6
+x6        x6 0.5911059 1.117740770 1.345308e+00    7
+x12      x12 0.5910978 1.117291808 1.345888e+00    8
+x25      x25 0.5387308 0.856958472 1.450441e+00    9
+x22      x22 0.4939814 0.576868937 1.619331e+00   10
+x1        x1 0.4934067 0.875248447 1.204653e+00   11
+x24      x24 0.4861492 0.549552835 1.618928e+00   12
+x10      x10 0.4801357 0.689555201 1.396408e+00   13
+x4        x4 0.4751749 0.782810589 1.243541e+00   14
+x8        x8 0.4708474 0.758490913 1.256055e+00   15
+x20      x20 0.4524034 0.575357709 1.419105e+00   16
+x5        x5 0.4510893 0.690069361 1.254363e+00   17
+x23      x23 0.4483962 0.558772253 1.422501e+00   18
+x17      x17 0.4461568 0.728680755 1.177063e+00   19
+x13      x13 0.4443428 0.605961199 1.337638e+00   20
+x19      x19 0.4361022 0.587390261 1.323176e+00   21
+x16      x16 0.4236473 0.652379070 1.172862e+00   22
+x11      x11 0.4018786 0.588357920 1.155313e+00   23
+x3        x3 0.3910133 0.637935889 1.034007e+00   24
+x18      x18 0.3774687 0.491234667 1.170607e+00   25
+x14      x14 0.3671654 0.588251132 9.865513e-01   26
+y          Y 0.0000000 0.008692051 6.555443e-39   27</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">importance_df</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">score</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/reorder.factor.html">reorder</a></span><span class="op">(</span><span class="va">variable</span>, <span class="va">score</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_col</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>fill <span class="op">=</span> <span class="va">variable</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="va">highlight_vars</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -1375,20 +1377,22 @@ y          Y 0.0000000 0.008508842 6.555443e-39   27</code></pre>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"Graph from adaptive threshold tau=%.4g\n"</span>, <span class="va">tau_msg</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>Graph from adaptive threshold tau=0.01648</code></pre>
+<pre><code>Graph from adaptive threshold tau=0.01661</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"Edges in plot: %d\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">edge_df</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>Edges in plot: 233</code></pre>
+<pre><code>Edges in plot: 219</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">edge_df</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">edge_df</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"from"</span>, <span class="st">"to"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">40</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
 <pre><code>    from to
 2     x2 x1
+3     x3 x1
 11   x11 x1
 15   x15 x1
 19   x19 x1
 21   x21 x1
+23   x23 x1
 26     T x1
 28    x1 x2
 30    x3 x2
@@ -1409,21 +1413,19 @@ y          Y 0.0000000 0.008508842 6.555443e-39   27</code></pre>
 48   x21 x2
 49   x22 x2
 51   x24 x2
-52   x25 x2
 53     T x2
+83    x2 x4
+88    x7 x4
+98   x17 x4
+104  x23 x4
+105  x24 x4
+107    T x4
 119  x11 x5
-129  x21 x5
 136   x1 x6
 137   x2 x6
 138   x3 x6
 139   x4 x6
-142   x7 x6
-143   x8 x6
-144   x9 x6
-145  x10 x6
-147  x12 x6
-148  x13 x6
-151  x16 x6</code></pre>
+142   x7 x6</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">edge_df</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"|A| is effectively zero; lower beta_sparsity / acyc_weight or train longer.\n"</span><span class="op">)</span></span>
@@ -1581,7 +1583,7 @@ Graph statistics (CASTLE)</code></pre>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">stats_df</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
 <pre><code>        model nodes edges density isDAG max_in_degree max_out_degree
-CASTLE CASTLE    27   233  0.3319 FALSE            25             11</code></pre>
+CASTLE CASTLE    27   219   0.312 FALSE            25             11</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">W_sem</span> <span class="op">&lt;-</span> <span class="va">A_est</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/diag.html">diag</a></span><span class="op">(</span><span class="va">W_sem</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
@@ -1595,7 +1597,7 @@ SEM reconstruction (linear Z %*% W, exploratory)</code></pre>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">recon_df</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
 <pre><code>        model mean_MSE global_R2    mse_T mse_Y
-CASTLE CASTLE   5.1296    -0.316 122.6304     0</code></pre>
+CASTLE CASTLE   5.1448   -0.3199 122.7385     0</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">node</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"T"</span>, <span class="st">"Y"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">nb</span> <span class="op">&lt;-</span> <span class="fu">causal_neighbors</span><span class="op">(</span><span class="va">G_castle</span>, <span class="va">node</span><span class="op">)</span></span>
@@ -1611,7 +1613,7 @@ CASTLE CASTLE   5.1296    -0.316 122.6304     0</code></pre>
 <span>  <span class="op">}</span></span>
 <span><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details><div class="cell-output cell-output-stdout">
-<pre><code>CASTLE T parents=x1, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x2, x20, x21, x22, x23, x24, x25, x3, x4, x5, x6, x7, x8, x9 children=x1, x12, x15, x2, x21, x25, x6, x7, x9
+<pre><code>CASTLE T parents=x1, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x2, x20, x21, x22, x23, x24, x25, x3, x4, x5, x6, x7, x8, x9 children=x1, x12, x15, x2, x21, x4, x6, x7, x9
 CASTLE Y is not present in the learned graph.</code></pre>
 </div>
 <details class="code-fold"><summary>Code</summary><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">W_ate</span> <span class="op">&lt;-</span> <span class="va">A_thresholded</span></span>

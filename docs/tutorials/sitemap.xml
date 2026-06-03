@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://zia207.github.io/RCausalML/tutorials/05-04-06-DeepCausalML-timeseries-counterfactual-potential-causalML-r.html</loc>
-    <lastmod>2026-05-26T22:49:23.690Z</lastmod>
+    <lastmod>2026-06-03T12:14:45.912Z</lastmod>
   </url>
   <url>
     <loc>https://zia207.github.io/RCausalML/tutorials/05-04-04-DeepCausalML-timeseries-RNN-LSTM-causaML-r.html</loc>
@@ -14,7 +14,7 @@
   </url>
   <url>
     <loc>https://zia207.github.io/RCausalML/tutorials/05-04-00-DeepCuasalML-timesseries-introduction-r.html</loc>
-    <lastmod>2026-05-24T01:27:12.104Z</lastmod>
+    <lastmod>2026-06-03T11:27:46.522Z</lastmod>
   </url>
   <url>
     <loc>https://zia207.github.io/RCausalML/tutorials/05-03-04-DeepCausalML-DAGMA-NoCurl-r.html</loc>
@@ -26,7 +26,7 @@
   </url>
   <url>
     <loc>https://zia207.github.io/RCausalML/tutorials/05-03-00-DeepCausalML-structural-learnering-introduction-r.html</loc>
-    <lastmod>2026-06-02T21:47:09.121Z</lastmod>
+    <lastmod>2026-06-03T04:33:38.354Z</lastmod>
   </url>
   <url>
     <loc>https://zia207.github.io/RCausalML/tutorials/05-02-06-DeepCausalML-deep-structural-causal-model-DSCM-r.html</loc>
@@ -54,7 +54,7 @@
   </url>
   <url>
     <loc>https://zia207.github.io/RCausalML/tutorials/05-00-DeepCausalML-introduction-r.html</loc>
-    <lastmod>2026-05-22T14:24:10.265Z</lastmod>
+    <lastmod>2026-06-03T02:37:34.686Z</lastmod>
   </url>
   <url>
     <loc>https://zia207.github.io/RCausalML/tutorials/04-07-double-ml-cluster-robust-r.html</loc>
